@@ -12,7 +12,7 @@ setupX <- function(filename, dir = getwd(), sep = ",",
                          backingfile = backingfile, descriptorfile = descriptorfile,
                          backingpath = dir, shared = TRUE, ...)
   cat("End time: ", format(Sys.time()), "\n")
-  cat("DONE!")
+  cat("DONE!\n")
   
   rm(dat)
   gc()
