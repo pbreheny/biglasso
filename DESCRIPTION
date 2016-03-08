@@ -6,6 +6,6 @@ Author: Yaohui Zeng [aut,cre], Patrick Breheny [ctb]
 Maintainer: Yaohui Zeng <yaohui-zeng@uiowa.edu>
 Description: Extend lasso and elastic-net model fitting for ultrahigh-dimensional, multi-gigabyte data sets that cannot be loaded into memory. Compared to existing lasso-fitting packages, it preserves equivalently fast computation speed but is much more memory-efficient, thus allowing for very powerful big data analysis even with only a single laptop.
 License: GPL-2
-Depends: bigmemory, Matrix, parallel, ncvreg
+Depends: bigmemory (>= 4.0.0), Matrix, parallel, ncvreg
 Imports: Rcpp (>= 0.12.1), methods
 LinkingTo: Rcpp, RcppArmadillo, bigmemory, BH
