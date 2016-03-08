@@ -3,3 +3,5 @@
 .Rbuildignore
 .Rhistory
 README.md
+^.*\.Rproj$
+^\.Rproj\.user$
