@@ -1,3 +1,9 @@
+
+
+[![Build Status](https://travis-ci.org/YaohuiZeng/biglasso.svg?branch=master)](https://travis-ci.org/YaohuiZeng/biglasso)
+[![CRAN_Status_Badge](http://www.r-pkg.org/badges/version/biglasso)](http://cran.r-project.org/package=biglasso)
+
+
 # Big Lasso: Extending Lasso Model Fitting to Big Data in R
 
 `biglasso` Extend lasso and elastic-net model fitting for ultrahigh-dimensional, multi-gigabyte 
