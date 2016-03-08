@@ -53,9 +53,9 @@ biglasso <- function(X, y, row.idx = 1:nrow(X), penalty = c("lasso", "ridge", "e
   if (storage.mode(penalty.factor) != "double") storage.mode(penalty.factor) <- "double"
 
   n <- length(row.idx) ## subset of X. idx: indices of rows.
- 
+
   # standardize X, return center vector and scale vector
-  stand <- .Call('standardize_bm', X@address, as.integer(row.idx-1))
+  stand <- .Call('standardize_bm', X@address, as.integer(row.idx-1), PACKAGE = 'biglasso')
   center <- stand[[1]]
   scale <- stand[[2]]
   
