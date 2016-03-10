@@ -9,6 +9,8 @@
 #include <Rmath.h>
 #include "bigmemory/BigMatrix.h"
 #include "bigmemory/MatrixAccessor.hpp"
+#include "bigmemory/bigmemoryDefines.h"
+#include "bigmemory/isna.hpp"
 
 // Use openMP
 //#include <omp.h>
