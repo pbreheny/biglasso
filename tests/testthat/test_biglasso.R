@@ -59,12 +59,12 @@ test_that("Test cross-validation: ",{
   expect_equal(cvfit1$lambda.min, cvfit2$lambda.min)
 })
 
-test_that("Test parallel cross-validation: ",{
-  expect_equal(cvfit1$cve, cvfit3$cve)
-  expect_equal(cvfit1$cvse, cvfit3$cvse)
-  expect_equal(cvfit1$min, cvfit3$min)
-  expect_equal(cvfit1$lambda.min, cvfit3$lambda.min)
-})
+# test_that("Test parallel cross-validation: ",{
+#   expect_equal(cvfit1$cve, cvfit3$cve)
+#   expect_equal(cvfit1$cvse, cvfit3$cvse)
+#   expect_equal(cvfit1$min, cvfit3$min)
+#   expect_equal(cvfit1$lambda.min, cvfit3$lambda.min)
+# })
 
 
 
