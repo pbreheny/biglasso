@@ -117,7 +117,7 @@ biglasso <- function(X, y, row.idx = 1:nrow(X), penalty = c("lasso", "ridge", "e
 
   ## Names
   varnames <- if (is.null(colnames(X))) paste("V", 1:p, sep="") else colnames(X)
-  if (family!="gaussian") varnames <- c("(Intercept)", varnames)
+  if (family == "gaussian") varnames <- c("(Intercept)", varnames)
   dimnames(beta) <- list(varnames, round(lambda,digits=4))
 
   ## Output
