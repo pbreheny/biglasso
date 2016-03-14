@@ -21,7 +21,8 @@ predict.biglasso <- function(object, X, row.idx = 1:nrow(X),
   temp <- .Call("get_eta", X@address, as.integer(row.idx-1), beta, beta.T@i, 
                 beta.T@j, PACKAGE = 'biglasso')
   eta <- sweep(temp, 2, alpha, "+")
- 
+  dimnames(eta) <- list(c(1:nrow(eta)), round(object$lambda, digits = 4))
+  
   if (type=="link" || object$family=="gaussian") return(drop(eta))
   resp <- switch(object$family,
                  binomial = exp(eta)/(1+exp(eta)),
