@@ -1,7 +1,7 @@
 
 library(testthat)
-library(biglasso)
-# 
+# library(biglasso)
+# library(parallel)
 # require(bigmemory)
 # require(Rcpp)
 # require(RcppArmadillo)
@@ -16,6 +16,7 @@ library(biglasso)
 # source("~/GitHub/biglasso/R/cv.biglasso.R")
 # source("~/GitHub/biglasso/R/plot.biglasso.R")
 # source("~/GitHub/biglasso/R/setupLambda.R")
+# source("~/GitHub/biglasso/R/loss.R")
 
 context("Testing biglasso against ncvreg:")
 
@@ -46,12 +47,19 @@ test_that("Linear regression, test lambda, loss, center, scale: ",{
 test_that("Linear regression, test prediction:",{
   expect_equal(predict(fit1, X = X.bm, type = 'coefficients'), 
                Matrix(predict(fit2, X, type = 'coefficients'), sparse = T))
-  expect_equal(predict(fit1, X = X.bm, type = 'response'), 
-               Matrix(predict(fit2, X, type = 'response')))
+  expect_equal(
+    all.equal(predict(fit1, X = X.bm, type = 'response'), 
+              Matrix(predict(fit2, X, type = 'response'), dimnames = NULL), 
+              check.attributes = FALSE), 
+    TRUE
+    )
   expect_equal(predict(fit1, X = X.bm, type = 'nvars'), predict(fit2, X, type = 'nvars'))
   expect_equal(predict(fit1, X = X.bm, type = 'vars'), predict(fit2, X, type = 'vars'))
-  expect_equal(predict(fit1, X = X.bm, type = 'link'), 
-               Matrix(predict(fit2, X, type = 'link')))
+  expect_equal(
+    all.equal(predict(fit1, X = X.bm, type = 'link'), 
+              Matrix(predict(fit2, X, type = 'link')),
+              check.attributes = FALSE),
+    TRUE)
 })
 
 test_that("Linear regression, test cross-validation: ",{
@@ -94,14 +102,25 @@ test_that("Logistic regression, test lambda, loss, center, scale: ",{
 test_that("Logistic regression, test prediction:",{
   expect_equal(predict(fit1, X = X.bm, type = 'coefficients'), 
                Matrix(predict(fit2, X, type = 'coefficients'), sparse = T))
-  expect_equal(predict(fit1, X = X.bm, type = 'response'), 
-               Matrix(predict(fit2, X, type = 'response')))
+  expect_equal(
+    all.equal(predict(fit1, X = X.bm, type = 'response'), 
+              Matrix(predict(fit2, X, type = 'response'), dimnames = NULL), 
+              check.attributes = FALSE), 
+    TRUE
+  )
   expect_equal(predict(fit1, X = X.bm, type = 'nvars'), predict(fit2, X, type = 'nvars'))
   expect_equal(predict(fit1, X = X.bm, type = 'vars'), predict(fit2, X, type = 'vars'))
-  expect_equal(predict(fit1, X = X.bm, type = 'link'), 
-               Matrix(predict(fit2, X, type = 'link')))
-  expect_equal(predict(fit1, X = X.bm, type = 'class'), 
-               Matrix(predict(fit2, X, type = 'class')))  
+  expect_equal(
+    all.equal(predict(fit1, X = X.bm, type = 'link'), 
+              Matrix(predict(fit2, X, type = 'link')),
+              check.attributes = FALSE),
+    TRUE)
+  expect_equal(
+    all.equal(predict(fit1, X = X.bm, type = 'class'), 
+              Matrix(predict(fit2, X, type = 'class')),
+              check.attributes = FALSE),
+    TRUE
+  )
 })
 
 test_that("Logistic regression, test cross-validation: ",{
