@@ -7,6 +7,9 @@ sudo: required
 env:
  global:
    - CRAN: http://cran.rstudio.com
+   
+r_build_args: --resave-data
+r_check_args: --as-cran
 
 notifications:
   email:
