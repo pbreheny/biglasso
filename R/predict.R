@@ -21,7 +21,7 @@ predict.biglasso <- function(object, X, row.idx = 1:nrow(X),
   temp <- .Call("get_eta", X@address, as.integer(row.idx-1), beta, beta.T@i, 
                 beta.T@j, PACKAGE = 'biglasso')
   eta <- sweep(temp, 2, alpha, "+")
-  dimnames(eta) <- list(NULL, round(object$lambda, digits = 4))
+  # dimnames(eta) <- list(c(1:nrow(eta)), round(object$lambda, digits = 4))
   
   if (object$family == 'gaussian') {
     if (type == 'class') {
@@ -35,7 +35,7 @@ predict.biglasso <- function(object, X, row.idx = 1:nrow(X),
     } else if (type == 'class') {
       return(drop(Matrix(1*(eta>0))))
     } else { # response
-      return(exp(eta)/(1+exp(eta)))
+      return(drop(exp(eta)/(1+exp(eta))))
     }
   }
 }
