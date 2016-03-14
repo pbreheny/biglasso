@@ -21,18 +21,21 @@ predict.biglasso <- function(object, X, row.idx = 1:nrow(X),
   temp <- .Call("get_eta", X@address, as.integer(row.idx-1), beta, beta.T@i, 
                 beta.T@j, PACKAGE = 'biglasso')
   eta <- sweep(temp, 2, alpha, "+")
-  dimnames(eta) <- list(c(1:nrow(eta)), round(object$lambda, digits = 4))
+  dimnames(eta) <- list(NULL, round(object$lambda, digits = 4))
   
-  if (type=="link" || object$family=="gaussian") return(drop(eta))
-  resp <- switch(object$family,
-                 binomial = exp(eta)/(1+exp(eta)),
-                 poisson = exp(eta))
-  if (type=="response") return(drop(resp))
-  if (type=="class") {
-    if (object$family=="binomial") {
-      return(drop(1*(eta>0)))
-    } else {
+  if (object$family == 'gaussian') {
+    if (type == 'class') {
       stop("type='class' can only be used with family='binomial'")
+    } else { ## then 'type' must be either 'link' or 'response'
+      return(drop(eta))
+    }
+  } else { # binomial
+    if (type =='link') {
+      return(drop(eta))
+    } else if (type == 'class') {
+      return(drop(Matrix(1*(eta>0))))
+    } else { # response
+      return(exp(eta)/(1+exp(eta)))
     }
   }
 }
