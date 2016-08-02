@@ -21,6 +21,6 @@ To report bugs：
 
 Note:
 
-This package is under heavy development. In the newest version, I have implemented several sparse screening rules along with parallel computing and better algorithm design to speed up the computation. 
+This package is under heavy development. The newest version is expected to be released by the end of August. In the newest version, I have implemented several sparse screening rules along with parallel computing and better algorithm design to speed up the computation. 
 
-Several users have already reported that there are some issues on Windows. I will do more testing on different OS for the next version, which is expected to be released by end of August. If you encounter any issues or questions, please don't hesitate to send me an email.
+Several users have already reported that there are some issues on Windows. I will do more testing on different OS. If you encounter any issues or questions, please don't hesitate to send me an email.
