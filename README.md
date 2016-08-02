@@ -17,7 +17,8 @@ To install:
 
 To report bugs：
 * send email to Yaohui Zeng at <yaohui-zeng@uiowa.edu>
- 
+
+
 Note:
 
 This package is under heavy development. In the newest version, I have implemented several sparse screening rules along with parallel computing and better algorithm design to speed up the computation. 
