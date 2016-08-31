@@ -2,7 +2,7 @@
 .gitignore
 .Rbuildignore
 .Rhistory
-README.md
+.DS_Store
 test*
 ^.*\.Rproj$
 ^\.Rproj\.user$
