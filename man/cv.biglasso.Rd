@@ -9,8 +9,8 @@ Perform k-fold cross validation for penalized regression models over a grid of
 values for the regularization parameter lambda.}
 
 \usage{
-cv.biglasso(X, y, row.idx = 1:nrow(X), ..., ncores = 1, 
-            nfolds=10, seed, cv.ind, trace=FALSE)
+cv.biglasso(X, y, row.idx = 1:nrow(X), ncores = 1, ..., 
+            nfolds=5, seed, cv.ind, trace=FALSE)
 }
 
 \arguments{
