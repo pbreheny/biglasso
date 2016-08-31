@@ -3,6 +3,7 @@
 .Rbuildignore
 .Rhistory
 README.md
+test*
 ^.*\.Rproj$
 ^\.Rproj\.user$
 ^\.travis\.yml$

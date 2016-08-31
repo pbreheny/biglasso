@@ -1,10 +1,11 @@
-#include <math.h>
-#include <string.h>
-#include "Rinternals.h"
 #include "R_ext/Rdynload.h"
-#include <R.h>
 #include <R_ext/Applic.h>
 
+#include "utilities.h"
+
+// -----------------------------------------------------------------------------
+// C functions exported into R
+// -----------------------------------------------------------------------------
 SEXP cdfit_gaussian(SEXP X_, SEXP y_, SEXP row_idx_, SEXP center_, SEXP scale_, 
                     SEXP lambda, SEXP eps_, SEXP max_iter_, 
                     SEXP multiplier, SEXP alpha_, SEXP dfmax_, SEXP user_); 
@@ -12,9 +13,13 @@ SEXP cdfit_binomial(SEXP X_, SEXP y_, SEXP row_idx_, SEXP center_, SEXP scale_,
                     SEXP lambda, SEXP eps_, SEXP max_iter_, 
                     SEXP multiplier, SEXP alpha_, SEXP dfmax_, SEXP user_, 
                     SEXP warn_);
+SEXP cdfit_gaussian_edpp(SEXP X_, SEXP y_, SEXP row_idx_, SEXP center_, SEXP scale_, 
+                         SEXP lambda, SEXP eps_, SEXP max_iter_, SEXP multiplier, 
+                         SEXP alpha_, SEXP dfmax_, SEXP user_, SEXP ncore_);
 SEXP standardize(SEXP X_);
 SEXP maxprod(SEXP X_, SEXP y_, SEXP v_, SEXP m_);
-SEXP maxprod_bm(SEXP X_, SEXP y_, SEXP row_idx_, SEXP center_, SEXP scale, SEXP v_, SEXP m_);
+SEXP maxprod_bm(SEXP X_, SEXP y_, SEXP row_idx_, SEXP center_, SEXP scale, 
+                SEXP v_, SEXP m_);
 
 // Cross product of y with jth column of X
 double crossprod(double *X, double *y, int n, int j) {
@@ -22,6 +27,28 @@ double crossprod(double *X, double *y, int n, int j) {
   double val=0;
   for (int i=0;i<n;i++) val += X[nn+i]*y[i];
   return(val);
+}
+
+// count discarded features
+int sum_discard(int *discards, int p) {
+  int sum  = 0;
+  for (int j = 0; j < p; j++) {
+    sum += discards[j];
+  }
+  return sum;
+}
+
+// Gaussian loss
+double gLoss(double *r, int n) {
+  double l = 0;
+  for (int i=0;i<n;i++) l = l + pow(r[i],2);
+  return(l);
+}
+
+double sign(double x) {
+  if(x>0.00000000001) return 1.0;
+  else if(x<-0.00000000001) return -1.0;
+  else return 0.0;
 }
 
 double sum(double *x, int n) {
@@ -53,36 +80,12 @@ static R_CallMethodDef callMethods[] = {
   {"cdfit_gaussian", (DL_FUNC) &cdfit_gaussian, 12},
   {"cdfit_binomial", (DL_FUNC) &cdfit_binomial, 13},
   {"maxprod_bm", (DL_FUNC) &maxprod_bm, 7},
+  {"cdfit_gaussian_edpp", (DL_FUNC) &cdfit_gaussian_edpp, 13},
   {NULL, NULL, 0}
 };
 
 void R_init_ncvreg(DllInfo *info) {
   R_registerRoutines(info, NULL, callMethods, NULL, NULL);
 }
-
-// NOT USED
-// Weighted cross product of y with jth column of x
-// double wcrossprod(double *X, double *y, double *w, int n, int j) {
-//  int nn = n*j;
-//  double val=0;
-//  for (int i=0;i<n;i++) val += X[nn+i]*y[i]*w[i];
-//  return(val);
-// }
-
-// Weighted sum of squares of jth column of X
-// double wsqsum(double *X, double *w, int n, int j) {
-//   int nn = n*j;
-//   double val=0;
-//   for (int i=0;i<n;i++) val += w[i] * pow(X[nn+i], 2);
-//   return(val);
-// }
-
-// Sum of squares of jth column of X
-// double sqsum(double *X, int n, int j) {
-//   int nn = n*j;
-//   double val=0;
-//   for (int i=0;i<n;i++) val += pow(X[nn+i], 2);
-//   return(val);
-// }
 
   

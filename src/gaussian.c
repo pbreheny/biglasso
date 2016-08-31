@@ -1,30 +1,14 @@
-#include <math.h>
-#include <string.h>
-#include "Rinternals.h"
-#include "R_ext/Rdynload.h"
-#include <R.h>
-#include <R_ext/Applic.h>
-
-// c++ functions for big.matrix
-int get_row_bm(SEXP xP);
-int get_col_bm(SEXP xP);
-double crossprod_bm(SEXP xP, double *y_, int *row_idx_, double center_, 
-                    double scale_, int n_row, int j);
-double get_elem_bm(SEXP xP, double center_, double scale_, int i, int j);
-double crossprod_resid(SEXP xP, double *y_, double sumY_, int *row_idx_, 
-                       double center_, double scale_, int n_row, int j);
-double sum(double *x, int n);
-int checkConvergence(double *beta, double *beta_old, double eps, int l, int J);
-double lasso(double z, double l1, double l2, double v);
+#include <time.h>
+#include "utilities.h"
 
 // Memory handling, output formatting (Gaussian)
 SEXP cleanupG(double *a, double *r, int *e1, int *e2, double *z, 
               SEXP beta, SEXP loss, SEXP iter) {
-  Free(a);
-  Free(r);
-  Free(e1);
-  Free(e2);
-  Free(z);
+  free(a);
+  free(r);
+  free(e1);
+  free(e2);
+  free(z);
   SEXP res;
   PROTECT(res = allocVector(VECSXP, 3));
   SET_VECTOR_ELT(res, 0, beta);
@@ -32,13 +16,6 @@ SEXP cleanupG(double *a, double *r, int *e1, int *e2, double *z,
   SET_VECTOR_ELT(res, 2, iter);
   UNPROTECT(4);
   return(res);
-}
-
-// Gaussian loss
-double gLoss(double *r, int n) {
-  double l = 0;
-  for (int i=0;i<n;i++) l = l + pow(r[i],2);
-  return(l);
 }
 
 // Coordinate descent for gaussian models
@@ -80,10 +57,17 @@ SEXP cdfit_gaussian(SEXP X_, SEXP y_, SEXP row_idx_, SEXP center_, SEXP scale_,
   
   double sumResid = sum(r, n);
   
+  // record time 1
+  //clock_t start, end;
+  //double cpu_time_used;
+  //start = clock();
   for (int j=0; j<p; j++) {
     z[j] = crossprod_bm(X_, r, row_idx, center[j], scale[j], n, j)/n;
   }
-  
+  //end = clock();
+  //cpu_time_used = ((double) (end - start)) / CLOCKS_PER_SEC;
+  //Rprintf("crossprod initialization time: %.15f\n", cpu_time_used);
+    
   int *e1 = Calloc(p, int);
   for (int j=0; j<p; j++) e1[j] = 0;
   int *e2 = Calloc(p, int);
@@ -98,12 +82,17 @@ SEXP cdfit_gaussian(SEXP X_, SEXP y_, SEXP row_idx_, SEXP center_, SEXP scale_,
     REAL(loss)[0] = gLoss(r,n);
     lstart = 1;
   }
-  
+ 
   // Path
   for (int l=lstart;l<L;l++) {
+    // output time
+    //char buff[100];
+    //time_t now = time (0);
+    //strftime (buff, 100, "%Y-%m-%d %H:%M:%S.000", localtime (&now));
+    //Rprintf("Lambda %d. Now time: %s\n", l, buff);
+    
     if (l != 0) {
-      // Assign a
-      
+      // Assign a by previous b
       for (int j=0;j<p;j++) {
         a[j] = b[(l-1)*p+j];
       }
@@ -121,7 +110,6 @@ SEXP cdfit_gaussian(SEXP X_, SEXP y_, SEXP row_idx_, SEXP center_, SEXP scale_,
 
       // Determine eligible set
       cutoff = 2*lam[l] - lam[l-1];
-      
       for (int j=0; j<p; j++) {
         if (fabs(z[j]) > (cutoff * alpha * m[j])) e2[j] = 1;
       } 
@@ -141,18 +129,19 @@ SEXP cdfit_gaussian(SEXP X_, SEXP y_, SEXP row_idx_, SEXP center_, SEXP scale_,
       	  INTEGER(iter)[l]++;
       	  for (int j=0; j<p; j++) {
       	    if (e1[j]) {
-      	      //z[j] = crossprod_bm(X_, r, row_idx, center[j], scale[j], n, j)/n + a[j];
       	      z[j] = crossprod_resid(X_, r, sumResid, row_idx, center[j], scale[j], n, j) / n + a[j];
+      	      
       	      // Update beta_j
       	      l1 = lam[l] * m[j] * alpha;
       	      l2 = lam[l] * m[j] * (1-alpha);
       	      
       	      b[l*p+j] = lasso(z[j], l1, l2, 1);
-      	      
+      	     
       	      // Update r
       	      double shift = b[l*p+j] - a[j];
       	      if (shift !=0) {
-      	        for (int i=0;i<n;i++) r[i] -= shift * get_elem_bm(X_, center[j], scale[j], row_idx[i], j);
+      	        update_resid(X_, r, shift, row_idx, center[j], scale[j], n, j);
+      	        //for (int i=0;i<n;i++) r[i] -= shift * get_elem_bm(X_, center[j], scale[j], row_idx[i], j);
       	        sumResid = sum(r, n); //update sum of residual
       	      }
       	    }
@@ -174,6 +163,17 @@ SEXP cdfit_gaussian(SEXP X_, SEXP y_, SEXP row_idx_, SEXP center_, SEXP scale_,
             //z[j] = crossprod_bm(X_, r, row_idx, center[j], scale[j], n, j)/n;
             z[j] = crossprod_resid(X_, r, sumResid, row_idx, center[j], scale[j], n, j) / n;
             
+            
+            // JUST CHECK KKT, don't update
+            l1 = lam[l] * m[j] * alpha;
+            if(fabs(z[j]) > l1) {
+              Rprintf("lambda[%d] = %f, iteration = %d, violation occurs in STRONG set!\n", l, lam[l], INTEGER(iter)[l]);
+              e1[j] = e2[j] = 1;
+              violations++;
+            }
+            // END CHECK
+             
+            /*
             // Update beta_j
             l1 = lam[l] * m[j] * alpha;
             l2 = lam[l] * m[j] * (1-alpha);
@@ -183,12 +183,14 @@ SEXP cdfit_gaussian(SEXP X_, SEXP y_, SEXP row_idx_, SEXP center_, SEXP scale_,
             // If something enters the eligible set, update eligible set & residuals
             if (b[l*p+j] !=0) {
               e1[j] = e2[j] = 1;
-              for (int i=0; i<n; i++) r[i] -= b[l*p+j] * get_elem_bm(X_, center[j], scale[j], row_idx[i], j);
+              update_resid(X_, r, b[l*p+j], row_idx, center[j], scale[j], n, j);
+              //for (int i=0; i<n; i++) r[i] -= b[l*p+j] * get_elem_bm(X_, center[j], scale[j], row_idx[i], j);
               sumResid = sum(r, n); //update sum of residual
               
               a[j] = b[l*p+j];
               violations++;
             }
+            */
           }
         }
 
@@ -202,7 +204,20 @@ SEXP cdfit_gaussian(SEXP X_, SEXP y_, SEXP row_idx_, SEXP center_, SEXP scale_,
         if (e2[j]==0) {
           //z[j] = crossprod_bm(X_, r, row_idx, center[j], scale[j], n, j)/n;
           z[j] = crossprod_resid(X_, r, sumResid, row_idx, center[j], scale[j], n, j) / n;
+        
+          // JUST CHECK KKT, don't update
+          //Rprintf("\tlambda[%d] = %f, iteration = %d, start check REST set!\n", l, lam[l], INTEGER(iter)[l]);
+          l1 = lam[l] * m[j] * alpha;
+          if(fabs(z[j]) > l1) {
+            Rprintf("lambda[%d] = %f, iteration = %d, violation occurs in REST set!\n", l, lam[l], INTEGER(iter)[l]);
+            e1[j] = e2[j] = 1;
+            violations++;
+          }
+          //Rprintf("\tlambda[%d] = %f, iteration = %d, end check REST set!\n", l, lam[l], INTEGER(iter)[l]);
           
+          // END CHECK
+          
+          /*
           // Update beta_j
           l1 = lam[l] * m[j] * alpha;
           l2 = lam[l] * m[j] * (1-alpha);
@@ -210,12 +225,14 @@ SEXP cdfit_gaussian(SEXP X_, SEXP y_, SEXP row_idx_, SEXP center_, SEXP scale_,
           // If something enters the eligible set, update eligible set & residuals
           if (b[l*p+j] !=0) {
             e1[j] = e2[j] = 1;
-            for (int i=0; i<n; i++) r[i] -= b[l*p+j] * get_elem_bm(X_, center[j], scale[j], row_idx[i], j);
+            update_resid(X_, r, b[l*p+j], row_idx, center[j], scale[j], n, j);
+            //for (int i=0; i<n; i++) r[i] -= b[l*p+j] * get_elem_bm(X_, center[j], scale[j], row_idx[i], j);
             sumResid = sum(r, n);
             
             a[j] = b[l*p+j];
             violations++;
           }
+          */
         }
       }
       

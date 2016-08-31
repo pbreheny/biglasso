@@ -3,19 +3,15 @@
 
 #include <RcppArmadillo.h>
 #include <iostream>
-#include <R.h>
-#include <Rinternals.h>
-#include <Rdefines.h>
-#include <Rmath.h>
 #include "bigmemory/BigMatrix.h"
 #include "bigmemory/MatrixAccessor.hpp"
 #include "bigmemory/bigmemoryDefines.h"
 #include "bigmemory/isna.hpp"
-
-// Use openMP
 //#include <omp.h>
-using namespace Rcpp;
 
+//#include "defines.h"
+
+using namespace Rcpp;
 // -----------------------------------------------------------------------------
 // Following functions are callled by C
 // -----------------------------------------------------------------------------
@@ -75,6 +71,18 @@ RcppExport double crossprod_resid(SEXP xP, double *y_, double sumY_, int *row_id
   }
   sum = (sum - center_ * sumY_) / scale_;
   return sum;
+}
+
+// update residul vector if variable j enters eligible set
+RcppExport void update_resid(SEXP xP, double *r, double shift, int *row_idx_, 
+                               double center_, double scale_, int n_row, int j) {
+  XPtr<BigMatrix> xpMat(xP); //convert to big.matrix pointer;
+  MatrixAccessor<double> xAcc(*xpMat);
+  double *xCol = xAcc[j];
+  
+  for (int i=0; i < n_row; i++) {
+    r[i] -= shift * (xCol[row_idx_[i]] - center_) / scale_;
+  }
 }
 
 // Sum of squares of jth column of X
@@ -144,6 +152,109 @@ RcppExport double wsqsum_bm(SEXP xP, double *w, int *row_idx_, double center_,
   val = (sum_wx_sq - 2 * center_ * sum_wx + pow(center_, 2) * sum_w) / pow(scale_, 2);
   return val;
 }
+
+
+
+// -----------------------------------------------------------------------------
+// Following functions are used for EDPP rule
+// -----------------------------------------------------------------------------
+
+// theta = (y - X*beta) / lambda
+//       = (y - x1*beta1 - x2*beta2 - .... - xp * betap) / lambda
+RcppExport void update_theta(double *theta, SEXP xP, int *row_idx_, double *center, 
+                  double *scale, double *y, double *beta, double lambda, 
+                  int *nzero_beta, int n, int p, int l) {
+  double temp[n];
+  for (int i=0; i<n; i++) {
+    temp[i] = 0;
+  }
+  
+  XPtr<BigMatrix> xpMat(xP); //convert to big.matrix pointer;
+  MatrixAccessor<double> xAcc(*xpMat);
+  // first compute sum_xj*betaj: loop for variables with nonzero beta's.
+  for (int j = 0; j < p; j++) {
+    if (nzero_beta[j] != 0) {
+      for (int i = 0; i < n; i++) {
+        temp[i] += beta[l*p+j] * (xAcc[j][row_idx_[i]] - center[j]) / scale[j];
+      }
+    }
+  }
+  // then compute (y - sum_xj*betaj) / lambda
+  for (int i = 0; i < n; i++) {
+    theta[i] = (y[i] - temp[i]) / lambda;
+  }
+  
+}
+
+// V2 - <v1, v2> / ||v1||^2_2 * V1
+RcppExport void update_pv2(double *pv2, double *v1, double *v2, int n) {
+
+  double v1_dot_v2 = 0;
+  double v1_norm = 0;
+  for (int i = 0; i < n; i++) {
+    v1_dot_v2 += v1[i] * v2[i];
+    v1_norm += pow(v1[i], 2);
+  }
+  for (int i = 0; i < n; i++) {
+    pv2[i] = v2[i] - v1[i] * (v1_dot_v2 / v1_norm);
+  }
+}
+
+// apply EDPP 
+RcppExport void edpp_screen(int *discard_beta, SEXP xP, double *o, int *row_idx, 
+                            double *center, double *scale, int n, int p, 
+                            double rhs) {
+  XPtr<BigMatrix> xpMat(xP); //convert to big.matrix pointer;
+  MatrixAccessor<double> xAcc(*xpMat);
+  
+  int j;
+  double lhs;
+  double sum_xy;
+  double sum_y;
+  double *xCol;
+  #pragma omp parallel for private(j, lhs, sum_xy, sum_y) default(shared) schedule(static) 
+  for (j = 0; j < p; j++) {
+    sum_xy = 0.0;
+    sum_y = 0.0;
+    xCol = xAcc[j];
+    for (int i=0; i < n; i++) {
+      sum_xy = sum_xy + xCol[row_idx[i]] * o[i];
+      sum_y = sum_y + o[i];
+    }
+    lhs = fabs((sum_xy - center[j] * sum_y) / scale[j]);
+    if (lhs < rhs) {
+      discard_beta[j] = 1;
+    } else {
+      discard_beta[j] = 0;
+    }
+  }
+}
+
+// apply EDPP 
+RcppExport void edpp_screen2(int *discard_beta, SEXP xP, double *o, int *row_idx, 
+                            double *center, double *scale, int n, int p, 
+                            double rhs) {
+  XPtr<BigMatrix> xpMat(xP); //convert to big.matrix pointer;
+  MatrixAccessor<double> xAcc(*xpMat);
+  
+  int j;
+  double lhs;
+  double sum_xy;
+  double sum_y;
+
+  #pragma omp parallel for private(j, lhs, sum_xy, sum_y) default(shared) schedule(static) 
+  for (j = 0; j < p; j++) {
+    sum_xy = std::inner_product(xAcc[j], xAcc[j]+n, o, 0.0);
+    sum_y = std::accumulate(o, o+n, 0.0);
+    lhs = fabs((sum_xy - center[j] * sum_y) / scale[j]);
+    if (lhs < rhs) {
+      discard_beta[j] = 1;
+    } else {
+      discard_beta[j] = 0;
+    }
+  }
+}
+
 
 // -----------------------------------------------------------------------------
 // Following functions are directly callled inside R

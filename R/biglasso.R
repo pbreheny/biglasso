@@ -1,11 +1,13 @@
 biglasso <- function(X, y, row.idx = 1:nrow(X), penalty = c("lasso", "ridge", "enet"),
-                     family = c("gaussian","binomial"), alpha = 1, 
+                     family = c("gaussian","binomial"), screen = c("HSR", "EDPP"),
+                     ncores = 1, alpha = 1, 
                      lambda.min = ifelse(nrow(X) > ncol(X),.001,.05), nlambda = 100,
                      lambda, eps = .001, max.iter = 1000, dfmax = ncol(X)+1, 
                      penalty.factor = rep(1, ncol(X)), warn = TRUE) {
   # Coersion
   family <- match.arg(family)
   penalty <- match.arg(penalty)
+  screen <- match.arg(screen)
   
   if (identical(penalty, "lasso")) {
     alpha <- 1
@@ -55,7 +57,9 @@ biglasso <- function(X, y, row.idx = 1:nrow(X), penalty = c("lasso", "ridge", "e
   n <- length(row.idx) ## subset of X. idx: indices of rows.
 
   # standardize X, return center vector and scale vector
+  # cat("Standardization start: ", format(Sys.time()), "\n")
   stand <- .Call('standardize_bm', X@address, as.integer(row.idx-1), PACKAGE = 'biglasso')
+  # cat("Standardization end: ", format(Sys.time()), "\n")
   center <- stand[[1]]
   scale <- stand[[2]]
   
@@ -75,11 +79,20 @@ biglasso <- function(X, y, row.idx = 1:nrow(X), penalty = c("lasso", "ridge", "e
 
   ## fit model
   if (family == 'gaussian') {
-    res <- .Call("cdfit_gaussian", X@address, yy, as.integer(row.idx-1), 
-                 center, scale, lambda, eps, as.integer(max.iter), penalty.factor, 
-                 alpha, as.integer(dfmax), 
-                 as.integer(user.lambda | any(penalty.factor==0)),
-                 PACKAGE = 'biglasso')
+    if (screen == "EDPP") {
+      res <- .Call("cdfit_gaussian_edpp", X@address, yy, as.integer(row.idx-1), 
+                   center, scale, lambda, eps, as.integer(max.iter), penalty.factor, 
+                   alpha, as.integer(dfmax), 
+                   as.integer(user.lambda | any(penalty.factor==0)),
+                   as.integer(ncores),
+                   PACKAGE = 'biglasso')
+    } else {
+      res <- .Call("cdfit_gaussian", X@address, yy, as.integer(row.idx-1), 
+                   center, scale, lambda, eps, as.integer(max.iter), penalty.factor, 
+                   alpha, as.integer(dfmax), 
+                   as.integer(user.lambda | any(penalty.factor==0)), 
+                   PACKAGE = 'biglasso')
+    }
 
     a <- rep(mean(y), nlambda)
     b <- Matrix(res[[1]], p, nlambda, sparse = T)
@@ -132,7 +145,8 @@ biglasso <- function(X, y, row.idx = 1:nrow(X), penalty = c("lasso", "ridge", "e
                         n = n,
                         center = center,
                         scale = scale,
-                        y = y),
+                        y = y,
+                        screen = screen),
                    class = c("biglasso", 'ncvreg'))
   val
 }

@@ -11,6 +11,8 @@ setupLambda <- function(X, y, row.idx, center, scale, family, alpha,
   } else {
     fit <- glm(y~1, family=family)
   }
+ 
+  # cat("Compute lambda_max, start: ", format(Sys.time()), "\n")
   if (family=="gaussian") {
     zmax <- .Call("maxprod_bm", X@address, fit$residuals, row.idx, center, scale, 
                   col.idx, penalty.factor) / n
@@ -19,6 +21,7 @@ setupLambda <- function(X, y, row.idx, center, scale, family, alpha,
                   row.idx, center, scale, col.idx, penalty.factor) / n
   }
   lambda.max <- zmax/alpha
+  # cat("Compute lambda_max, end: ", format(Sys.time()), "\n")
 
   if (lambda.min==0) {
     lambda <- c(exp(seq(log(lambda.max),log(.001*lambda.max),len=nlambda-1)),0)
