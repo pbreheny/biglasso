@@ -1,0 +1,13 @@
+*   Minor change
+**  Major change
+
+
+1.1-1 (8/31/2016)
+	** Three sparse screening rules (HSR, EDPP, HSR-Dome) were implemented. Our new proposed HSR-Dome combines HSR and Dome test for feature screening, leading to even better performance as compared to 'glmnet'.	
+	** OpenMP parallel computing was added to speedup single model fitting.
+	** Source code were rewritten in pure cpp.
+	* Sparse matrix representation was added using Armadillo library.
+
+
+1.0-1 (3/1/2015)
+	** package ready for CRAN submission
