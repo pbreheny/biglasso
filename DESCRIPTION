@@ -9,3 +9,4 @@ License: GPL-2
 Depends: bigmemory (>= 4.0.0), Matrix, ncvreg
 Imports: Rcpp (>= 0.12.1), methods
 LinkingTo: Rcpp, RcppArmadillo, bigmemory, BH
+Suggests: parallel
