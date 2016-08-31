@@ -66,8 +66,9 @@ int check_rest_set(int *e1, int *e2, double *z, XPtr<BigMatrix> xpMat, int *row_
 }
 
 // Coordinate descent for gaussian models
-RcppExport SEXP cdfit_gaussian_hsr(SEXP X_, SEXP y_, SEXP row_idx_, SEXP lambda_, 
-                                   SEXP nlambda_, SEXP lambda_min_, 
+RcppExport SEXP cdfit_gaussian_hsr(SEXP X_, SEXP y_, SEXP row_idx_, 
+                                   SEXP lambda_, SEXP nlambda_, 
+                                   SEXP lam_scale_, SEXP lambda_min_, 
                                    SEXP alpha_, SEXP user_, SEXP eps_, 
                                    SEXP max_iter_, SEXP multiplier_, SEXP dfmax_, 
                                    SEXP ncore_, SEXP verbose_) {
@@ -83,6 +84,7 @@ RcppExport SEXP cdfit_gaussian_hsr(SEXP X_, SEXP y_, SEXP row_idx_, SEXP lambda_
   int p = xMat->ncol();
   int n_total = xMat->nrow(); // number of total observations
   int L = INTEGER(nlambda_)[0];
+  int lam_scale = INTEGER(lam_scale_)[0];
   int user = INTEGER(user_)[0];
   int verbose = INTEGER(verbose_)[0];
   // int chunk_cols = p / nchunks;
@@ -160,13 +162,34 @@ RcppExport SEXP cdfit_gaussian_hsr(SEXP X_, SEXP y_, SEXP row_idx_, SEXP lambda_
 //   } 
  
   // lambda, equally spaced on log scale
+  // if (user == 0) {
+  //   // set up lambda, equally spaced on log scale
+  //   double log_lambda_max = log(lambda_max);
+  //   double log_lambda_min = log(lambda_min*lambda_max);
+  //   double delta = (log_lambda_max - log_lambda_min) / (L-1);
+  //   for (int l = 0; l < L; l++) {
+  //     lambda[l] = exp(log_lambda_max - l * delta);
+  //   }
+  //   loss[0] = gLoss(r,n);
+  //   // lstart = 1;
+  //   // n_reject[0] = p; // strong rule rejects all variables at lambda_max
+  // } 
+  
+  // set up lambda
   if (user == 0) {
-    // set up lambda, equally spaced on log scale
-    double log_lambda_max = log(lambda_max);
-    double log_lambda_min = log(lambda_min*lambda_max);
-    double delta = (log_lambda_max - log_lambda_min) / (L-1);
-    for (int l = 0; l < L; l++) {
-      lambda[l] = exp(log_lambda_max - l * delta);
+    if (lam_scale) { // set up lambda, equally spaced on log scale
+      double log_lambda_max = log(lambda_max);
+      double log_lambda_min = log(lambda_min*lambda_max);
+      
+      double delta = (log_lambda_max - log_lambda_min) / (L-1);
+      for (int l = 0; l < L; l++) {
+        lambda[l] = exp(log_lambda_max - l * delta);
+      }
+    } else { // equally spaced on linear scale
+      double delta = (lambda_max - lambda_min*lambda_max) / (L-1);
+      for (int l = 0; l < L; l++) {
+        lambda[l] = lambda_max - l * delta;
+      }
     }
     loss[0] = gLoss(r,n);
     // lstart = 1;

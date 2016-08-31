@@ -101,7 +101,8 @@ biglasso <- function(X, y, row.idx = 1:nrow(X),
                    PACKAGE = 'biglasso')
     } else if (screen == "HSR") {
       res <- .Call("cdfit_gaussian_hsr", X@address, yy, as.integer(row.idx-1),
-                   lambda, as.integer(nlambda), lambda.min, alpha,
+                   lambda, as.integer(nlambda), as.integer(lambda.log.scale),
+                   lambda.min, alpha,
                    as.integer(user.lambda | any(penalty.factor==0)),
                    eps, as.integer(max.iter), penalty.factor,
                    as.integer(dfmax), as.integer(ncores), as.integer(verbose),
