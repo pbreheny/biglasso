@@ -7,39 +7,108 @@
 #include "bigmemory/MatrixAccessor.hpp"
 #include "bigmemory/bigmemoryDefines.h"
 #include "bigmemory/isna.hpp"
-//#include <omp.h>
+#include <omp.h>
+#include <stdlib.h>
 
 //#include "defines.h"
 
 using namespace Rcpp;
-// -----------------------------------------------------------------------------
-// Following functions are callled by C
-// -----------------------------------------------------------------------------
+
+// Cross product of y with jth column of X
+double crossprod(double *X, double *y, int n, int j) {
+  int nn = n*j;
+  double val=0;
+  for (int i=0;i<n;i++) val += X[nn+i]*y[i];
+  return(val);
+}
+
+int sum_discard(int *discards, int p) {
+  int sum  = 0;
+  for (int j = 0; j < p; j++) {
+    sum += discards[j];
+  }
+  return sum;
+}
+
+int sum_int(int *vec, int p) {
+  int j, sum  = 0;
+  for (j = 0; j < p; j++) {
+    sum += vec[j];
+  }
+  return sum;
+}
+
+double sign(double x) {
+  if(x>0.00000000001) return 1.0;
+  else if(x<-0.00000000001) return -1.0;
+  else return 0.0;
+}
+
+double sum(double *x, int n) {
+  double val=0;
+  for (int i=0;i<n;i++) val += x[i];
+  return(val);
+}
+
+
+// Sum of squares of jth column of X
+double sqsum(double *X, int n, int j) {
+  int nn = n*j;
+  double val=0;
+  for (int i=0;i<n;i++) val += pow(X[nn+i], 2);
+  return(val);
+}
+
+double lasso(double z, double l1, double l2, double v) {
+  double s=0;
+  if (z > 0) s = 1;
+  else if (z < 0) s = -1;
+  if (fabs(z) <= l1) return(0);
+  else return(s*(fabs(z)-l1)/(v*(1+l2)));
+}
+
+// Gaussian loss
+double gLoss(double *r, int n) {
+  double l = 0;
+  for (int i=0;i<n;i++) l = l + pow(r[i],2);
+  return(l);
+}
+
+int checkConvergence(arma::sp_mat beta, double *beta_old, double eps, int l, int p) {
+  int converged = 1;
+  for (int j = 0; j < p; j++) {
+    if (fabs((beta(j, l) - beta_old[j]) / beta_old[j]) > eps) {
+      converged = 0;
+      break;
+    }
+  }
+  return(converged);
+}
 
 // get_row
-RcppExport int get_row_bm(SEXP xP) {
+int get_row_bm(SEXP xP) {
   XPtr<BigMatrix> xMat(xP);
   int nrow = xMat->nrow();
   return nrow;
 }
 
 // get_col
-RcppExport int get_col_bm(SEXP xP) {
+int get_col_bm(SEXP xP) {
   XPtr<BigMatrix> xMat(xP);
   int ncol = xMat->ncol();
   return ncol;
 }
 
 // get X[i, j]: i-th row, j-th column element
-RcppExport double get_elem_bm(SEXP xP, double center_, double scale_, int i, int j) {
+double get_elem_bm(SEXP xP, double center_, double scale_, int i, int j) {
   XPtr<BigMatrix> xpMat(xP); //convert to big.matrix pointer;
   MatrixAccessor<double> xAcc(*xpMat);
   double res = (xAcc[j][i] - center_) / scale_;
   return res;
 }
-
+// 
 //crossprod - given specific rows of X
-RcppExport double crossprod_bm(SEXP xP, double *y_, int *row_idx_, double center_, 
+double crossprod_bm(SEXP xP, double *y_, int *row_idx_, double center_, 
                                double scale_, int n_row, int j) {
   XPtr<BigMatrix> xpMat(xP); //convert to big.matrix pointer;
   MatrixAccessor<double> xAcc(*xpMat);
@@ -59,9 +128,8 @@ RcppExport double crossprod_bm(SEXP xP, double *y_, int *row_idx_, double center
 }
 
 //crossprod_resid - given specific rows of X: separate computation
-RcppExport double crossprod_resid(SEXP xP, double *y_, double sumY_, int *row_idx_, 
+double crossprod_resid(XPtr<BigMatrix> xpMat, double *y_, double sumY_, int *row_idx_, 
                                   double center_, double scale_, int n_row, int j) {
-  XPtr<BigMatrix> xpMat(xP); //convert to big.matrix pointer;
   MatrixAccessor<double> xAcc(*xpMat);
   double *xCol = xAcc[j];
   
@@ -73,8 +141,9 @@ RcppExport double crossprod_resid(SEXP xP, double *y_, double sumY_, int *row_id
   return sum;
 }
 
+
 // update residul vector if variable j enters eligible set
-RcppExport void update_resid(SEXP xP, double *r, double shift, int *row_idx_, 
+void update_resid(SEXP xP, double *r, double shift, int *row_idx_, 
                                double center_, double scale_, int n_row, int j) {
   XPtr<BigMatrix> xpMat(xP); //convert to big.matrix pointer;
   MatrixAccessor<double> xAcc(*xpMat);
@@ -86,7 +155,7 @@ RcppExport void update_resid(SEXP xP, double *r, double shift, int *row_idx_,
 }
 
 // Sum of squares of jth column of X
-RcppExport double sqsum_bm(SEXP xP, int n_row, int j, int useCores) {
+double sqsum_bm(SEXP xP, int n_row, int j, int useCores) {
   XPtr<BigMatrix> xpMat(xP); //convert to big.matrix pointer;
   MatrixAccessor<double> xAcc(*xpMat);
   double *xCol = xAcc[j];
@@ -106,7 +175,7 @@ RcppExport double sqsum_bm(SEXP xP, int n_row, int j, int useCores) {
 }
 
 // Weighted sum of residuals
-RcppExport double wsum(double *r, double *w, int n_row) {
+double wsum(double *r, double *w, int n_row) {
   double val = 0.0;
   for (int i = 0; i < n_row; i++) {
     val += r[i] * w[i];
@@ -115,12 +184,11 @@ RcppExport double wsum(double *r, double *w, int n_row) {
 }
 
 // Weighted cross product of y with jth column of x
-RcppExport double wcrossprod_resid(SEXP xP, double *y, double sumYW_, int *row_idx_, 
-                                   double center_, double scale_, double *w, int n_row, int j) {
-  XPtr<BigMatrix> xpMat(xP); //convert to big.matrix pointer;
+double wcrossprod_resid(XPtr<BigMatrix> xpMat, double *y, double sumYW_, int *row_idx_, 
+                        double center_, double scale_, double *w, int n_row, int j) {
   MatrixAccessor<double> xAcc(*xpMat);
   double *xCol = xAcc[j];
-  
+
   double val = 0.0;
   for (int i = 0; i < n_row; i++) {
     val += xCol[row_idx_[i]] * y[i] * w[i];
@@ -134,9 +202,8 @@ RcppExport double wcrossprod_resid(SEXP xP, double *y, double sumYW_, int *row_i
 // Weighted sum of squares of jth column of X
 // sum w_i * x_i ^2 = sum w_i * ((x_i - c) / s) ^ 2
 // = 1/s^2 * (sum w_i * x_i^2 - 2 * c * sum w_i x_i + c^2 sum w_i)
-RcppExport double wsqsum_bm(SEXP xP, double *w, int *row_idx_, double center_, 
+double wsqsum_bm(XPtr<BigMatrix> xpMat, double *w, int *row_idx_, double center_, 
                             double scale_, int n_row, int j) {
-  XPtr<BigMatrix> xpMat(xP); //convert to big.matrix pointer;
   MatrixAccessor<double> xAcc(*xpMat);
   double *xCol = xAcc[j];
   
@@ -153,7 +220,134 @@ RcppExport double wsqsum_bm(SEXP xP, double *w, int *row_idx_, double center_,
   return val;
 }
 
+// standardize
+void standardize_and_get_residual(NumericVector &center, NumericVector &scale, 
+                                  double *z, double *lambda_max_ptr,
+                                  int *xmax_ptr, XPtr<BigMatrix> xMat, double *y, 
+                                  int *row_idx, double lambda_min, double alpha, int n, int p) {
+  MatrixAccessor<double> xAcc(*xMat);
+  double *xCol;
+  double sum_xy, sum_y;
+  double zmax = 0.0;
+  
+  for (int j = 0; j < p; j++) {
+    xCol = xAcc[j];
+    sum_xy = 0.0;
+    sum_y = 0.0;
+    
+    for (int i = 0; i < n; i++) {
+      center[j] += xCol[row_idx[i]];
+      scale[j] += pow(xCol[row_idx[i]], 2);
+      
+      sum_xy = sum_xy + xCol[row_idx[i]] * y[i];
+      sum_y = sum_y + y[i];
+    }
+    
+    center[j] = center[j] / n; //center
+    scale[j] = sqrt(scale[j] / n - pow(center[j], 2)); //scale
+    z[j] = (sum_xy - center[j] * sum_y) / (scale[j] * n); //residual
+    
+    // get lambda_max, xmax_idx;
+    if (fabs(z[j]) > zmax) {
+      zmax = fabs(z[j]);
+      *xmax_ptr = j;
+    }
+  }
+  *lambda_max_ptr = zmax / alpha;
+}
 
+
+void free_memo_hsr(double *a, double *r, double *z, int *e1, int *e2) {
+  free(a);
+  free(r);
+  free(z);
+  free(e1);
+  free(e2);
+}
+
+// -----------------------------------------------------------------------------
+// Following functions are used for logistic regression
+// -----------------------------------------------------------------------------
+
+void free_memo_bin_hsr(double *s, double *w, double *a, double *r, double *z, 
+                       int *e1, int *e2, double *eta) {
+  free(s);
+  free(w);
+  free(a);
+  free(r);
+  free(z);
+  free(e1);
+  free(e2);
+  free(eta);
+}
+
+int check_strong_set_bin(int *e1, int *e2, double *z, XPtr<BigMatrix> xpMat, int *row_idx, NumericVector &center, NumericVector &scale,
+                         double lambda, double sumResid, double alpha, double *r, double *m, int n, int p) {
+  MatrixAccessor<double> xAcc(*xpMat);
+  double *xCol, sum, l1;
+  int j, violations = 0;
+  
+#pragma omp parallel for private(j, sum, l1) reduction(+:violations) schedule(static) 
+  for (j = 0; j < p; j++) {
+    if (e1[j] == 0 && e2[j] == 1) {
+      xCol = xAcc[j];
+      sum = 0.0;
+      for (int i=0; i < n; i++) {
+        sum = sum + xCol[row_idx[i]] * r[i];
+      }
+      z[j] = (sum - center[j] * sumResid) / (scale[j] * n);
+      
+      l1 = lambda * m[j] * alpha;
+      if(fabs(z[j]) > l1) {
+        e1[j] = 1;
+        violations++;
+      }
+    }
+  }
+  return violations;
+}
+
+int check_rest_set_bin(int *e1, int *e2, double *z, XPtr<BigMatrix> xpMat, int *row_idx, NumericVector &center, NumericVector &scale,
+                       double lambda, double sumResid, double alpha, double *r, double *m, int n, int p) {
+  
+  MatrixAccessor<double> xAcc(*xpMat);
+  double *xCol, sum, l1;
+  int j, violations = 0;
+#pragma omp parallel for private(j, sum, l1) reduction(+:violations) schedule(static) 
+  for (j = 0; j < p; j++) {
+    if (e2[j] == 0) {
+      // Rprintf("thread id: %d, ", omp_get_thread_num());
+      xCol = xAcc[j];
+      
+      sum = 0.0;
+      for (int i=0; i < n; i++) {
+        sum = sum + xCol[row_idx[i]] * r[i];
+      }
+      z[j] = (sum - center[j] * sumResid) / (scale[j] * n);
+      
+      l1 = lambda * m[j] * alpha;
+      if(fabs(z[j]) > l1) {
+        e1[j] = e2[j] = 1;
+        violations++;
+      }
+    }
+  }
+  
+  return violations;
+}
+
+void update_resid_eta(double *r, double *eta, XPtr<BigMatrix> xpMat, double shift, 
+                      int *row_idx_, double center_, double scale_, int n, int j) {
+  
+  MatrixAccessor<double> xAcc(*xpMat);
+  double *xCol = xAcc[j];
+  double si; 
+  for (int i=0;i<n;i++) {
+    si = shift * (xCol[row_idx_[i]] - center_) / scale_;
+    r[i] -= si;
+    eta[i] += si;
+  }
+}
 
 // -----------------------------------------------------------------------------
 // Following functions are used for EDPP rule
@@ -161,8 +355,8 @@ RcppExport double wsqsum_bm(SEXP xP, double *w, int *row_idx_, double center_,
 
 // theta = (y - X*beta) / lambda
 //       = (y - x1*beta1 - x2*beta2 - .... - xp * betap) / lambda
-RcppExport void update_theta(double *theta, SEXP xP, int *row_idx_, double *center, 
-                  double *scale, double *y, double *beta, double lambda, 
+void update_theta(double *theta, SEXP xP, int *row_idx_, NumericVector &center, 
+                  NumericVector &scale, double *y, arma::sp_mat beta, double lambda, 
                   int *nzero_beta, int n, int p, int l) {
   double temp[n];
   for (int i=0; i<n; i++) {
@@ -175,7 +369,8 @@ RcppExport void update_theta(double *theta, SEXP xP, int *row_idx_, double *cent
   for (int j = 0; j < p; j++) {
     if (nzero_beta[j] != 0) {
       for (int i = 0; i < n; i++) {
-        temp[i] += beta[l*p+j] * (xAcc[j][row_idx_[i]] - center[j]) / scale[j];
+        //temp[i] += beta[l*p+j] * (xAcc[j][row_idx_[i]] - center[j]) / scale[j];
+        temp[i] += beta(j, l) * (xAcc[j][row_idx_[i]] - center[j]) / scale[j];
       }
     }
   }
@@ -187,7 +382,7 @@ RcppExport void update_theta(double *theta, SEXP xP, int *row_idx_, double *cent
 }
 
 // V2 - <v1, v2> / ||v1||^2_2 * V1
-RcppExport void update_pv2(double *pv2, double *v1, double *v2, int n) {
+void update_pv2(double *pv2, double *v1, double *v2, int n) {
 
   double v1_dot_v2 = 0;
   double v1_norm = 0;
@@ -201,12 +396,12 @@ RcppExport void update_pv2(double *pv2, double *v1, double *v2, int n) {
 }
 
 // apply EDPP 
-RcppExport void edpp_screen(int *discard_beta, SEXP xP, double *o, int *row_idx, 
-                            double *center, double *scale, int n, int p, 
-                            double rhs) {
+void edpp_screen(int *discard_beta, SEXP xP, double *o, int *row_idx, 
+                 NumericVector &center, NumericVector &scale, int n, int p, 
+                 double rhs) {
   XPtr<BigMatrix> xpMat(xP); //convert to big.matrix pointer;
   MatrixAccessor<double> xAcc(*xpMat);
-  
+
   int j;
   double lhs;
   double sum_xy;
@@ -230,10 +425,138 @@ RcppExport void edpp_screen(int *discard_beta, SEXP xP, double *o, int *row_idx,
   }
 }
 
-// apply EDPP 
-RcppExport void edpp_screen2(int *discard_beta, SEXP xP, double *o, int *row_idx, 
-                            double *center, double *scale, int n, int p, 
-                            double rhs) {
+// apply EDPP - by chunking reading, openmp
+void edpp_screen_by_chunk_omp(int *discard_beta, const char *xf_bin, int nchunks, int chunk_cols, 
+                          double *o, int *row_idx, NumericVector &center, 
+                          NumericVector &scale, int n, int p, double rhs, int n_total) {
+  unsigned long int chunk_size = chunk_cols * sizeof(double) * n_total;
+  ifstream xfile(xf_bin, ios::in|ios::binary);
+  
+  int i, j;
+  double lhs;
+  double sum_xy;
+  double sum_y;
+  
+  if (xfile.is_open()) {
+    char *memblock_x;
+    int chunk_i;
+    //int chunks = 0;
+    int col_pos;
+    int col_j;
+    double *X;
+
+    memblock_x = (char *) calloc(chunk_size, sizeof(char));
+    for (chunk_i = 0; chunk_i < nchunks; chunk_i++) {
+      col_pos = chunk_i * chunk_cols; // current column position offset
+      
+      xfile.seekg (chunk_i * chunk_size, ios::beg);
+      xfile.read (memblock_x, chunk_size);
+      X = (double*) memblock_x;//reinterpret as doubles
+      
+      // loop over loaded columns and do crossprod
+      #pragma omp parallel for private(sum_xy, sum_y, j, lhs, col_j) default(shared) schedule(static) 
+      for (j = 0; j < chunk_cols; j++) {
+        sum_xy = 0.0;
+        sum_y = 0.0;
+        col_j = col_pos + j; //absolute position of current column j
+        for (i = 0; i < n; i++) {
+          sum_xy = sum_xy + X[j*n_total+row_idx[i]] * o[i];
+          sum_y = sum_y + o[i];
+        }
+        //printf("\nresult[%d] = %f\n\n", j, result[col_pos + j]);
+        lhs = fabs((sum_xy - center[col_j] * sum_y) / scale[col_j]);
+        if (lhs < rhs) {
+          discard_beta[col_j] = 1;
+        } else {
+          discard_beta[col_j] = 0;
+        }
+      }
+    }
+    free(memblock_x);
+    xfile.close();
+  } else {
+    Rprintf("Open file failed! filename = %s, chunk_size = %lu\n", xf_bin, chunk_size);
+    Rcpp::stop("Open file failed!");
+    // exit(EXIT_FAILURE);
+  }
+}
+
+
+// apply EDPP - by chunking reading, sequential
+void edpp_screen_by_chunk(int *discard_beta, const char *xf_bin, int nchunks, int chunk_cols, 
+                          double *o, int *row_idx, NumericVector &center, 
+                          NumericVector &scale, int n, int p, double rhs, int n_total) {
+  unsigned long int chunk_size = chunk_cols * sizeof(double) * n_total;
+  ifstream xfile(xf_bin, ios::in|ios::binary);
+  
+  int i, j;
+  double lhs;
+  double sum_xy;
+  double sum_y;
+  
+  if (xfile.is_open()) {
+    //Rprintf("Open file succeeded! filename = %s, chunk_size = %lu\n", xf_bin, chunk_size);
+    streampos size_x;
+    char *memblock_x;
+    int chunk_i = 0;
+    //int chunks = 0;
+    int col_pos = 0;
+    int col_j = 0;
+    
+    //xfile.seekg (0, ios::end);
+    //size_x = xfile.tellg();
+    //xfile.seekg (0, ios::beg);
+    //cout << "\tSize_x = " << size_x << endl;
+    // I need guarantee this is dividable;
+    //chunks = size_x / chunk_size;
+   
+    memblock_x = (char *) calloc(chunk_size, sizeof(char));
+    while (chunk_i < nchunks) {
+      //printf("\tChunk %d\n", chunk_i);
+      col_pos = chunk_i * chunk_cols; // current column position offset
+      xfile.seekg (chunk_i * chunk_size, ios::beg);
+      xfile.read (memblock_x, chunk_size);
+      
+      //size_t count = xfile.gcount();
+      // If nothing has been read, break
+      //if (!count) {
+      //  Rprintf("\n\t Error in reading chunk %d\n", chunk_i);
+      //  break;
+      //} 
+      double *X = (double*) memblock_x;//reinterpret as doubles
+      
+      // loop over loaded columns and do crossprod
+      for (j = 0; j < chunk_cols; j++) {
+        sum_xy = 0.0;
+        sum_y = 0.0;
+        col_j = col_pos + j; //absolute position of current column j
+        for (i = 0; i < n; i++) {
+          sum_xy = sum_xy + X[j*n_total+row_idx[i]] * o[i];
+          sum_y = sum_y + o[i];
+        }
+        //printf("\nresult[%d] = %f\n\n", j, result[col_pos + j]);
+        lhs = fabs((sum_xy - center[col_j] * sum_y) / scale[col_j]);
+        if (lhs < rhs) {
+          discard_beta[col_j] = 1;
+        } else {
+          discard_beta[col_j] = 0;
+        }
+      }
+      chunk_i++;
+      
+    }
+    free(memblock_x);
+    xfile.close();
+  } else {
+    Rprintf("Open file failed! filename = %s, chunk_size = %lu\n", xf_bin, chunk_size);
+    Rcpp::stop("Open file failed!");
+    // exit (EXIT_FAILURE);
+  }
+}
+
+void edpp_screen2(int *discard_beta, SEXP xP, double *o, int *row_idx, 
+                  NumericVector &center, NumericVector &scale, int n, int p, 
+                  double rhs) {
   XPtr<BigMatrix> xpMat(xP); //convert to big.matrix pointer;
   MatrixAccessor<double> xAcc(*xpMat);
   

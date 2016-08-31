@@ -10,7 +10,7 @@ predict.biglasso <- function(object, X, row.idx = 1:nrow(X),
     beta <- beta[-1,,drop=FALSE]
   }
   
-  if (type=="nvars") return(apply(beta!=0,2,sum))
+  if (type=="nvars") return(apply(beta!=0,2,sum, na.rm = T))
   if (type=="vars") return(drop(apply(beta!=0, 2, FUN=which)))
 
   if (!inherits(X, 'big.matrix')) {

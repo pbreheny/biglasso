@@ -1,7 +1,11 @@
 ## read and set up design matrix X from external ASCII-file
 setupX <- function(filename, dir = getwd(), sep = ",", 
-                   backingfile = paste0(unlist(strsplit(filename, split = "\\."))[1], ".bin"),
-                   descriptorfile = paste0(unlist(strsplit(filename, split = "\\."))[1], ".desc"), 
+                   backingfile = paste0(unlist(strsplit(filename, 
+                                                        split = "\\."))[1], 
+                                        ".bin"),
+                   descriptorfile = paste0(unlist(strsplit(filename, 
+                                                           split = "\\."))[1], 
+                                           ".desc"), 
                    ...) {
   # create file backing cache
   cat("Reading data from file, and creating file-backed big.matrix...\n")

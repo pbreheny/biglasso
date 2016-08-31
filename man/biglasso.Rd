@@ -12,30 +12,36 @@ or ridge, or elastic-net over a grid of values for the regularization parameter 
 
 \usage{
 biglasso(X, y, row.idx = 1:nrow(X), penalty = c("lasso", "ridge", "enet"),
-        family = c("gaussian","binomial"),
-        alpha = 1, lambda.min = ifelse(nrow(X) > ncol(X),.001,.05), nlambda = 100,
-        lambda, eps = .001, max.iter = 1000, dfmax = ncol(X)+1, 
-        penalty.factor = rep(1, ncol(X)), warn = TRUE)
+         family = c("gaussian","binomial"), alg.logistic = c("Newton", "MM"),
+         screen = c("HSR", "EDPP", "HSR-Dome"), dome.thresh = 0.01, 
+         ncores = 1, alpha = 1, lambda.min = ifelse(nrow(X) > ncol(X),.001,.05), 
+         nlambda = 100, lambda.log.scale = TRUE, lambda, eps = .001, 
+         max.iter = 1000, dfmax = ncol(X)+1, penalty.factor = rep(1, ncol(X)), 
+         warn = TRUE, output.time = TRUE, verbose = FALSE)
 }
 
 \arguments{
-  \item{X}{The design matrix, without an intercept. It must be a \code{\link[bigmemory]{big.matrix}} object. The function standardizes the data and includes an intercept internally 
-  by default during the model fitting.}
+  \item{X}{The design matrix, without an intercept. It must be a \code{\link[bigmemory]{big.matrix}} object. The function standardizes the data and includes an intercept internally by default during the model fitting.}
   \item{y}{The response vector.}
   \item{row.idx}{The integer vector of row indices of \code{X} that used for fitting 
   the model. \code{1:nrow(X)} by default.}
   \item{penalty}{The penalty to be applied to the model. Either "lasso" (the default), 
   "ridge", or "enet" (elastic net).}
-  \item{family}{Either "gaussian", "binomial", depending on the response.}
+  \item{family}{Either "gaussian" or "binomial", depending on the response.}
+  \item{alg.logistic}{The algorithm used in logistic regression. If "Newton" then the exact hessian is used (default); if "MM" then a majorization-minimization algorithm is used to set an upper-bound on the hessian matrix. This can be faster, particularly in data-larger-than-RAM case.}
+  \item{screen}{The screening rule used \strong{for linear regression}. "HSR" (default) is the hybrid strong rule; "EDPP" is the (sequential) enhanced dual polytope projection rule; "HSR-Dome" is our new proposed screening rule which combines the hybrid strong rule and the Dome test. \strong{Note that for logistic regression}, only "HSR" is applicable. See details.}
+  \item{dome.thresh}{the thrshold value between 0 and 1 that controls when to stop Dome test in the "hsr-dome" rule. For example, 0.01 means to stop Dome test at next lambda iteration if the number of features rejected by Dome test at current lambda iteration is less than 1\% of the total number of features. So 0 meansto turn off Dome test in HSR-Dome algorithm, i.e., just use HSR for screening. On the contrary, 1 means to always turn on Dome test. This is not recommended in practice though because Dome test is useless (i.e., almost never rejects features) when lambda becomes smaller than 0.5 times \code{lambda.max}.}
+  \item{ncores}{The number of OpenMP threads used for parallel computing.}
   \item{alpha}{The elastic-net mixing parameter that controls the relative contribution from the lasso (l1) and the ridge (l2) penalty. It must be a number between 0 and 1 if \code{"penalty"} is "enet". No need to set \code{"alpha"} value for other two penalties.}
   \item{lambda.min}{The smallest value for lambda, as a fraction of
     lambda.max.  Default is .001 if the number of observations is larger
     than the number of covariates and .05 otherwise.}
   \item{nlambda}{The number of lambda values.  Default is 100.}
+  \item{lambda.log.scale}{Whether compute the grid values of lambda on log scale (default) or linear scale.}
   \item{lambda}{A user-specified sequence of lambda values.  By default,
     a sequence of values of length \code{nlambda} is computed, equally
     spaced on the log scale.}
-  \item{eps}{Convergence threshhold.  The algorithm iterates until the
+  \item{eps}{Convergence threshold.  The algorithm iterates until the
     relative change in any coefficient is less than \code{eps}.  Default
     is \code{.001}.}
   \item{max.iter}{Maximum number of iterations.  Default is 1000.}
@@ -52,33 +58,32 @@ biglasso(X, y, row.idx = 1:nrow(X), penalty = c("lasso", "ridge", "enet"),
     unpenalized coefficients. That is\code{penalty.factor} cannot be 0. }
   \item{warn}{Return warning messages for failures to converge and model
     saturation?  Default is TRUE.}
+  \item{output.time}{Whether to print out the start and end time of the model fitting.}
+  \item{verbose}{Whether to output the timing of each lambda iteration.}
 }
 
 \details{
   See documentation in \code{\link[ncvreg]{ncvreg}} (or package \href{http://cran.r-project.org/package=ncvreg}{ncvreg}) for more details about the model
   and the algorithm. (Note the nonconvex penalties MCP and SCAD in \code{ncvreg} package are not supported in this package.)
   }
- 
+
 \value{
   An object with S3 class \code{"biglasso"} with following variables.
-  \item{beta}{The fitted matrix of coefficients, store in sparse matrix representation.
-  The number of rows is equal to the number of coefficients, and the number of columns is
-    equal to \code{nlambda}.}
-  \item{iter}{A vector of length \code{nlambda} containing the number
-    of iterations until convergence at each value of \code{lambda}.}
+  \item{beta}{The fitted matrix of coefficients, store in sparse matrix representation. The number of rows is equal to the number of coefficients, whereas the number of columns is equal to \code{nlambda}.}
+  \item{iter}{A vector of length \code{nlambda} containing the number of iterations until convergence at each value of \code{lambda}.}
   \item{lambda}{The sequence of regularization parameter values in the path.}
   \item{penalty}{Same as above.}
   \item{family}{Same as above.}
   \item{alpha}{Same as above.}
-  \item{loss}{A vector containing either the residual sum of squares
-    (\code{"gaussian"}) or negative log-likelihood (\code{"binomial"}) of the 
-    fitted model at each value of \code{lambda}.}
+  \item{loss}{A vector containing either the residual sum of squares (\code{for "gaussian"}) or negative log-likelihood (for \code{"binomial"}) of the fitted model at each value of \code{lambda}.}
   \item{penalty.factor}{Same as above.}
   \item{n}{The number of observations used in the model fitting. It's equal to \code{length(row.idx)}.}
-  \item{center}{The sample mean vector of the variables, i.e., column mean of the submatrix of \code{X} used for model fitting.}
-  \item{scale}{The sample standard deviation of the variables, i.e., column standard deviation of the submatrix of \code{X} used for model fitting.}
-  \item{y}{The response vector used in the model fitting. Depending on \code{row.idx}, it 
-  could be a subset of the raw input of the response vector y.}
+  \item{center}{The sample mean vector of the variables, i.e., column mean of the sub-matrix of \code{X} used for model fitting.}
+  \item{scale}{The sample standard deviation of the variables, i.e., column standard deviation of the sub-matrix of \code{X} used for model fitting.}
+  \item{y}{The response vector used in the model fitting. Depending on \code{row.idx}, it could be a subset of the raw input of the response vector y.}
+  \item{screen}{Same as above.}
+  \item{rejections}{The number of features rejected at each value of \code{lambda}.}
+  \item{rejections}{The number of features rejected by Dome test at each value of \code{lambda}. Only for "HSR-Dome" case.}
 }
 
 \author{
