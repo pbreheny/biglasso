@@ -13,6 +13,7 @@
 //#include "defines.h"
 
 using namespace Rcpp;
+using namespace std;
 
 // Cross product of y with jth column of X
 double crossprod(double *X, double *y, int n, int j) {
@@ -100,17 +101,15 @@ int get_col_bm(SEXP xP) {
 }
 
 // get X[i, j]: i-th row, j-th column element
-double get_elem_bm(SEXP xP, double center_, double scale_, int i, int j) {
-  XPtr<BigMatrix> xpMat(xP); //convert to big.matrix pointer;
+double get_elem_bm(XPtr<BigMatrix> xpMat, double center_, double scale_, int i, int j) {
   MatrixAccessor<double> xAcc(*xpMat);
   double res = (xAcc[j][i] - center_) / scale_;
   return res;
 }
-// 
+
 //crossprod - given specific rows of X
-double crossprod_bm(SEXP xP, double *y_, int *row_idx_, double center_, 
+double crossprod_bm(XPtr<BigMatrix> xpMat, double *y_, int *row_idx_, double center_, 
                                double scale_, int n_row, int j) {
-  XPtr<BigMatrix> xpMat(xP); //convert to big.matrix pointer;
   MatrixAccessor<double> xAcc(*xpMat);
   double *xCol = xAcc[j];
 
@@ -143,9 +142,8 @@ double crossprod_resid(XPtr<BigMatrix> xpMat, double *y_, double sumY_, int *row
 
 
 // update residul vector if variable j enters eligible set
-void update_resid(SEXP xP, double *r, double shift, int *row_idx_, 
+void update_resid(XPtr<BigMatrix> xpMat, double *r, double shift, int *row_idx_, 
                                double center_, double scale_, int n_row, int j) {
-  XPtr<BigMatrix> xpMat(xP); //convert to big.matrix pointer;
   MatrixAccessor<double> xAcc(*xpMat);
   double *xCol = xAcc[j];
   
@@ -222,20 +220,22 @@ double wsqsum_bm(XPtr<BigMatrix> xpMat, double *w, int *row_idx_, double center_
 
 // standardize
 void standardize_and_get_residual(NumericVector &center, NumericVector &scale, 
-                                  double *z, double *lambda_max_ptr,
+                                  int *p_keep_ptr, vector<int> &col_idx, //columns to keep, removing columns whose scale < 1e-6
+                                  vector<double> &z, double *lambda_max_ptr,
                                   int *xmax_ptr, XPtr<BigMatrix> xMat, double *y, 
                                   int *row_idx, double lambda_min, double alpha, int n, int p) {
   MatrixAccessor<double> xAcc(*xMat);
   double *xCol;
   double sum_xy, sum_y;
   double zmax = 0.0;
+  int i, j, jj;
   
-  for (int j = 0; j < p; j++) {
+  for (j = 0; j < p; j++) {
     xCol = xAcc[j];
     sum_xy = 0.0;
     sum_y = 0.0;
     
-    for (int i = 0; i < n; i++) {
+    for (i = 0; i < n; i++) {
       center[j] += xCol[row_idx[i]];
       scale[j] += pow(xCol[row_idx[i]], 2);
       
@@ -245,338 +245,192 @@ void standardize_and_get_residual(NumericVector &center, NumericVector &scale,
     
     center[j] = center[j] / n; //center
     scale[j] = sqrt(scale[j] / n - pow(center[j], 2)); //scale
-    z[j] = (sum_xy - center[j] * sum_y) / (scale[j] * n); //residual
     
+    if (scale[j] > 1e-6) {
+      col_idx.push_back(j);
+    }
+  }
+  
+  *p_keep_ptr = col_idx.size();
+  z.resize(*p_keep_ptr);
+
+  for (jj = 0; jj < *p_keep_ptr; jj++) {
+    j = col_idx[jj];
+    z[jj] = (sum_xy - center[j] * sum_y) / (scale[j] * n); //residual
     // get lambda_max, xmax_idx;
-    if (fabs(z[j]) > zmax) {
-      zmax = fabs(z[j]);
-      *xmax_ptr = j;
+    if (fabs(z[jj]) > zmax) {
+      zmax = fabs(z[jj]);
+      *xmax_ptr = jj;
     }
   }
   *lambda_max_ptr = zmax / alpha;
 }
 
 
-void free_memo_hsr(double *a, double *r, double *z, int *e1, int *e2) {
+void free_memo_hsr(double *a, double *r, int *e1, int *e2) {
   free(a);
   free(r);
-  free(z);
   free(e1);
   free(e2);
-}
-
-// -----------------------------------------------------------------------------
-// Following functions are used for logistic regression
-// -----------------------------------------------------------------------------
-
-void free_memo_bin_hsr(double *s, double *w, double *a, double *r, double *z, 
-                       int *e1, int *e2, double *eta) {
-  free(s);
-  free(w);
-  free(a);
-  free(r);
-  free(z);
-  free(e1);
-  free(e2);
-  free(eta);
-}
-
-int check_strong_set_bin(int *e1, int *e2, double *z, XPtr<BigMatrix> xpMat, int *row_idx, NumericVector &center, NumericVector &scale,
-                         double lambda, double sumResid, double alpha, double *r, double *m, int n, int p) {
-  MatrixAccessor<double> xAcc(*xpMat);
-  double *xCol, sum, l1;
-  int j, violations = 0;
-  
-#pragma omp parallel for private(j, sum, l1) reduction(+:violations) schedule(static) 
-  for (j = 0; j < p; j++) {
-    if (e1[j] == 0 && e2[j] == 1) {
-      xCol = xAcc[j];
-      sum = 0.0;
-      for (int i=0; i < n; i++) {
-        sum = sum + xCol[row_idx[i]] * r[i];
-      }
-      z[j] = (sum - center[j] * sumResid) / (scale[j] * n);
-      
-      l1 = lambda * m[j] * alpha;
-      if(fabs(z[j]) > l1) {
-        e1[j] = 1;
-        violations++;
-      }
-    }
-  }
-  return violations;
-}
-
-int check_rest_set_bin(int *e1, int *e2, double *z, XPtr<BigMatrix> xpMat, int *row_idx, NumericVector &center, NumericVector &scale,
-                       double lambda, double sumResid, double alpha, double *r, double *m, int n, int p) {
-  
-  MatrixAccessor<double> xAcc(*xpMat);
-  double *xCol, sum, l1;
-  int j, violations = 0;
-#pragma omp parallel for private(j, sum, l1) reduction(+:violations) schedule(static) 
-  for (j = 0; j < p; j++) {
-    if (e2[j] == 0) {
-      // Rprintf("thread id: %d, ", omp_get_thread_num());
-      xCol = xAcc[j];
-      
-      sum = 0.0;
-      for (int i=0; i < n; i++) {
-        sum = sum + xCol[row_idx[i]] * r[i];
-      }
-      z[j] = (sum - center[j] * sumResid) / (scale[j] * n);
-      
-      l1 = lambda * m[j] * alpha;
-      if(fabs(z[j]) > l1) {
-        e1[j] = e2[j] = 1;
-        violations++;
-      }
-    }
-  }
-  
-  return violations;
-}
-
-void update_resid_eta(double *r, double *eta, XPtr<BigMatrix> xpMat, double shift, 
-                      int *row_idx_, double center_, double scale_, int n, int j) {
-  
-  MatrixAccessor<double> xAcc(*xpMat);
-  double *xCol = xAcc[j];
-  double si; 
-  for (int i=0;i<n;i++) {
-    si = shift * (xCol[row_idx_[i]] - center_) / scale_;
-    r[i] -= si;
-    eta[i] += si;
-  }
 }
 
 // -----------------------------------------------------------------------------
 // Following functions are used for EDPP rule
 // -----------------------------------------------------------------------------
+// 
+// // apply EDPP - by chunking reading, openmp
+// void edpp_screen_by_chunk_omp(int *discard_beta, const char *xf_bin, int nchunks, int chunk_cols, 
+//                           double *o, int *row_idx, NumericVector &center, 
+//                           NumericVector &scale, int n, int p, double rhs, int n_total) {
+//   unsigned long int chunk_size = chunk_cols * sizeof(double) * n_total;
+//   ifstream xfile(xf_bin, ios::in|ios::binary);
+//   
+//   int i, j;
+//   double lhs;
+//   double sum_xy;
+//   double sum_y;
+//   
+//   if (xfile.is_open()) {
+//     char *memblock_x;
+//     int chunk_i;
+//     //int chunks = 0;
+//     int col_pos;
+//     int col_j;
+//     double *X;
+// 
+//     memblock_x = (char *) calloc(chunk_size, sizeof(char));
+//     for (chunk_i = 0; chunk_i < nchunks; chunk_i++) {
+//       col_pos = chunk_i * chunk_cols; // current column position offset
+//       
+//       xfile.seekg (chunk_i * chunk_size, ios::beg);
+//       xfile.read (memblock_x, chunk_size);
+//       X = (double*) memblock_x;//reinterpret as doubles
+//       
+//       // loop over loaded columns and do crossprod
+//       #pragma omp parallel for private(sum_xy, sum_y, j, lhs, col_j) default(shared) schedule(static) 
+//       for (j = 0; j < chunk_cols; j++) {
+//         sum_xy = 0.0;
+//         sum_y = 0.0;
+//         col_j = col_pos + j; //absolute position of current column j
+//         for (i = 0; i < n; i++) {
+//           sum_xy = sum_xy + X[j*n_total+row_idx[i]] * o[i];
+//           sum_y = sum_y + o[i];
+//         }
+//         //printf("\nresult[%d] = %f\n\n", j, result[col_pos + j]);
+//         lhs = fabs((sum_xy - center[col_j] * sum_y) / scale[col_j]);
+//         if (lhs < rhs) {
+//           discard_beta[col_j] = 1;
+//         } else {
+//           discard_beta[col_j] = 0;
+//         }
+//       }
+//     }
+//     free(memblock_x);
+//     xfile.close();
+//   } else {
+//     Rprintf("Open file failed! filename = %s, chunk_size = %lu\n", xf_bin, chunk_size);
+//     Rcpp::stop("Open file failed!");
+//     // exit(EXIT_FAILURE);
+//   }
+// }
+// 
+// 
+// // apply EDPP - by chunking reading, sequential
+// void edpp_screen_by_chunk(int *discard_beta, const char *xf_bin, int nchunks, int chunk_cols, 
+//                           double *o, int *row_idx, NumericVector &center, 
+//                           NumericVector &scale, int n, int p, double rhs, int n_total) {
+//   unsigned long int chunk_size = chunk_cols * sizeof(double) * n_total;
+//   ifstream xfile(xf_bin, ios::in|ios::binary);
+//   
+//   int i, j;
+//   double lhs;
+//   double sum_xy;
+//   double sum_y;
+//   
+//   if (xfile.is_open()) {
+//     //Rprintf("Open file succeeded! filename = %s, chunk_size = %lu\n", xf_bin, chunk_size);
+//     streampos size_x;
+//     char *memblock_x;
+//     int chunk_i = 0;
+//     //int chunks = 0;
+//     int col_pos = 0;
+//     int col_j = 0;
+//     
+//     //xfile.seekg (0, ios::end);
+//     //size_x = xfile.tellg();
+//     //xfile.seekg (0, ios::beg);
+//     //cout << "\tSize_x = " << size_x << endl;
+//     // I need guarantee this is dividable;
+//     //chunks = size_x / chunk_size;
+//    
+//     memblock_x = (char *) calloc(chunk_size, sizeof(char));
+//     while (chunk_i < nchunks) {
+//       //printf("\tChunk %d\n", chunk_i);
+//       col_pos = chunk_i * chunk_cols; // current column position offset
+//       xfile.seekg (chunk_i * chunk_size, ios::beg);
+//       xfile.read (memblock_x, chunk_size);
+//       
+//       //size_t count = xfile.gcount();
+//       // If nothing has been read, break
+//       //if (!count) {
+//       //  Rprintf("\n\t Error in reading chunk %d\n", chunk_i);
+//       //  break;
+//       //} 
+//       double *X = (double*) memblock_x;//reinterpret as doubles
+//       
+//       // loop over loaded columns and do crossprod
+//       for (j = 0; j < chunk_cols; j++) {
+//         sum_xy = 0.0;
+//         sum_y = 0.0;
+//         col_j = col_pos + j; //absolute position of current column j
+//         for (i = 0; i < n; i++) {
+//           sum_xy = sum_xy + X[j*n_total+row_idx[i]] * o[i];
+//           sum_y = sum_y + o[i];
+//         }
+//         //printf("\nresult[%d] = %f\n\n", j, result[col_pos + j]);
+//         lhs = fabs((sum_xy - center[col_j] * sum_y) / scale[col_j]);
+//         if (lhs < rhs) {
+//           discard_beta[col_j] = 1;
+//         } else {
+//           discard_beta[col_j] = 0;
+//         }
+//       }
+//       chunk_i++;
+//       
+//     }
+//     free(memblock_x);
+//     xfile.close();
+//   } else {
+//     Rprintf("Open file failed! filename = %s, chunk_size = %lu\n", xf_bin, chunk_size);
+//     Rcpp::stop("Open file failed!");
+//     // exit (EXIT_FAILURE);
+//   }
+// }
+// 
+// void edpp_screen2(int *discard_beta, SEXP xP, double *o, int *row_idx, 
+//                   NumericVector &center, NumericVector &scale, int n, int p, 
+//                   double rhs) {
+//   XPtr<BigMatrix> xpMat(xP); //convert to big.matrix pointer;
+//   MatrixAccessor<double> xAcc(*xpMat);
+//   
+//   int j;
+//   double lhs;
+//   double sum_xy;
+//   double sum_y;
+// 
+//   #pragma omp parallel for private(j, lhs, sum_xy, sum_y) default(shared) schedule(static) 
+//   for (j = 0; j < p; j++) {
+//     sum_xy = std::inner_product(xAcc[j], xAcc[j]+n, o, 0.0);
+//     sum_y = std::accumulate(o, o+n, 0.0);
+//     lhs = fabs((sum_xy - center[j] * sum_y) / scale[j]);
+//     if (lhs < rhs) {
+//       discard_beta[j] = 1;
+//     } else {
+//       discard_beta[j] = 0;
+//     }
+//   }
+// }
 
-// theta = (y - X*beta) / lambda
-//       = (y - x1*beta1 - x2*beta2 - .... - xp * betap) / lambda
-void update_theta(double *theta, SEXP xP, int *row_idx_, NumericVector &center, 
-                  NumericVector &scale, double *y, arma::sp_mat beta, double lambda, 
-                  int *nzero_beta, int n, int p, int l) {
-  double temp[n];
-  for (int i=0; i<n; i++) {
-    temp[i] = 0;
-  }
-  
-  XPtr<BigMatrix> xpMat(xP); //convert to big.matrix pointer;
-  MatrixAccessor<double> xAcc(*xpMat);
-  // first compute sum_xj*betaj: loop for variables with nonzero beta's.
-  for (int j = 0; j < p; j++) {
-    if (nzero_beta[j] != 0) {
-      for (int i = 0; i < n; i++) {
-        //temp[i] += beta[l*p+j] * (xAcc[j][row_idx_[i]] - center[j]) / scale[j];
-        temp[i] += beta(j, l) * (xAcc[j][row_idx_[i]] - center[j]) / scale[j];
-      }
-    }
-  }
-  // then compute (y - sum_xj*betaj) / lambda
-  for (int i = 0; i < n; i++) {
-    theta[i] = (y[i] - temp[i]) / lambda;
-  }
-  
-}
-
-// V2 - <v1, v2> / ||v1||^2_2 * V1
-void update_pv2(double *pv2, double *v1, double *v2, int n) {
-
-  double v1_dot_v2 = 0;
-  double v1_norm = 0;
-  for (int i = 0; i < n; i++) {
-    v1_dot_v2 += v1[i] * v2[i];
-    v1_norm += pow(v1[i], 2);
-  }
-  for (int i = 0; i < n; i++) {
-    pv2[i] = v2[i] - v1[i] * (v1_dot_v2 / v1_norm);
-  }
-}
-
-// apply EDPP 
-void edpp_screen(int *discard_beta, SEXP xP, double *o, int *row_idx, 
-                 NumericVector &center, NumericVector &scale, int n, int p, 
-                 double rhs) {
-  XPtr<BigMatrix> xpMat(xP); //convert to big.matrix pointer;
-  MatrixAccessor<double> xAcc(*xpMat);
-
-  int j;
-  double lhs;
-  double sum_xy;
-  double sum_y;
-  double *xCol;
-  #pragma omp parallel for private(j, lhs, sum_xy, sum_y) default(shared) schedule(static) 
-  for (j = 0; j < p; j++) {
-    sum_xy = 0.0;
-    sum_y = 0.0;
-    xCol = xAcc[j];
-    for (int i=0; i < n; i++) {
-      sum_xy = sum_xy + xCol[row_idx[i]] * o[i];
-      sum_y = sum_y + o[i];
-    }
-    lhs = fabs((sum_xy - center[j] * sum_y) / scale[j]);
-    if (lhs < rhs) {
-      discard_beta[j] = 1;
-    } else {
-      discard_beta[j] = 0;
-    }
-  }
-}
-
-// apply EDPP - by chunking reading, openmp
-void edpp_screen_by_chunk_omp(int *discard_beta, const char *xf_bin, int nchunks, int chunk_cols, 
-                          double *o, int *row_idx, NumericVector &center, 
-                          NumericVector &scale, int n, int p, double rhs, int n_total) {
-  unsigned long int chunk_size = chunk_cols * sizeof(double) * n_total;
-  ifstream xfile(xf_bin, ios::in|ios::binary);
-  
-  int i, j;
-  double lhs;
-  double sum_xy;
-  double sum_y;
-  
-  if (xfile.is_open()) {
-    char *memblock_x;
-    int chunk_i;
-    //int chunks = 0;
-    int col_pos;
-    int col_j;
-    double *X;
-
-    memblock_x = (char *) calloc(chunk_size, sizeof(char));
-    for (chunk_i = 0; chunk_i < nchunks; chunk_i++) {
-      col_pos = chunk_i * chunk_cols; // current column position offset
-      
-      xfile.seekg (chunk_i * chunk_size, ios::beg);
-      xfile.read (memblock_x, chunk_size);
-      X = (double*) memblock_x;//reinterpret as doubles
-      
-      // loop over loaded columns and do crossprod
-      #pragma omp parallel for private(sum_xy, sum_y, j, lhs, col_j) default(shared) schedule(static) 
-      for (j = 0; j < chunk_cols; j++) {
-        sum_xy = 0.0;
-        sum_y = 0.0;
-        col_j = col_pos + j; //absolute position of current column j
-        for (i = 0; i < n; i++) {
-          sum_xy = sum_xy + X[j*n_total+row_idx[i]] * o[i];
-          sum_y = sum_y + o[i];
-        }
-        //printf("\nresult[%d] = %f\n\n", j, result[col_pos + j]);
-        lhs = fabs((sum_xy - center[col_j] * sum_y) / scale[col_j]);
-        if (lhs < rhs) {
-          discard_beta[col_j] = 1;
-        } else {
-          discard_beta[col_j] = 0;
-        }
-      }
-    }
-    free(memblock_x);
-    xfile.close();
-  } else {
-    Rprintf("Open file failed! filename = %s, chunk_size = %lu\n", xf_bin, chunk_size);
-    Rcpp::stop("Open file failed!");
-    // exit(EXIT_FAILURE);
-  }
-}
-
-
-// apply EDPP - by chunking reading, sequential
-void edpp_screen_by_chunk(int *discard_beta, const char *xf_bin, int nchunks, int chunk_cols, 
-                          double *o, int *row_idx, NumericVector &center, 
-                          NumericVector &scale, int n, int p, double rhs, int n_total) {
-  unsigned long int chunk_size = chunk_cols * sizeof(double) * n_total;
-  ifstream xfile(xf_bin, ios::in|ios::binary);
-  
-  int i, j;
-  double lhs;
-  double sum_xy;
-  double sum_y;
-  
-  if (xfile.is_open()) {
-    //Rprintf("Open file succeeded! filename = %s, chunk_size = %lu\n", xf_bin, chunk_size);
-    streampos size_x;
-    char *memblock_x;
-    int chunk_i = 0;
-    //int chunks = 0;
-    int col_pos = 0;
-    int col_j = 0;
-    
-    //xfile.seekg (0, ios::end);
-    //size_x = xfile.tellg();
-    //xfile.seekg (0, ios::beg);
-    //cout << "\tSize_x = " << size_x << endl;
-    // I need guarantee this is dividable;
-    //chunks = size_x / chunk_size;
-   
-    memblock_x = (char *) calloc(chunk_size, sizeof(char));
-    while (chunk_i < nchunks) {
-      //printf("\tChunk %d\n", chunk_i);
-      col_pos = chunk_i * chunk_cols; // current column position offset
-      xfile.seekg (chunk_i * chunk_size, ios::beg);
-      xfile.read (memblock_x, chunk_size);
-      
-      //size_t count = xfile.gcount();
-      // If nothing has been read, break
-      //if (!count) {
-      //  Rprintf("\n\t Error in reading chunk %d\n", chunk_i);
-      //  break;
-      //} 
-      double *X = (double*) memblock_x;//reinterpret as doubles
-      
-      // loop over loaded columns and do crossprod
-      for (j = 0; j < chunk_cols; j++) {
-        sum_xy = 0.0;
-        sum_y = 0.0;
-        col_j = col_pos + j; //absolute position of current column j
-        for (i = 0; i < n; i++) {
-          sum_xy = sum_xy + X[j*n_total+row_idx[i]] * o[i];
-          sum_y = sum_y + o[i];
-        }
-        //printf("\nresult[%d] = %f\n\n", j, result[col_pos + j]);
-        lhs = fabs((sum_xy - center[col_j] * sum_y) / scale[col_j]);
-        if (lhs < rhs) {
-          discard_beta[col_j] = 1;
-        } else {
-          discard_beta[col_j] = 0;
-        }
-      }
-      chunk_i++;
-      
-    }
-    free(memblock_x);
-    xfile.close();
-  } else {
-    Rprintf("Open file failed! filename = %s, chunk_size = %lu\n", xf_bin, chunk_size);
-    Rcpp::stop("Open file failed!");
-    // exit (EXIT_FAILURE);
-  }
-}
-
-void edpp_screen2(int *discard_beta, SEXP xP, double *o, int *row_idx, 
-                  NumericVector &center, NumericVector &scale, int n, int p, 
-                  double rhs) {
-  XPtr<BigMatrix> xpMat(xP); //convert to big.matrix pointer;
-  MatrixAccessor<double> xAcc(*xpMat);
-  
-  int j;
-  double lhs;
-  double sum_xy;
-  double sum_y;
-
-  #pragma omp parallel for private(j, lhs, sum_xy, sum_y) default(shared) schedule(static) 
-  for (j = 0; j < p; j++) {
-    sum_xy = std::inner_product(xAcc[j], xAcc[j]+n, o, 0.0);
-    sum_y = std::accumulate(o, o+n, 0.0);
-    lhs = fabs((sum_xy - center[j] * sum_y) / scale[j]);
-    if (lhs < rhs) {
-      discard_beta[j] = 1;
-    } else {
-      discard_beta[j] = 0;
-    }
-  }
-}
 
 
 // -----------------------------------------------------------------------------
@@ -593,12 +447,12 @@ RcppExport SEXP standardize_bm(SEXP xP, SEXP row_idx_) {
     XPtr<BigMatrix> xMat(xP);
     MatrixAccessor<double> xAcc(*xMat);
     int ncol = xMat->ncol();
-
+    
     NumericVector c(ncol);
     NumericVector s(ncol);
     IntegerVector row_idx(row_idx_);
     int nrow = row_idx.size();
-
+    
     for (int j = 0; j < ncol; j++) {
       c[j] = 0; //center
       s[j] = 0; //scale
@@ -625,21 +479,21 @@ RcppExport SEXP get_eta(SEXP xP, SEXP row_idx_, SEXP beta, SEXP idx_p, SEXP idx_
     Rcpp::RNGScope __rngScope;
     XPtr<BigMatrix> xpMat(xP); //convert to big.matrix pointer;
     MatrixAccessor<double> xAcc(*xpMat);
-   
+    
     // sparse matrix for beta: only pass the non-zero entries and their indices;
     arma::sp_mat sp_beta = Rcpp::as<arma::sp_mat>(beta);
-
+    
     IntegerVector row_idx(row_idx_);
     IntegerVector index_p(idx_p);
     IntegerVector index_l(idx_l);
-   
+    
     int n = row_idx.size();
     int l = sp_beta.n_cols;
     int nnz = index_p.size();
     
     // initialize result
     arma::sp_mat sp_res = arma::sp_mat(n, l);
-  
+    
     for (int k = 0; k < nnz; k++) {
       for (int i = 0; i < n; i++) {
         //double x = (xAcc[index_p[k]][row_idx[i]] - center[index_p[k]]) / scale[index_p[k]];
@@ -648,10 +502,12 @@ RcppExport SEXP get_eta(SEXP xP, SEXP row_idx_, SEXP beta, SEXP idx_p, SEXP idx_
         sp_res(i, index_l[k]) += x * sp_beta(index_p[k], index_l[k]);
       }
     }
-
+    
     PROTECT(__sexp_result = Rcpp::wrap(sp_res));
   }
   UNPROTECT(1);
   return __sexp_result;
   END_RCPP
 }
+
+

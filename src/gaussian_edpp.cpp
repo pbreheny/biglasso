@@ -1,5 +1,7 @@
 #include <RcppArmadillo.h>
 #include <iostream>
+#include <vector>
+#include <algorithm>
 #include "bigmemory/BigMatrix.h"
 #include "bigmemory/MatrixAccessor.hpp"
 #include "bigmemory/bigmemoryDefines.h"
@@ -8,19 +10,96 @@
 
 #include "utilities.h"
 //#include "defines.h"
-using namespace std;
 
-void free_memo_edpp(double *a, double *r, double *z, int *nzero_beta, int *discard_beta,
+void free_memo_edpp(double *a, double *r, int *nzero_beta, int *discard_beta,
                double *theta, double *v1, double *v2, double *o) {
   free(a);
   free(r);
-  free(z);
   free(nzero_beta);
   free(discard_beta);
   free(theta);
   free(v1);
   free(v2);
   free(o);
+}
+
+// theta = (y - X*beta) / lambda
+//       = (y - x1*beta1 - x2*beta2 - .... - xp * betap) / lambda
+void update_theta(double *theta, XPtr<BigMatrix> xpMat, int *row_idx, 
+                  vector<int> &col_idx, NumericVector &center, 
+                  NumericVector &scale, double *y, arma::sp_mat beta, double lambda, 
+                  int *nzero_beta, int n, int p, int l) {
+  int i, j, jj;
+  double *xCol;
+  double temp[n];
+  for (int i=0; i<n; i++) {
+    temp[i] = 0;
+  }
+
+  MatrixAccessor<double> xAcc(*xpMat);
+  // first compute sum_xj*betaj: loop for variables with nonzero beta's.
+  for (j = 0; j < p; j++) {
+    if (nzero_beta[j] != 0) {
+      jj = col_idx[j];
+      xCol = xAcc[jj];
+      for (i = 0; i < n; i++) {
+        temp[i] += beta(j, l) * (xCol[row_idx[i]] - center[jj]) / scale[jj];
+      }
+    }
+  }
+  // then compute (y - sum_xj*betaj) / lambda
+  for (i = 0; i < n; i++) {
+    theta[i] = (y[i] - temp[i]) / lambda;
+  }
+  
+}
+
+
+// V2 - <v1, v2> / ||v1||^2_2 * V1
+void update_pv2(double *pv2, double *v1, double *v2, int n) {
+  
+  double v1_dot_v2 = 0;
+  double v1_norm = 0;
+  for (int i = 0; i < n; i++) {
+    v1_dot_v2 += v1[i] * v2[i];
+    v1_norm += pow(v1[i], 2);
+  }
+  for (int i = 0; i < n; i++) {
+    pv2[i] = v2[i] - v1[i] * (v1_dot_v2 / v1_norm);
+  }
+}
+
+// apply EDPP 
+void edpp_screen(int *discard_beta, XPtr<BigMatrix> xpMat, double *o, 
+                 int *row_idx, vector<int> &col_idx,
+                 NumericVector &center, NumericVector &scale, int n, int p, 
+                 double rhs) {
+  MatrixAccessor<double> xAcc(*xpMat);
+  
+  int j, jj;
+  double lhs;
+  double sum_xy;
+  double sum_y;
+  double *xCol;
+  
+  #pragma omp parallel for private(j, lhs, sum_xy, sum_y) default(shared) schedule(static) 
+  for (j = 0; j < p; j++) {
+    sum_xy = 0.0;
+    sum_y = 0.0;
+    
+    jj = col_idx[j];
+    xCol = xAcc[jj];
+    for (int i=0; i < n; i++) {
+      sum_xy = sum_xy + xCol[row_idx[i]] * o[i];
+      sum_y = sum_y + o[i];
+    }
+    lhs = fabs((sum_xy - center[jj] * sum_y) / scale[jj]);
+    if (lhs < rhs) {
+      discard_beta[j] = 1;
+    } else {
+      discard_beta[j] = 0;
+    }
+  }
 }
 
 // Coordinate descent for gaussian models
@@ -32,18 +111,14 @@ RcppExport SEXP cdfit_gaussian_edpp(SEXP X_, SEXP y_, SEXP row_idx_, SEXP lambda
   XPtr<BigMatrix> xMat(X_);
   double *y = REAL(y_);
   int *row_idx = INTEGER(row_idx_);
-  // const char *xf_bin = CHAR(Rf_asChar(xf_bin_));
-  // int nchunks = INTEGER(nchunks_)[0];
   double lambda_min = REAL(lambda_min_)[0];
   double alpha = REAL(alpha_)[0];
   int n = Rf_length(row_idx_); // number of observations used for fitting model
   int p = xMat->ncol();
-  // int n_total = xMat->nrow(); // number of total observations
   int lam_scale = INTEGER(lam_scale_)[0];
   int L = INTEGER(nlambda_)[0];
   int user = INTEGER(user_)[0];
-  // int chunk_cols = p / nchunks;
-  
+
   NumericVector lambda(L);
   if (user != 0) {
     lambda = Rcpp::as<NumericVector>(lambda_);
@@ -56,7 +131,10 @@ RcppExport SEXP cdfit_gaussian_edpp(SEXP X_, SEXP y_, SEXP row_idx_, SEXP lambda
 
   NumericVector center(p);
   NumericVector scale(p);
-  double *z = Calloc(p, double);
+  int p_keep = 0;
+  int *p_keep_ptr = &p_keep;
+  vector<int> col_idx;
+  vector<double> z;
   double lambda_max = 0.0;
   double *lambda_max_ptr = &lambda_max;
   int xmax_idx = 0;
@@ -66,14 +144,23 @@ RcppExport SEXP cdfit_gaussian_edpp(SEXP X_, SEXP y_, SEXP row_idx_, SEXP lambda
 //   time_t now1 = time (0);
 //   strftime (buff1, 100, "%Y-%m-%d %H:%M:%S.000", localtime (&now1));
 //   Rprintf("\nPreprocessing start: %s\n", buff1);
-  // standardize: get center, scale; get z, lambda_max, xmax_idx;
-  standardize_and_get_residual(center, scale, z, lambda_max_ptr, xmax_ptr, xMat, 
+  // standardize: get center, scale; get p_keep_ptr, col_idx; get z, lambda_max, xmax_idx;
+  standardize_and_get_residual(center, scale, p_keep_ptr, col_idx, z, 
+                               lambda_max_ptr, xmax_ptr, xMat, 
                                y, row_idx, lambda_min, alpha, n, p);
+  
+  // set p = p_keep, only loop over columns whose scale > 1e-6
+  p = p_keep;
+  
 //   now1 = time (0);
 //   strftime (buff1, 100, "%Y-%m-%d %H:%M:%S.000", localtime (&now1));
 //   Rprintf("Preprocessing end: %s\n", buff1);
 //   Rprintf("\n-----------------------------------------------\n");
-  
+
+  double l1, l2;
+  int converged;
+  int i, j, jj, l; //temp index
+
   // lambda, equally spaced on log scale
   if (user == 0) {
     if (lam_scale) {
@@ -82,29 +169,19 @@ RcppExport SEXP cdfit_gaussian_edpp(SEXP X_, SEXP y_, SEXP row_idx_, SEXP lambda
       double log_lambda_min = log(lambda_min*lambda_max);
       
       double delta = (log_lambda_max - log_lambda_min) / (L-1);
-      for (int l = 0; l < L; l++) {
+      for (l = 0; l < L; l++) {
         lambda[l] = exp(log_lambda_max - l * delta);
       }
     } else { // equally spaced on linear scale
       double delta = (lambda_max - lambda_min*lambda_max) / (L-1);
-      for (int l = 0; l < L; l++) {
+      for (l = 0; l < L; l++) {
         lambda[l] = lambda_max - l * delta;
       }
     }
   } 
-  
-//   if (user == 0) {
-//     // set up lambda, equally spaced on log scale
-//     double log_lambda_max = log(lambda_max);
-//     double log_lambda_min = log(lambda_min*lambda_max);
-//     double delta = (log_lambda_max - log_lambda_min) / (L-1);
-//     for (int l = 0; l < L; l++) {
-//       lambda[l] = exp(log_lambda_max - l * delta);
-//     }
-//   }
-  
+
   double *r = Calloc(n, double);
-  for (int i=0; i<n; i++) r[i] = y[i];
+  for (i = 0; i < n; i++) r[i] = y[i];
   double sumResid = sum(r, n);
  
   // beta
@@ -117,9 +194,6 @@ RcppExport SEXP cdfit_gaussian_edpp(SEXP X_, SEXP y_, SEXP row_idx_, SEXP lambda
   NumericVector loss(L);
   IntegerVector iter(L);
   IntegerVector discard_count(L);
-  
-  double l1, l2;
-  int converged;
  
   // EDPP
   double *theta = Calloc(n, double);
@@ -132,9 +206,6 @@ RcppExport SEXP cdfit_gaussian_edpp(SEXP X_, SEXP y_, SEXP row_idx_, SEXP lambda
   int *nzero_beta = Calloc(p, int);
   // index set of discarded features at l+1;
   int *discard_beta = Calloc(p, int);
-  // number of discarded features at each lambda
-//   int *discard_count = Calloc(L, int);
-//   for (int l = 0; l < L; l++) discard_count[l] = 0;
   double pv2_norm = 0;
  
   // set up omp
@@ -148,7 +219,7 @@ RcppExport SEXP cdfit_gaussian_edpp(SEXP X_, SEXP y_, SEXP row_idx_, SEXP lambda
   omp_set_dynamic(0);
   omp_set_num_threads(useCores);
 
-  for (int l = 0; l < L-1; l++) {
+  for (l = 0; l < L-1; l++) {
 //     char buff[100];
 //     time_t now = time (0);
 //     strftime (buff, 100, "%Y-%m-%d %H:%M:%S.000", localtime (&now));
@@ -162,48 +233,49 @@ RcppExport SEXP cdfit_gaussian_edpp(SEXP X_, SEXP y_, SEXP row_idx_, SEXP lambda
       }
       if (nv > dfmax) {
         for (int ll=l; ll<L; ll++) iter[ll] = NA_INTEGER;
-        free_memo_edpp(a, r, z, nzero_beta, discard_beta, theta, v1, v2, o);
+        free_memo_edpp(a, r, nzero_beta, discard_beta, theta, v1, v2, o);
         return List::create(beta, center, scale, lambda, loss, iter, discard_count);
       }
       // update theta
-      update_theta(theta, X_, row_idx, center, scale, y, beta, lambda[l], nzero_beta, n, p, l);
+      update_theta(theta, xMat, row_idx, col_idx, center, scale, y, beta, lambda[l], nzero_beta, n, p, l);
       // update v1
-      for (int i=0; i < n; i++) {
+      for (i = 0; i < n; i++) {
         v1[i] = y[i] / lambda[l] - theta[i];
         //if (i == 0) Rprintf("v1[0] = %f, theta[0] = %f\n", v1[i], theta[0]);
       }
     } else { // lambda_max = lam[0]
-      for (int i = 0; i < n; i++) {
+      for (i = 0; i < n; i++) {
         theta[i] =  y[i] / lambda[l];
       }
       // compute v1 for lambda_max
-      double xty = crossprod_bm(X_, y, row_idx, center[xmax_idx], scale[xmax_idx], n, xmax_idx);
-      for (int i = 0; i < n; i++) {
-        v1[i] = sign(xty) * get_elem_bm(X_, center[xmax_idx], scale[xmax_idx], row_idx[i], xmax_idx);
+      double xty = crossprod_bm(xMat, y, row_idx, center[col_idx[xmax_idx]], 
+                                scale[col_idx[xmax_idx]], n, col_idx[xmax_idx]);
+      for (i = 0; i < n; i++) {
+        v1[i] = sign(xty) * get_elem_bm(xMat, center[col_idx[xmax_idx]], 
+                     scale[col_idx[xmax_idx]], row_idx[i], col_idx[xmax_idx]);
       }
       loss[l] = gLoss(r,n);
-      
-      for (int j=0; j<p; j++) {
+      for (j = 0; j < p; j++) {
         nzero_beta[j] = 0;
         discard_beta[j] = 1;
       }
-      discard_count[l] = sum_discard(discard_beta, p);
+      discard_count[l] = sum_int(discard_beta, p);
 //       Rprintf("lambda[%d] = %f: discarded features: %d\n", l, lambda[l], discard_count[l]);
     } 
     // update v2:
-    for (int i = 0; i < n; i++) {
+    for (i = 0; i < n; i++) {
       v2[i] = y[i] / lambda[l+1] - theta[i];
     }
     //update pv2:
     update_pv2(pv2, v1, v2, n);
     // update norm of pv2;
-    for (int i = 0; i < n; i++) {
+    for (i = 0; i < n; i++) {
       pv2_norm += pow(pv2[i], 2);
     }
     pv2_norm = pow(pv2_norm, 0.5);
     // Rprintf("\npv2_norm = %f\n", pv2_norm);
     // update o
-    for (int i = 0; i < n; i++) {
+    for (i = 0; i < n; i++) {
       o[i] = theta[i] + 0.5 * pv2[i];
     }
     double rhs = n - 0.5 * pv2_norm * sqrt(n); 
@@ -213,14 +285,8 @@ RcppExport SEXP cdfit_gaussian_edpp(SEXP X_, SEXP y_, SEXP row_idx_, SEXP lambda
 //     Rprintf("EDPP start: Now time: %s\n", buff);
 
     // apply EDPP
-//     if (nchunks > 1) {   // chunk-reading or memory mapping for EDPP?
-//       edpp_screen_by_chunk_omp(discard_beta, xf_bin, nchunks, chunk_cols, o, row_idx, center,
-//                            scale, n, p, rhs, n_total);
-//     } else {
-//       edpp_screen(discard_beta, X_, o, row_idx, center, scale, n, p, rhs);
-//     }
-    edpp_screen(discard_beta, X_, o, row_idx, center, scale, n, p, rhs);
-    discard_count[l+1] = sum_discard(discard_beta, p);
+    edpp_screen(discard_beta, xMat, o, row_idx, col_idx, center, scale, n, p, rhs);
+    discard_count[l+1] = sum_int(discard_beta, p);
     
 //     now = time (0);
 //     strftime (buff, 100, "%Y-%m-%d %H:%M:%S.000", localtime (&now));
@@ -234,20 +300,22 @@ RcppExport SEXP cdfit_gaussian_edpp(SEXP X_, SEXP y_, SEXP row_idx_, SEXP lambda
 //     now = time (0);
 //     strftime (buff, 100, "%Y-%m-%d %H:%M:%S.000", localtime (&now));
 //     Rprintf("Solve lasso start: Now time: %s\n", buff);
+
     double shift = 0.0;
     while (iter[l+1] < max_iter) {
       iter[l+1]++;
       for (int j=0; j<p; j++) {
         if (discard_beta[j] == 0) {
-          z[j] = crossprod_resid(xMat, r, sumResid, row_idx, center[j], scale[j], n, j) / n + a[j];
+          jj = col_idx[jj];
+          z[j] = crossprod_resid(xMat, r, sumResid, row_idx, center[jj], scale[jj], n, jj) / n + a[j];
           // Update beta_j
-          l1 = lambda[l+1] * m[j] * alpha;
-          l2 = lambda[l+1] * m[j] * (1-alpha);
+          l1 = lambda[l+1] * m[jj] * alpha;
+          l2 = lambda[l+1] * m[jj] * (1-alpha);
           beta(j, l+1) = lasso(z[j], l1, l2, 1);
           // Update r
           shift = beta(j, l+1) - a[j];
           if (shift !=0) {
-            update_resid(X_, r, shift, row_idx, center[j], scale[j], n, j);
+            update_resid(xMat, r, shift, row_idx, center[jj], scale[jj], n, jj);
             sumResid = sum(r, n); //update sum of residual
           }
           // update non-zero beta set
@@ -275,7 +343,7 @@ RcppExport SEXP cdfit_gaussian_edpp(SEXP X_, SEXP y_, SEXP row_idx_, SEXP lambda
 //     Rprintf("Solve lasso end: Now time: %s\n", buff);
   }
 
-  free_memo_edpp(a, r, z, nzero_beta, discard_beta, theta, v1, v2, o);
+  free_memo_edpp(a, r, nzero_beta, discard_beta, theta, v1, v2, o);
   return List::create(beta, center, scale, lambda, loss, iter, discard_count);
 }
 
