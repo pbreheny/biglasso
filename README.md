@@ -11,16 +11,12 @@ data sets that cannot be loaded into memory. Compared to existing lasso-fitting 
 it preserves equivalently fast computation speed but is much more memory-efficient, 
 thus allowing for very powerful big data analysis even with only a single laptop.
 
-To install:
+### To install:
 * the stable version: `install.packages("biglasso")`
 * the latest version (requires devtools): `install_github("YaohuiZeng/biglasso")`
 
-To report bugs：
+### To report bugs：
 * send email to Yaohui Zeng at <yaohui-zeng@uiowa.edu>
 
-
-Note:
-
-This package is under heavy development. The newest version is expected to be released by the end of August. In the newest version, I have implemented several sparse screening rules along with parallel computing and better algorithm design to speed up the computation. 
-
-Several users have already reported that there are some issues on Windows. I will do more testing on different OS. If you encounter any issues or questions, please don't hesitate to send me an email.
+### News:
+* This package has been updated to Version 1.1-2. See details in NEWS.
