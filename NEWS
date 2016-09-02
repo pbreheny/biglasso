@@ -9,12 +9,12 @@
 
 1.1-1 (8/31/2016)
   ** Three sparse screening rules (HSR, EDPP, HSR-Dome) were implemented. Our 
-  new proposed HSR-Dome combines HSR and Dome test for feature screening, 
-  leading to even better performance as compared to 'glmnet'.	
+     new proposed HSR-Dome combines HSR and Dome test for feature screening, 
+     leading to even better performance as compared to 'glmnet'.	
   ** OpenMP parallel computing was added to speedup single model fitting.
   ** Both exact Newton and majorization-minimization (MM) algorithm for logistic
-  regression were implemented. The latter could be faster, especially in 
-  data-larger-than-RAM cases.
+     regression were implemented. The latter could be faster, especially in 
+     data-larger-than-RAM cases.
   ** Source code were rewritten in pure cpp.
   *  Sparse matrix representation was added using Armadillo library.
 
