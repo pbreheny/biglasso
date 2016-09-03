@@ -56,29 +56,12 @@ biglasso <- function(X, y, row.idx = 1:nrow(X),
     yy <- y
   }
 
-  ## TODO:
-  ## assume inherits(X, "big.matrix"), AND no missing values
   p <- ncol(X)
   if (length(penalty.factor) != p) stop("penalty.factor does not match up with X")
   if (storage.mode(penalty.factor) != "double") storage.mode(penalty.factor) <- "double"
-
   n <- length(row.idx) ## subset of X. idx: indices of rows.
 
-  # standardize X, return center vector and scale vector
-#   cat("Standardization start: ", format(Sys.time()), "\n")
-#   stand <- .Call('standardize_bm', X@address, as.integer(row.idx-1), PACKAGE = 'biglasso')
-#   cat("Standardization end: ", format(Sys.time()), "\n")
-#   center <- stand[[1]]
-#   scale <- stand[[2]]
-
-  ## TODO: eliminate variables with variance close to 0.
-  nz <- 1:p
-#   nz <- which(scale > 1e-6)
-#   if (length(nz) != ncol(XX)) XX <- XX[ ,nz, drop=FALSE]
-#   penalty.factor <- penalty.factor[nz]
-
   if (missing(lambda)) {
-    # lambda <- setupLambda(X, yy, as.integer(row.idx-1), center, scale, family, alpha, lambda.min, nlambda, penalty.factor)
     user.lambda <- FALSE
     lambda <- rep(0.0, nlambda);
   } else {
@@ -125,11 +108,14 @@ biglasso <- function(X, y, row.idx = 1:nrow(X),
     loss <- res[[5]]
     iter <- res[[6]]
     rejections <- res[[7]]
-   
+    
     if (screen == 'HSR-Dome') {
       dome_rejections <- res[[8]]
+      col.idx <- res[[9]]
+    } else {
+      col.idx <- res[[8]]
     }
-   
+    
   } else if (family == 'binomial') {
     if (alg.logistic == 'MM') {
       res <- .Call("cdfit_binomial_hsr_approx", X@address, yy, as.integer(row.idx-1), 
@@ -155,16 +141,16 @@ biglasso <- function(X, y, row.idx = 1:nrow(X),
     lambda <- res[[5]]
     loss <- res[[6]]
     iter <- res[[7]]
-    rejections <- rep(0, p)
+    rejections <- res[[8]]
+    col.idx <- res[[9]]
   } else {
     stop("Current version only supports Gaussian or Binominal response!")
   }
   if (output.time) {
     cat("\nEnd biglasso: ", format(Sys.time()), '\n')
   }
-
-#   # print(str(res))
-#   stop("testing logistic ....")
+  p.keep <- length(col.idx)
+  col.idx <- col.idx + 1 # indices (in R) for which variables have scale > 1e-6
   
   ## Eliminate saturated lambda values, if any
   ind <- !is.na(iter)
@@ -176,14 +162,14 @@ biglasso <- function(X, y, row.idx = 1:nrow(X),
 
   if (warn & any(iter==max.iter)) warning("Algorithm failed to converge for some values of lambda")
 
-  ## Unstandardize coefficients: TODO: NEED CONVERT TO C++ CODE
-  beta <- Matrix(0, nrow=(p+1), ncol=length(lambda), sparse = T)
-  bb <- b/scale[nz]
-  beta[nz+1,] <- bb
-  beta[1,] <- a - crossprod(center[nz], bb)
+  ## Unstandardize coefficients:
+  beta <- Matrix(0, nrow = (p.keep+1), ncol = length(lambda), sparse = T)
+  bb <- b / scale[col.idx]
+  beta[col.idx, ] <- bb
+  beta[1,] <- a - crossprod(center[col.idx], bb)
 
   ## Names
-  varnames <- if (is.null(colnames(X))) paste("V", 1:p, sep="") else colnames(X)
+  varnames <- if (is.null(colnames(X))) paste("V", col.idx, sep="") else colnames(X)
   varnames <- c("(Intercept)", varnames)
   dimnames(beta) <- list(varnames, round(lambda,digits=4))
 
@@ -202,6 +188,7 @@ biglasso <- function(X, y, row.idx = 1:nrow(X),
     scale = scale,
     y = y,
     screen = screen,
+    col.idx = col.idx,
     rejections = rejections
   )
   if (screen == 'HSR-Dome') {

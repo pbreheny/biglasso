@@ -337,7 +337,8 @@ RcppExport SEXP cdfit_gaussian_hsr_dome(SEXP X_, SEXP y_, SEXP row_idx_,
         for (int ll = l; ll < L; ll++) iter[ll] = NA_INTEGER;
         free_memo_hsr(a, r, e1, e2);
         free(dome_accept);
-        return List::create(beta, center, scale, lambda, loss, iter, n_reject, n_dome_reject);
+        return List::create(beta, center, scale, lambda, loss, iter, 
+                            n_reject, n_dome_reject, Rcpp::wrap(col_idx));
       }
       cutoff = 2*lambda[l] - lambda[l-1];
     } else {
@@ -442,6 +443,7 @@ RcppExport SEXP cdfit_gaussian_hsr_dome(SEXP X_, SEXP y_, SEXP row_idx_,
   
   free_memo_hsr(a, r, e1, e2);
   free(dome_accept);
-  return List::create(beta, center, scale, lambda, loss, iter, n_reject, n_dome_reject);
+  return List::create(beta, center, scale, lambda, loss, iter, 
+                      n_reject, n_dome_reject, Rcpp::wrap(col_idx));
 }
 

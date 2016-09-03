@@ -234,7 +234,8 @@ RcppExport SEXP cdfit_gaussian_edpp(SEXP X_, SEXP y_, SEXP row_idx_, SEXP lambda
       if (nv > dfmax) {
         for (int ll=l; ll<L; ll++) iter[ll] = NA_INTEGER;
         free_memo_edpp(a, r, nzero_beta, discard_beta, theta, v1, v2, o);
-        return List::create(beta, center, scale, lambda, loss, iter, discard_count);
+        return List::create(beta, center, scale, lambda, loss, iter, 
+                            discard_count, Rcpp::wrap(col_idx));
       }
       // update theta
       update_theta(theta, xMat, row_idx, col_idx, center, scale, y, beta, lambda[l], nzero_beta, n, p, l);
@@ -344,6 +345,7 @@ RcppExport SEXP cdfit_gaussian_edpp(SEXP X_, SEXP y_, SEXP row_idx_, SEXP lambda
   }
 
   free_memo_edpp(a, r, nzero_beta, discard_beta, theta, v1, v2, o);
-  return List::create(beta, center, scale, lambda, loss, iter, discard_count);
+  return List::create(beta, center, scale, lambda, loss, iter, 
+                      discard_count, Rcpp::wrap(col_idx));
 }
 
