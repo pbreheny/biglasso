@@ -132,6 +132,7 @@ RcppExport SEXP cdfit_binomial_hsr(SEXP X_, SEXP y_, SEXP row_idx_,
   NumericVector lambda(L);
   NumericVector Dev(L);
   IntegerVector iter(L);
+  IntegerVector n_reject(L);
   NumericVector beta0(L);
   NumericVector center(p);
   NumericVector scale(p);
@@ -247,9 +248,10 @@ RcppExport SEXP cdfit_binomial_hsr(SEXP X_, SEXP y_, SEXP row_idx_,
       if (nv > dfmax) {
         for (int ll=l; ll<L; ll++) iter[ll] = NA_INTEGER;
         free_memo_bin_hsr(s, w, a, r, e1, e2, eta);
-        return List::create(beta0, beta, center, scale, lambda, Dev, iter);
+        return List::create(beta0, beta, center, scale, lambda, Dev, 
+                            iter, n_reject, Rcpp::wrap(col_idx));
       }
-    
+   
       // strong set
       cutoff = 2*lambda[l] - lambda[l-1];
       for (j = 0; j < p; j++) {
@@ -268,6 +270,7 @@ RcppExport SEXP cdfit_binomial_hsr(SEXP X_, SEXP y_, SEXP row_idx_,
       }
     }
     
+    n_reject[l] = p - sum_int(e2, p);
     // path start
 //     now = time (0);
 //     strftime (buff, 100, "%Y-%m-%d %H:%M:%S.000", localtime (&now));
@@ -302,7 +305,8 @@ RcppExport SEXP cdfit_binomial_hsr(SEXP X_, SEXP y_, SEXP row_idx_,
             if (warn) warning("Model saturated; exiting...");
             for (int ll=l; ll<L; ll++) iter[ll] = NA_INTEGER;
             free_memo_bin_hsr(s, w, a, r, e1, e2, eta);
-            return List::create(beta0, beta, center, scale, lambda, Dev, iter);
+            return List::create(beta0, beta, center, scale, lambda, Dev,
+                                iter, n_reject, Rcpp::wrap(col_idx));
           }
           
           // Intercept
@@ -394,7 +398,8 @@ RcppExport SEXP cdfit_binomial_hsr(SEXP X_, SEXP y_, SEXP row_idx_,
   }
 
   free_memo_bin_hsr(s, w, a, r, e1, e2, eta);
-  return List::create(beta0, beta, center, scale, lambda, Dev, iter);
+  return List::create(beta0, beta, center, scale, lambda, Dev, 
+                      iter, n_reject, Rcpp::wrap(col_idx));
   
 }
 
