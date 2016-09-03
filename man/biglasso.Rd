@@ -82,8 +82,9 @@ biglasso(X, y, row.idx = 1:nrow(X), penalty = c("lasso", "ridge", "enet"),
   \item{scale}{The sample standard deviation of the variables, i.e., column standard deviation of the sub-matrix of \code{X} used for model fitting.}
   \item{y}{The response vector used in the model fitting. Depending on \code{row.idx}, it could be a subset of the raw input of the response vector y.}
   \item{screen}{Same as above.}
+  \item{col.idx}{The indices of features that have 'scale' value greater than 1e-6. Features with 'scale' less than 1e-6 are removed from model fitting.}
   \item{rejections}{The number of features rejected at each value of \code{lambda}.}
-  \item{rejections}{The number of features rejected by Dome test at each value of \code{lambda}. Only for "HSR-Dome" case.}
+  \item{dome_rejections}{The number of features rejected by Dome test at each value of \code{lambda}. Only for "HSR-Dome" case.}
 }
 
 \author{
