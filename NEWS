@@ -3,8 +3,8 @@
 
 
 1.1-2 (9/1/2016)
-  * fixed bug occurred when some features have identical values for different 
-    observations. These features will be internally removed from model fitting.
+  * fixed bugs occurred when some features have identical values for different 
+    observations. These features are internally removed from model fitting.
 
 1.1-1 (8/31/2016)
   ** Three sparse screening rules (HSR, EDPP, HSR-Dome) were implemented. Our 
