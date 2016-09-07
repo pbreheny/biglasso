@@ -227,8 +227,8 @@ void standardize_and_get_residual(NumericVector &center, NumericVector &scale,
   MatrixAccessor<double> xAcc(*xMat);
   double *xCol;
   double sum_xy, sum_y;
-  double zmax = 0.0;
-  int i, j, jj;
+  double zmax = 0.0, zj = 0.0;
+  int i, j;
   
   for (j = 0; j < p; j++) {
     xCol = xAcc[j];
@@ -248,21 +248,15 @@ void standardize_and_get_residual(NumericVector &center, NumericVector &scale,
     
     if (scale[j] > 1e-6) {
       col_idx.push_back(j);
+      zj = (sum_xy - center[j] * sum_y) / (scale[j] * n); //residual
+      if (fabs(zj) > zmax) {
+        zmax = fabs(zj);
+        *xmax_ptr = j;
+      }
+      z.push_back(zj);
     }
   }
-  
   *p_keep_ptr = col_idx.size();
-  z.resize(*p_keep_ptr);
-
-  for (jj = 0; jj < *p_keep_ptr; jj++) {
-    j = col_idx[jj];
-    z[jj] = (sum_xy - center[j] * sum_y) / (scale[j] * n); //residual
-    // get lambda_max, xmax_idx;
-    if (fabs(z[jj]) > zmax) {
-      zmax = fabs(z[jj]);
-      *xmax_ptr = jj;
-    }
-  }
   *lambda_max_ptr = zmax / alpha;
 }
 

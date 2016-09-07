@@ -129,7 +129,10 @@ RcppExport SEXP cdfit_gaussian_hsr(SEXP X_, SEXP y_, SEXP row_idx_,
                                y, row_idx, lambda_min, alpha, n, p);
   // set p = p_keep, only loop over columns whose scale > 1e-6
   p = p_keep;
- 
+
+  Rprintf("p_keep = %d; lambda_max = %f; lambda_min = %f\n", p_keep, lambda_max, lambda_min);
+  Rprintf("z[0] = %f; size of z = %d\n", z[0], z.size());
+  
   if (verbose) {
     char buff1[100];
     time_t now1 = time (0);
@@ -145,9 +148,6 @@ RcppExport SEXP cdfit_gaussian_hsr(SEXP X_, SEXP y_, SEXP row_idx_,
   // beta
   arma::sp_mat beta = arma::sp_mat(p, L);
   double *a = Calloc(p, double); //Beta from previous iteration
-//   for (int j = 0; j < p; j++) {
-//     a[j] = 0.0;
-//   }
 
   NumericVector loss(L);
   IntegerVector iter(L);
@@ -155,9 +155,7 @@ RcppExport SEXP cdfit_gaussian_hsr(SEXP X_, SEXP y_, SEXP row_idx_,
   
   double l1, l2, cutoff, shift;
   int *e1 = Calloc(p, int);
-  // for (int j=0; j<p; j++) e1[j] = 0;
   int *e2 = Calloc(p, int);
-  // for (int j=0; j<p; j++) e2[j] = 0;
   int converged, lstart = 0, violations;
   int j, jj, l; // temp index
   

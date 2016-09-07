@@ -37,14 +37,12 @@ RcppExport SEXP cdfit_binomial_hsr_approx(SEXP X_, SEXP y_, SEXP row_idx_,
                                           SEXP ncore_, SEXP warn_,
                                           SEXP verbose_) {
   XPtr<BigMatrix> xMat(X_);
-
   double *y = REAL(y_);
   int *row_idx = INTEGER(row_idx_);
   double lambda_min = REAL(lambda_min_)[0];
   double alpha = REAL(alpha_)[0];
   int n = Rf_length(row_idx_); // number of observations used for fitting model
   int p = xMat->ncol();
-  // int n_total = xMat->nrow(); // number of total observations
   int L = INTEGER(nlambda_)[0];
   
   double eps = REAL(eps_)[0];
@@ -62,30 +60,16 @@ RcppExport SEXP cdfit_binomial_hsr_approx(SEXP X_, SEXP y_, SEXP row_idx_,
   NumericVector beta0(L);
   NumericVector center(p);
   NumericVector scale(p);
-  arma::sp_mat beta = arma::sp_mat(p, L); //beta
-  double *a = Calloc(p, double); //Beta from previous iteration
-  double a0 = 0.0; //beta0 from previousiteration
-
-  double *w = Calloc(n, double);
-  double *s = Calloc(n, double); //y_i - pi_i
+  
   int p_keep = 0; // keep columns whose scale > 1e-6
   int *p_keep_ptr = &p_keep;
   vector<int> col_idx;
   vector<double> z;
-  double *eta = Calloc(n, double);
-  int *e1 = Calloc(p, int); //ever-active set
-  int *e2 = Calloc(p, int); //strong set
-  int lstart = 0;
-  int converged, violations;
-  double xwr, xwx, pi, u, v, cutoff, l1, l2, shift, si;
-  double max_update, update, thresh; // for convergence check
-  int i, j, jj, l; // temp index
-  
   double lambda_max = 0.0;
   double *lambda_max_ptr = &lambda_max;
   int xmax_idx = 0;
   int *xmax_ptr = &xmax_idx;
-
+  
   if (verbose) {
     char buff1[100];
     time_t now1 = time (0);
@@ -107,7 +91,25 @@ RcppExport SEXP cdfit_binomial_hsr_approx(SEXP X_, SEXP y_, SEXP row_idx_,
     Rprintf("\n-----------------------------------------------\n");
   }
   
+  
   // Initialization
+  
+  arma::sp_mat beta = arma::sp_mat(p, L); //beta
+  double *a = Calloc(p, double); //Beta from previous iteration
+  double a0 = 0.0; //beta0 from previousiteration
+
+  double *w = Calloc(n, double);
+  double *s = Calloc(n, double); //y_i - pi_i
+  
+  double *eta = Calloc(n, double);
+  int *e1 = Calloc(p, int); //ever-active set
+  int *e2 = Calloc(p, int); //strong set
+  int lstart = 0;
+  int converged, violations;
+  double xwr, xwx, pi, u, v, cutoff, l1, l2, shift, si;
+  double max_update, update, thresh; // for convergence check
+  int i, j, jj, l; // temp index
+
   double ybar = sum(y, n)/n;
   a0 = beta0[0] = log(ybar/(1-ybar));
   double nullDev = 0;
@@ -133,7 +135,6 @@ RcppExport SEXP cdfit_binomial_hsr_approx(SEXP X_, SEXP y_, SEXP row_idx_,
       lambda[l] = exp(log_lambda_max - l * delta);
     }
     Dev[0] = nullDev;
-    lstart = 1;
   } else {
     lambda = Rcpp::as<NumericVector>(lambda_);
   }
@@ -179,16 +180,20 @@ RcppExport SEXP cdfit_binomial_hsr_approx(SEXP X_, SEXP y_, SEXP row_idx_,
       // strong set
       cutoff = 2*lambda[l] - lambda[l-1];
       for (j = 0; j < p; j++) {
-        if (fabs(z[j]) > (cutoff * alpha * m[col_idx[xmax_idx]])) {
+        if (fabs(z[j]) > (cutoff * alpha * m[col_idx[j]])) {
           e2[j] = 1;
+        } else {
+          e2[j] = 0;
         }
       }
     } else {
       // strong set
       cutoff = 2*lambda[l] - lambda_max;
       for (int j=0; j<p; j++) {
-        if (fabs(z[j]) > (cutoff * alpha * m[col_idx[xmax_idx]])) {
+        if (fabs(z[j]) > (cutoff * alpha * m[col_idx[j]])) {
           e2[j] = 1;
+        } else {
+          e2[j] = 0;
         }
       }
     }
