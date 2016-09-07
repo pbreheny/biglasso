@@ -151,7 +151,7 @@ biglasso <- function(X, y, row.idx = 1:nrow(X),
   }
   p.keep <- length(col.idx)
   col.idx <- col.idx + 1 # indices (in R) for which variables have scale > 1e-6
-  
+ 
   ## Eliminate saturated lambda values, if any
   ind <- !is.na(iter)
   if (family != "gaussian") a <- a[ind]
@@ -163,9 +163,9 @@ biglasso <- function(X, y, row.idx = 1:nrow(X),
   if (warn & any(iter==max.iter)) warning("Algorithm failed to converge for some values of lambda")
 
   ## Unstandardize coefficients:
-  beta <- Matrix(0, nrow = (p.keep+1), ncol = length(lambda), sparse = T)
+  beta <- Matrix(0, nrow = (p+1), ncol = length(lambda), sparse = T)
   bb <- b / scale[col.idx]
-  beta[col.idx, ] <- bb
+  beta[col.idx+1, ] <- bb
   beta[1,] <- a - crossprod(center[col.idx], bb)
 
   ## Names
