@@ -244,6 +244,7 @@ RcppExport SEXP cdfit_gaussian_hsr_dome(SEXP X_, SEXP y_, SEXP row_idx_,
   IntegerVector n_dome_reject(L); // number of rejections by dome test;
   
   double l1, l2, cutoff, shift;
+  double max_update, update, thresh; // for convergence check
   int converged, lstart = 0, violations;
   int j, jj, l; // temp index
 
@@ -264,10 +265,11 @@ RcppExport SEXP cdfit_gaussian_hsr_dome(SEXP X_, SEXP y_, SEXP row_idx_,
         lambda[l] = lambda_max - l * delta;
       }
     }
-    loss[0] = gLoss(r,n);
     // lstart = 1;
     // n_reject[0] = p; // strong rule rejects all variables at lambda_max
   } 
+  loss[0] = gLoss(r,n);
+  thresh = eps * loss[0];
   
   int *e1 = Calloc(p, int); // ever-active set
   int *e2 = Calloc(p, int); // strong set;
@@ -381,6 +383,7 @@ RcppExport SEXP cdfit_gaussian_hsr_dome(SEXP X_, SEXP y_, SEXP row_idx_,
         while(iter[l] < max_iter) {
           iter[l]++;
           //solve lasso over ever-active set
+          max_update = 0.0;
           for (j = 0; j < p; j++) {
             if (e1[j]) {
               jj = col_idx[j];
@@ -392,6 +395,12 @@ RcppExport SEXP cdfit_gaussian_hsr_dome(SEXP X_, SEXP y_, SEXP row_idx_,
               // Update r
               shift = beta(j, l) - a[j];
               if (shift !=0) {
+                // compute objective update for checking convergence
+                update =  - z[j] * shift + 0.5 * (1 + l2) * (pow(beta(j, l), 2) - \
+                  pow(a[j], 2)) + l1 * (fabs(beta(j, l)) -  fabs(a[j]));
+                if (update > max_update) {
+                  max_update = update;
+                }
                 update_resid(xMat, r, shift, row_idx, center[jj], scale[jj], n, jj);
                 sumResid = sum(r, n); //update sum of residual
               }
@@ -399,7 +408,13 @@ RcppExport SEXP cdfit_gaussian_hsr_dome(SEXP X_, SEXP y_, SEXP row_idx_,
           }
           
           // Check for convergence
-          converged = checkConvergence(beta, a, eps, l, p);
+          if (max_update < thresh) {
+            converged = 1;
+          } else {
+            converged = 0;
+          }
+          //converged = checkConvergence(beta, a, eps, l, p);
+          
           // update a; only for ever-active set
           for (j = 0; j < p; j++) {
             a[j] = beta(j, l);
@@ -434,11 +449,6 @@ RcppExport SEXP cdfit_gaussian_hsr_dome(SEXP X_, SEXP y_, SEXP row_idx_,
     if (n_dome_reject[l] < p * dome_thresh) {
       dome = 0; // turn off dome for next iteration if not efficient
     }
-    
-  }
-  
-  if (verbose) {
-    Rprintf("\nDone!");
   }
   
   free_memo_hsr(a, r, e1, e2);
