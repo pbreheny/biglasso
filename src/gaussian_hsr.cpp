@@ -261,7 +261,7 @@ RcppExport SEXP cdfit_gaussian_hsr(SEXP X_, SEXP y_, SEXP row_idx_,
               if (shift !=0) {
                 // compute objective update for checking convergence
                 update =  - z[j] * shift + 0.5 * (1 + l2) * (pow(beta(j, l), 2) - \
-                  pow(a[j], 2)) + l1 * (fabs(beta(j, l)) -  fabs(a[j]));
+                  pow(a[j], 2)) + l1 * (std::abs(beta(j, l)) -  std::abs(a[j]));
                 if (update > max_update) {
                   max_update = update;
                 }
