@@ -281,14 +281,15 @@ RcppExport SEXP cdfit_binomial_hsr_approx(SEXP X_, SEXP y_, SEXP row_idx_,
               // Update r
               shift = beta(j, l) - a[j];
               if (shift !=0) {
+                // update change of objective function
+                update = - u * shift + (0.5 * v + 0.5 * l2) * (pow(beta(j, l), 2) - pow(a[j], 2)) + \
+                  l1 * (std::abs(beta(j, l)) - std::abs(a[j]));
+                if (update > max_update) max_update = update;
+
                 update_resid_eta(r, eta, xMat, shift, row_idx, center[jj], scale[jj], n, jj);
                 // update temp result w * r, used for computing xwr;
                 sumResid = sum(r, n);
-                
-                // update change of objective function
-                update = (0.125 + n * l2) * pow(beta(j, l), 2) - pow(a[j], 2) + \
-                           n * l1 * (abs(beta(j, l)) - abs(a[j]));
-                if (update > max_update) max_update = update;
+
               }
             }
           }
