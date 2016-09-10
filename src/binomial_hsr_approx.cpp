@@ -11,18 +11,29 @@
 #include "utilities.h"
 //#include "defines.h"
 
+template<typename T>
+SEXP cdfit_binomial_hsr_approx_cpp(XPtr<BigMatrix> xMat, SEXP y_, SEXP row_idx_, 
+                                   SEXP lambda_, SEXP nlambda_,
+                                   SEXP lambda_min_, SEXP alpha_, SEXP user_, SEXP eps_, 
+                                   SEXP max_iter_, SEXP multiplier_, SEXP dfmax_, 
+                                   SEXP ncore_, SEXP warn_,
+                                   SEXP verbose_);
+
 void free_memo_bin_hsr(double *s, double *w, double *a, double *r,
                        int *e1, int *e2, double *eta);
 
+template<typename T>
 void update_resid_eta(double *r, double *eta, XPtr<BigMatrix> xpMat, double shift, 
                       int *row_idx_, double center_, double scale_, int n, int j);
 
+template<typename T>
 int check_strong_set_bin(int *e1, int *e2, vector<double> &z, XPtr<BigMatrix> xpMat, 
                          int *row_idx, vector<int> &col_idx,
                          NumericVector &center, NumericVector &scale,
                          double lambda, double sumResid, double alpha, 
                          double *r, double *m, int n, int p);
 
+template<typename T>
 int check_rest_set_bin(int *e1, int *e2, vector<double> &z, XPtr<BigMatrix> xpMat, 
                        int *row_idx, vector<int> &col_idx,
                        NumericVector &center, NumericVector &scale,
@@ -37,6 +48,44 @@ RcppExport SEXP cdfit_binomial_hsr_approx(SEXP X_, SEXP y_, SEXP row_idx_,
                                           SEXP ncore_, SEXP warn_,
                                           SEXP verbose_) {
   XPtr<BigMatrix> xMat(X_);
+  int xtype = xMat->matrix_type();
+  
+  switch(xtype)
+  {
+  case 2:
+    return cdfit_binomial_hsr_approx_cpp<short>(xMat, y_, row_idx_, lambda_,nlambda_, 
+                                         lambda_min_,alpha_, user_, eps_, 
+                                         max_iter_, multiplier_, dfmax_, ncore_,
+                                         warn_, verbose_);
+  case 4:
+    return cdfit_binomial_hsr_approx_cpp<int>(xMat, y_, row_idx_, lambda_,nlambda_, 
+                                       lambda_min_,alpha_, user_, eps_, 
+                                       max_iter_, multiplier_, dfmax_, ncore_,
+                                       warn_, verbose_);
+  case 6:
+    return cdfit_binomial_hsr_approx_cpp<float>(xMat, y_, row_idx_, lambda_,nlambda_, 
+                                         lambda_min_,alpha_, user_, eps_, 
+                                         max_iter_, multiplier_, dfmax_, ncore_,
+                                         warn_, verbose_);
+  case 8:
+    return cdfit_binomial_hsr_approx_cpp<double>(xMat, y_, row_idx_, lambda_,nlambda_, 
+                                          lambda_min_,alpha_, user_, eps_, 
+                                          max_iter_, multiplier_, dfmax_, ncore_,
+                                          warn_, verbose_);
+  default:
+    throw Rcpp::exception("the type defined for big.matrix is not supported!");
+  }
+}
+
+
+template<typename T>
+SEXP cdfit_binomial_hsr_approx_cpp(XPtr<BigMatrix> xMat, SEXP y_, SEXP row_idx_, 
+                                          SEXP lambda_, SEXP nlambda_,
+                                          SEXP lambda_min_, SEXP alpha_, SEXP user_, SEXP eps_, 
+                                          SEXP max_iter_, SEXP multiplier_, SEXP dfmax_, 
+                                          SEXP ncore_, SEXP warn_,
+                                          SEXP verbose_) {
+  // XPtr<BigMatrix> xMat(X_);
   double *y = REAL(y_);
   int *row_idx = INTEGER(row_idx_);
   double lambda_min = REAL(lambda_min_)[0];
@@ -78,7 +127,7 @@ RcppExport SEXP cdfit_binomial_hsr_approx(SEXP X_, SEXP y_, SEXP row_idx_,
   }
   
   // standardize: get center, scale; get p_keep_ptr, col_idx; get z, lambda_max, xmax_idx;
-  standardize_and_get_residual(center, scale, p_keep_ptr, col_idx, z, lambda_max_ptr, xmax_ptr, xMat, 
+  standardize_and_get_residual<T>(center, scale, p_keep_ptr, col_idx, z, lambda_max_ptr, xmax_ptr, xMat, 
                                y, row_idx, lambda_min, alpha, n, p);
   // set p = p_keep, only loop over columns whose scale > 1e-6
   p = p_keep;
@@ -93,7 +142,6 @@ RcppExport SEXP cdfit_binomial_hsr_approx(SEXP X_, SEXP y_, SEXP row_idx_,
   
   
   // Initialization
-  
   arma::sp_mat beta = arma::sp_mat(p, L); //beta
   double *a = Calloc(p, double); //Beta from previous iteration
   double a0 = 0.0; //beta0 from previousiteration
@@ -267,7 +315,7 @@ RcppExport SEXP cdfit_binomial_hsr_approx(SEXP X_, SEXP y_, SEXP row_idx_,
             if (e1[j]) {
               jj = col_idx[j];
               // Calculate u, v
-              xwr = 0.25 * crossprod_resid(xMat, r, sumResid, row_idx, center[jj], scale[jj], n, jj);
+              xwr = 0.25 * crossprod_resid<T>(xMat, r, sumResid, row_idx, center[jj], scale[jj], n, jj);
               v = 0.25; // x^T * W * x / n = w = 0.25
               // xwr = wcrossprod_resid(xMat, r, sumWResid, row_idx, center[j], scale[j], w, n, j);
               // v = wsqsum_bm(xMat, w, row_idx, center[j], scale[j], n, j) / n;
@@ -286,7 +334,7 @@ RcppExport SEXP cdfit_binomial_hsr_approx(SEXP X_, SEXP y_, SEXP row_idx_,
                   l1 * (std::abs(beta(j, l)) - std::abs(a[j]));
                 if (update > max_update) max_update = update;
 
-                update_resid_eta(r, eta, xMat, shift, row_idx, center[jj], scale[jj], n, jj);
+                update_resid_eta<T>(r, eta, xMat, shift, row_idx, center[jj], scale[jj], n, jj);
                 // update temp result w * r, used for computing xwr;
                 sumResid = sum(r, n);
 
@@ -311,7 +359,7 @@ RcppExport SEXP cdfit_binomial_hsr_approx(SEXP X_, SEXP y_, SEXP row_idx_,
         
         // Scan for violations in strong set
         sumS = sum(s, n);
-        violations = check_strong_set_bin(e1, e2, z, xMat, row_idx, col_idx, 
+        violations = check_strong_set_bin<T>(e1, e2, z, xMat, row_idx, col_idx, 
                                           center, scale, lambda[l], 
                                           sumS, alpha, s, m, n, p);
         if (violations==0) break;
@@ -322,7 +370,7 @@ RcppExport SEXP cdfit_binomial_hsr_approx(SEXP X_, SEXP y_, SEXP row_idx_,
 //       now = time (0);
 //       strftime (buff, 100, "%Y-%m-%d %H:%M:%S.000", localtime (&now));
 //       Rprintf("Scan rest set start: %s;   ", buff);
-      violations = check_rest_set_bin(e1, e2, z, xMat, row_idx, col_idx,
+      violations = check_rest_set_bin<T>(e1, e2, z, xMat, row_idx, col_idx,
                                       center, scale, lambda[l], 
                                       sumS, alpha, s, m, n, p);
     

@@ -51,7 +51,6 @@ double sum(double *x, int n) {
   return(val);
 }
 
-
 // Sum of squares of jth column of X
 double sqsum(double *X, int n, int j) {
   int nn = n*j;
@@ -86,32 +85,21 @@ int checkConvergence(arma::sp_mat beta, double *beta_old, double eps, int l, int
   return(converged);
 }
 
-// get_row
-int get_row_bm(SEXP xP) {
-  XPtr<BigMatrix> xMat(xP);
-  int nrow = xMat->nrow();
-  return nrow;
-}
-
-// get_col
-int get_col_bm(SEXP xP) {
-  XPtr<BigMatrix> xMat(xP);
-  int ncol = xMat->ncol();
-  return ncol;
-}
-
 // get X[i, j]: i-th row, j-th column element
-double get_elem_bm(XPtr<BigMatrix> xpMat, double center_, double scale_, int i, int j) {
-  MatrixAccessor<double> xAcc(*xpMat);
-  double res = (xAcc[j][i] - center_) / scale_;
+template<typename T>
+double get_elem_bm(BigMatrix *xpMat, double center_, double scale_, int i, int j) {
+  MatrixAccessor<T> xAcc(*xpMat);
+  T *xCol = xAcc[j];
+  double res = (xCol[i] - center_) / scale_;
   return res;
 }
 
 //crossprod - given specific rows of X
+template<typename T>
 double crossprod_bm(XPtr<BigMatrix> xpMat, double *y_, int *row_idx_, double center_, 
                                double scale_, int n_row, int j) {
-  MatrixAccessor<double> xAcc(*xpMat);
-  double *xCol = xAcc[j];
+  MatrixAccessor<T> xAcc(*xpMat);
+  T *xCol = xAcc[j];
 
   double sum = 0.0;
   double sum_xy = 0.0;
@@ -127,10 +115,11 @@ double crossprod_bm(XPtr<BigMatrix> xpMat, double *y_, int *row_idx_, double cen
 }
 
 //crossprod_resid - given specific rows of X: separate computation
+template<typename T>
 double crossprod_resid(XPtr<BigMatrix> xpMat, double *y_, double sumY_, int *row_idx_, 
                                   double center_, double scale_, int n_row, int j) {
-  MatrixAccessor<double> xAcc(*xpMat);
-  double *xCol = xAcc[j];
+  MatrixAccessor<T> xAcc(*xpMat);
+  T *xCol = xAcc[j];
   
   double sum = 0.0;
   for (int i=0; i < n_row; i++) {
@@ -140,37 +129,37 @@ double crossprod_resid(XPtr<BigMatrix> xpMat, double *y_, double sumY_, int *row
   return sum;
 }
 
-
 // update residul vector if variable j enters eligible set
+template<typename T>
 void update_resid(XPtr<BigMatrix> xpMat, double *r, double shift, int *row_idx_, 
                                double center_, double scale_, int n_row, int j) {
-  MatrixAccessor<double> xAcc(*xpMat);
-  double *xCol = xAcc[j];
+  MatrixAccessor<T> xAcc(*xpMat);
+  T *xCol = xAcc[j];
   
   for (int i=0; i < n_row; i++) {
     r[i] -= shift * (xCol[row_idx_[i]] - center_) / scale_;
   }
 }
 
-// Sum of squares of jth column of X
-double sqsum_bm(SEXP xP, int n_row, int j, int useCores) {
-  XPtr<BigMatrix> xpMat(xP); //convert to big.matrix pointer;
-  MatrixAccessor<double> xAcc(*xpMat);
-  double *xCol = xAcc[j];
-  
-//   omp_set_dynamic(0);
-//   omp_set_num_threads(useCores);
-  //Rprintf("sqsum_bm: Number of used threads: %d\n", omp_get_num_threads());
-  double val = 0.0;
-  // #pragma omp parallel for reduction(+:val)
-  for (int i=0; i < n_row; i++) {
-    val += pow(xCol[i], 2);
-//     if (i == 0) {
-//       Rprintf("sqsum_bm: Number of used threads: %d\n", omp_get_num_threads());
-//     }
-  }
-  return val;
-}
+// // Sum of squares of jth column of X
+// double sqsum_bm(SEXP xP, int n_row, int j, int useCores) {
+//   XPtr<BigMatrix> xpMat(xP); //convert to big.matrix pointer;
+//   MatrixAccessor<double> xAcc(*xpMat);
+//   double *xCol = xAcc[j];
+//   
+// //   omp_set_dynamic(0);
+// //   omp_set_num_threads(useCores);
+//   //Rprintf("sqsum_bm: Number of used threads: %d\n", omp_get_num_threads());
+//   double val = 0.0;
+//   // #pragma omp parallel for reduction(+:val)
+//   for (int i=0; i < n_row; i++) {
+//     val += pow(xCol[i], 2);
+// //     if (i == 0) {
+// //       Rprintf("sqsum_bm: Number of used threads: %d\n", omp_get_num_threads());
+// //     }
+//   }
+//   return val;
+// }
 
 // Weighted sum of residuals
 double wsum(double *r, double *w, int n_row) {
@@ -182,10 +171,11 @@ double wsum(double *r, double *w, int n_row) {
 }
 
 // Weighted cross product of y with jth column of x
+template<typename T>
 double wcrossprod_resid(XPtr<BigMatrix> xpMat, double *y, double sumYW_, int *row_idx_, 
                         double center_, double scale_, double *w, int n_row, int j) {
-  MatrixAccessor<double> xAcc(*xpMat);
-  double *xCol = xAcc[j];
+  MatrixAccessor<T> xAcc(*xpMat);
+  T *xCol = xAcc[j];
 
   double val = 0.0;
   for (int i = 0; i < n_row; i++) {
@@ -200,10 +190,11 @@ double wcrossprod_resid(XPtr<BigMatrix> xpMat, double *y, double sumYW_, int *ro
 // Weighted sum of squares of jth column of X
 // sum w_i * x_i ^2 = sum w_i * ((x_i - c) / s) ^ 2
 // = 1/s^2 * (sum w_i * x_i^2 - 2 * c * sum w_i x_i + c^2 sum w_i)
+template<typename T>
 double wsqsum_bm(XPtr<BigMatrix> xpMat, double *w, int *row_idx_, double center_, 
                             double scale_, int n_row, int j) {
-  MatrixAccessor<double> xAcc(*xpMat);
-  double *xCol = xAcc[j];
+  MatrixAccessor<T> xAcc(*xpMat);
+  T *xCol = xAcc[j];
   
   double val = 0.0;
   double sum_wx_sq = 0.0;
@@ -219,13 +210,14 @@ double wsqsum_bm(XPtr<BigMatrix> xpMat, double *w, int *row_idx_, double center_
 }
 
 // standardize
+template<typename T>
 void standardize_and_get_residual(NumericVector &center, NumericVector &scale, 
                                   int *p_keep_ptr, vector<int> &col_idx, //columns to keep, removing columns whose scale < 1e-6
                                   vector<double> &z, double *lambda_max_ptr,
                                   int *xmax_ptr, XPtr<BigMatrix> xMat, double *y, 
                                   int *row_idx, double lambda_min, double alpha, int n, int p) {
-  MatrixAccessor<double> xAcc(*xMat);
-  double *xCol;
+  MatrixAccessor<T> xAcc(*xMat);
+  T *xCol;
   double sum_xy, sum_y;
   double zmax = 0.0, zj = 0.0;
   int i, j;
@@ -259,7 +251,6 @@ void standardize_and_get_residual(NumericVector &center, NumericVector &scale,
   *p_keep_ptr = col_idx.size();
   *lambda_max_ptr = zmax / alpha;
 }
-
 
 void free_memo_hsr(double *a, double *r, int *e1, int *e2) {
   free(a);

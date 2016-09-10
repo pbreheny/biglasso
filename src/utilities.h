@@ -34,49 +34,47 @@ double lasso(double z, double l1, double l2, double v);
 
 double gLoss(double *r, int n);
 
-// get_row
-int get_row_bm(SEXP xP);
-
-// get_col
-int get_col_bm(SEXP xP);
-
 // get X[i, j]: i-th row, j-th column element
+template<typename T>
 double get_elem_bm(XPtr<BigMatrix> xpMat, double center_, double scale_, int i, int j);
 
 //crossprod - given specific rows of X
+template<typename T>
 double crossprod_bm(XPtr<BigMatrix> xpMat, double *y_, int *row_idx_, double center_, 
                     double scale_, int n_row, int j);
 
-double crossprod_bmC(SEXP xP, double *y_, int *row_idx_, double center_, 
-                     double scale_, int n_row, int j);
-
 //crossprod_resid - given specific rows of X: separate computation
+template<typename T>
 double crossprod_resid(XPtr<BigMatrix> xpMat, double *y_, double sumY_, int *row_idx_, 
                        double center_, double scale_, int n_row, int j);
 
 // update residul vector if variable j enters eligible set
+template<typename T>
 void update_resid(XPtr<BigMatrix> xpMat, double *r, double shift, int *row_idx_, 
                   double center_, double scale_, int n_row, int j);
 
-// Sum of squares of jth column of X
-double sqsum_bm(SEXP xP, int n_row, int j, int useCores);
+// // Sum of squares of jth column of X
+// double sqsum_bm(SEXP xP, int n_row, int j, int useCores);
 
 // Weighted sum of residuals
 double wsum(double *r, double *w, int n_row);
 
 // Weighted cross product of y with jth column of x
+template<typename T>
 double wcrossprod_resid(XPtr<BigMatrix> xpMat, double *y, double sumYW_, int *row_idx_, 
                         double center_, double scale_, double *w, int n_row, int j);
 
 // Weighted sum of squares of jth column of X
 // sum w_i * x_i ^2 = sum w_i * ((x_i - c) / s) ^ 2
 // = 1/s^2 * (sum w_i * x_i^2 - 2 * c * sum w_i x_i + c^2 sum w_i)
+template<typename T>
 double wsqsum_bm(XPtr<BigMatrix> xpMat, double *w, int *row_idx_, double center_, 
                  double scale_, int n_row, int j);
 
 void free_memo_hsr(double *a, double *r, int *e1, int *e2);
 
 // standardize
+template<typename T>
 void standardize_and_get_residual(NumericVector &center, NumericVector &scale, 
                                   int *p_keep_ptr, vector<int> &col_idx,
                                   vector<double> &z, double *lambda_max_ptr,
