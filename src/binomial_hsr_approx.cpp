@@ -12,7 +12,7 @@
 //#include "defines.h"
 
 template<typename T>
-SEXP cdfit_binomial_hsr_approx_cpp(XPtr<BigMatrix> xMat, SEXP y_, SEXP row_idx_, 
+List cdfit_binomial_hsr_approx_cpp(XPtr<BigMatrix> xMat, SEXP y_, SEXP row_idx_, 
                                    SEXP lambda_, SEXP nlambda_,
                                    SEXP lambda_min_, SEXP alpha_, SEXP user_, SEXP eps_, 
                                    SEXP max_iter_, SEXP multiplier_, SEXP dfmax_, 
@@ -79,7 +79,7 @@ RcppExport SEXP cdfit_binomial_hsr_approx(SEXP X_, SEXP y_, SEXP row_idx_,
 
 
 template<typename T>
-SEXP cdfit_binomial_hsr_approx_cpp(XPtr<BigMatrix> xMat, SEXP y_, SEXP row_idx_, 
+List cdfit_binomial_hsr_approx_cpp(XPtr<BigMatrix> xMat, SEXP y_, SEXP row_idx_, 
                                           SEXP lambda_, SEXP nlambda_,
                                           SEXP lambda_min_, SEXP alpha_, SEXP user_, SEXP eps_, 
                                           SEXP max_iter_, SEXP multiplier_, SEXP dfmax_, 
