@@ -11,23 +11,14 @@
 #include "utilities.h"
 //#include "defines.h"
 
-template<typename T>
-SEXP cdfit_gaussian_hsr_cpp(XPtr<BigMatrix> xMat,
-                            SEXP y_, SEXP row_idx_, SEXP lambda_, SEXP nlambda_, 
-                            SEXP lam_scale_, SEXP lambda_min_, SEXP alpha_, 
-                            SEXP user_, SEXP eps_, SEXP max_iter_, SEXP multiplier_, 
-                            SEXP dfmax_, SEXP ncore_, SEXP verbose_);
-
 // check strong set
-template<typename T>
-int check_strong_set(int *e1, int *e2, vector<double> &z, XPtr<BigMatrix> xpMat,
+int check_strong_set(int *e1, int *e2, vector<double> &z, XPtr<BigMatrix> xpMat, 
                      int *row_idx, vector<int> &col_idx,
                      NumericVector &center, NumericVector &scale,
                      double lambda, double sumResid, double alpha, 
                      double *r, double *m, int n, int p) {
-  MatrixAccessor<T> xAcc(*xpMat);
-  T *xCol;
-  double sum, l1;
+  MatrixAccessor<double> xAcc(*xpMat);
+  double *xCol, sum, l1;
   int j, jj, violations = 0;
   
   #pragma omp parallel for private(j, sum, l1) reduction(+:violations) schedule(static) 
@@ -52,14 +43,13 @@ int check_strong_set(int *e1, int *e2, vector<double> &z, XPtr<BigMatrix> xpMat,
 }
 
 // check rest set
-template<typename T>
 int check_rest_set(int *e1, int *e2, vector<double> &z, XPtr<BigMatrix> xpMat, int *row_idx, 
                    vector<int> &col_idx, NumericVector &center, NumericVector &scale,
                    double lambda, double sumResid, double alpha, double *r, double *m, int n, int p) {
   
-  MatrixAccessor<T> xAcc(*xpMat);
-  T *xCol;
-  double sum, l1;
+  MatrixAccessor<double> xAcc(*xpMat);
+ 
+  double *xCol, sum, l1;
   int j, jj, violations = 0;
   #pragma omp parallel for private(j, sum, l1) reduction(+:violations) schedule(static) 
   for (j = 0; j < p; j++) {
@@ -90,46 +80,6 @@ RcppExport SEXP cdfit_gaussian_hsr(SEXP X_, SEXP y_, SEXP row_idx_,
                                    SEXP max_iter_, SEXP multiplier_, SEXP dfmax_, 
                                    SEXP ncore_, SEXP verbose_) {
   XPtr<BigMatrix> xMat(X_);
-  int xtype = xMat->matrix_type();
-  
-  switch(xtype)
-  {
-  case 2:
-    return cdfit_gaussian_hsr_cpp<short>(xMat, y_, row_idx_, lambda_,nlambda_, 
-                                  lam_scale_, lambda_min_,alpha_, 
-                                  user_, eps_, max_iter_, multiplier_, 
-                                  dfmax_, ncore_, verbose_);
-  case 4:
-    return cdfit_gaussian_hsr_cpp<int>(xMat, 
-                                  y_, row_idx_, lambda_,nlambda_, 
-                                  lam_scale_, lambda_min_,alpha_, 
-                                  user_, eps_, max_iter_, multiplier_, 
-                                  dfmax_, ncore_, verbose_);
-  case 6:
-    return cdfit_gaussian_hsr_cpp<float>(xMat,
-                                  y_, row_idx_, lambda_,nlambda_, 
-                                  lam_scale_, lambda_min_,alpha_, 
-                                  user_, eps_, max_iter_, multiplier_, 
-                                  dfmax_, ncore_, verbose_);
-  case 8:
-    return cdfit_gaussian_hsr_cpp<double>(xMat,
-                                  y_, row_idx_, lambda_,nlambda_, 
-                                  lam_scale_, lambda_min_,alpha_, 
-                                  user_, eps_, max_iter_, multiplier_, 
-                                  dfmax_, ncore_, verbose_);
-  default:
-    throw Rcpp::exception("the type defined for big.matrix is not supported!");
-  }
-}
-
-
-template<typename T>
-SEXP cdfit_gaussian_hsr_cpp(XPtr<BigMatrix> xMat,
-                            SEXP y_, SEXP row_idx_, SEXP lambda_, SEXP nlambda_, 
-                            SEXP lam_scale_, SEXP lambda_min_, SEXP alpha_, 
-                            SEXP user_, SEXP eps_, SEXP max_iter_, SEXP multiplier_, 
-                            SEXP dfmax_, SEXP ncore_, SEXP verbose_) {
-  // XPtr<BigMatrix> xMat(X_);
   double *y = REAL(y_);
   int *row_idx = INTEGER(row_idx_);
   // const char *xf_bin = CHAR(Rf_asChar(xf_bin_));
@@ -175,7 +125,7 @@ SEXP cdfit_gaussian_hsr_cpp(XPtr<BigMatrix> xMat,
     Rprintf("\nPreprocessing start: %s\n", buff1);
   }
   // standardize: get center, scale; get p_keep_ptr, col_idx; get z, lambda_max, xmax_idx;
-  standardize_and_get_residual<T>(center, scale, p_keep_ptr, col_idx, z, lambda_max_ptr, xmax_ptr, xMat, 
+  standardize_and_get_residual(center, scale, p_keep_ptr, col_idx, z, lambda_max_ptr, xmax_ptr, xMat, 
                                y, row_idx, lambda_min, alpha, n, p);
   // set p = p_keep, only loop over columns whose scale > 1e-6
   p = p_keep;
@@ -301,7 +251,7 @@ SEXP cdfit_gaussian_hsr_cpp(XPtr<BigMatrix> xMat,
           for (j = 0; j < p; j++) {
             if (e1[j]) {
               jj = col_idx[j];
-              z[j] = crossprod_resid<T>(xMat, r, sumResid, row_idx, center[jj], scale[jj], n, jj) / n + a[j];
+              z[j] = crossprod_resid(xMat, r, sumResid, row_idx, center[jj], scale[jj], n, jj) / n + a[j];
               // Update beta_j
               l1 = lambda[l] * m[jj] * alpha;
               l2 = lambda[l] * m[jj] * (1-alpha);
@@ -315,7 +265,7 @@ SEXP cdfit_gaussian_hsr_cpp(XPtr<BigMatrix> xMat,
                 if (update > max_update) {
                   max_update = update;
                 }
-                update_resid<T>(xMat, r, shift, row_idx, center[jj], scale[jj], n, jj);
+                update_resid(xMat, r, shift, row_idx, center[jj], scale[jj], n, jj);
                 sumResid = sum(r, n); //update sum of residual
               }
             }
@@ -338,7 +288,7 @@ SEXP cdfit_gaussian_hsr_cpp(XPtr<BigMatrix> xMat,
         }
         
         // Scan for violations in strong set
-        violations = check_strong_set<T>(e1, e2, z, xMat, row_idx, col_idx, 
+        violations = check_strong_set(e1, e2, z, xMat, row_idx, col_idx, 
                                       center, scale, lambda[l], 
                                       sumResid, alpha, r, m, n, p); 
         if (violations==0) break;
@@ -346,7 +296,7 @@ SEXP cdfit_gaussian_hsr_cpp(XPtr<BigMatrix> xMat,
       
       // Scan for violations in rest set
       // Rprintf("\tlambda[%d] = %f, iteration = %d, start omp 2:\n", l, lambda[l], iter[l]);
-      violations = check_rest_set<T>(e1, e2, z, xMat, row_idx, col_idx, center,
+      violations = check_rest_set(e1, e2, z, xMat, row_idx, col_idx, center,
                                   scale, lambda[l], sumResid, alpha, r, m, n, p);
       if (violations == 0) {
         loss[l] = gLoss(r, n);

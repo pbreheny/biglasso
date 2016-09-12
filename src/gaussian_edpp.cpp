@@ -11,15 +11,6 @@
 #include "utilities.h"
 //#include "defines.h"
 
-template<typename T>  
-SEXP cdfit_gaussian_edpp_cpp(XPtr<BigMatrix> xMat,
-                             SEXP y_, SEXP row_idx_, SEXP lambda_, 
-                             SEXP nlambda_, SEXP lam_scale_,
-                             SEXP lambda_min_, SEXP alpha_, 
-                             SEXP user_, SEXP eps_, SEXP max_iter_, 
-                             SEXP multiplier_, SEXP dfmax_, 
-                             SEXP ncore_, SEXP verbose_);
-
 void free_memo_edpp(double *a, double *r, int *nzero_beta, int *discard_beta,
                double *theta, double *v1, double *v2, double *o) {
   free(a);
@@ -34,45 +25,33 @@ void free_memo_edpp(double *a, double *r, int *nzero_beta, int *discard_beta,
 
 // theta = (y - X*beta) / lambda
 //       = (y - x1*beta1 - x2*beta2 - .... - xp * betap) / lambda
-template<typename T>
 void update_theta(double *theta, XPtr<BigMatrix> xpMat, int *row_idx, 
                   vector<int> &col_idx, NumericVector &center, 
-                  NumericVector &scale, double *y, const arma::sp_mat& beta, double lambda, 
+                  NumericVector &scale, double *y, arma::sp_mat beta, double lambda, 
                   int *nzero_beta, int n, int p, int l) {
-  // Rprintf("\nStart updating theta: \n");
   int i, j, jj;
-  T *xCol;
+  double *xCol;
   double temp[n];
-  for (i = 0; i < n; i++) {
+  for (int i=0; i<n; i++) {
     temp[i] = 0;
   }
 
-  MatrixAccessor<T> xAcc(*xpMat);
+  MatrixAccessor<double> xAcc(*xpMat);
   // first compute sum_xj*betaj: loop for variables with nonzero beta's.
   for (j = 0; j < p; j++) {
     if (nzero_beta[j] != 0) {
       jj = col_idx[j];
-      // Rprintf("\tjj = %d;", jj);
       xCol = xAcc[jj];
-      // Rprintf("\n\n");
-      // if (j < 10) {
-      //   Rprintf("beta(%d, %d) = %f; ", j, l, beta(j, l));
-      // }
-
       for (i = 0; i < n; i++) {
         temp[i] += beta(j, l) * (xCol[row_idx[i]] - center[jj]) / scale[jj];
-        // if (i < 10) Rprintf("temp[%d]=%f; ", i, temp[i]);
       }
     }
   }
   // then compute (y - sum_xj*betaj) / lambda
   for (i = 0; i < n; i++) {
     theta[i] = (y[i] - temp[i]) / lambda;
-    // if (i < 10) {
-    //   Rprintf("\ttheta[%d] = %f; ", i, theta[i]);
-    // }
   }
-  // Rprintf("\nEnd updating theta: \n");
+  
 }
 
 
@@ -91,16 +70,17 @@ void update_pv2(double *pv2, double *v1, double *v2, int n) {
 }
 
 // apply EDPP 
-template<typename T>
 void edpp_screen(int *discard_beta, XPtr<BigMatrix> xpMat, double *o, 
                  int *row_idx, vector<int> &col_idx,
                  NumericVector &center, NumericVector &scale, int n, int p, 
                  double rhs) {
-  MatrixAccessor<T> xAcc(*xpMat);
+  MatrixAccessor<double> xAcc(*xpMat);
   
   int j, jj;
-  double lhs, sum_xy, sum_y;
-  T *xCol;
+  double lhs;
+  double sum_xy;
+  double sum_y;
+  double *xCol;
   
   #pragma omp parallel for private(j, lhs, sum_xy, sum_y) default(shared) schedule(static) 
   for (j = 0; j < p; j++) {
@@ -127,50 +107,8 @@ RcppExport SEXP cdfit_gaussian_edpp(SEXP X_, SEXP y_, SEXP row_idx_, SEXP lambda
                                     SEXP nlambda_, SEXP lam_scale_,
                                     SEXP lambda_min_, SEXP alpha_, 
                                     SEXP user_, SEXP eps_, SEXP max_iter_, 
-                                    SEXP multiplier_, SEXP dfmax_, 
-                                    SEXP ncore_, SEXP verbose_) {
+                                    SEXP multiplier_, SEXP dfmax_, SEXP ncore_) {
   XPtr<BigMatrix> xMat(X_);
-  int xtype = xMat->matrix_type();
-  
-  switch(xtype)
-  {
-  case 2:
-    return cdfit_gaussian_edpp_cpp<short>(xMat, y_, row_idx_, lambda_,nlambda_, 
-                                         lam_scale_, lambda_min_,alpha_, 
-                                         user_, eps_, max_iter_, multiplier_, 
-                                         dfmax_, ncore_, verbose_);
-  case 4:
-    return cdfit_gaussian_edpp_cpp<int>(xMat, 
-                                       y_, row_idx_, lambda_,nlambda_, 
-                                       lam_scale_, lambda_min_,alpha_, 
-                                       user_, eps_, max_iter_, multiplier_, 
-                                       dfmax_, ncore_, verbose_);
-  case 6:
-    return cdfit_gaussian_edpp_cpp<float>(xMat,
-                                         y_, row_idx_, lambda_,nlambda_, 
-                                         lam_scale_, lambda_min_,alpha_, 
-                                         user_, eps_, max_iter_, multiplier_, 
-                                         dfmax_, ncore_, verbose_);
-  case 8:
-    return cdfit_gaussian_edpp_cpp<double>(xMat,
-                                          y_, row_idx_, lambda_,nlambda_, 
-                                          lam_scale_, lambda_min_,alpha_, 
-                                          user_, eps_, max_iter_, multiplier_, 
-                                          dfmax_, ncore_, verbose_);
-  default:
-    throw Rcpp::exception("the type defined for big.matrix is not supported!");
-  }
-}
-
-template<typename T>  
-SEXP cdfit_gaussian_edpp_cpp(XPtr<BigMatrix> xMat,
-                             SEXP y_, SEXP row_idx_, SEXP lambda_, 
-                                    SEXP nlambda_, SEXP lam_scale_,
-                                    SEXP lambda_min_, SEXP alpha_, 
-                                    SEXP user_, SEXP eps_, SEXP max_iter_, 
-                                    SEXP multiplier_, SEXP dfmax_, 
-                                    SEXP ncore_, SEXP verbose_) {
-  // XPtr<BigMatrix> xMat(X_);
   double *y = REAL(y_);
   int *row_idx = INTEGER(row_idx_);
   double lambda_min = REAL(lambda_min_)[0];
@@ -180,8 +118,7 @@ SEXP cdfit_gaussian_edpp_cpp(XPtr<BigMatrix> xMat,
   int lam_scale = INTEGER(lam_scale_)[0];
   int L = INTEGER(nlambda_)[0];
   int user = INTEGER(user_)[0];
-  int verbose = INTEGER(verbose_)[0];
-  
+
   NumericVector lambda(L);
   if (user != 0) {
     lambda = Rcpp::as<NumericVector>(lambda_);
@@ -208,14 +145,14 @@ SEXP cdfit_gaussian_edpp_cpp(XPtr<BigMatrix> xMat,
 //   strftime (buff1, 100, "%Y-%m-%d %H:%M:%S.000", localtime (&now1));
 //   Rprintf("\nPreprocessing start: %s\n", buff1);
   // standardize: get center, scale; get p_keep_ptr, col_idx; get z, lambda_max, xmax_idx;
-  standardize_and_get_residual<T>(center, scale, p_keep_ptr, col_idx, z, 
+  standardize_and_get_residual(center, scale, p_keep_ptr, col_idx, z, 
                                lambda_max_ptr, xmax_ptr, xMat, 
                                y, row_idx, lambda_min, alpha, n, p);
   
   // set p = p_keep, only loop over columns whose scale > 1e-6
   p = p_keep;
-    
-    //now1 = time (0);
+  
+//   now1 = time (0);
 //   strftime (buff1, 100, "%Y-%m-%d %H:%M:%S.000", localtime (&now1));
 //   Rprintf("Preprocessing end: %s\n", buff1);
 //   Rprintf("\n-----------------------------------------------\n");
@@ -223,7 +160,6 @@ SEXP cdfit_gaussian_edpp_cpp(XPtr<BigMatrix> xMat,
   double l1, l2;
   int converged;
   int i, j, jj, l; //temp index
-  double max_update, update, thresh; // for convergence check
 
   // lambda, equally spaced on log scale
   if (user == 0) {
@@ -244,22 +180,20 @@ SEXP cdfit_gaussian_edpp_cpp(XPtr<BigMatrix> xMat,
     }
   } 
 
+  double *r = Calloc(n, double);
+  for (i = 0; i < n; i++) r[i] = y[i];
+  double sumResid = sum(r, n);
+ 
   // beta
   arma::sp_mat beta = arma::sp_mat(p, L);
-  Rprintf("beta(100, 1) = %f; cols = %d, rows = %d\n\n", beta(99, 1), 
-          beta.n_cols, beta.n_rows);
-  
   double *a = Calloc(p, double); //Beta from previous iteration
+//   for (int j = 0; j < p; j++) {
+//     a[j] = 0.0;
+//   }
 
   NumericVector loss(L);
   IntegerVector iter(L);
   IntegerVector discard_count(L);
-  
-  double *r = Calloc(n, double);
-  for (i = 0; i < n; i++) r[i] = y[i];
-  double sumResid = sum(r, n);
-  loss[0] = gLoss(r, n);
-  thresh = eps * loss[0]; // threshold for convergence of CD
  
   // EDPP
   double *theta = Calloc(n, double);
@@ -276,7 +210,9 @@ SEXP cdfit_gaussian_edpp_cpp(XPtr<BigMatrix> xMat,
  
   // set up omp
   int useCores = INTEGER(ncore_)[0];
-  int haveCores = omp_get_num_procs();
+  // Rprintf("Number of requsted threads: %d\n", useCores);
+  int haveCores=omp_get_num_procs();
+  //Rprintf("Number of avaialbe processors: %d\n", haveCores);
   if(useCores < 1) {
     useCores = haveCores;
   }
@@ -288,11 +224,11 @@ SEXP cdfit_gaussian_edpp_cpp(XPtr<BigMatrix> xMat,
 //     time_t now = time (0);
 //     strftime (buff, 100, "%Y-%m-%d %H:%M:%S.000", localtime (&now));
 //     Rprintf("Lambda %d. Now time: %s\n", l, buff);
-    // Rprintf("\n*********l = %d *********\n\n", l);
+   
     if (l != 0 ) {
       // Check dfmax: a is current beta. At each iteration, solving for next beta.
       int nv = 0;
-      for (j = 0; j < p; j++) {
+      for (int j=0; j<p; j++) {
         if (a[j] != 0) nv++;
       }
       if (nv > dfmax) {
@@ -301,48 +237,32 @@ SEXP cdfit_gaussian_edpp_cpp(XPtr<BigMatrix> xMat,
         return List::create(beta, center, scale, lambda, loss, iter, 
                             discard_count, Rcpp::wrap(col_idx));
       }
-      
-      // Rprintf("Update theta: \n");
-      // // update theta
-      // Rprintf("theta[0] = %f; col_idx[0] = %d; beta[0] = %f\n",
-      //             theta[0], col_idx[0], beta(0, l));
-      // 
-      // for (j = 0; j < 10; j++) {
-      //   Rprintf("\t beta(%d, %d) = %f; ", j, l, beta(j, l));
-      // }
-      // Rprintf("\n\n");
-      
-      update_theta<T>(theta, xMat, row_idx, col_idx, center, scale, y, beta, lambda[l], nzero_beta, n, p, l);
-      
-      // for (j = 0; j < 10; j++) {
-      //   Rprintf("\t beta(%d, %d) = %f; ", j, l, beta(j, l));
-      // }
-      // Rprintf("\n\n");
-     
+      // update theta
+      update_theta(theta, xMat, row_idx, col_idx, center, scale, y, beta, lambda[l], nzero_beta, n, p, l);
       // update v1
       for (i = 0; i < n; i++) {
         v1[i] = y[i] / lambda[l] - theta[i];
-        // if (i == 0) Rprintf("v1[0] = %f, theta[0] = %f\n", v1[i], theta[0]);
+        //if (i == 0) Rprintf("v1[0] = %f, theta[0] = %f\n", v1[i], theta[0]);
       }
     } else { // lambda_max = lam[0]
       for (i = 0; i < n; i++) {
         theta[i] =  y[i] / lambda[l];
       }
       // compute v1 for lambda_max
-      double xty = crossprod_bm<T>(xMat, y, row_idx, center[xmax_idx], 
-                                   scale[xmax_idx], n, xmax_idx);
+      double xty = crossprod_bm(xMat, y, row_idx, center[col_idx[xmax_idx]], 
+                                scale[col_idx[xmax_idx]], n, col_idx[xmax_idx]);
       for (i = 0; i < n; i++) {
-        double temp = get_elem_bm<T>(xMat, center[xmax_idx], scale[xmax_idx], row_idx[i], xmax_idx);
-        v1[i] = sign(xty) * temp;
+        v1[i] = sign(xty) * get_elem_bm(xMat, center[col_idx[xmax_idx]], 
+                     scale[col_idx[xmax_idx]], row_idx[i], col_idx[xmax_idx]);
       }
-      // loss[l] = gLoss(r,n);
+      loss[l] = gLoss(r,n);
       for (j = 0; j < p; j++) {
         nzero_beta[j] = 0;
         discard_beta[j] = 1;
       }
       discard_count[l] = sum_int(discard_beta, p);
 //       Rprintf("lambda[%d] = %f: discarded features: %d\n", l, lambda[l], discard_count[l]);
-    }
+    } 
     // update v2:
     for (i = 0; i < n; i++) {
       v2[i] = y[i] / lambda[l+1] - theta[i];
@@ -354,23 +274,20 @@ SEXP cdfit_gaussian_edpp_cpp(XPtr<BigMatrix> xMat,
       pv2_norm += pow(pv2[i], 2);
     }
     pv2_norm = pow(pv2_norm, 0.5);
-    Rprintf("pv2_norm = %f\n", pv2_norm);
-    
-   // update o
+    // Rprintf("\npv2_norm = %f\n", pv2_norm);
+    // update o
     for (i = 0; i < n; i++) {
       o[i] = theta[i] + 0.5 * pv2[i];
     }
     double rhs = n - 0.5 * pv2_norm * sqrt(n); 
-    Rprintf("rhs = %f\n", rhs);
+    
 //     now = time (0);
 //     strftime (buff, 100, "%Y-%m-%d %H:%M:%S.000", localtime (&now));
 //     Rprintf("EDPP start: Now time: %s\n", buff);
 
     // apply EDPP
-    Rprintf("apply EDPP:\n");
-    edpp_screen<T>(discard_beta, xMat, o, row_idx, col_idx, center, scale, n, p, rhs);
+    edpp_screen(discard_beta, xMat, o, row_idx, col_idx, center, scale, n, p, rhs);
     discard_count[l+1] = sum_int(discard_beta, p);
-    Rprintf("discard_count[%d] = %d\n", l+1, discard_count[l+1]);
     
 //     now = time (0);
 //     strftime (buff, 100, "%Y-%m-%d %H:%M:%S.000", localtime (&now));
@@ -388,27 +305,18 @@ SEXP cdfit_gaussian_edpp_cpp(XPtr<BigMatrix> xMat,
     double shift = 0.0;
     while (iter[l+1] < max_iter) {
       iter[l+1]++;
-      
-      //solve lasso over ever-active set
-      max_update = 0.0;
-      for (j = 0; j < p; j++) {
+      for (int j=0; j<p; j++) {
         if (discard_beta[j] == 0) {
           jj = col_idx[jj];
-          z[j] = crossprod_resid<T>(xMat, r, sumResid, row_idx, center[jj], scale[jj], n, jj) / n + a[j];
+          z[j] = crossprod_resid(xMat, r, sumResid, row_idx, center[jj], scale[jj], n, jj) / n + a[j];
           // Update beta_j
           l1 = lambda[l+1] * m[jj] * alpha;
           l2 = lambda[l+1] * m[jj] * (1-alpha);
           beta(j, l+1) = lasso(z[j], l1, l2, 1);
           // Update r
           shift = beta(j, l+1) - a[j];
-          if (shift != 0) {
-            // compute objective update for checking convergence
-            update =  - z[j] * shift + 0.5 * (1 + l2) * (pow(beta(j, l+1), 2) - \
-              pow(a[j], 2)) + l1 * (fabs(beta(j, l+1)) -  fabs(a[j]));
-            if (update > max_update) {
-              max_update = update;
-            }
-            update_resid<T>(xMat, r, shift, row_idx, center[jj], scale[jj], n, jj);
+          if (shift !=0) {
+            update_resid(xMat, r, shift, row_idx, center[jj], scale[jj], n, jj);
             sumResid = sum(r, n); //update sum of residual
           }
           // update non-zero beta set
@@ -420,14 +328,9 @@ SEXP cdfit_gaussian_edpp_cpp(XPtr<BigMatrix> xMat,
         }
       }
       // Check for convergence
-      if (max_update < thresh) {
-        converged = 1;
-      } else {
-        converged = 0;
-      }
-      //converged = checkConvergence(beta, a, eps, l+1, p);
+      converged = checkConvergence(beta, a, eps, l+1, p);
       // update a
-      for (j = 0; j < p; j++) {
+      for (int j = 0; j < p; j++) {
         a[j] = beta(j, l+1);
       }
       if (converged) {
