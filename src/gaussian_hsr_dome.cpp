@@ -11,7 +11,7 @@
 #include "utilities.h"
 //#include "defines.h"
 template<typename T>
-List cdfit_gaussian_hsr_dome_cpp(XPtr<BigMatrix> xMat,
+SEXP cdfit_gaussian_hsr_dome_cpp(XPtr<BigMatrix> xMat,
                                  SEXP y_, SEXP row_idx_,  
                                  SEXP lambda_, SEXP nlambda_,
                                  SEXP lam_scale_,
@@ -221,7 +221,7 @@ RcppExport SEXP cdfit_gaussian_hsr_dome(SEXP X_, SEXP y_, SEXP row_idx_,
 
 
 template<typename T>
-List cdfit_gaussian_hsr_dome_cpp(XPtr<BigMatrix> xMat,
+SEXP cdfit_gaussian_hsr_dome_cpp(XPtr<BigMatrix> xMat,
                                  SEXP y_, SEXP row_idx_,  
                                         SEXP lambda_, SEXP nlambda_,
                                         SEXP lam_scale_,

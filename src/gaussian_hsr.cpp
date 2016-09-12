@@ -12,7 +12,7 @@
 //#include "defines.h"
 
 template<typename T>
-List cdfit_gaussian_hsr_cpp(XPtr<BigMatrix> xMat,
+SEXP cdfit_gaussian_hsr_cpp(XPtr<BigMatrix> xMat,
                             SEXP y_, SEXP row_idx_, SEXP lambda_, SEXP nlambda_, 
                             SEXP lam_scale_, SEXP lambda_min_, SEXP alpha_, 
                             SEXP user_, SEXP eps_, SEXP max_iter_, SEXP multiplier_, 
@@ -124,7 +124,7 @@ RcppExport SEXP cdfit_gaussian_hsr(SEXP X_, SEXP y_, SEXP row_idx_,
 
 
 template<typename T>
-List cdfit_gaussian_hsr_cpp(XPtr<BigMatrix> xMat,
+SEXP cdfit_gaussian_hsr_cpp(XPtr<BigMatrix> xMat,
                             SEXP y_, SEXP row_idx_, SEXP lambda_, SEXP nlambda_, 
                             SEXP lam_scale_, SEXP lambda_min_, SEXP alpha_, 
                             SEXP user_, SEXP eps_, SEXP max_iter_, SEXP multiplier_, 
