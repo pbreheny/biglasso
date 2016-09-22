@@ -2,12 +2,12 @@ biglasso <- function(X, y, row.idx = 1:nrow(X),
                      penalty = c("lasso", "ridge", "enet"),
                      family = c("gaussian","binomial"), 
                      alg.logistic = c("Newton", "MM"),
-                     screen = c("HSR", "EDPP", "HSR-Dome"),
-                     dome.thresh = 0.01,
+                     screen = c("HSR", "EDPP", "HSR-Dome", "HSR-BEDPP"),
+                     safe.thresh = 0.01,
                      ncores = 1, alpha = 1,
                      lambda.min = ifelse(nrow(X) > ncol(X),.001,.05), 
                      nlambda = 100, lambda.log.scale = TRUE,
-                     lambda, eps = .001, max.iter = 1000, 
+                     lambda, eps = 1e-7, max.iter = 1000, 
                      dfmax = ncol(X)+1,
                      penalty.factor = rep(1, ncol(X)), 
                      warn = TRUE, output.time = TRUE,
@@ -96,7 +96,16 @@ biglasso <- function(X, y, row.idx = 1:nrow(X),
                    lambda.min, alpha,
                    as.integer(user.lambda | any(penalty.factor==0)),
                    eps, as.integer(max.iter), penalty.factor,
-                   as.integer(dfmax), as.integer(ncores), dome.thresh, 
+                   as.integer(dfmax), as.integer(ncores), safe.thresh, 
+                   as.integer(verbose),
+                   PACKAGE = 'biglasso')
+    } else if (screen == 'HSR-BEDPP') {
+      res <- .Call("cdfit_gaussian_hsr_bedpp", X@address, yy, as.integer(row.idx-1),
+                   lambda, as.integer(nlambda), as.integer(lambda.log.scale),
+                   lambda.min, alpha,
+                   as.integer(user.lambda | any(penalty.factor==0)),
+                   eps, as.integer(max.iter), penalty.factor,
+                   as.integer(dfmax), as.integer(ncores), safe.thresh, 
                    as.integer(verbose),
                    PACKAGE = 'biglasso')
     }
@@ -109,8 +118,8 @@ biglasso <- function(X, y, row.idx = 1:nrow(X),
     iter <- res[[6]]
     rejections <- res[[7]]
     
-    if (screen == 'HSR-Dome') {
-      dome_rejections <- res[[8]]
+    if (screen == 'HSR-Dome' || screen == 'HSR-BEDPP') {
+      safe_rejections <- res[[8]]
       col.idx <- res[[9]]
     } else {
       col.idx <- res[[8]]
@@ -149,7 +158,7 @@ biglasso <- function(X, y, row.idx = 1:nrow(X),
   if (output.time) {
     cat("\nEnd biglasso: ", format(Sys.time()), '\n')
   }
-  p.keep <- length(col.idx)
+  # p.keep <- length(col.idx)
   col.idx <- col.idx + 1 # indices (in R) for which variables have scale > 1e-6
  
   ## Eliminate saturated lambda values, if any
@@ -191,8 +200,8 @@ biglasso <- function(X, y, row.idx = 1:nrow(X),
     col.idx = col.idx,
     rejections = rejections
   )
-  if (screen == 'HSR-Dome') {
-    return.val$dome_rejections <- dome_rejections
+  if (screen == 'HSR-Dome' || screen == 'HSR-BEDPP') {
+    return.val$safe_rejections <- safe_rejections
   }
   
   val <- structure(return.val, class = c("biglasso", 'ncvreg'))
