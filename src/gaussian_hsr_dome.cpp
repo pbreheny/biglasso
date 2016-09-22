@@ -71,7 +71,7 @@ int check_rest_set_hsr_dome(int *e1, int *e2, int *dome_accept, vector<double> &
         sum = sum + xCol[row_idx[i]] * r[i];
       }
       z[j] = (sum - center[jj] * sumResid) / (scale[jj] * n);
-      
+     
       l1 = lambda * m[jj] * alpha;
       if(fabs(z[j]) > l1) {
         e1[j] = e2[j] = 1;
@@ -285,7 +285,7 @@ RcppExport SEXP cdfit_gaussian_hsr_dome(SEXP X_, SEXP y_, SEXP row_idx_,
   int accept_size; 
   
   int dome; // if 0, don't perform dome test
-  if (dome_thresh) {
+  if (dome_thresh < 1) {
     dome = 1; // turn on dome
     xty.resize(p);
     xtxmax.resize(p);
