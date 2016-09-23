@@ -77,9 +77,7 @@ void edpp_screen(int *discard_beta, XPtr<BigMatrix> xpMat, double *o,
   MatrixAccessor<double> xAcc(*xpMat);
   
   int j, jj;
-  double lhs;
-  double sum_xy;
-  double sum_y;
+  double lhs, sum_xy, sum_y;
   double *xCol;
   
   #pragma omp parallel for private(j, lhs, sum_xy, sum_y) default(shared) schedule(static) 

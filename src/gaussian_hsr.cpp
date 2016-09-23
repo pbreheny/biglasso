@@ -130,9 +130,6 @@ RcppExport SEXP cdfit_gaussian_hsr(SEXP X_, SEXP y_, SEXP row_idx_,
   // set p = p_keep, only loop over columns whose scale > 1e-6
   p = p_keep;
 
-  Rprintf("p_keep = %d; lambda_max = %f; lambda_min = %f\n", p_keep, lambda_max, lambda_min);
-  Rprintf("z[0] = %f; size of z = %d\n", z[0], z.size());
-  
   if (verbose) {
     char buff1[100];
     time_t now1 = time (0);
