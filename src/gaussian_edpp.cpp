@@ -47,12 +47,10 @@ void update_theta(double *theta, XPtr<BigMatrix> xpMat, int *row_idx,
   for (i = 0; i < n; i++) {
     theta[i] = (y[i] - temp[i]) / lambda;
   }
-
 }
 
 // V2 - <v1, v2> / ||v1||^2_2 * V1
 void update_pv2(double *pv2, double *v1, double *v2, int n) {
-  
   double v1_dot_v2 = 0;
   double v1_norm = 0;
   for (int i = 0; i < n; i++) {
@@ -126,6 +124,7 @@ RcppExport SEXP cdfit_gaussian_edpp(SEXP X_, SEXP y_, SEXP row_idx_, SEXP lambda
   NumericVector scale(p);
   int p_keep = 0;
   int *p_keep_ptr = &p_keep;
+  
   vector<int> col_idx;
   vector<double> z;
   double lambda_max = 0.0;
@@ -133,27 +132,43 @@ RcppExport SEXP cdfit_gaussian_edpp(SEXP X_, SEXP y_, SEXP row_idx_, SEXP lambda
   int xmax_idx = 0;
   int *xmax_ptr = &xmax_idx;
 
-  // char buff1[100];
-  // time_t now1 = time (0);
-  // strftime (buff1, 100, "%Y-%m-%d %H:%M:%S.000", localtime (&now1));
-  // Rprintf("\nPreprocessing start: %s\n", buff1);
-  // standardize: get center, scale; get p_keep_ptr, col_idx; get z, lambda_max, xmax_idx;
   standardize_and_get_residual(center, scale, p_keep_ptr, col_idx, z, 
                                lambda_max_ptr, xmax_ptr, xMat, 
                                y, row_idx, lambda_min, alpha, n, p);
-  
   // set p = p_keep, only loop over columns whose scale > 1e-6
   p = p_keep;
   
-  // now1 = time (0);
-  // strftime (buff1, 100, "%Y-%m-%d %H:%M:%S.000", localtime (&now1));
-  // Rprintf("Preprocessing end: %s\n", buff1);
-  // Rprintf("\n-----------------------------------------------\n");
-
+  // beta
+  arma::sp_mat beta = arma::sp_mat(p, L);
+  double *a = Calloc(p, double); //Beta from previous iteration
+  NumericVector loss(L);
+  IntegerVector iter(L);
+  IntegerVector discard_count(L);
+  
   double l1, l2;
   int converged;
+  double max_update, update, thresh; // for convergence check
   int i, j, jj, l; //temp index
 
+  double *r = Calloc(n, double);
+  for (i = 0; i < n; i++) r[i] = y[i];
+  double sumResid = sum(r, n);
+  loss[0] = gLoss(r, n);
+  thresh = eps * loss[0];
+  
+  // EDPP
+  double *theta = Calloc(n, double);
+  double *v1 = Calloc(n, double);
+  double *v2 = Calloc(n, double);
+  double *pv2 = Calloc(n, double);
+  double *o = Calloc(n, double);
+  
+  // index set of nonzero beta's at l+1;
+  int *nzero_beta = Calloc(p, int);
+  // index set of discarded features at l+1;
+  int *discard_beta = Calloc(p, int);
+  double pv2_norm = 0;
+  
   // lambda, equally spaced on log scale
   if (user == 0) {
     if (lam_scale) {
@@ -172,31 +187,6 @@ RcppExport SEXP cdfit_gaussian_edpp(SEXP X_, SEXP y_, SEXP row_idx_, SEXP lambda
       }
     }
   } 
-
-  double *r = Calloc(n, double);
-  for (i = 0; i < n; i++) r[i] = y[i];
-  double sumResid = sum(r, n);
- 
-  // beta
-  arma::sp_mat beta = arma::sp_mat(p, L);
-  double *a = Calloc(p, double); //Beta from previous iteration
-
-  NumericVector loss(L);
-  IntegerVector iter(L);
-  IntegerVector discard_count(L);
- 
-  // EDPP
-  double *theta = Calloc(n, double);
-  double *v1 = Calloc(n, double);
-  double *v2 = Calloc(n, double);
-  double *pv2 = Calloc(n, double);
-  double *o = Calloc(n, double);
-  
-  // index set of nonzero beta's at l+1;
-  int *nzero_beta = Calloc(p, int);
-  // index set of discarded features at l+1;
-  int *discard_beta = Calloc(p, int);
-  double pv2_norm = 0;
  
   // set up omp
   int useCores = INTEGER(ncore_)[0];
@@ -239,7 +229,7 @@ RcppExport SEXP cdfit_gaussian_edpp(SEXP X_, SEXP y_, SEXP row_idx_, SEXP lambda
         v1[i] = sign(xty) * get_elem_bm(xMat, center[xmax_idx], 
                      scale[xmax_idx], row_idx[i], xmax_idx);
       }
-      loss[l] = gLoss(r,n);
+      // loss[l] = gLoss(r,n);
       for (j = 0; j < p; j++) {
         nzero_beta[j] = 0;
         discard_beta[j] = 1;
@@ -270,6 +260,8 @@ RcppExport SEXP cdfit_gaussian_edpp(SEXP X_, SEXP y_, SEXP row_idx_, SEXP lambda
     double shift = 0.0;
     while (iter[l+1] < max_iter) {
       iter[l+1]++;
+      
+      max_update = 0.0;
       for (int j=0; j<p; j++) {
         if (discard_beta[j] == 0) {
           jj = col_idx[j];
@@ -281,6 +273,13 @@ RcppExport SEXP cdfit_gaussian_edpp(SEXP X_, SEXP y_, SEXP row_idx_, SEXP lambda
           // Update r
           shift = beta(j, l+1) - a[j];
           if (shift !=0) {
+            // compute objective update for checking convergence
+            update =  - (z[j] - a[j]) * shift + 0.5 * (1 + l2) * (pow(beta(j, l+1), 2) - \
+              pow(a[j], 2)) + l1 * (fabs(beta(j, l+1)) -  fabs(a[j]));
+            if (update > max_update) {
+              max_update = update;
+            }
+            
             update_resid(xMat, r, shift, row_idx, center[jj], scale[jj], n, jj);
             sumResid = sum(r, n); //update sum of residual
           }
@@ -293,7 +292,13 @@ RcppExport SEXP cdfit_gaussian_edpp(SEXP X_, SEXP y_, SEXP row_idx_, SEXP lambda
         }
       }
       // Check for convergence
-      converged = checkConvergence(beta, a, eps, l+1, p);
+      // converged = checkConvergence(beta, a, eps, l+1, p);
+      if (max_update < thresh) {
+        converged = 1;
+      } else {
+        converged = 0;
+      }
+      
       // update a
       for (int j = 0; j < p; j++) {
         a[j] = beta(j, l+1);

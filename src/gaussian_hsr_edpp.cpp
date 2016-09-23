@@ -329,7 +329,7 @@ RcppExport SEXP cdfit_gaussian_hsr_bedpp(SEXP X_, SEXP y_, SEXP row_idx_,
         // update bedpp_accept_old with bedpp_accept
         bedpp_accept_old[j] = bedpp_accept[j];
         // hsr screening
-        if (bedpp_accept[j] && (fabs(z[j]) > (cutoff * alpha * m[col_idx[j]]))) {
+        if (bedpp_accept[j] && (fabs(z[j]) >= (cutoff * alpha * m[col_idx[j]]))) {
           e2[j] = 1;
         } else {
           e2[j] = 0;
@@ -340,7 +340,7 @@ RcppExport SEXP cdfit_gaussian_hsr_bedpp(SEXP X_, SEXP y_, SEXP row_idx_,
       // hsr screening over all
       #pragma omp parallel for private(j) schedule(static) 
       for (j = 0; j < p; j++) {
-        if (fabs(z[j]) > (cutoff * alpha * m[col_idx[j]])) {
+        if (fabs(z[j]) >= (cutoff * alpha * m[col_idx[j]])) {
           e2[j] = 1;
         } else {
           e2[j] = 0;
@@ -367,7 +367,7 @@ RcppExport SEXP cdfit_gaussian_hsr_bedpp(SEXP X_, SEXP y_, SEXP row_idx_,
               shift = beta(j, l) - a[j];
               if (shift !=0) {
                 // compute objective update for checking convergence
-                update =  - z[j] * shift + 0.5 * (1 + l2) * (pow(beta(j, l), 2) - \
+                update =  - (z[j] - a[j]) * shift + 0.5 * (1 + l2) * (pow(beta(j, l), 2) - \
                   pow(a[j], 2)) + l1 * (fabs(beta(j, l)) -  fabs(a[j]));
                 if (update > max_update) {
                   max_update = update;

@@ -218,7 +218,7 @@ RcppExport SEXP cdfit_gaussian_hsr(SEXP X_, SEXP y_, SEXP row_idx_,
       // strong set
       cutoff = 2 * lambda[l] - lambda[l-1];
       for (j = 0; j < p; j++) {
-        if (fabs(z[j]) > (cutoff * alpha * m[col_idx[j]])) {
+        if (fabs(z[j]) >= (cutoff * alpha * m[col_idx[j]])) {
           e2[j] = 1;
         } else {
           e2[j] = 0;
@@ -228,7 +228,7 @@ RcppExport SEXP cdfit_gaussian_hsr(SEXP X_, SEXP y_, SEXP row_idx_,
       // strong set
       cutoff = 2*lambda[l] - lambda_max;
       for (j = 0; j < p; j++) {
-        if (fabs(z[j]) > (cutoff * alpha * m[col_idx[j]])) {
+        if (fabs(z[j]) >= (cutoff * alpha * m[col_idx[j]])) {
           e2[j] = 1;
         } else {
           e2[j] = 0;
@@ -257,7 +257,7 @@ RcppExport SEXP cdfit_gaussian_hsr(SEXP X_, SEXP y_, SEXP row_idx_,
               shift = beta(j, l) - a[j];
               if (shift !=0) {
                 // compute objective update for checking convergence
-                update =  - z[j] * shift + 0.5 * (1 + l2) * (pow(beta(j, l), 2) - \
+                update =  - (z[j] - a[j]) * shift + 0.5 * (1 + l2) * (pow(beta(j, l), 2) - \
                   pow(a[j], 2)) + l1 * (fabs(beta(j, l)) -  fabs(a[j]));
                 if (update > max_update) {
                   max_update = update;
@@ -276,7 +276,7 @@ RcppExport SEXP cdfit_gaussian_hsr(SEXP X_, SEXP y_, SEXP row_idx_,
           }
           
           // Check for convergence
-          //converged = checkConvergence(beta, a, eps, l, p);
+          // converged = checkConvergence(beta, a, eps, l, p);
           // update a
           for (j = 0; j < p; j++) {
             a[j] = beta(j, l);
