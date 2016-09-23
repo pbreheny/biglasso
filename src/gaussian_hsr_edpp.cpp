@@ -93,11 +93,9 @@ void bedpp_init(vector<double>& sign_lammax_xtxmax,
   xCol_max = xAcc[xmax_idx];
   int i, j, jj;
   // sign of xmaxTy
-  for (i = 0; i < n; i++) {
-    sum_xmaxTy += xCol_max[row_idx[i]] * y[i];
-  }
-  sign_xmaxTy = sign(sum_xmaxTy);
-
+  sum_xmaxTy = crossprod_bm(xMat, y, row_idx, center[xmax_idx], scale[xmax_idx], n, xmax_idx);
+  sum_xmaxTy = sign(sum_xmaxTy);
+  
   #pragma omp parallel for private(j, sum_xjxmax) schedule(static) 
   for (j = 0; j < p; j++) { // p = p_keep
     jj = col_idx[j]; // index in the raw XMat, not in col_idx;
