@@ -251,7 +251,7 @@ void standardize_and_get_residual(NumericVector &center, NumericVector &scale,
       zj = (sum_xy - center[j] * sum_y) / (scale[j] * n); //residual
       if (fabs(zj) > zmax) {
         zmax = fabs(zj);
-        *xmax_ptr = j;
+        *xmax_ptr = j; // xmax_ptr is the index in the raw xMat, not index in col_idx!
       }
       z.push_back(zj);
     }
