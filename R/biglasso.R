@@ -7,10 +7,10 @@ biglasso <- function(X, y, row.idx = 1:nrow(X),
                      ncores = 1, alpha = 1,
                      lambda.min = ifelse(nrow(X) > ncol(X),.001,.05), 
                      nlambda = 100, lambda.log.scale = TRUE,
-                     lambda, eps = 1e-7, max.iter = 1000, 
+                     lambda, eps = 1e-7, max.iter = 100000, 
                      dfmax = ncol(X)+1,
                      penalty.factor = rep(1, ncol(X)), 
-                     warn = TRUE, output.time = TRUE,
+                     warn = TRUE, output.time = F,
                      verbose = FALSE) {
   # Coersion
   family <- match.arg(family)
