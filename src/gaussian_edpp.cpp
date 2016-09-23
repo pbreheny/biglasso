@@ -31,10 +31,7 @@ void update_theta(double *theta, XPtr<BigMatrix> xpMat, int *row_idx,
                   int *nzero_beta, int n, int p, int l) {
   int i, j, jj;
   double *xCol;
-  double temp[n];
-  for (int i=0; i<n; i++) {
-    temp[i] = 0;
-  }
+  double *temp = Calloc(n, double);
 
   MatrixAccessor<double> xAcc(*xpMat);
   // first compute sum_xj*betaj: loop for variables with nonzero beta's.
@@ -47,13 +44,11 @@ void update_theta(double *theta, XPtr<BigMatrix> xpMat, int *row_idx,
       }
     }
   }
-  // then compute (y - sum_xj*betaj) / lambda
   for (i = 0; i < n; i++) {
     theta[i] = (y[i] - temp[i]) / lambda;
   }
-  
-}
 
+}
 
 // V2 - <v1, v2> / ||v1||^2_2 * V1
 void update_pv2(double *pv2, double *v1, double *v2, int n) {
@@ -138,10 +133,10 @@ RcppExport SEXP cdfit_gaussian_edpp(SEXP X_, SEXP y_, SEXP row_idx_, SEXP lambda
   int xmax_idx = 0;
   int *xmax_ptr = &xmax_idx;
 
-//   char buff1[100];
-//   time_t now1 = time (0);
-//   strftime (buff1, 100, "%Y-%m-%d %H:%M:%S.000", localtime (&now1));
-//   Rprintf("\nPreprocessing start: %s\n", buff1);
+  // char buff1[100];
+  // time_t now1 = time (0);
+  // strftime (buff1, 100, "%Y-%m-%d %H:%M:%S.000", localtime (&now1));
+  // Rprintf("\nPreprocessing start: %s\n", buff1);
   // standardize: get center, scale; get p_keep_ptr, col_idx; get z, lambda_max, xmax_idx;
   standardize_and_get_residual(center, scale, p_keep_ptr, col_idx, z, 
                                lambda_max_ptr, xmax_ptr, xMat, 
@@ -150,10 +145,10 @@ RcppExport SEXP cdfit_gaussian_edpp(SEXP X_, SEXP y_, SEXP row_idx_, SEXP lambda
   // set p = p_keep, only loop over columns whose scale > 1e-6
   p = p_keep;
   
-//   now1 = time (0);
-//   strftime (buff1, 100, "%Y-%m-%d %H:%M:%S.000", localtime (&now1));
-//   Rprintf("Preprocessing end: %s\n", buff1);
-//   Rprintf("\n-----------------------------------------------\n");
+  // now1 = time (0);
+  // strftime (buff1, 100, "%Y-%m-%d %H:%M:%S.000", localtime (&now1));
+  // Rprintf("Preprocessing end: %s\n", buff1);
+  // Rprintf("\n-----------------------------------------------\n");
 
   double l1, l2;
   int converged;
@@ -185,9 +180,6 @@ RcppExport SEXP cdfit_gaussian_edpp(SEXP X_, SEXP y_, SEXP row_idx_, SEXP lambda
   // beta
   arma::sp_mat beta = arma::sp_mat(p, L);
   double *a = Calloc(p, double); //Beta from previous iteration
-//   for (int j = 0; j < p; j++) {
-//     a[j] = 0.0;
-//   }
 
   NumericVector loss(L);
   IntegerVector iter(L);
@@ -218,11 +210,6 @@ RcppExport SEXP cdfit_gaussian_edpp(SEXP X_, SEXP y_, SEXP row_idx_, SEXP lambda
   omp_set_num_threads(useCores);
 
   for (l = 0; l < L-1; l++) {
-//     char buff[100];
-//     time_t now = time (0);
-//     strftime (buff, 100, "%Y-%m-%d %H:%M:%S.000", localtime (&now));
-//     Rprintf("Lambda %d. Now time: %s\n", l, buff);
-   
     if (l != 0 ) {
       // Check dfmax: a is current beta. At each iteration, solving for next beta.
       int nv = 0;
@@ -240,18 +227,17 @@ RcppExport SEXP cdfit_gaussian_edpp(SEXP X_, SEXP y_, SEXP row_idx_, SEXP lambda
       // update v1
       for (i = 0; i < n; i++) {
         v1[i] = y[i] / lambda[l] - theta[i];
-        //if (i == 0) Rprintf("v1[0] = %f, theta[0] = %f\n", v1[i], theta[0]);
       }
     } else { // lambda_max = lam[0]
       for (i = 0; i < n; i++) {
         theta[i] =  y[i] / lambda[l];
       }
       // compute v1 for lambda_max
-      double xty = crossprod_bm(xMat, y, row_idx, center[col_idx[xmax_idx]], 
-                                scale[col_idx[xmax_idx]], n, col_idx[xmax_idx]);
+      double xty = crossprod_bm(xMat, y, row_idx, center[xmax_idx], 
+                                scale[xmax_idx], n, xmax_idx);
       for (i = 0; i < n; i++) {
-        v1[i] = sign(xty) * get_elem_bm(xMat, center[col_idx[xmax_idx]], 
-                     scale[col_idx[xmax_idx]], row_idx[i], col_idx[xmax_idx]);
+        v1[i] = sign(xty) * get_elem_bm(xMat, center[xmax_idx], 
+                     scale[xmax_idx], row_idx[i], xmax_idx);
       }
       loss[l] = gLoss(r,n);
       for (j = 0; j < p; j++) {
@@ -259,7 +245,6 @@ RcppExport SEXP cdfit_gaussian_edpp(SEXP X_, SEXP y_, SEXP row_idx_, SEXP lambda
         discard_beta[j] = 1;
       }
       discard_count[l] = sum_int(discard_beta, p);
-//       Rprintf("lambda[%d] = %f: discarded features: %d\n", l, lambda[l], discard_count[l]);
     } 
     // update v2:
     for (i = 0; i < n; i++) {
@@ -272,40 +257,22 @@ RcppExport SEXP cdfit_gaussian_edpp(SEXP X_, SEXP y_, SEXP row_idx_, SEXP lambda
       pv2_norm += pow(pv2[i], 2);
     }
     pv2_norm = pow(pv2_norm, 0.5);
-    // Rprintf("\npv2_norm = %f\n", pv2_norm);
     // update o
     for (i = 0; i < n; i++) {
       o[i] = theta[i] + 0.5 * pv2[i];
     }
     double rhs = n - 0.5 * pv2_norm * sqrt(n); 
-    
-//     now = time (0);
-//     strftime (buff, 100, "%Y-%m-%d %H:%M:%S.000", localtime (&now));
-//     Rprintf("EDPP start: Now time: %s\n", buff);
 
     // apply EDPP
     edpp_screen(discard_beta, xMat, o, row_idx, col_idx, center, scale, n, p, rhs);
     discard_count[l+1] = sum_int(discard_beta, p);
-    
-//     now = time (0);
-//     strftime (buff, 100, "%Y-%m-%d %H:%M:%S.000", localtime (&now));
-//     Rprintf("EDPP end: Now time: %s\n", buff);
-//     
-//     // count discarded features for next lambda
-//     discard_count[l+1] = sum_discard(discard_beta, p);
-//     Rprintf("lambda[%d] = %f: discarded features: %d\n", l+1, lambda[l+1], discard_count[l+1]);
-//     
-//     // solve lasso for beta[lam(l+1)] based on the set of non-discarded features.
-//     now = time (0);
-//     strftime (buff, 100, "%Y-%m-%d %H:%M:%S.000", localtime (&now));
-//     Rprintf("Solve lasso start: Now time: %s\n", buff);
 
     double shift = 0.0;
     while (iter[l+1] < max_iter) {
       iter[l+1]++;
       for (int j=0; j<p; j++) {
         if (discard_beta[j] == 0) {
-          jj = col_idx[jj];
+          jj = col_idx[j];
           z[j] = crossprod_resid(xMat, r, sumResid, row_idx, center[jj], scale[jj], n, jj) / n + a[j];
           // Update beta_j
           l1 = lambda[l+1] * m[jj] * alpha;
@@ -336,10 +303,6 @@ RcppExport SEXP cdfit_gaussian_edpp(SEXP X_, SEXP y_, SEXP row_idx_, SEXP lambda
         break;
       } 
     }
-    
-//     now = time (0);
-//     strftime (buff, 100, "%Y-%m-%d %H:%M:%S.000", localtime (&now));
-//     Rprintf("Solve lasso end: Now time: %s\n", buff);
   }
 
   free_memo_edpp(a, r, nzero_beta, discard_beta, theta, v1, v2, o);
