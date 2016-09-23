@@ -16,8 +16,8 @@ biglasso(X, y, row.idx = 1:nrow(X), penalty = c("lasso", "ridge", "enet"),
          screen = c("HSR", "EDPP", "HSR-Dome", "HSR-BEDPP"), safe.thresh = 0.01, 
          ncores = 1, alpha = 1, lambda.min = ifelse(nrow(X) > ncol(X),.001,.05), 
          nlambda = 100, lambda.log.scale = TRUE, lambda, eps = 1e-7, 
-         max.iter = 1000, dfmax = ncol(X)+1, penalty.factor = rep(1, ncol(X)), 
-         warn = TRUE, output.time = TRUE, verbose = FALSE)
+         max.iter = 100000, dfmax = ncol(X)+1, penalty.factor = rep(1, ncol(X)), 
+         warn = TRUE, output.time = FALSE, verbose = FALSE)
 }
 
 \arguments{
