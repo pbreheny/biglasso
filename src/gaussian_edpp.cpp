@@ -146,7 +146,6 @@ RcppExport SEXP cdfit_gaussian_edpp(SEXP X_, SEXP y_, SEXP row_idx_, SEXP lambda
   IntegerVector discard_count(L);
   
   double l1, l2;
-  int converged;
   double max_update, update, thresh; // for convergence check
   int i, j, jj, l; //temp index
 
@@ -274,14 +273,14 @@ RcppExport SEXP cdfit_gaussian_edpp(SEXP X_, SEXP y_, SEXP row_idx_, SEXP lambda
           shift = beta(j, l+1) - a[j];
           if (shift !=0) {
             // compute objective update for checking convergence
-            update =  - (z[j] - a[j]) * shift + 0.5 * (1 + l2) * (pow(beta(j, l+1), 2) - \
-              pow(a[j], 2)) + l1 * (fabs(beta(j, l+1)) -  fabs(a[j]));
+            update =  z[j] * shift - 0.5 * (1 + l2) * (pow(beta(j, l+1), 2) - \
+              pow(a[j], 2)) - l1 * (fabs(beta(j, l+1)) -  fabs(a[j]));
             if (update > max_update) {
               max_update = update;
             }
-            
             update_resid(xMat, r, shift, row_idx, center[jj], scale[jj], n, jj);
             sumResid = sum(r, n); //update sum of residual
+            a[j] = beta(j, l+1); //update a
           }
           // update non-zero beta set
           if (beta(j, l+1) != 0) {
@@ -294,16 +293,6 @@ RcppExport SEXP cdfit_gaussian_edpp(SEXP X_, SEXP y_, SEXP row_idx_, SEXP lambda
       // Check for convergence
       // converged = checkConvergence(beta, a, eps, l+1, p);
       if (max_update < thresh) {
-        converged = 1;
-      } else {
-        converged = 0;
-      }
-      
-      // update a
-      for (int j = 0; j < p; j++) {
-        a[j] = beta(j, l+1);
-      }
-      if (converged) {
         loss[l+1] = gLoss(r, n);
         break;
       } 

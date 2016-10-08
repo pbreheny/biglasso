@@ -134,7 +134,7 @@ void dome_screen(int *accept, const vector<double> &xtxmax, const vector<int> &r
       L = - n_time_lam + delta_lam * xtxmax[j] + dlam_times_psi * tt[j];
       U = n_time_lam + delta_lam * xtxmax[j] - dlam_times_psi * tt[j];
     }
-    if (xty[j] > U || xty[j] < L) { // don't reject; accept; save index
+    if (xty[j] >= U || xty[j] <= L) { // don't reject; accept; save index
       accept[j] = 1;
     } else {
       accept[j] = 0;
@@ -223,7 +223,7 @@ RcppExport SEXP cdfit_gaussian_hsr_dome(SEXP X_, SEXP y_, SEXP row_idx_,
   
   double l1, l2, cutoff, shift;
   double max_update, update, thresh; // for convergence check
-  int converged, lstart = 0, violations;
+  int lstart = 0, violations;
   int j, jj, l; // temp index
 
   // lambda, equally spaced on log scale
@@ -346,7 +346,7 @@ RcppExport SEXP cdfit_gaussian_hsr_dome(SEXP X_, SEXP y_, SEXP row_idx_,
         // update dome_accept_old with dome_accept
         dome_accept_old[j] = dome_accept[j];
         // hsr screening over dome_accept
-        if (dome_accept[j] && (fabs(z[j]) >= (cutoff * alpha * m[col_idx[j]]))) {
+        if (dome_accept[j] && (fabs(z[j]) >= cutoff * alpha * m[col_idx[j]])) {
           e2[j] = 1;
         } else {
           e2[j] = 0;
@@ -357,7 +357,7 @@ RcppExport SEXP cdfit_gaussian_hsr_dome(SEXP X_, SEXP y_, SEXP row_idx_,
       // hsr screening over all
       #pragma omp parallel for private(j) schedule(static) 
       for (j = 0; j < p; j++) {
-        if (fabs(z[j]) >= (cutoff * alpha * m[col_idx[j]])) {
+        if (fabs(z[j]) >= cutoff * alpha * m[col_idx[j]]) {
           e2[j] = 1;
         } else {
           e2[j] = 0;
@@ -376,38 +376,29 @@ RcppExport SEXP cdfit_gaussian_hsr_dome(SEXP X_, SEXP y_, SEXP row_idx_,
             if (e1[j]) {
               jj = col_idx[j];
               z[j] = crossprod_resid(xMat, r, sumResid, row_idx, center[jj], scale[jj], n, jj) / n + a[j];
-              // Update beta_j
               l1 = lambda[l] * m[jj] * alpha;
               l2 = lambda[l] * m[jj] * (1-alpha);
               beta(j, l) = lasso(z[j], l1, l2, 1);
-              // Update r
+              
               shift = beta(j, l) - a[j];
               if (shift !=0) {
-                // compute objective update for checking convergence
-                update =  - (z[j] - a[j]) * shift + 0.5 * (1 + l2) * (pow(beta(j, l), 2) - \
-                  pow(a[j], 2)) + l1 * (fabs(beta(j, l)) -  fabs(a[j]));
+                // compute objective update for convergence check
+                update =  z[j] * shift - 0.5 * (1 + l2) * (pow(beta(j, l), 2) - \
+                  pow(a[j], 2)) - l1 * (fabs(beta(j, l)) -  fabs(a[j]));
                 if (update > max_update) {
                   max_update = update;
                 }
-                update_resid(xMat, r, shift, row_idx, center[jj], scale[jj], n, jj);
+                update_resid(xMat, r, shift, row_idx, center[jj], scale[jj], n, jj); // update r
                 sumResid = sum(r, n); //update sum of residual
+                a[j] = beta(j, l); // update a
               }
             }
           }
-          
+         
           // Check for convergence
-          if (max_update < thresh) {
-            converged = 1;
-          } else {
-            converged = 0;
-          }
+          if (max_update < thresh) break;
           //converged = checkConvergence(beta, a, eps, l, p);
-          
-          // update a; only for ever-active set
-          for (j = 0; j < p; j++) {
-            a[j] = beta(j, l);
-          }
-          if (converged) break;
+
         }
         
         // Scan for violations in strong set

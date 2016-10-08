@@ -48,7 +48,6 @@ int check_rest_set(int *e1, int *e2, vector<double> &z, XPtr<BigMatrix> xpMat, i
                    double lambda, double sumResid, double alpha, double *r, double *m, int n, int p) {
   
   MatrixAccessor<double> xAcc(*xpMat);
- 
   double *xCol, sum, l1;
   int j, jj, violations = 0;
   #pragma omp parallel for private(j, sum, l1) reduction(+:violations) schedule(static) 
@@ -82,9 +81,6 @@ RcppExport SEXP cdfit_gaussian_hsr(SEXP X_, SEXP y_, SEXP row_idx_,
   XPtr<BigMatrix> xMat(X_);
   double *y = REAL(y_);
   int *row_idx = INTEGER(row_idx_);
-  // const char *xf_bin = CHAR(Rf_asChar(xf_bin_));
-  // int nchunks = INTEGER(nchunks_)[0];
-  // int dome = INTEGER(dome_)[0]; // use dome test for screening or not?
   double lambda_min = REAL(lambda_min_)[0];
   double alpha = REAL(alpha_)[0];
   int n = Rf_length(row_idx_); // number of observations used for fitting model
@@ -100,7 +96,7 @@ RcppExport SEXP cdfit_gaussian_hsr(SEXP X_, SEXP y_, SEXP row_idx_,
   if (user != 0) {
     lambda = Rcpp::as<NumericVector>(lambda_);
   } 
-  
+
   double eps = REAL(eps_)[0];
   int max_iter = INTEGER(max_iter_)[0];
   double *m = REAL(multiplier_);
@@ -155,7 +151,7 @@ RcppExport SEXP cdfit_gaussian_hsr(SEXP X_, SEXP y_, SEXP row_idx_,
   
   int *e1 = Calloc(p, int);
   int *e2 = Calloc(p, int);
-  int converged, lstart = 0, violations;
+  int lstart = 0, violations;
   int j, jj, l; // temp index
   
   // set up lambda
@@ -179,7 +175,7 @@ RcppExport SEXP cdfit_gaussian_hsr(SEXP X_, SEXP y_, SEXP row_idx_,
   } 
   loss[0] = gLoss(r,n);
   thresh = eps * loss[0];
-  
+
   // set up omp
   int useCores = INTEGER(ncore_)[0];
   int haveCores = omp_get_num_procs();
@@ -237,8 +233,7 @@ RcppExport SEXP cdfit_gaussian_hsr(SEXP X_, SEXP y_, SEXP row_idx_,
     }
     
     n_reject[l] = p - sum_discard(e2, p);
-    // Rprintf("\t n_reject[%d] = %d\n", l, n_reject[l]);
-   
+
     while(iter[l] < max_iter) {
       while(iter[l] < max_iter){
         while(iter[l] < max_iter) {
@@ -257,31 +252,24 @@ RcppExport SEXP cdfit_gaussian_hsr(SEXP X_, SEXP y_, SEXP row_idx_,
               shift = beta(j, l) - a[j];
               if (shift !=0) {
                 // compute objective update for checking convergence
-                update =  - (z[j] - a[j]) * shift + 0.5 * (1 + l2) * (pow(beta(j, l), 2) - \
-                  pow(a[j], 2)) + l1 * (fabs(beta(j, l)) -  fabs(a[j]));
+                update =  z[j] * shift - 0.5 * (1 + l2) * (pow(beta(j, l), 2) - \
+                  pow(a[j], 2)) - l1 * (fabs(beta(j, l)) -  fabs(a[j]));
                 if (update > max_update) {
                   max_update = update;
                 }
                 update_resid(xMat, r, shift, row_idx, center[jj], scale[jj], n, jj);
                 sumResid = sum(r, n); //update sum of residual
+                a[j] = beta(j, l); //update a
               }
             }
           }
-          
+        
           // Check for convergence
-          if (max_update < thresh) {
-            converged = 1;
-          } else {
-            converged = 0;
-          }
+          if (max_update < thresh) break;
           
           // Check for convergence
           // converged = checkConvergence(beta, a, eps, l, p);
-          // update a
-          for (j = 0; j < p; j++) {
-            a[j] = beta(j, l);
-          }
-          if (converged) break;
+
         }
         
         // Scan for violations in strong set

@@ -216,7 +216,7 @@ RcppExport SEXP cdfit_gaussian_hsr_bedpp(SEXP X_, SEXP y_, SEXP row_idx_,
   
   double l1, l2, cutoff, shift;
   double max_update, update, thresh; // for convergence check
-  int converged, lstart = 0, violations;
+  int lstart = 0, violations;
   int j, jj, l; // temp index
 
   // lambda, equally spaced on log scale
@@ -367,30 +367,22 @@ RcppExport SEXP cdfit_gaussian_hsr_bedpp(SEXP X_, SEXP y_, SEXP row_idx_,
               shift = beta(j, l) - a[j];
               if (shift !=0) {
                 // compute objective update for checking convergence
-                update =  - (z[j] - a[j]) * shift + 0.5 * (1 + l2) * (pow(beta(j, l), 2) - \
-                  pow(a[j], 2)) + l1 * (fabs(beta(j, l)) -  fabs(a[j]));
+                update =  z[j] * shift - 0.5 * (1 + l2) * (pow(beta(j, l), 2) - \
+                  pow(a[j], 2)) - l1 * (fabs(beta(j, l)) -  fabs(a[j]));
                 if (update > max_update) {
                   max_update = update;
                 }
                 update_resid(xMat, r, shift, row_idx, center[jj], scale[jj], n, jj);
                 sumResid = sum(r, n); //update sum of residual
+                a[j] = beta(j, l); //update a
               }
             }
           }
           
           // Check for convergence
-          if (max_update < thresh) {
-            converged = 1;
-          } else {
-            converged = 0;
-          }
+          if (max_update < thresh) break;
           //converged = checkConvergence(beta, a, eps, l, p);
-          
-          // update a; only for ever-active set
-          for (j = 0; j < p; j++) {
-            a[j] = beta(j, l);
-          }
-          if (converged) break;
+
         }
         
         // Scan for violations in strong set
