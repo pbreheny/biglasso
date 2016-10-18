@@ -84,18 +84,14 @@ void dome_init(vector<double> &xtxmax, vector<int> &region, // region: whether x
   #pragma omp parallel for private(j, sum_xjxmax) schedule(static) 
   for (j = 0; j < p; j++) {
     jj = col_idx[j];
-    if (jj != xmax_idx) {
-      xCol = xAcc[jj];
-      sum_xjxmax = 0.0;
-      for (int i = 0; i < n; i++) {
-        sum_xjxmax = sum_xjxmax + xCol[row_idx[i]] * xCol_max[row_idx[i]];
-      }
-      xtxmax[j] = (sum_xjxmax - center[jj] * sum_xmax) / (scale[jj] * scale[xmax_idx]);
-      tt[j] = sqrt(n - xtxmax[j]*xtxmax[j] / n);
-    } else {
-      xtxmax[j] = n;
-      tt[j] = sqrt(n - xtxmax[j]*xtxmax[j] / n);
+    xCol = xAcc[jj];
+    sum_xjxmax = 0.0;
+    for (int i = 0; i < n; i++) {
+      sum_xjxmax = sum_xjxmax + xCol[row_idx[i]] * xCol_max[row_idx[i]];
     }
+    xtxmax[j] = (sum_xjxmax - center[jj] * sum_xmax) / (scale[jj] * scale[xmax_idx]);
+    tt[j] = sqrt(n - xtxmax[j]*xtxmax[j] / n);
+
     if (xtxmax[j] < - cutoff) {
       region[j] = 1;
     } else if (xtxmax[j] > cutoff) {
@@ -134,10 +130,10 @@ void dome_screen(int *accept, const vector<double> &xtxmax, const vector<int> &r
       L = - n_time_lam + delta_lam * xtxmax[j] + dlam_times_psi * tt[j];
       U = n_time_lam + delta_lam * xtxmax[j] - dlam_times_psi * tt[j];
     }
-    if (xty[j] >= U || xty[j] <= L) { // don't reject; accept; save index
-      accept[j] = 1;
-    } else {
+    if (xty[j] > L && xty[j] < U) { // reject
       accept[j] = 0;
+    } else {
+      accept[j] = 1;
     }
   }
 }
@@ -246,9 +242,9 @@ RcppExport SEXP cdfit_gaussian_hsr_dome(SEXP X_, SEXP y_, SEXP row_idx_,
     // lstart = 1;
     // n_reject[0] = p; // strong rule rejects all variables at lambda_max
   } 
-  loss[0] = gLoss(r,n);
-  thresh = eps * loss[0];
-  
+  loss[0] = gLoss(r, n);
+  thresh = eps * loss[0] / n;
+ 
   int *e1 = Calloc(p, int); // ever-active set
   int *e2 = Calloc(p, int); // strong set;
 
@@ -257,7 +253,6 @@ RcppExport SEXP cdfit_gaussian_hsr_dome(SEXP X_, SEXP y_, SEXP row_idx_,
   vector<double> xtxmax;
   vector<double> tt;
   vector<int> region;
-
   double ynorm, psi;
   int *dome_accept = Calloc(p, int);
   int *dome_accept_old = Calloc(p, int);
@@ -265,8 +260,8 @@ RcppExport SEXP cdfit_gaussian_hsr_dome(SEXP X_, SEXP y_, SEXP row_idx_,
     dome_accept[j] = 1;
     dome_accept_old[j] = 1;
   }
-  int accept_size; 
-  int dome; // if 0, don't perform dome test
+  int accept_size;
+  int dome;
   if (dome_thresh < 1) {
     dome = 1; // turn on dome
     xty.resize(p);
@@ -383,8 +378,9 @@ RcppExport SEXP cdfit_gaussian_hsr_dome(SEXP X_, SEXP y_, SEXP row_idx_,
               shift = beta(j, l) - a[j];
               if (shift !=0) {
                 // compute objective update for convergence check
-                update =  z[j] * shift - 0.5 * (1 + l2) * (pow(beta(j, l), 2) - \
-                  pow(a[j], 2)) - l1 * (fabs(beta(j, l)) -  fabs(a[j]));
+                //update =  z[j] * shift - 0.5 * (1 + l2) * (pow(beta(j, l), 2) - \
+                //  pow(a[j], 2)) - l1 * (fabs(beta(j, l)) -  fabs(a[j]));
+                update = pow(beta(j, l) - a[j], 2);
                 if (update > max_update) {
                   max_update = update;
                 }

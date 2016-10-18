@@ -11,8 +11,10 @@
 #include "utilities.h"
 //#include "defines.h"
 
-void free_memo_edpp(double *a, double *r, int *nzero_beta, int *discard_beta,
-               double *theta, double *v1, double *v2, double *o) {
+void free_memo_edpp(double *a, double *r, int *nzero_beta, 
+                    int *discard_beta, double *theta, double *v1, 
+                    double *v2, 
+                    double *o) {
   free(a);
   free(r);
   free(nzero_beta);
@@ -153,15 +155,15 @@ RcppExport SEXP cdfit_gaussian_edpp(SEXP X_, SEXP y_, SEXP row_idx_, SEXP lambda
   for (i = 0; i < n; i++) r[i] = y[i];
   double sumResid = sum(r, n);
   loss[0] = gLoss(r, n);
-  thresh = eps * loss[0];
-  
+  thresh = eps * loss[0] / n;
+
   // EDPP
   double *theta = Calloc(n, double);
   double *v1 = Calloc(n, double);
   double *v2 = Calloc(n, double);
   double *pv2 = Calloc(n, double);
   double *o = Calloc(n, double);
-  
+
   // index set of nonzero beta's at l+1;
   int *nzero_beta = Calloc(p, int);
   // index set of discarded features at l+1;
@@ -230,7 +232,6 @@ RcppExport SEXP cdfit_gaussian_edpp(SEXP X_, SEXP y_, SEXP row_idx_, SEXP lambda
       }
       // loss[l] = gLoss(r,n);
       for (j = 0; j < p; j++) {
-        nzero_beta[j] = 0;
         discard_beta[j] = 1;
       }
       discard_count[l] = sum_int(discard_beta, p);
@@ -273,8 +274,9 @@ RcppExport SEXP cdfit_gaussian_edpp(SEXP X_, SEXP y_, SEXP row_idx_, SEXP lambda
           shift = beta(j, l+1) - a[j];
           if (shift !=0) {
             // compute objective update for checking convergence
-            update =  z[j] * shift - 0.5 * (1 + l2) * (pow(beta(j, l+1), 2) - \
-              pow(a[j], 2)) - l1 * (fabs(beta(j, l+1)) -  fabs(a[j]));
+            //update =  z[j] * shift - 0.5 * (1 + l2) * (pow(beta(j, l+1), 2) - \
+            //  pow(a[j], 2)) - l1 * (fabs(beta(j, l+1)) -  fabs(a[j]));
+            update = pow(beta(j, l+1) - a[j], 2);
             if (update > max_update) {
               max_update = update;
             }

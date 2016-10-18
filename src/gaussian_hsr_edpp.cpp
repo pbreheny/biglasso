@@ -240,8 +240,8 @@ RcppExport SEXP cdfit_gaussian_hsr_bedpp(SEXP X_, SEXP y_, SEXP row_idx_,
     // n_reject[0] = p; // strong rule rejects all variables at lambda_max
   } 
   loss[0] = gLoss(r,n);
-  thresh = eps * loss[0];
-  
+  thresh = eps * loss[0] / n;
+ 
   int *e1 = Calloc(p, int); // ever-active set
   int *e2 = Calloc(p, int); // strong set;
 
@@ -259,7 +259,7 @@ RcppExport SEXP cdfit_gaussian_hsr_bedpp(SEXP X_, SEXP y_, SEXP row_idx_,
   
   int bedpp; // if 0, don't perform bedpp test
   if (bedpp_thresh < 1) {
-    bedpp = 1; // turn on dome
+    bedpp = 1; // turn on bedpp test
     xty.resize(p);
     sign_lammax_xtxmax.resize(p);
     
@@ -367,8 +367,9 @@ RcppExport SEXP cdfit_gaussian_hsr_bedpp(SEXP X_, SEXP y_, SEXP row_idx_,
               shift = beta(j, l) - a[j];
               if (shift !=0) {
                 // compute objective update for checking convergence
-                update =  z[j] * shift - 0.5 * (1 + l2) * (pow(beta(j, l), 2) - \
-                  pow(a[j], 2)) - l1 * (fabs(beta(j, l)) -  fabs(a[j]));
+                //update =  z[j] * shift - 0.5 * (1 + l2) * (pow(beta(j, l), 2) - \
+                //  pow(a[j], 2)) - l1 * (fabs(beta(j, l)) -  fabs(a[j]));
+                update = pow(beta(j, l) - a[j], 2);
                 if (update > max_update) {
                   max_update = update;
                 }
