@@ -1,6 +1,11 @@
 *   Minor change
 **  Major change
 
+1.2-1 (10/18/2016)
+  ** Implemented another new screening rule (HSR-BEDPP), also combining hybrid strong rule
+     with a safe rule (BEDPP).
+  ** implemented EDPP rule with active set cycling strategy for linear regression.
+  * changed convergence criteria to be the same as that in glmnet.
 
 1.1-2 (9/1/2016)
   * fixed bugs occurred when some features have identical values for different 
