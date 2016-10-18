@@ -13,7 +13,8 @@ or ridge, or elastic-net over a grid of values for the regularization parameter 
 \usage{
 biglasso(X, y, row.idx = 1:nrow(X), penalty = c("lasso", "ridge", "enet"),
          family = c("gaussian","binomial"), alg.logistic = c("Newton", "MM"),
-         screen = c("HSR", "EDPP", "HSR-Dome", "HSR-BEDPP"), safe.thresh = 0.01, 
+         screen = c("HSR", "EDPP", "HSR-Dome", "HSR-BEDPP", "EDPP-Active"), 
+         safe.thresh = 0.01, 
          ncores = 1, alpha = 1, lambda.min = ifelse(nrow(X) > ncol(X),.001,.05), 
          nlambda = 100, lambda.log.scale = TRUE, lambda, eps = 1e-7, 
          max.iter = 100000, dfmax = ncol(X)+1, penalty.factor = rep(1, ncol(X)), 
@@ -29,7 +30,7 @@ biglasso(X, y, row.idx = 1:nrow(X), penalty = c("lasso", "ridge", "enet"),
   "ridge", or "enet" (elastic net).}
   \item{family}{Either "gaussian" or "binomial", depending on the response.}
   \item{alg.logistic}{The algorithm used in logistic regression. If "Newton" then the exact hessian is used (default); if "MM" then a majorization-minimization algorithm is used to set an upper-bound on the hessian matrix. This can be faster, particularly in data-larger-than-RAM case.}
-  \item{screen}{The screening rule used \strong{for linear regression}. "HSR" (default) is the hybrid strong rule; "EDPP" is the (sequential) enhanced dual polytope projection rule; "HSR-Dome" is our new proposed screening rule which combines the hybrid strong rule and the Dome test. \strong{Note that for logistic regression}, only "HSR" is applicable. See details.}
+  \item{screen}{The screening rule used \strong{for linear regression}. "HSR" (default) is the hybrid strong rule; "EDPP" is the (sequential) enhanced dual polytope projection rule; "HSR-BEDPP" and "HSR-Dome" are our new proposed screening rules which combine the hybrid strong rule and a safe rule (BEDPP or Dome test). \strong{Note that for logistic regression}, only "HSR" is applicable. See details.}
   \item{safe.thresh}{the threshold value between 0 and 1 that controls when to stop safe test in the "HSR-Dome" and "HSR-BEDPP" rules. For example, 0.01 means to stop Dome test at next lambda iteration if the number of features rejected by Dome test at current lambda iteration is less than 1\% of the total number of features. So 1 means to turn off Dome test in HSR-Dome algorithm, i.e., just use HSR for screening. On the contrary, 0 means to always turn on Dome test. This is not recommended in practice though because Dome test is useless (i.e., almost never rejects features) when lambda becomes smaller than 0.5 times \code{lambda.max}.}
   \item{ncores}{The number of OpenMP threads used for parallel computing.}
   \item{alpha}{The elastic-net mixing parameter that controls the relative contribution from the lasso (l1) and the ridge (l2) penalty. It must be a number between 0 and 1 if \code{"penalty"} is "enet". No need to set \code{"alpha"} value for other two penalties.}
