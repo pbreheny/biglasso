@@ -410,7 +410,7 @@ RcppExport SEXP cdfit_gaussian_hsr_bedpp(SEXP X_, SEXP y_, SEXP row_idx_,
       }
     }
     
-    if (n_bedpp_reject[l] < p * bedpp_thresh) {
+    if (n_bedpp_reject[l] <= p * bedpp_thresh) {
       bedpp = 0; // turn off bedpp for next iteration if not efficient
     }
   }

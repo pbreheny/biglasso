@@ -421,7 +421,7 @@ RcppExport SEXP cdfit_gaussian_hsr_dome(SEXP X_, SEXP y_, SEXP row_idx_,
       }
     }
     
-    if (n_dome_reject[l] < p * dome_thresh) {
+    if (n_dome_reject[l] <= p * dome_thresh) {
       dome = 0; // turn off dome for next iteration if not efficient
     }
   }
