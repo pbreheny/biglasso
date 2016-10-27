@@ -18,5 +18,5 @@ thus allowing for very powerful big data analysis even with only a single laptop
 * open an issue or send email to Yaohui Zeng at <yaohui-zeng@uiowa.edu>
 
 ### News:
-* This package on GitHub has been updated to Version 1.1-2. See details in NEWS.
+* This package on GitHub has been updated to Version 1.2-2. See details in NEWS.
 * The newest stable version will be submitted to CRAN soon after testing.
