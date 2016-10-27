@@ -5,8 +5,7 @@
 \title{Set up design matrix X by reading data from big data file}
 
 \description{
-Set up the design matrix X as a \code{big.matrix} object based on external massive data file stored on disk that cannot be fullly loaded into memory. The data file must be a well-formated ASCII-file, and contains only one single type. Current version only supports \code{double} type. Other restrictions about the data file are described in \code{\link{biglasso-package}}. This function reads the massive data, and creates a \code{big.matrix} object. By default, the 
-resulting \code{big.matrix} is file-backed, and can be shared across processors or nodes of a cluster.}
+Set up the design matrix X as a \code{big.matrix} object based on external massive data file stored on disk that cannot be fullly loaded into memory. The data file must be a well-formated ASCII-file, and contains only one single type. Current version only supports \code{double} type. Other restrictions about the data file are described in \code{\link{biglasso-package}}. This function reads the massive data, and creates a \code{big.matrix} object. By default, the resulting \code{big.matrix} is file-backed, and can be shared across processors or nodes of a cluster.}
 
 \usage{
 setupX(filename, dir = getwd(), sep = ",", 
@@ -29,9 +28,11 @@ setupX(filename, dir = getwd(), sep = ",",
 }
 
 \details{
-  This function is a simple wrapper of \code{\link[bigmemory]{read.big.matrix}}. See \code{\link[bigmemory]{read.big.matrix}} and the package \href{http://cran.r-project.org/package=bigmemory}{bigmemory} for more details. 
-  }
- 
+For a data set, this function needs to be called only one time to set up the \code{big.matrix} object with two backing files (.bin, .desc) created in current working directory. Once set up, the data can be "loaded" into any (new) R session by calling \code{attach.big.matrix(discriptorfile)}.
+
+This function is a simple wrapper of \code{\link[bigmemory]{read.big.matrix}}. See \code{\link[bigmemory]{read.big.matrix}} and the package \href{http://cran.r-project.org/package=bigmemory}{bigmemory} for more details. 
+}
+
 \value{
   A \code{big.matrix} object corresponding to a file-backed \code{big.matrix}. It's ready  to be used as the design matrix \code{X} in \code{\link{biglasso}} and \code{\link{cv.biglasso}}.
 }
