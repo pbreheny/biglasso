@@ -96,39 +96,29 @@ biglasso(X, y, row.idx = 1:nrow(X), penalty = c("lasso", "ridge", "enet"),
 
 \seealso{\code{\link{biglasso-package}}, \code{\link{setupX}}, \code{\link{cv.biglasso}}, \code{\link{plot.biglasso}}, \code{\link[ncvreg]{ncvreg}}}
 \examples{
-## See "biglasso-package" for the comprehensive example of reading data from 
-## external big data file, fit lasso model, run cross validation in parallel, etc.
-
-## Below are rather simple examples.
 ## Linear regression
-data(prostate)
-X <- as.matrix(prostate[,1:8])
-y <- prostate$lpsa
-X <- as.big.matrix(X)
+data(colon)
+X <- colon$X
+y <- colon$y
+X.bm <- as.big.matrix(X)
 # lasso, default
-par(mfrow=c(1,3))
-fit.lasso <- biglasso(X, y, family = 'gaussian')
+par(mfrow=c(1,2))
+fit.lasso <- biglasso(X.bm, y, family = 'gaussian')
 plot(fit.lasso, log.l = TRUE, main = 'lasso')
-# ridge
-fit.ridge <- biglasso(X, y, penalty  = 'ridge', family = 'gaussian')
-plot(fit.ridge, log.l = TRUE, main = 'ridge')
 # elastic net
-fit.enet <- biglasso(X, y, penalty = 'enet', alpha = 0.5, family = 'gaussian')
+fit.enet <- biglasso(X.bm, y, penalty = 'enet', alpha = 0.5, family = 'gaussian')
 plot(fit.enet, log.l = TRUE, main = 'elastic net, alpha = 0.5')
 
 ## Logistic regression
-data(heart)
-X <- as.matrix(heart[,1:9])
-y <- heart$chd
-X <- as.big.matrix(X)
+data(colon)
+X <- colon$X
+y <- colon$y
+X.bm <- as.big.matrix(X)
 # lasso, default
-par(mfrow = c(1, 3))
-fit.bin.lasso <- biglasso(X, y, penalty = 'lasso', family = "binomial")
+par(mfrow = c(1, 2))
+fit.bin.lasso <- biglasso(X.bm, y, penalty = 'lasso', family = "binomial")
 plot(fit.bin.lasso, log.l = TRUE, main = 'lasso')
-# ridge
-fit.bin.ridge <- biglasso(X, y, penalty = 'ridge', family = "binomial")
-plot(fit.bin.ridge, log.l = TRUE, main = 'ridge')
 # elastic net
-fit.bin.enet <- biglasso(X, y, penalty = 'enet', alpha = 0.5, family = "binomial")
+fit.bin.enet <- biglasso(X.bm, y, penalty = 'enet', alpha = 0.5, family = "binomial")
 plot(fit.bin.enet, log.l = TRUE, main = 'elastic net, alpha = 0.5')
 }
