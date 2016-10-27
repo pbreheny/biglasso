@@ -6,8 +6,7 @@
 
 \description{
 Extend lasso model fitting to big data that cannot be loaded into memory. Fit 
-solution paths for linear or logistic regression models penalized by lasso, 
-or ridge, or elastic-net over a grid of values for the regularization parameter lambda.
+solution paths for linear or logistic regression models penalized by lasso, ridge, or elastic-net over a grid of values for the regularization parameter lambda.
 }
 
 \usage{
@@ -42,9 +41,7 @@ biglasso(X, y, row.idx = 1:nrow(X), penalty = c("lasso", "ridge", "enet"),
   \item{lambda}{A user-specified sequence of lambda values.  By default,
     a sequence of values of length \code{nlambda} is computed, equally
     spaced on the log scale.}
-  \item{eps}{Convergence threshold.  The algorithm iterates until the
-    relative change in any coefficient is less than \code{eps}.  Default
-    is \code{.001}.}
+  \item{eps}{Convergence threshold for inner coordinate descent.  The algorithm iterates until the maximum change in the objective after any coefficient update is less than \code{eps} times the null deviance. Default value is \code{1e-7}.}
   \item{max.iter}{Maximum number of iterations.  Default is 1000.}
   \item{dfmax}{Upper bound for the number of nonzero coefficients.
     Default is no upper bound.  However, for large data sets,
@@ -60,12 +57,12 @@ biglasso(X, y, row.idx = 1:nrow(X), penalty = c("lasso", "ridge", "enet"),
   \item{warn}{Return warning messages for failures to converge and model
     saturation?  Default is TRUE.}
   \item{output.time}{Whether to print out the start and end time of the model fitting.}
-  \item{verbose}{Whether to output the timing of each lambda iteration.}
+  \item{verbose}{Whether to output the timing of each lambda iteration. Default is FALSE.}
 }
 
 \details{
   See documentation in \code{\link[ncvreg]{ncvreg}} (or package \href{http://cran.r-project.org/package=ncvreg}{ncvreg}) for more details about the model
-  and the algorithm. (Note the nonconvex penalties MCP and SCAD in \code{ncvreg} package are not supported in this package.)
+  and the algorithm.
   }
 
 \value{
@@ -85,7 +82,7 @@ biglasso(X, y, row.idx = 1:nrow(X), penalty = c("lasso", "ridge", "enet"),
   \item{screen}{Same as above.}
   \item{col.idx}{The indices of features that have 'scale' value greater than 1e-6. Features with 'scale' less than 1e-6 are removed from model fitting.}
   \item{rejections}{The number of features rejected at each value of \code{lambda}.}
-  \item{dome_rejections}{The number of features rejected by Dome test at each value of \code{lambda}. Only for "HSR-Dome" case.}
+  \item{safe_rejections}{The number of features rejected by safe rules at each value of \code{lambda}. Only for "HSR-Dome" and "HSR-BEDPP" cases.}
 }
 
 \author{
