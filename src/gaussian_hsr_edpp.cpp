@@ -23,9 +23,9 @@ int check_strong_set(int *e1, int *e2, vector<double> &z, XPtr<BigMatrix> xpMat,
                      double lambda, double sumResid, double alpha, 
                      double *r, double *m, int n, int p);
 
-// update z[j] for features which are rejected at previous lambda but accepted at current one.
+// update z[j] for features which are rejected at previous lambda but not rejected at current one.
 void update_zj(vector<double> &z,
-               int *bedpp_accept, int *bedpp_accept_old,
+               int *bedpp_reject, int *bedpp_reject_old,
                XPtr<BigMatrix> xpMat, int *row_idx,vector<int> &col_idx,
                NumericVector &center, NumericVector &scale, 
                double sumResid, double *r, double *m, int n, int p) {
@@ -35,7 +35,7 @@ void update_zj(vector<double> &z,
   
   #pragma omp parallel for private(j, sum) schedule(static) 
   for (j = 0; j < p; j++) {
-    if (bedpp_accept[j] && bedpp_accept_old[j] == 0) {
+    if (bedpp_reject[j] == 0 && bedpp_reject_old[j] == 1) {
       jj = col_idx[j];
       xCol = xAcc[jj];
       sum = 0.0;
@@ -48,7 +48,7 @@ void update_zj(vector<double> &z,
 }
 
 // check rest set with bedpp screening
-int check_rest_set_hsr_bedpp(int *e1, int *e2, int *accept, vector<double> &z, 
+int check_rest_set_hsr_bedpp(int *e1, int *e2, int *reject, vector<double> &z, 
                             XPtr<BigMatrix> xpMat, 
                             int *row_idx,vector<int> &col_idx,
                             NumericVector &center, 
@@ -62,7 +62,7 @@ int check_rest_set_hsr_bedpp(int *e1, int *e2, int *accept, vector<double> &z,
   
   #pragma omp parallel for private(j, sum, l1) reduction(+:violations) schedule(static) 
   for (j = 0; j < p; j++) {
-    if (accept[j] && e2[j] == 0) {
+    if (reject[j] == 0 && e2[j] == 0) { // set not rejected by bedpp but by hsr
       jj = col_idx[j];
       xCol = xAcc[jj];
       sum = 0.0;
@@ -114,7 +114,7 @@ void bedpp_init(vector<double>& sign_lammax_xtxmax,
 }
 
 // Basic (non-sequential) EDPP test to determine the accept set of features;
-void bedpp_screen(int *accept, const vector<double>& sign_lammax_xtxmax,
+void bedpp_screen(int *bedpp_reject, const vector<double>& sign_lammax_xtxmax,
                   const vector<double>& XTy, double ynorm_sq, int *row_idx, 
                   vector<int>& col_idx, double lambda, 
                   double lambda_max, int n, int p) {
@@ -127,9 +127,9 @@ void bedpp_screen(int *accept, const vector<double>& sign_lammax_xtxmax,
   for (j = 0; j < p; j++) { // p = p_keep
     LHS = (lambda + lambda_max) * XTy[j] - (lambda_max - lambda) * sign_lammax_xtxmax[j];
     if (fabs(LHS) < RHS) {
-      accept[j] = 0;
+      bedpp_reject[j] = 1;
     } else {
-      accept[j] = 1;
+      bedpp_reject[j] = 0;
     }
   }
 }
@@ -217,12 +217,10 @@ RcppExport SEXP cdfit_gaussian_hsr_bedpp(SEXP X_, SEXP y_, SEXP row_idx_,
   double l1, l2, cutoff, shift;
   double max_update, update, thresh; // for convergence check
   int lstart = 0, violations;
-  int j, jj, l; // temp index
+  int j, jj, l; 
 
-  // lambda, equally spaced on log scale
   if (user == 0) {
-    if (lam_scale) {
-      // set up lambda, equally spaced on log scale
+    if (lam_scale) { // lambda, equally spaced on log scale
       double log_lambda_max = log(lambda_max);
       double log_lambda_min = log(lambda_min*lambda_max);
       
@@ -243,19 +241,14 @@ RcppExport SEXP cdfit_gaussian_hsr_bedpp(SEXP X_, SEXP y_, SEXP row_idx_,
   thresh = eps * loss[0] / n;
  
   int *e1 = Calloc(p, int); // ever-active set
-  int *e2 = Calloc(p, int); // strong set;
+  int *e2 = Calloc(p, int); // strong set: features that survived hsr screening
 
-  /* Variables for BEDPP test */
+  /* Variables used for BEDPP test */
   vector<double> xty;
   vector<double> sign_lammax_xtxmax;
   double ynorm_sq;
-  int *bedpp_accept = Calloc(p, int);
-  int *bedpp_accept_old = Calloc(p, int);
-  for (j = 0; j < p; j++) { // initialize
-    bedpp_accept[j] = 1;
-    bedpp_accept_old[j] = 1;
-  }
-  int accept_size; 
+  int *bedpp_reject = Calloc(p, int);
+  int *bedpp_reject_old = Calloc(p, int);
   
   int bedpp; // if 0, don't perform bedpp test
   if (bedpp_thresh < 1) {
@@ -304,8 +297,8 @@ RcppExport SEXP cdfit_gaussian_hsr_bedpp(SEXP X_, SEXP y_, SEXP row_idx_,
       if (nv > dfmax) {
         for (int ll = l; ll < L; ll++) iter[ll] = NA_INTEGER;
         free_memo_hsr(a, r, e1, e2);
-        free(bedpp_accept);
-        free(bedpp_accept_old);
+        free(bedpp_reject);
+        free(bedpp_reject_old);
         return List::create(beta, center, scale, lambda, loss, iter, 
                             n_reject, n_bedpp_reject, Rcpp::wrap(col_idx));
       }
@@ -313,30 +306,29 @@ RcppExport SEXP cdfit_gaussian_hsr_bedpp(SEXP X_, SEXP y_, SEXP row_idx_,
     } else {
       cutoff = 2*lambda[l] - lambda_max;
     }
-    
+   
     if (bedpp) {
-      bedpp_screen(bedpp_accept, sign_lammax_xtxmax, xty, ynorm_sq, row_idx, 
+      bedpp_screen(bedpp_reject, sign_lammax_xtxmax, xty, ynorm_sq, row_idx, 
                    col_idx, lambda[l], lambda_max, n, p);
-      accept_size = sum_int(bedpp_accept, p);
-      n_bedpp_reject[l] = p - accept_size;
+      n_bedpp_reject[l] = sum_int(bedpp_reject, p);
       
       // update z[j] for features which are rejected at previous lambda but accepted at current one.
-      update_zj(z, bedpp_accept, bedpp_accept_old, xMat, row_idx, col_idx, 
+      update_zj(z, bedpp_reject, bedpp_reject_old, xMat, row_idx, col_idx, 
                 center, scale, sumResid, r, m, n, p);
 
       #pragma omp parallel for private(j) schedule(static) 
       for (j = 0; j < p; j++) {
-        // update bedpp_accept_old with bedpp_accept
-        bedpp_accept_old[j] = bedpp_accept[j];
+        // update bedpp_reject_old with bedpp_reject
+        bedpp_reject_old[j] = bedpp_reject[j];
         // hsr screening
-        if (bedpp_accept[j] && (fabs(z[j]) >= (cutoff * alpha * m[col_idx[j]]))) {
+        if (bedpp_reject[j] == 0 && (fabs(z[j]) >= (cutoff * alpha * m[col_idx[j]]))) {
           e2[j] = 1;
         } else {
           e2[j] = 0;
         }
       }
     } else {
-      n_bedpp_reject[l] = 0; // no dome test;
+      n_bedpp_reject[l] = 0; // no bedpp test;
       // hsr screening over all
       #pragma omp parallel for private(j) schedule(static) 
       for (j = 0; j < p; j++) {
@@ -353,17 +345,16 @@ RcppExport SEXP cdfit_gaussian_hsr_bedpp(SEXP X_, SEXP y_, SEXP row_idx_,
       while(iter[l] < max_iter){
         while(iter[l] < max_iter) {
           iter[l]++;
-          //solve lasso over ever-active set
           max_update = 0.0;
           for (j = 0; j < p; j++) {
-            if (e1[j]) {
+            if (e1[j]) { //solve lasso over ever-active set
               jj = col_idx[j];
               z[j] = crossprod_resid(xMat, r, sumResid, row_idx, center[jj], scale[jj], n, jj) / n + a[j];
               // Update beta_j
               l1 = lambda[l] * m[jj] * alpha;
               l2 = lambda[l] * m[jj] * (1-alpha);
               beta(j, l) = lasso(z[j], l1, l2, 1);
-              // Update r
+
               shift = beta(j, l) - a[j];
               if (shift !=0) {
                 // compute objective update for checking convergence
@@ -373,7 +364,7 @@ RcppExport SEXP cdfit_gaussian_hsr_bedpp(SEXP X_, SEXP y_, SEXP row_idx_,
                 if (update > max_update) {
                   max_update = update;
                 }
-                update_resid(xMat, r, shift, row_idx, center[jj], scale[jj], n, jj);
+                update_resid(xMat, r, shift, row_idx, center[jj], scale[jj], n, jj); // Update r
                 sumResid = sum(r, n); //update sum of residual
                 a[j] = beta(j, l); //update a
               }
@@ -382,8 +373,6 @@ RcppExport SEXP cdfit_gaussian_hsr_bedpp(SEXP X_, SEXP y_, SEXP row_idx_,
           
           // Check for convergence
           if (max_update < thresh) break;
-          //converged = checkConvergence(beta, a, eps, l, p);
-
         }
         
         // Scan for violations in strong set
@@ -394,8 +383,9 @@ RcppExport SEXP cdfit_gaussian_hsr_bedpp(SEXP X_, SEXP y_, SEXP row_idx_,
         if (violations == 0) break;
       }
       
+      // Scan for violations in rest set
       if (bedpp) {
-        violations = check_rest_set_hsr_bedpp(e1, e2, bedpp_accept, z, xMat, 
+        violations = check_rest_set_hsr_bedpp(e1, e2, bedpp_reject, z, xMat, 
                                              row_idx, col_idx,
                                              center, scale, lambda[l], 
                                              sumResid, alpha, r, m, n, p);
@@ -416,8 +406,8 @@ RcppExport SEXP cdfit_gaussian_hsr_bedpp(SEXP X_, SEXP y_, SEXP row_idx_,
   }
   
   free_memo_hsr(a, r, e1, e2);
-  free(bedpp_accept);
-  free(bedpp_accept_old);
+  free(bedpp_reject);
+  free(bedpp_reject_old);
   return List::create(beta, center, scale, lambda, loss, iter, 
                       n_reject, n_bedpp_reject, Rcpp::wrap(col_idx));
 }

@@ -11,10 +11,8 @@
 #include "utilities.h"
 //#include "defines.h"
 
-void free_memo_edpp(double *a, double *r, int *nzero_beta, 
-                    int *discard_beta, double *theta, double *v1, 
-                    double *v2, 
-                    double *o) {
+void free_memo_edpp(double *a, double *r, int *nzero_beta, int *discard_beta, 
+                    double *theta, double *v1, double *v2, double *o) {
   free(a);
   free(r);
   free(nzero_beta);
