@@ -12,10 +12,10 @@ The data file contains gene expression data of 62 samples from colon-cancer pati
 \format{
 A list of 2 variables included in \code{colon}:
   \itemize{
-    \item{\code{X:}}{
+    \item{\code{X}:}{
     a 62-by-2000 matrix that records the gene expression data. Used as design matrix.
     }
-    \item{\code{y:}}{
+    \item{\code{y}:}{
     a binary vector of length 62 recording the sample status: 1 = tumor sample;
     0 = normal sample. Used as response vector.
     }
