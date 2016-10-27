@@ -19,13 +19,8 @@ cv.biglasso(X, y, row.idx = 1:nrow(X), ncores = 1, ...,
   \item{row.idx}{The integer vector of row indices of \code{X} that used for fitting 
   the model. as in \code{biglasso}.}
   \item{...}{Additional arguments to \code{biglasso}.}
-  \item{ncores}{\code{cv.biglasso} can be run in parallel across a
-    cluster using the \code{parallel} package. If \code{ncores > 1}, then a cluster is 
-    created to run \code{cv.biglasso} in parallel. The code is run in series if 
-    \code{ncores = 1} (the default). An error occurs if \code{ncores} is larger than the
-    total number of available cores. Since each core takes (around equally) a large portion 
-    of memory, the total memory consumed would be proportional to \code{ncores}.
-    \strong{Be cautious here to prevent the memory usage from blowing up in the big data case.}
+  \item{ncores}{The number of OpenMP threads used for parallel computing. Same 
+  as in \code{\link{biglasso}.}
     }
   \item{nfolds}{The number of cross-validation folds.  Default is 10.}
   \item{seed}{The seed of the random number generator in order to obtain 
@@ -38,7 +33,6 @@ cv.biglasso(X, y, row.idx = 1:nrow(X), ncores = 1, ...,
   }
 
 \details{
-  
   The function calls \code{biglasso} \code{nfolds} times, each time
   leaving out 1/\code{nfolds} of the data.  The cross-validation
   error is based on the residual sum of squares when
@@ -80,21 +74,15 @@ cv.biglasso(X, y, row.idx = 1:nrow(X), ncores = 1, ...,
 \examples{
 ## cv.biglasso
 seed <- 1234
-data(prostate)
-X <- as.matrix(prostate[,1:8])
-y <- prostate$lpsa
-X <- as.big.matrix(X)
-# run in series
-cvfit <- cv.biglasso(X, y, family = 'gaussian', seed = seed)
+data(colon)
+X <- colon$X
+y <- colon$y
+X.bm <- as.big.matrix(X)
+
+## logistic regression
+cvfit <- cv.biglasso(X.bm, y, family = 'binomial', seed = seed)
 par(mfrow = c(2, 2))
 plot(cvfit, type = 'all')
 summary(cvfit)
 
-# run in parallel
-\dontrun{
-cvfit2 <- cv.biglasso(X, y, family = 'gaussian', seed = seed, ncores = 5)
-plot(cvfit2)
-summary(cvfit2)
-stopifnot(identical(cvfit, cvfit2))
-}
 }

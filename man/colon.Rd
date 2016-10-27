@@ -33,6 +33,13 @@ The raw data can be found on Bioconductor: \url{https://bioconductor.org/package
 
 \examples{
 data(colon)
+X <- colon$X
+y <- colon$y
+str(X)
+dim(X)
+X.bm <- as.big.matrix(X) # convert to big.matrix object
+str(X.bm)
+dim(X.bm)
 }
 
 \keyword{datasets}

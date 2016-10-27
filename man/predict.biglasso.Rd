@@ -49,15 +49,16 @@ Extract predictions (fitted reponse, coefficients, etc.) from a fitted \code{\li
 \seealso{\code{\link{biglasso}}, \code{\link{cv.biglasso}}}
 \examples{
 ## Logistic regression
-data(heart)
-X <- as.matrix(heart[,1:9])
-y <- heart$chd
-X <- as.big.matrix(X)
-fit <- biglasso(X, y, penalty = 'lasso', family = "binomial")
-coef(fit, lambda=0.05, drop = FALSE)
-predict(fit, X, type="link", lambda=0.05)
-predict(fit, X, type="response", lambda=0.05)
-predict(fit, X, type="class", lambda=0.1)
+data(colon)
+X <- colon$X
+y <- colon$y
+X.bm <- as.big.matrix(X)
+fit <- biglasso(X.bm, y, penalty = 'lasso', family = "binomial")
+coef <- coef(fit, lambda=0.05, drop = TRUE)
+coef[which(coef != 0)]
+predict(fit, X.bm, type="link", lambda=0.05)
+predict(fit, X.bm, type="response", lambda=0.05)
+predict(fit, X.bm, type="class", lambda=0.1)
 predict(fit, type="vars", lambda=c(0.05, 0.1))
 predict(fit, type="nvars", lambda=c(0.05, 0.1))
 }

@@ -12,6 +12,7 @@ resulting \code{big.matrix} is file-backed, and can be shared across processors 
 setupX(filename, dir = getwd(), sep = ",", 
        backingfile = paste0(unlist(strsplit(filename, split = "\\\."))[1], ".bin"),
        descriptorfile = paste0(unlist(strsplit(filename, split = "\\\."))[1], ".desc"), 
+       type = "double",
        ...)
 }
 
@@ -23,6 +24,7 @@ setupX(filename, dir = getwd(), sep = ",",
   (the default); "\\t" for tab-delimited files.}
   \item{backingfile}{The binary file associated with the file-backed \code{big.matrix}. By default, its name is the same as \code{filename} with the extension replaced by ".bin".}
   \item{descriptorfile}{The descriptor file used for the description of the file-backed \code{big.matrix}. By default, its name is the same as \code{filename} with the extension replaced by ".desc".}
+  \item{type}{The data type. Only "double" is supported for now.}
   \item{...}{Additional arguments that can be passed into function \code{\link[bigmemory]{read.big.matrix}}.}
 }
 

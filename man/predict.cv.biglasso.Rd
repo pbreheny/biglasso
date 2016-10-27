@@ -47,17 +47,17 @@ Extract predictions from a fitted \code{\link{cv.biglasso}} object.
 \seealso{\code{\link{biglasso}}, \code{\link{cv.biglasso}}}
 \examples{
 ## predict.cv.biglasso
-data(heart)
-X <- as.matrix(heart[,1:9])
-y <- heart$chd
-X <- as.big.matrix(X)
-\dontrun{
-cvfit <- cv.biglasso(X, y, penalty = 'lasso', family = "binomial")
-coef(cvfit)
-predict(cvfit, X, type = "response")
-predict(cvfit, X, type = "link")
-predict(cvfit, X, type = "class")
-}
+data(colon)
+X <- colon$X
+y <- colon$y
+X.bm <- as.big.matrix(X)
+fit <- biglasso(X.bm, y, penalty = 'lasso', family = "binomial")
+cvfit <- cv.biglasso(X.bm, y, penalty = 'lasso', family = "binomial")
+coef <- coef(cvfit)
+coef[which(coef != 0)]
+predict(cvfit, X.bm, type = "response")
+predict(cvfit, X.bm, type = "link")
+predict(cvfit, X.bm, type = "class")
 }
 \keyword{models}
 \keyword{regression}
