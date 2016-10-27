@@ -1,6 +1,6 @@
 Package: biglasso
-Version: 1.2-1
-Date: 2016-10-18
+Version: 1.2-2
+Date: 2016-10-27
 Title: Big Lasso: Extending Lasso Model Fitting to Big Data in R
 Author: Yaohui Zeng [aut,cre], Patrick Breheny [ctb]
 Maintainer: Yaohui Zeng <yaohui-zeng@uiowa.edu>

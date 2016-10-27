@@ -14,8 +14,8 @@ Extend lasso and elastic-net model fitting for ultrahigh-dimensional, multi-giga
   \tabular{ll}{
     Package: \tab biglasso\cr
     Type: \tab Package\cr
-    Version: \tab 1.0-1\cr
-    Date: \tab 2016-02-27\cr
+    Version: \tab 1.2-2\cr
+    Date: \tab 2016-10-27\cr
     License: \tab GPL-2\cr}
  
 Penalized regression models, in particular the lasso, have been extensively applied to analyzing high-dimensional data sets. However, due to the memory limit, existing R packages are not capable of fitting lasso models for ultrahigh-dimensional, multi-gigabyte data sets that have been increasingly seen in many areas such as genetics, biomedical imaging, genome sequencing and high-frequency finance.
@@ -34,7 +34,7 @@ Future versions will try to address these restrictions.
 }
 
 \note{
-Denote the number of observations and variables be, respectively, \code{n} and \code{p}. It's worth noting that the package is more suitable for wide data (ultrahigh-dimensional, \code{p >> n}) as compared to long data (\code{n >> p}). This is because the model fitting algorithm takes advantage of parsimony assumption of high-dimensional data.
+Denote the number of observations and variables be, respectively, \code{n} and \code{p}. It's worth noting that the package is more suitable for wide data (ultrahigh-dimensional, \code{p >> n}) as compared to long data (\code{n >> p}). This is because the model fitting algorithm takes advantage of sparsity assumption of high-dimensional data.
 
 To just give the user some ideas, below are some benchmarking results of the time used for fitting a single lasso model with different sizes of the design matrix. More rigorous benchmarking results will be reported later. 
 
@@ -52,9 +52,6 @@ Size of \code{X} \tab 9.5 MB \tab 95 MB \tab 950 MB \tab 9.5 GB \cr
 Elapsed time (s) \tab 2.50 \tab 11.43 \tab 83.69 \tab 1090.62 \cr
 }
 }
-
-
-
 
 }
 
