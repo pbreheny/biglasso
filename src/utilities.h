@@ -18,27 +18,25 @@ double sign(double x);
 
 double sum(double *x, int n);
 
+// template<typename T>
+// T sum(T *x, int n);
+
 // Sum of squares of jth column of X
 double sqsum(double *X, int n, int j);
  
 double crossprod(double *X, double *y, int n, int j);
 
-// count discarded features
-int sum_discard(int *discards, int p);
-
-int sum_int(int *vec, int p);
-
-int checkConvergence(arma::sp_mat beta, double *beta_old, double eps, int l, int p);
+int sum(int *vec, int p);
 
 double lasso(double z, double l1, double l2, double v);
 
 double gLoss(double *r, int n);
-
-// get_row
-int get_row_bm(SEXP xP);
-
-// get_col
-int get_col_bm(SEXP xP);
+// 
+// // get_row
+// int get_row_bm(SEXP xP);
+// 
+// // get_col
+// int get_col_bm(SEXP xP);
 
 // get X[i, j]: i-th row, j-th column element
 double get_elem_bm(XPtr<BigMatrix> xpMat, double center_, double scale_, int i, int j);
@@ -83,33 +81,5 @@ void standardize_and_get_residual(NumericVector &center, NumericVector &scale,
                                   int *xmax_ptr, XPtr<BigMatrix> xMat, double *y, 
                                   int *row_idx, double lambda_min, double alpha, int n, int p);
 
-// -----------------------------------------------------------------------------
-// C++ functions used for EDPP rule
-// -----------------------------------------------------------------------------
-// void update_theta(double *theta, SEXP xP, int *row_idx_, NumericVector &center, 
-//                   NumericVector &scale, double *y, arma::sp_mat beta, double lambda, 
-//                   int *nzero_beta, int n, int p, int l);
-
-// V2 - <v1, v2> / ||v1||^2_2 * V1
-// void update_pv2(double *pv2, double *v1, double *v2, int n);
-
-// apply EDPP 
-// void edpp_screen(int *discard_beta, SEXP xP, double *o, int *row_idx, 
-//                  NumericVector &center, NumericVector &scale, int n, int p, 
-//                  double rhs);
-
-// // apply EDPP - by chunk
-// void edpp_screen_by_chunk(int *discard_beta, const char *xf_bin, int nchunks, int chunk_cols,
-//                           double *o, int *row_idx, NumericVector &center,
-//                           NumericVector &scale, int n, int p, double rhs, int n_total);
-// 
-// // apply EDPP - by chunk, openmp
-// void edpp_screen_by_chunk_omp(int *discard_beta, const char *xf_bin, int nchunks, int chunk_cols,
-//                               double *o, int *row_idx, NumericVector &center,
-//                               NumericVector &scale, int n, int p, double rhs, int n_total);
-// // apply EDPP
-// void edpp_screen2(int *discard_beta, SEXP xP, double *o, int *row_idx,
-//                  NumericVector &center, NumericVector &scale, int n, int p,
-//                  double rhs);
 
 #endif

@@ -17,7 +17,8 @@ biglasso <- function(X, y, row.idx = 1:nrow(X),
   penalty <- match.arg(penalty)
   alg.logistic <- match.arg(alg.logistic)
   screen <- match.arg(screen)
-
+  lambda.min <- max(lambda.min, 1.0e-6)
+  
   if (identical(penalty, "lasso")) {
     alpha <- 1
   } else if (identical(penalty, 'ridge')) {

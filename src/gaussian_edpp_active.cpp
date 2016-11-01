@@ -42,26 +42,9 @@ int check_edpp_set(int *ever_active, int *discard_beta, vector<double> &z,
   return violations;
 }
 
-void free_memo_edpp_active(double *a, double *r, int *ever_active, int *nzero_beta, 
-                           int *discard_beta, double *theta, double *v1, double *v2, 
-                           double *o) {
-  free(a);
-  free(r);
-  free(ever_active);
-  free(nzero_beta);
-  free(discard_beta);
-  free(theta);
-  free(v1);
-  free(v2);
-  free(o);
-}
+void free_memo_edpp(double *a, double *r, int *discard_beta, 
+                    double *theta, double *v1, double *v2, double *o);
 
-// theta = (y - X*beta) / lambda
-//       = (y - x1*beta1 - x2*beta2 - .... - xp * betap) / lambda
-void update_theta(double *theta, XPtr<BigMatrix> xpMat, int *row_idx, 
-                  vector<int> &col_idx, NumericVector &center, 
-                  NumericVector &scale, double *y, arma::sp_mat beta, double lambda, 
-                  int *nzero_beta, int n, int p, int l);
 // V2 - <v1, v2> / ||v1||^2_2 * V1
 void update_pv2(double *pv2, double *v1, double *v2, int n);
 
@@ -87,17 +70,13 @@ RcppExport SEXP cdfit_gaussian_edpp_active(SEXP X_, SEXP y_, SEXP row_idx_, SEXP
   int lam_scale = INTEGER(lam_scale_)[0];
   int L = INTEGER(nlambda_)[0];
   int user = INTEGER(user_)[0];
-  
-  NumericVector lambda(L);
-  if (user != 0) {
-    lambda = Rcpp::as<NumericVector>(lambda_);
-  } 
-  
   double eps = REAL(eps_)[0];
   int max_iter = INTEGER(max_iter_)[0];
   double *m = REAL(multiplier_);
   int dfmax = INTEGER(dfmax_)[0];
   
+  NumericVector lambda(L);
+  if (user != 0) lambda = Rcpp::as<NumericVector>(lambda_);
   NumericVector center(p);
   NumericVector scale(p);
   int p_keep = 0;
@@ -110,23 +89,32 @@ RcppExport SEXP cdfit_gaussian_edpp_active(SEXP X_, SEXP y_, SEXP row_idx_, SEXP
   int xmax_idx = 0;
   int *xmax_ptr = &xmax_idx;
   
+  // set up omp
+  int useCores = INTEGER(ncore_)[0];
+  int haveCores=omp_get_num_procs();
+  if(useCores < 1) {
+    useCores = haveCores;
+  }
+  omp_set_dynamic(0);
+  omp_set_num_threads(useCores);
+  
   standardize_and_get_residual(center, scale, p_keep_ptr, col_idx, z, 
                                lambda_max_ptr, xmax_ptr, xMat, 
                                y, row_idx, lambda_min, alpha, n, p);
-  // set p = p_keep, only loop over columns whose scale > 1e-6
-  p = p_keep;
-  
-  // beta
-  arma::sp_mat beta = arma::sp_mat(p, L);
+  p = p_keep; // set p = p_keep, only loop over columns whose scale > 1e-6
+
+  // Objects to be returned to R
+  arma::sp_mat beta = arma::sp_mat(p, L); //Beta
   double *a = Calloc(p, double); //Beta from previous iteration
   NumericVector loss(L);
   IntegerVector iter(L);
-  IntegerVector discard_count(L);
-  
-  double l1, l2;
+  IntegerVector n_reject(L);
+ 
+  double l1, l2, shift;
   double max_update, update, thresh; // for convergence check
-  int i, j, jj, l; //temp index
-  
+  int i, j, jj, l, violations, lstart; //temp index
+  int *ever_active = Calloc(p, int); // ever-active set
+  int *discard_beta = Calloc(p, int); // index set of discarded features;
   double *r = Calloc(n, double);
   for (i = 0; i < n; i++) r[i] = y[i];
   double sumResid = sum(r, n);
@@ -139,15 +127,7 @@ RcppExport SEXP cdfit_gaussian_edpp_active(SEXP X_, SEXP y_, SEXP row_idx_, SEXP
   double *v2 = Calloc(n, double);
   double *pv2 = Calloc(n, double);
   double *o = Calloc(n, double);
-  
-  // ever-active set
-  int *ever_active = Calloc(p, int);
-  // index set of nonzero beta's at l+1;
-  int *nzero_beta = Calloc(p, int);
-  // index set of discarded features at l+1;
-  int *discard_beta = Calloc(p, int);
   double pv2_norm = 0;
-  int violations;
   
   // lambda, equally spaced on log scale
   if (user == 0) {
@@ -166,55 +146,49 @@ RcppExport SEXP cdfit_gaussian_edpp_active(SEXP X_, SEXP y_, SEXP row_idx_, SEXP
         lambda[l] = lambda_max - l * delta;
       }
     }
+    lstart = 1;
+    n_reject[0] = p;
+  } else {
+    lstart = 0;
   } 
   
-  // set up omp
-  int useCores = INTEGER(ncore_)[0];
-  // Rprintf("Number of requsted threads: %d\n", useCores);
-  int haveCores=omp_get_num_procs();
-  //Rprintf("Number of avaialbe processors: %d\n", haveCores);
-  if(useCores < 1) {
-    useCores = haveCores;
-  }
-  omp_set_dynamic(0);
-  omp_set_num_threads(useCores);
+  // compute v1 for lambda_max
+  double xty = crossprod_bm(xMat, y, row_idx, center[xmax_idx], scale[xmax_idx], n, xmax_idx);
   
-  for (l = 0; l < L-1; l++) {
+  // Path
+  for (l = 0; l < L; l++) {
     if (l != 0 ) {
-      // Check dfmax: a is current beta. At each iteration, solving for next beta.
       int nv = 0;
       for (int j=0; j<p; j++) {
         if (a[j] != 0) nv++;
       }
       if (nv > dfmax) {
         for (int ll=l; ll<L; ll++) iter[ll] = NA_INTEGER;
-        free_memo_edpp_active(a, r, ever_active, nzero_beta, discard_beta, theta, v1, v2, o);
+        free(ever_active);
+        free_memo_edpp(a, r, discard_beta, theta, v1, v2, o);
         return List::create(beta, center, scale, lambda, loss, iter, 
-                            discard_count, Rcpp::wrap(col_idx));
+                            n_reject, Rcpp::wrap(col_idx));
       }
-      // update theta
-      update_theta(theta, xMat, row_idx, col_idx, center, scale, y, beta, lambda[l], nzero_beta, n, p, l);
-      // update v1
+      // update theta and v1
       for (i = 0; i < n; i++) {
-        v1[i] = y[i] / lambda[l] - theta[i];
+        theta[i] = r[i] / lambda[l-1];
+        if (lambda[l-1] < lambda_max) {
+          v1[i] = y[i] / lambda[l-1] - theta[i];
+        } else {
+          v1[i] = sign(xty) * get_elem_bm(xMat, center[xmax_idx], 
+                       scale[xmax_idx], row_idx[i], xmax_idx);        
+        }
       }
     } else { // lambda_max = lam[0]
       for (i = 0; i < n; i++) {
-        theta[i] =  y[i] / lambda[l];
+        theta[i] = r[i] / lambda_max;
+        if (lambda[l] < lambda_max) {
+          v1[i] = y[i] / lambda[l] - theta[i];
+        } else {
+          v1[i] = sign(xty) * get_elem_bm(xMat, center[xmax_idx], 
+                       scale[xmax_idx], row_idx[i], xmax_idx);        
+        }
       }
-      // compute v1 for lambda_max
-      double xty = crossprod_bm(xMat, y, row_idx, center[xmax_idx], 
-                                scale[xmax_idx], n, xmax_idx);
-      for (i = 0; i < n; i++) {
-        v1[i] = sign(xty) * get_elem_bm(xMat, center[xmax_idx], 
-                     scale[xmax_idx], row_idx[i], xmax_idx);
-      }
-      // loss[l] = gLoss(r,n);
-      for (j = 0; j < p; j++) {
-        // nzero_beta[j] = 0;
-        discard_beta[j] = 1;
-      }
-      discard_count[l] = sum_int(discard_beta, p);
     } 
     // update v2:
     for (i = 0; i < n; i++) {
@@ -235,40 +209,39 @@ RcppExport SEXP cdfit_gaussian_edpp_active(SEXP X_, SEXP y_, SEXP row_idx_, SEXP
     
     // apply EDPP
     edpp_screen(discard_beta, xMat, o, row_idx, col_idx, center, scale, n, p, rhs);
-    discard_count[l+1] = sum_int(discard_beta, p);
+    n_reject[l] = sum(discard_beta, p);
     
-    double shift = 0.0;
-    while (iter[l+1] < max_iter) {
-      while (iter[l+1] < max_iter) {
-        iter[l+1]++;
+    while (iter[l] < max_iter) {
+      while (iter[l] < max_iter) {
+        iter[l]++;
+        
         max_update = 0.0;
-        for (int j=0; j<p; j++) {
+        for (j = 0; j < p; j++) {
           if (ever_active[j] == 1) {
             jj = col_idx[j];
             z[j] = crossprod_resid(xMat, r, sumResid, row_idx, center[jj], scale[jj], n, jj) / n + a[j];
-            // Update beta_j
-            l1 = lambda[l+1] * m[jj] * alpha;
-            l2 = lambda[l+1] * m[jj] * (1-alpha);
-            beta(j, l+1) = lasso(z[j], l1, l2, 1);
-            // Update r
-            shift = beta(j, l+1) - a[j];
-            if (shift !=0) {
+            l1 = lambda[l] * m[jj] * alpha;
+            l2 = lambda[l] * m[jj] * (1-alpha);
+            beta(j, l) = lasso(z[j], l1, l2, 1);
+            
+            shift = beta(j, l) - a[j];
+            if (shift != 0) {
               // compute objective update for checking convergence
               //update =  z[j] * shift - 0.5 * (1 + l2) * (pow(beta(j, l+1), 2) - \
               //  pow(a[j], 2)) - l1 * (fabs(beta(j, l+1)) -  fabs(a[j]));
-              update = pow(beta(j, l+1) - a[j], 2);
+              update = pow(beta(j, l) - a[j], 2);
               if (update > max_update) {
                 max_update = update;
               }
               update_resid(xMat, r, shift, row_idx, center[jj], scale[jj], n, jj);
               sumResid = sum(r, n); //update sum of residual
-              a[j] = beta(j, l+1); //update a
+              a[j] = beta(j, l); //update a
             }
-            // update non-zero beta and ever active sets
-            if (beta(j, l+1) != 0) {
-              nzero_beta[j] = ever_active[j] = 1;
+            // update ever active sets
+            if (beta(j, l) != 0) {
+              ever_active[j] = 1;
             } else {
-              nzero_beta[j] = 0;
+              ever_active[j] = 0;
             }
           }
         }
@@ -279,16 +252,16 @@ RcppExport SEXP cdfit_gaussian_edpp_active(SEXP X_, SEXP y_, SEXP row_idx_, SEXP
       
       // Scan for violations in edpp set
       violations = check_edpp_set(ever_active, discard_beta, z, xMat, row_idx, 
-                                  col_idx, center, scale, lambda[l+1],sumResid, alpha, r, m, n, p); 
+                                  col_idx, center, scale, lambda[l],sumResid, alpha, r, m, n, p); 
       if (violations==0) {
         loss[l+1] = gLoss(r, n);
         break;
       }
     }
   }
-  
-  free_memo_edpp_active(a, r, ever_active, nzero_beta, discard_beta, theta, v1, v2, o);
+  free(ever_active);
+  free_memo_edpp(a, r, discard_beta, theta, v1, v2, o);
   return List::create(beta, center, scale, lambda, loss, iter, 
-                      discard_count, Rcpp::wrap(col_idx));
+                      n_reject, Rcpp::wrap(col_idx));
 }
 

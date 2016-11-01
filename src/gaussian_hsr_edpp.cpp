@@ -94,7 +94,7 @@ void bedpp_init(vector<double>& sign_lammax_xtxmax,
   int i, j, jj;
   // sign of xmaxTy
   sum_xmaxTy = crossprod_bm(xMat, y, row_idx, center[xmax_idx], scale[xmax_idx], n, xmax_idx);
-  sum_xmaxTy = sign(sum_xmaxTy);
+  sign_xmaxTy = sign(sum_xmaxTy);
   
   #pragma omp parallel for private(j, sum_xjxmax) schedule(static) 
   for (j = 0; j < p; j++) { // p = p_keep
@@ -113,7 +113,7 @@ void bedpp_init(vector<double>& sign_lammax_xtxmax,
   }
 }
 
-// Basic (non-sequential) EDPP test to determine the accept set of features;
+// Basic (non-sequential) EDPP test
 void bedpp_screen(int *bedpp_reject, const vector<double>& sign_lammax_xtxmax,
                   const vector<double>& XTy, double ynorm_sq, int *row_idx, 
                   vector<int>& col_idx, double lambda, 
@@ -151,23 +151,18 @@ RcppExport SEXP cdfit_gaussian_hsr_bedpp(SEXP X_, SEXP y_, SEXP row_idx_,
   double alpha = REAL(alpha_)[0];
   int n = Rf_length(row_idx_); // number of observations used for fitting model
   int p = xMat->ncol();
-  // int n_total = xMat->nrow(); // number of total observations
   int L = INTEGER(nlambda_)[0];
   int lam_scale = INTEGER(lam_scale_)[0];
   int user = INTEGER(user_)[0];
   int verbose = INTEGER(verbose_)[0];
   double bedpp_thresh = REAL(safe_thresh_)[0]; // threshold for safe test
-
-  NumericVector lambda(L);
-  if (user != 0) {
-    lambda = Rcpp::as<NumericVector>(lambda_);
-  } 
-  
   double eps = REAL(eps_)[0];
   int max_iter = INTEGER(max_iter_)[0];
   double *m = REAL(multiplier_);
   int dfmax = INTEGER(dfmax_)[0];
-
+  
+  NumericVector lambda(L);
+  if (user != 0) lambda = Rcpp::as<NumericVector>(lambda_);
   NumericVector center(p);
   NumericVector scale(p);
   int p_keep = 0; // keep columns whose scale > 1e-6
@@ -178,6 +173,15 @@ RcppExport SEXP cdfit_gaussian_hsr_bedpp(SEXP X_, SEXP y_, SEXP row_idx_,
   double *lambda_max_ptr = &lambda_max;
   int xmax_idx = 0;
   int *xmax_ptr = &xmax_idx;
+  
+  // set up omp
+  int useCores = INTEGER(ncore_)[0];
+  int haveCores = omp_get_num_procs();
+  if(useCores < 1) {
+    useCores = haveCores;
+  }
+  omp_set_dynamic(0);
+  omp_set_num_threads(useCores);
   
   if (verbose) {
     char buff1[100];
@@ -190,9 +194,8 @@ RcppExport SEXP cdfit_gaussian_hsr_bedpp(SEXP X_, SEXP y_, SEXP row_idx_,
   standardize_and_get_residual(center, scale, p_keep_ptr, col_idx, z, lambda_max_ptr, xmax_ptr, xMat, 
                                y, row_idx, lambda_min, alpha, n, p);
   
-  // set p = p_keep, only loop over columns whose scale > 1e-6
-  p = p_keep;
-  
+  p = p_keep; // set p = p_keep, only loop over columns whose scale > 1e-6
+
   if (verbose) {
     char buff1[100];
     time_t now1 = time (0);
@@ -201,14 +204,9 @@ RcppExport SEXP cdfit_gaussian_hsr_bedpp(SEXP X_, SEXP y_, SEXP row_idx_,
     Rprintf("\n-----------------------------------------------\n");
   }
 
-  double *r = Calloc(n, double);
-  for (int i=0; i<n; i++) r[i] = y[i];
-  double sumResid = sum(r, n);
-  
-  // beta
-  arma::sp_mat beta = arma::sp_mat(p, L);
+  // Objects to be returned to R
+  arma::sp_mat beta = arma::sp_mat(p, L); // Beta
   double *a = Calloc(p, double); //Beta from previous iteration
-
   NumericVector loss(L);
   IntegerVector iter(L);
   IntegerVector n_reject(L); // number of total rejections;
@@ -216,11 +214,18 @@ RcppExport SEXP cdfit_gaussian_hsr_bedpp(SEXP X_, SEXP y_, SEXP row_idx_,
   
   double l1, l2, cutoff, shift;
   double max_update, update, thresh; // for convergence check
-  int lstart = 0, violations;
-  int j, jj, l; 
-
+  int i, j, jj, l, violations, lstart; 
+  int *e1 = Calloc(p, int); // ever-active set
+  int *e2 = Calloc(p, int); // strong set
+  double *r = Calloc(n, double);
+  for (i = 0; i < n; i++) r[i] = y[i];
+  double sumResid = sum(r, n);
+  loss[0] = gLoss(r,n);
+  thresh = eps * loss[0] / n;
+  
+  // set up lambda
   if (user == 0) {
-    if (lam_scale) { // lambda, equally spaced on log scale
+    if (lam_scale) { // set up lambda, equally spaced on log scale
       double log_lambda_max = log(lambda_max);
       double log_lambda_min = log(lambda_min*lambda_max);
       
@@ -234,14 +239,11 @@ RcppExport SEXP cdfit_gaussian_hsr_bedpp(SEXP X_, SEXP y_, SEXP row_idx_,
         lambda[l] = lambda_max - l * delta;
       }
     }
-    // lstart = 1;
-    // n_reject[0] = p; // strong rule rejects all variables at lambda_max
-  } 
-  loss[0] = gLoss(r,n);
-  thresh = eps * loss[0] / n;
- 
-  int *e1 = Calloc(p, int); // ever-active set
-  int *e2 = Calloc(p, int); // strong set: features that survived hsr screening
+    lstart = 1;
+    n_reject[0] = p;
+  } else {
+    lstart = 0;
+  }
 
   /* Variables used for BEDPP test */
   vector<double> xty;
@@ -249,13 +251,11 @@ RcppExport SEXP cdfit_gaussian_hsr_bedpp(SEXP X_, SEXP y_, SEXP row_idx_,
   double ynorm_sq;
   int *bedpp_reject = Calloc(p, int);
   int *bedpp_reject_old = Calloc(p, int);
-  
   int bedpp; // if 0, don't perform bedpp test
   if (bedpp_thresh < 1) {
     bedpp = 1; // turn on bedpp test
     xty.resize(p);
     sign_lammax_xtxmax.resize(p);
-    
     for (j = 0; j < p; j++) {
       xty[j] = z[j] * n;
     }
@@ -264,18 +264,11 @@ RcppExport SEXP cdfit_gaussian_hsr_bedpp(SEXP X_, SEXP y_, SEXP row_idx_,
   } else {
     bedpp = 0; // turn off bedpp test
   }
-
-  // set up omp
-  int useCores = INTEGER(ncore_)[0];
-  int haveCores = omp_get_num_procs();
-  if(useCores < 1) {
-    useCores = haveCores;
-  }
-  omp_set_dynamic(0);
-  omp_set_num_threads(useCores);
   
+  if (bedpp == 1 && user == 0) n_bedpp_reject[0] = p;
+
   // Path
-  for (l=lstart;l<L;l++) {
+  for (l = lstart; l < L; l++) {
     if(verbose) {
       // output time
       char buff[100];
@@ -285,10 +278,6 @@ RcppExport SEXP cdfit_gaussian_hsr_bedpp(SEXP X_, SEXP y_, SEXP row_idx_,
     }
   
     if (l != 0) {
-      // Assign a by previous b
-      for (j = 0; j < p; j++) {
-        a[j] = beta(j, l-1);
-      }
       // Check dfmax
       int nv = 0;
       for (j = 0; j < p; j++) {
@@ -306,11 +295,11 @@ RcppExport SEXP cdfit_gaussian_hsr_bedpp(SEXP X_, SEXP y_, SEXP row_idx_,
     } else {
       cutoff = 2*lambda[l] - lambda_max;
     }
-   
+    
     if (bedpp) {
       bedpp_screen(bedpp_reject, sign_lammax_xtxmax, xty, ynorm_sq, row_idx, 
                    col_idx, lambda[l], lambda_max, n, p);
-      n_bedpp_reject[l] = sum_int(bedpp_reject, p);
+      n_bedpp_reject[l] = sum(bedpp_reject, p);
       
       // update z[j] for features which are rejected at previous lambda but accepted at current one.
       update_zj(z, bedpp_reject, bedpp_reject_old, xMat, row_idx, col_idx, 
@@ -339,18 +328,19 @@ RcppExport SEXP cdfit_gaussian_hsr_bedpp(SEXP X_, SEXP y_, SEXP row_idx_,
         }
       }
     }
-    n_reject[l] = p - sum_int(e2, p); // e2 set means not reject by bedpp or hsr;
+    n_reject[l] = p - sum(e2, p); // e2 set means not reject by bedpp or hsr;
 
     while(iter[l] < max_iter) {
       while(iter[l] < max_iter){
         while(iter[l] < max_iter) {
           iter[l]++;
+          
+          //solve lasso over ever-active set
           max_update = 0.0;
           for (j = 0; j < p; j++) {
-            if (e1[j]) { //solve lasso over ever-active set
+            if (e1[j]) { 
               jj = col_idx[j];
               z[j] = crossprod_resid(xMat, r, sumResid, row_idx, center[jj], scale[jj], n, jj) / n + a[j];
-              // Update beta_j
               l1 = lambda[l] * m[jj] * alpha;
               l2 = lambda[l] * m[jj] * (1-alpha);
               beta(j, l) = lasso(z[j], l1, l2, 1);
@@ -370,7 +360,6 @@ RcppExport SEXP cdfit_gaussian_hsr_bedpp(SEXP X_, SEXP y_, SEXP row_idx_,
               }
             }
           }
-          
           // Check for convergence
           if (max_update < thresh) break;
         }
@@ -379,7 +368,6 @@ RcppExport SEXP cdfit_gaussian_hsr_bedpp(SEXP X_, SEXP y_, SEXP row_idx_,
         violations = check_strong_set(e1, e2, z, xMat, row_idx, col_idx,
                                       center, scale, lambda[l], sumResid, 
                                       alpha, r, m, n, p);
-
         if (violations == 0) break;
       }
       
