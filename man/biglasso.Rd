@@ -12,11 +12,11 @@ solution paths for linear or logistic regression models penalized by lasso, ridg
 \usage{
 biglasso(X, y, row.idx = 1:nrow(X), penalty = c("lasso", "ridge", "enet"),
          family = c("gaussian","binomial"), alg.logistic = c("Newton", "MM"),
-         screen = c("HSR", "EDPP", "HSR-Dome", "HSR-BEDPP", "EDPP-Active"), 
+         screen = c("SSR", "EDPP", "SSR-Dome", "SSR-BEDPP","EDPP-No-Active"),
          safe.thresh = 0, ncores = 1, alpha = 1, 
          lambda.min = ifelse(nrow(X) > ncol(X),.001,.05), 
          nlambda = 100, lambda.log.scale = TRUE, lambda, eps = 1e-7, 
-         max.iter = 100000, dfmax = ncol(X)+1, penalty.factor = rep(1, ncol(X)), 
+         max.iter = 1000, dfmax = ncol(X)+1, penalty.factor = rep(1, ncol(X)), 
          warn = TRUE, output.time = FALSE, verbose = FALSE)
 }
 
@@ -29,10 +29,10 @@ biglasso(X, y, row.idx = 1:nrow(X), penalty = c("lasso", "ridge", "enet"),
   "ridge", or "enet" (elastic net).}
   \item{family}{Either "gaussian" or "binomial", depending on the response.}
   \item{alg.logistic}{The algorithm used in logistic regression. If "Newton" then the exact hessian is used (default); if "MM" then a majorization-minimization algorithm is used to set an upper-bound on the hessian matrix. This can be faster, particularly in data-larger-than-RAM case.}
-  \item{screen}{The screening rule used \strong{for linear regression}. "HSR" (default) is the hybrid strong rule; "EDPP" is the (sequential) enhanced dual polytope projection rule; "HSR-BEDPP" and "HSR-Dome" are our new proposed screening rules which combine the hybrid strong rule and a safe rule (BEDPP or Dome test). \strong{Note that for logistic regression}, only "HSR" is applicable. See details.}
-  \item{safe.thresh}{the threshold value between 0 and 1 that controls when to stop safe test in the "HSR-Dome" and "HSR-BEDPP" rules. For example, 0.01 means to stop Dome test at next lambda iteration if the number of features rejected by safe test at current lambda iteration is not larger than 1\% of the total number of features. So 1 means to always turn off safe test, whereas 0 (default) means to turn off safe test if the number of features rejected by safe test is 0 at current lambda.}
+  \item{screen}{The feature screening rule used at each \code{lambda} that discards features to speed up computation: "SSR" (default) is the sequential strong rule; "EDPP" is the (sequential) EDPP rule; "SSR-BEDPP" and "SSR-Dome" are our new proposed screening rules which combine the strong rule with a safe rule (BEDPP or Dome test). "EDPP-No-Active" is the (sequential) EDPP rule without active set cycling in the algorithm, which is for research purpose only. \strong{Note that for logistic regression and/or the elastic net penalty}, only "SSR" is applicable for now.}
+  \item{safe.thresh}{the threshold value between 0 and 1 that controls when to stop safe test in the "SSR-Dome" and "SSR-BEDPP" rules. For example, 0.01 means to stop Dome test at next lambda iteration if the number of features rejected by safe test at current lambda iteration is not larger than 1\% of the total number of features. So 1 means to always turn off safe test, whereas 0 (default) means to turn off safe test if the number of features rejected by safe test is 0 at current lambda.}
   \item{ncores}{The number of OpenMP threads used for parallel computing.}
-  \item{alpha}{The elastic-net mixing parameter that controls the relative contribution from the lasso (l1) and the ridge (l2) penalty. It must be a number between 0 and 1 if \code{"penalty"} is "enet". No need to set \code{"alpha"} value for other two penalties.}
+  \item{alpha}{The elastic-net mixing parameter that controls the relative contribution from the lasso (l1) and the ridge (l2) penalty. The penalty is defined as \deqn{ \alpha||\beta||_1  + (1-\alpha)/2||\beta||_2^2.} \code{alpha=1} is the lasso penalty, \code{alpha=0} the ridge penalty, \code{alpha} in between 0 and 1 is the elastic-net ("enet") penalty. }
   \item{lambda.min}{The smallest value for lambda, as a fraction of
     lambda.max.  Default is .001 if the number of observations is larger
     than the number of covariates and .05 otherwise.}
@@ -61,9 +61,12 @@ biglasso(X, y, row.idx = 1:nrow(X), penalty = c("lasso", "ridge", "enet"),
 }
 
 \details{
-  See documentation in \code{\link[ncvreg]{ncvreg}} (or package \href{http://cran.r-project.org/package=ncvreg}{ncvreg}) for more details about the model
-  and the algorithm.
-  }
+The objective function for linear regression (\code{family = "gaussian"}) is \deqn{1/2
+  RSS/nobs + \lambda*penalty,} for logistic regression (\code{family = "binomial"}) it is
+  \deqn{-loglik/nobs + \lambda*penalty.} 
+
+Several advanced feature screening rules are proposed and implemented. For lasso-penalized linear regression, all the options of \code{screen} are applicable. Our proposal - "SSR-BEDPP" - achieves largest speedup so it's the recommended one, especially for ultrahigh-dimensional large-scale data sets. For logistic regression and/or the elastic net penalty, only "SSR" is applicable for now.
+}
 
 \value{
   An object with S3 class \code{"biglasso"} with following variables.
@@ -82,7 +85,7 @@ biglasso(X, y, row.idx = 1:nrow(X), penalty = c("lasso", "ridge", "enet"),
   \item{screen}{Same as above.}
   \item{col.idx}{The indices of features that have 'scale' value greater than 1e-6. Features with 'scale' less than 1e-6 are removed from model fitting.}
   \item{rejections}{The number of features rejected at each value of \code{lambda}.}
-  \item{safe_rejections}{The number of features rejected by safe rules at each value of \code{lambda}. Only for "HSR-Dome" and "HSR-BEDPP" cases.}
+  \item{safe_rejections}{The number of features rejected by safe rules at each value of \code{lambda}. Only for "SSR-Dome" and "SSR-BEDPP" cases.}
 }
 
 \author{

@@ -2,12 +2,12 @@ biglasso <- function(X, y, row.idx = 1:nrow(X),
                      penalty = c("lasso", "ridge", "enet"),
                      family = c("gaussian","binomial"), 
                      alg.logistic = c("Newton", "MM"),
-                     screen = c("HSR", "EDPP", "HSR-Dome", "HSR-BEDPP", "EDPP-Active"),
+                     screen = c("SSR", "EDPP", "SSR-Dome", "SSR-BEDPP","EDPP-No-Active"),
                      safe.thresh = 0,
                      ncores = 1, alpha = 1,
                      lambda.min = ifelse(nrow(X) > ncol(X),.001,.05), 
                      nlambda = 100, lambda.log.scale = TRUE,
-                     lambda, eps = 1e-7, max.iter = 100000, 
+                     lambda, eps = 1e-7, max.iter = 1000, 
                      dfmax = ncol(X)+1,
                      penalty.factor = rep(1, ncol(X)), 
                      warn = TRUE, output.time = FALSE,
@@ -75,14 +75,6 @@ biglasso <- function(X, y, row.idx = 1:nrow(X),
   }
   if (family == 'gaussian') {
     if (screen == "EDPP") {
-      res <- .Call("cdfit_gaussian_edpp", X@address, yy, as.integer(row.idx-1),
-                   lambda, as.integer(nlambda), as.integer(lambda.log.scale),
-                   lambda.min, alpha,
-                   as.integer(user.lambda | any(penalty.factor==0)),
-                   eps, as.integer(max.iter), penalty.factor,
-                   as.integer(dfmax), as.integer(ncores),
-                   PACKAGE = 'biglasso')
-    } else if (screen == 'EDPP-Active') {
       res <- .Call("cdfit_gaussian_edpp_active", X@address, yy, as.integer(row.idx-1),
                    lambda, as.integer(nlambda), as.integer(lambda.log.scale),
                    lambda.min, alpha,
@@ -90,7 +82,15 @@ biglasso <- function(X, y, row.idx = 1:nrow(X),
                    eps, as.integer(max.iter), penalty.factor,
                    as.integer(dfmax), as.integer(ncores),
                    PACKAGE = 'biglasso')
-    } else if (screen == "HSR") {
+    } else if (screen == 'EDPP-No-Active') {
+      res <- .Call("cdfit_gaussian_edpp", X@address, yy, as.integer(row.idx-1),
+                   lambda, as.integer(nlambda), as.integer(lambda.log.scale),
+                   lambda.min, alpha,
+                   as.integer(user.lambda | any(penalty.factor==0)),
+                   eps, as.integer(max.iter), penalty.factor,
+                   as.integer(dfmax), as.integer(ncores),
+                   PACKAGE = 'biglasso')
+    } else if (screen == "SSR") {
       res <- .Call("cdfit_gaussian_hsr", X@address, yy, as.integer(row.idx-1),
                    lambda, as.integer(nlambda), as.integer(lambda.log.scale),
                    lambda.min, alpha,
@@ -98,7 +98,7 @@ biglasso <- function(X, y, row.idx = 1:nrow(X),
                    eps, as.integer(max.iter), penalty.factor,
                    as.integer(dfmax), as.integer(ncores), as.integer(verbose),
                    PACKAGE = 'biglasso')
-    } else if (screen == 'HSR-Dome') {
+    } else if (screen == 'SSR-Dome') {
       res <- .Call("cdfit_gaussian_hsr_dome", X@address, yy, as.integer(row.idx-1),
                    lambda, as.integer(nlambda), as.integer(lambda.log.scale),
                    lambda.min, alpha,
@@ -107,7 +107,7 @@ biglasso <- function(X, y, row.idx = 1:nrow(X),
                    as.integer(dfmax), as.integer(ncores), safe.thresh, 
                    as.integer(verbose),
                    PACKAGE = 'biglasso')
-    } else if (screen == 'HSR-BEDPP') {
+    } else if (screen == 'SSR-BEDPP') {
       res <- .Call("cdfit_gaussian_hsr_bedpp", X@address, yy, as.integer(row.idx-1),
                    lambda, as.integer(nlambda), as.integer(lambda.log.scale),
                    lambda.min, alpha,
@@ -126,7 +126,7 @@ biglasso <- function(X, y, row.idx = 1:nrow(X),
     iter <- res[[6]]
     rejections <- res[[7]]
     
-    if (screen == 'HSR-Dome' || screen == 'HSR-BEDPP') {
+    if (screen == 'SSR-Dome' || screen == 'SSR-BEDPP') {
       safe_rejections <- res[[8]]
       col.idx <- res[[9]]
     } else {
@@ -208,7 +208,7 @@ biglasso <- function(X, y, row.idx = 1:nrow(X),
     col.idx = col.idx,
     rejections = rejections
   )
-  if (screen == 'HSR-Dome' || screen == 'HSR-BEDPP') {
+  if (screen == 'SSR-Dome' || screen == 'SSR-BEDPP') {
     return.val$safe_rejections <- safe_rejections
   }
   
