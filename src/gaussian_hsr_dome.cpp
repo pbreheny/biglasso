@@ -165,7 +165,6 @@ RcppExport SEXP cdfit_gaussian_hsr_dome(SEXP X_, SEXP y_, SEXP row_idx_,
   int dfmax = INTEGER(dfmax_)[0];
   
   NumericVector lambda(L);
-  if (user != 0) lambda = Rcpp::as<NumericVector>(lambda_);
   NumericVector center(p);
   NumericVector scale(p);
   int p_keep = 0; // keep columns whose scale > 1e-6
@@ -246,6 +245,7 @@ RcppExport SEXP cdfit_gaussian_hsr_dome(SEXP X_, SEXP y_, SEXP row_idx_,
     n_reject[0] = p;
   } else {
     lstart = 0;
+    lambda = Rcpp::as<NumericVector>(lambda_);
   } 
 
   // Variables for Dome test

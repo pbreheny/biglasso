@@ -88,7 +88,6 @@ RcppExport SEXP cdfit_gaussian_edpp(SEXP X_, SEXP y_, SEXP row_idx_, SEXP lambda
   int dfmax = INTEGER(dfmax_)[0];
   
   NumericVector lambda(L);
-  if (user != 0) lambda = Rcpp::as<NumericVector>(lambda_);
   NumericVector center(p);
   NumericVector scale(p);
   int p_keep = 0;
@@ -159,13 +158,14 @@ RcppExport SEXP cdfit_gaussian_edpp(SEXP X_, SEXP y_, SEXP row_idx_, SEXP lambda
     n_reject[0] = p;
   } else {
     lstart = 0;
+    lambda = Rcpp::as<NumericVector>(lambda_);
   }
 
   // compute v1 for lambda_max
   double xty = crossprod_bm(xMat, y, row_idx, center[xmax_idx], scale[xmax_idx], n, xmax_idx);
   
   // Path
-  for (l = 0; l < L; l++) {
+  for (l = lstart; l < L; l++) {
     if (l != 0 ) {
       int nv = 0;
       for (int j=0; j<p; j++) {

@@ -85,7 +85,6 @@ RcppExport SEXP cdfit_gaussian_hsr(SEXP X_, SEXP y_, SEXP row_idx_,
   double alpha = REAL(alpha_)[0];
   int n = Rf_length(row_idx_); // number of observations used for fitting model
   int p = xMat->ncol();
-  // int n_total = xMat->nrow(); // number of total observations
   int L = INTEGER(nlambda_)[0];
   int lam_scale = INTEGER(lam_scale_)[0];
   int user = INTEGER(user_)[0];
