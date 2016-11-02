@@ -2,7 +2,7 @@ biglasso <- function(X, y, row.idx = 1:nrow(X),
                      penalty = c("lasso", "ridge", "enet"),
                      family = c("gaussian","binomial"), 
                      alg.logistic = c("Newton", "MM"),
-                     screen = c("SSR", "EDPP", "SSR-Dome", "SSR-BEDPP","EDPP-No-Active"),
+                     screen = c("SSR", "SEDPP", "SSR-Dome", "SSR-BEDPP","SEDPP-No-Active"),
                      safe.thresh = 0,
                      ncores = 1, alpha = 1,
                      lambda.min = ifelse(nrow(X) > ncol(X),.001,.05), 
@@ -75,7 +75,7 @@ biglasso <- function(X, y, row.idx = 1:nrow(X),
     cat("\nStart biglasso: ", format(Sys.time()), '\n')
   }
   if (family == 'gaussian') {
-    if (screen == "EDPP") {
+    if (screen == "SEDPP") {
       res <- .Call("cdfit_gaussian_edpp_active", X@address, yy, as.integer(row.idx-1),
                    lambda, as.integer(nlambda), as.integer(lambda.log.scale),
                    lambda.min, alpha,
@@ -83,7 +83,7 @@ biglasso <- function(X, y, row.idx = 1:nrow(X),
                    eps, as.integer(max.iter), penalty.factor,
                    as.integer(dfmax), as.integer(ncores),
                    PACKAGE = 'biglasso')
-    } else if (screen == 'EDPP-No-Active') {
+    } else if (screen == 'SEDPP-No-Active') {
       res <- .Call("cdfit_gaussian_edpp", X@address, yy, as.integer(row.idx-1),
                    lambda, as.integer(nlambda), as.integer(lambda.log.scale),
                    lambda.min, alpha,
@@ -118,6 +118,7 @@ biglasso <- function(X, y, row.idx = 1:nrow(X),
                    as.integer(verbose),
                    PACKAGE = 'biglasso')
     }
+    
     a <- rep(mean(y), nlambda)
     b <- Matrix(res[[1]], sparse = T)
     center <- res[[2]]
@@ -187,9 +188,9 @@ biglasso <- function(X, y, row.idx = 1:nrow(X),
   beta[1,] <- a - crossprod(center[col.idx], bb)
 
   ## Names
-  varnames <- if (is.null(colnames(X))) paste("V", col.idx, sep="") else colnames(X)
+  varnames <- if (is.null(colnames(X))) paste("V", 1:p, sep="") else colnames(X)
   varnames <- c("(Intercept)", varnames)
-  dimnames(beta) <- list(varnames, round(lambda,digits=4))
+  dimnames(beta) <- list(varnames, round(lambda, digits = 4))
 
   ## Output
   return.val <- list(
