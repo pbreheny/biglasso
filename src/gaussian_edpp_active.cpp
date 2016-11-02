@@ -76,7 +76,6 @@ RcppExport SEXP cdfit_gaussian_edpp_active(SEXP X_, SEXP y_, SEXP row_idx_, SEXP
   int dfmax = INTEGER(dfmax_)[0];
   
   NumericVector lambda(L);
-  if (user != 0) lambda = Rcpp::as<NumericVector>(lambda_);
   NumericVector center(p);
   NumericVector scale(p);
   int p_keep = 0;
@@ -150,13 +149,14 @@ RcppExport SEXP cdfit_gaussian_edpp_active(SEXP X_, SEXP y_, SEXP row_idx_, SEXP
     n_reject[0] = p;
   } else {
     lstart = 0;
+    lambda = Rcpp::as<NumericVector>(lambda_);
   } 
   
   // compute v1 for lambda_max
   double xty = crossprod_bm(xMat, y, row_idx, center[xmax_idx], scale[xmax_idx], n, xmax_idx);
   
   // Path
-  for (l = 0; l < L; l++) {
+  for (l = lstart; l < L; l++) {
     if (l != 0 ) {
       int nv = 0;
       for (int j=0; j<p; j++) {
@@ -179,7 +179,7 @@ RcppExport SEXP cdfit_gaussian_edpp_active(SEXP X_, SEXP y_, SEXP row_idx_, SEXP
                        scale[xmax_idx], row_idx[i], xmax_idx);        
         }
       }
-    } else { // lambda_max = lam[0]
+    } else { // lam[0]
       for (i = 0; i < n; i++) {
         theta[i] = r[i] / lambda_max;
         if (lambda[l] < lambda_max) {
@@ -192,7 +192,7 @@ RcppExport SEXP cdfit_gaussian_edpp_active(SEXP X_, SEXP y_, SEXP row_idx_, SEXP
     } 
     // update v2:
     for (i = 0; i < n; i++) {
-      v2[i] = y[i] / lambda[l+1] - theta[i];
+      v2[i] = y[i] / lambda[l] - theta[i];
     }
     //update pv2:
     update_pv2(pv2, v1, v2, n);
@@ -249,12 +249,13 @@ RcppExport SEXP cdfit_gaussian_edpp_active(SEXP X_, SEXP y_, SEXP row_idx_, SEXP
         // converged = checkConvergence(beta, a, eps, l+1, p);
         if (max_update < thresh) break;
       }
-      
+     
       // Scan for violations in edpp set
       violations = check_edpp_set(ever_active, discard_beta, z, xMat, row_idx, 
-                                  col_idx, center, scale, lambda[l],sumResid, alpha, r, m, n, p); 
-      if (violations==0) {
-        loss[l+1] = gLoss(r, n);
+                                  col_idx, center, scale, lambda[l], sumResid, 
+                                  alpha, r, m, n, p); 
+      if (violations == 0) {
+        loss[l] = gLoss(r, n);
         break;
       }
     }
