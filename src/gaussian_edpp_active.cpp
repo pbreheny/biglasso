@@ -217,7 +217,7 @@ RcppExport SEXP cdfit_gaussian_edpp_active(SEXP X_, SEXP y_, SEXP row_idx_, SEXP
         
         max_update = 0.0;
         for (j = 0; j < p; j++) {
-          if (ever_active[j] == 1) {
+          if (ever_active[j]) {
             jj = col_idx[j];
             z[j] = crossprod_resid(xMat, r, sumResid, row_idx, center[jj], scale[jj], n, jj) / n + a[j];
             l1 = lambda[l] * m[jj] * alpha;
@@ -240,16 +240,14 @@ RcppExport SEXP cdfit_gaussian_edpp_active(SEXP X_, SEXP y_, SEXP row_idx_, SEXP
             // update ever active sets
             if (beta(j, l) != 0) {
               ever_active[j] = 1;
-            } else {
-              ever_active[j] = 0;
-            }
+            } 
           }
         }
         // Check for convergence
         // converged = checkConvergence(beta, a, eps, l+1, p);
         if (max_update < thresh) break;
       }
-     
+    
       // Scan for violations in edpp set
       violations = check_edpp_set(ever_active, discard_beta, z, xMat, row_idx, 
                                   col_idx, center, scale, lambda[l], sumResid, 
