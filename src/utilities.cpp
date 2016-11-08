@@ -1,16 +1,13 @@
-#include <RcppArmadillo.h>
-#include <iostream>
-#include "bigmemory/BigMatrix.h"
-#include "bigmemory/MatrixAccessor.hpp"
-#include "bigmemory/bigmemoryDefines.h"
-#include "bigmemory/isna.hpp"
-#include <omp.h>
-#include <stdlib.h>
+// #include <RcppArmadillo.h>
+// #include <iostream>
+// #include "bigmemory/BigMatrix.h"
+// #include "bigmemory/MatrixAccessor.hpp"
+// #include "bigmemory/bigmemoryDefines.h"
+// #include "bigmemory/isna.hpp"
+// #include <omp.h>
+// #include <stdlib.h>
 
-//#include "defines.h"
-
-using namespace Rcpp;
-using namespace std;
+#include "utilities.h"
 
 double sign(double x) {
   if(x > 0.00000000001) return 1.0;
@@ -74,20 +71,6 @@ double gLoss(double *r, int n) {
   for (int i=0;i<n;i++) l = l + pow(r[i],2);
   return(l);
 }
-
-// // get_row
-// int get_row_bm(SEXP xP) {
-//   XPtr<BigMatrix> xMat(xP);
-//   int nrow = xMat->nrow();
-//   return nrow;
-// }
-// 
-// // get_col
-// int get_col_bm(SEXP xP) {
-//   XPtr<BigMatrix> xMat(xP);
-//   int ncol = xMat->ncol();
-//   return ncol;
-// }
 
 // get X[i, j]: i-th row, j-th column element
 double get_elem_bm(XPtr<BigMatrix> xpMat, double center_, double scale_, int i, int j) {

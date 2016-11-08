@@ -1,16 +1,27 @@
+
+// #include <math.h>
+// #include <string.h>
+// #include <R.h>
+// #include <Rinternals.h>
+// #include <Rdefines.h>
+// #include <Rmath.h>
+// #include <iostream>
+// #include <vector>
+// #include <algorithm>
+
+#include <RcppArmadillo.h>
+#include "bigmemory/BigMatrix.h"
+#include <time.h>
+#include "bigmemory/BigMatrix.h"
+#include "bigmemory/MatrixAccessor.hpp"
+#include "bigmemory/bigmemoryDefines.h"
+
+#include "biglasso_omp.h"
+//#include "defines.h"
+
 #ifndef UTILITIES_H
 #define UTILITIES_H
 
-#include <math.h>
-#include <string.h>
-#include <R.h>
-#include <Rinternals.h>
-#include <Rdefines.h>
-#include <Rmath.h>
-#include <RcppArmadillo.h>
-#include "bigmemory/BigMatrix.h"
-
-//#include "defines.h"
 using namespace Rcpp;
 using namespace std;
 
@@ -31,12 +42,6 @@ int sum(int *vec, int p);
 double lasso(double z, double l1, double l2, double v);
 
 double gLoss(double *r, int n);
-// 
-// // get_row
-// int get_row_bm(SEXP xP);
-// 
-// // get_col
-// int get_col_bm(SEXP xP);
 
 // get X[i, j]: i-th row, j-th column element
 double get_elem_bm(XPtr<BigMatrix> xpMat, double center_, double scale_, int i, int j);

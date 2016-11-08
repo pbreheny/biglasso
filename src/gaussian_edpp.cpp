@@ -1,15 +1,14 @@
-#include <RcppArmadillo.h>
-#include <iostream>
-#include <vector>
-#include <algorithm>
-#include "bigmemory/BigMatrix.h"
-#include "bigmemory/MatrixAccessor.hpp"
-#include "bigmemory/bigmemoryDefines.h"
-#include <time.h>
-#include <omp.h>
+// #include <RcppArmadillo.h>
+// #include <iostream>
+// #include <vector>
+// #include <algorithm>
+// #include "bigmemory/BigMatrix.h"
+// #include "bigmemory/MatrixAccessor.hpp"
+// #include "bigmemory/bigmemoryDefines.h"
+// #include <time.h>
+// #include <omp.h>
 
 #include "utilities.h"
-//#include "defines.h"
 
 void free_memo_edpp(double *a, double *r, int *discard_beta, 
                     double *theta, double *v1, double *v2, double *o) {
@@ -101,12 +100,14 @@ RcppExport SEXP cdfit_gaussian_edpp(SEXP X_, SEXP y_, SEXP row_idx_, SEXP lambda
   
   // set up omp
   int useCores = INTEGER(ncore_)[0];
-  int haveCores=omp_get_num_procs();
+#ifdef BIGLASSO_OMP_H_
+  int haveCores = omp_get_num_procs();
   if(useCores < 1) {
     useCores = haveCores;
   }
   omp_set_dynamic(0);
   omp_set_num_threads(useCores);
+#endif
   
   // standardize: get center, scale; get p_keep_ptr, col_idx; get z, lambda_max, xmax_idx;
   standardize_and_get_residual(center, scale, p_keep_ptr, col_idx, z, 

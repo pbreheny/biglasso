@@ -1,15 +1,14 @@
-#include <RcppArmadillo.h>
-#include <iostream>
-#include <vector>
-#include <algorithm>
-#include "bigmemory/BigMatrix.h"
-#include "bigmemory/MatrixAccessor.hpp"
-#include "bigmemory/bigmemoryDefines.h"
-#include <time.h>
-#include <omp.h>
+// #include <RcppArmadillo.h>
+// #include <iostream>
+// #include <vector>
+// #include <algorithm>
+// #include "bigmemory/BigMatrix.h"
+// #include "bigmemory/MatrixAccessor.hpp"
+// #include "bigmemory/bigmemoryDefines.h"
+// #include <time.h>
+// #include <omp.h>
 
 #include "utilities.h"
-//#include "defines.h"
 
 // check KKT conditions over features in the strong set
 int check_strong_set(int *e1, int *e2, vector<double> &z, XPtr<BigMatrix> xpMat, 
@@ -84,6 +83,7 @@ RcppExport SEXP cdfit_gaussian_hsr(SEXP X_, SEXP y_, SEXP row_idx_,
   double lambda_min = REAL(lambda_min_)[0];
   double alpha = REAL(alpha_)[0];
   int n = Rf_length(row_idx_); // number of observations used for fitting model
+  
   int p = xMat->ncol();
   int L = INTEGER(nlambda_)[0];
   int lam_scale = INTEGER(lam_scale_)[0];
@@ -108,12 +108,14 @@ RcppExport SEXP cdfit_gaussian_hsr(SEXP X_, SEXP y_, SEXP row_idx_,
 
   // set up omp
   int useCores = INTEGER(ncore_)[0];
+#ifdef BIGLASSO_OMP_H_
   int haveCores = omp_get_num_procs();
   if(useCores < 1) {
     useCores = haveCores;
   }
   omp_set_dynamic(0);
   omp_set_num_threads(useCores);
+#endif
  
   if (verbose) {
     char buff1[100];

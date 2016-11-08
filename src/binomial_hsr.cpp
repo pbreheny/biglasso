@@ -1,16 +1,14 @@
-#include <RcppArmadillo.h>
-#include <iostream>
-#include <vector>
-#include <algorithm>
-#include "bigmemory/BigMatrix.h"
-#include "bigmemory/MatrixAccessor.hpp"
-#include "bigmemory/bigmemoryDefines.h"
-#include <time.h>
-#include <omp.h>
+// #include <RcppArmadillo.h>
+// #include <iostream>
+// #include <vector>
+// #include <algorithm>
+// #include "bigmemory/BigMatrix.h"
+// #include "bigmemory/MatrixAccessor.hpp"
+// #include "bigmemory/bigmemoryDefines.h"
+// #include <time.h>
+// #include <omp.h>
 
 #include "utilities.h"
-
-//#include "defines.h"
 
 void free_memo_bin_hsr(double *s, double *w, double *a, double *r, 
                        int *e1, int *e2, double *eta) {
@@ -141,13 +139,15 @@ RcppExport SEXP cdfit_binomial_hsr(SEXP X_, SEXP y_, SEXP row_idx_,
   
   // set up omp
   int useCores = INTEGER(ncore_)[0];
-  int haveCores=omp_get_num_procs();
+#ifdef BIGLASSO_OMP_H_
+  int haveCores = omp_get_num_procs();
   if(useCores < 1) {
     useCores = haveCores;
   }
   omp_set_dynamic(0);
   omp_set_num_threads(useCores);
-
+#endif
+  
   if (verbose) {
     char buff1[100];
     time_t now1 = time (0);
