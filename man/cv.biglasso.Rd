@@ -9,8 +9,8 @@ Perform k-fold cross validation for penalized regression models over a grid of
 values for the regularization parameter lambda.}
 
 \usage{
-cv.biglasso(X, y, row.idx = 1:nrow(X), ncores = 1, ..., 
-            nfolds=5, seed, cv.ind, trace=FALSE)
+cv.biglasso(X, y, row.idx = 1:nrow(X), ncores = parallel::detectCores(), ...,
+            nfolds = 5, seed, cv.ind, trace = FALSE)
 }
 
 \arguments{
@@ -18,11 +18,11 @@ cv.biglasso(X, y, row.idx = 1:nrow(X), ncores = 1, ...,
   \item{y}{The response vector, as in \code{biglasso}.}
   \item{row.idx}{The integer vector of row indices of \code{X} that used for fitting 
   the model. as in \code{biglasso}.}
+  \item{ncores}{The number of cores to use for parallel execution across a cluster 
+  created by the \code{parallel} package. (This is different from \code{ncores} 
+  in \code{\link{biglasso}}, which is the number of OpenMP threads.)}
   \item{...}{Additional arguments to \code{biglasso}.}
-  \item{ncores}{The number of OpenMP threads used for parallel computing. Same 
-  as in \code{\link{biglasso}.}
-    }
-  \item{nfolds}{The number of cross-validation folds.  Default is 10.}
+  \item{nfolds}{The number of cross-validation folds.  Default is 5.}
   \item{seed}{The seed of the random number generator in order to obtain 
   reproducible results.}
   \item{cv.ind}{Which fold each observation belongs to.  By default the
@@ -61,6 +61,7 @@ cv.biglasso(X, y, row.idx = 1:nrow(X), ncores = 1, ...,
   \item{null.dev}{The deviance for the intercept-only model.}
   \item{pe}{If \code{family="binomial"}, the cross-validation prediction
     error for each value of \code{lambda}.}
+  \item{cv.ind}{Same as above.}
 }
 
 \author{
@@ -73,14 +74,13 @@ cv.biglasso(X, y, row.idx = 1:nrow(X), ncores = 1, ...,
 
 \examples{
 ## cv.biglasso
-seed <- 1234
 data(colon)
 X <- colon$X
 y <- colon$y
 X.bm <- as.big.matrix(X)
 
 ## logistic regression
-cvfit <- cv.biglasso(X.bm, y, family = 'binomial', seed = seed)
+cvfit <- cv.biglasso(X.bm, y, family = 'binomial', seed = 1234, ncores = 2)
 par(mfrow = c(2, 2))
 plot(cvfit, type = 'all')
 summary(cvfit)

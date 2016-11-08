@@ -4,8 +4,14 @@ Date: 2016-11-08
 Title: Big Lasso: Extending Lasso Model Fitting to Big Data in R
 Author: Yaohui Zeng [aut,cre], Patrick Breheny [ctb]
 Maintainer: Yaohui Zeng <yaohui-zeng@uiowa.edu>
-Description: Extend lasso and elastic-net model fitting for ultrahigh-dimensional, multi-gigabyte data sets that cannot be loaded into memory. It's much more memory- and computation-efficient as compared to existing lasso-fitting packages like "glmnet" and "ncvreg", allowing for very powerful big data analysis even with an ordinary laptop.
+Description: Extend lasso and elastic-net model fitting for ultrahigh-dimensional, 
+    multi-gigabyte data sets that cannot be loaded into memory. It's much more 
+    memory- and computation-efficient as compared to existing lasso-fitting packages 
+    like 'glmnet' and 'ncvreg', thus allowing for very powerful big data analysis 
+    even with an ordinary laptop.
 License: GPL-2
+URL: https://github.com/YaohuiZeng/biglasso
+BugReports: https://github.com/YaohuiZeng/biglasso/issues
 Depends: bigmemory (>= 4.0.0), Matrix, ncvreg
 Imports: Rcpp (>= 0.12.1), methods
 LinkingTo: Rcpp, RcppArmadillo, bigmemory, BH

@@ -52,7 +52,7 @@ X <- colon$X
 y <- colon$y
 X.bm <- as.big.matrix(X)
 fit <- biglasso(X.bm, y, penalty = 'lasso', family = "binomial")
-cvfit <- cv.biglasso(X.bm, y, penalty = 'lasso', family = "binomial")
+cvfit <- cv.biglasso(X.bm, y, penalty = 'lasso', family = "binomial", seed = 1234, ncores = 2)
 coef <- coef(cvfit)
 coef[which(coef != 0)]
 predict(cvfit, X.bm, type = "response")

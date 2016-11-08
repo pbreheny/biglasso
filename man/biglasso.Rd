@@ -61,11 +61,10 @@ biglasso(X, y, row.idx = 1:nrow(X), penalty = c("lasso", "ridge", "enet"),
 }
 
 \details{
-The objective function for linear regression (\code{family = "gaussian"}) is \deqn{1/2
-  RSS/nobs + \lambda*penalty,} for logistic regression (\code{family = "binomial"}) it is
-  \deqn{-loglik/nobs + \lambda*penalty.} 
-
-Several advanced feature screening rules are proposed and implemented. For lasso-penalized linear regression, all the options of \code{screen} are applicable. Our proposal - "SSR-BEDPP" - achieves largest speedup so it's the recommended one, especially for ultrahigh-dimensional large-scale data sets. For logistic regression and/or the elastic net penalty, only "SSR" is applicable for now.
+The objective function for linear regression (\code{family = "gaussian"}) is \deqn{\frac{1}{2n}\textrm{RSS} + \textrm{penalty},} for logistic regression (\code{family = "binomial"}) it is
+  \deqn{-\frac{1}{n} loglike + \textrm{penalty}.} 
+  
+Several advanced feature screening rules are implemented. For lasso-penalized linear regression, all the options of \code{screen} are applicable. Our proposal rule - "SSR-BEDPP" - achieves highest speedup so it's the recommended one, especially for ultrahigh-dimensional large-scale data sets. For logistic regression and/or the elastic net penalty, only "SSR" is applicable for now. More efficient rules are under development.
 }
 
 \value{

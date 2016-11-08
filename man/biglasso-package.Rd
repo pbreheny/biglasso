@@ -65,38 +65,40 @@ Elapsed time (s) \tab 0.11 \tab 0.83 \tab 8.47 \tab 85.50 \cr
 
 \examples{
 \dontrun{
-## Example of reading data from external big data file, fit lasso model, run
-## cross validation
+## Example of reading data from external big data file, fit lasso model, 
+## and run cross validation in parallel
 
 # simulated design matrix, 1000 observations, 500,000 variables, ~ 5GB
 # there are 10 true variables with non-zero coefficient 2.
 xfname <- 'x_e3_5e5.txt' 
 yfname <- 'y_e3_5e5.txt' # response vector
 time <- system.time(
-  X <- setupX(xfname, sep = '\t')
+  X <- setupX(xfname, sep = '\t') # create backing files (.bin, .desc)
 )
-print(time) # ~ 8 minutes; this is just one time operation
+print(time) # ~ 7 minutes; this is just one-time operation
 dim(X)
+
+# the big.matrix then can be retrieved by its descriptor file (.desc) in any new R session. 
+rm(X)
+xdesc <- 'x_e3_5e5.desc' 
+X <- attach.big.matrix(xdesc)
+dim(X)
+
 y <- as.matrix(read.table(yfname, header = F))
 time.fit <- system.time(
-  fit <- biglasso(X, y, family = 'gaussian')
+  fit <- biglasso(X, y, family = 'gaussian', screen = 'SSR-BEDPP')
 )
-print(time.fit) # ~ 1 minute for fitting a lasso model
+print(time.fit) # ~ 44 seconds for fitting a lasso model along the entire solution path
 
 # cross validation in parallel
 seed <- 1234
 time.cvfit <- system.time(
-  cvfit <- cv.biglasso(X, y, family = 'gaussian', seed = seed, ncores = 5)
+  cvfit <- cv.biglasso(X, y, family = 'gaussian', screen = 'SSR-BEDPP', 
+                       seed = seed, ncores = 4, nfolds = 10)
 )
-print(time.cvfit) # ~ 4 minutes for 10-fold cross validation
+print(time.cvfit) # ~ 3 minutes for 10-fold cross validation
 plot(cvfit)
 summary(cvfit)
 
-# the big.matrix can be retrieved by its descriptor file
-rm(list = ls())
-# the descriptor file was created after calling setupX(), and stored on the disk
-xdesc <- 'x_e3_5e5.desc' 
-X <- attach.big.matrix(xdesc)
-dim(X)
 }
 }
