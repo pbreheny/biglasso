@@ -106,7 +106,7 @@ void dome_screen(int *accept, const vector<double> &xtxmax, const vector<int> &r
                  const vector<double> &tt, const vector<double> &xty, double ynorm, double psi, 
                  double lambda, double lambda_max, int n, int p) {
   int j;
-  double L, U;
+  double L = 0, U = 0;
   double delta_lam = lambda_max - lambda;
   double dlam_times_psi = delta_lam * psi; // temp result
   double n_time_lam = n * lambda; // temp result
@@ -254,7 +254,7 @@ RcppExport SEXP cdfit_gaussian_hsr_dome(SEXP X_, SEXP y_, SEXP row_idx_,
   vector<double> xtxmax;
   vector<double> tt;
   vector<int> region;
-  double ynorm, psi;
+  double ynorm = 0, psi = 0;
   int *dome_accept = Calloc(p, int);
   int *dome_accept_old = Calloc(p, int);
   for (j = 0; j < p; j++) {
@@ -366,8 +366,7 @@ RcppExport SEXP cdfit_gaussian_hsr_dome(SEXP X_, SEXP y_, SEXP row_idx_,
               shift = beta(j, l) - a[j];
               if (shift !=0) {
                 // compute objective update for convergence check
-                //update =  z[j] * shift - 0.5 * (1 + l2) * (pow(beta(j, l), 2) - \
-                //  pow(a[j], 2)) - l1 * (fabs(beta(j, l)) -  fabs(a[j]));
+                //update =  z[j] * shift - 0.5 * (1 + l2) * (pow(beta(j, l), 2) - pow(a[j], 2)) - l1 * (fabs(beta(j, l)) -  fabs(a[j]));
                 update = pow(beta(j, l) - a[j], 2);
                 if (update > max_update) {
                   max_update = update;
