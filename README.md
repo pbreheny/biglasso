@@ -1,5 +1,5 @@
 
-# Big Lasso: Extending Lasso Model Fitting to Big Data in R
+# Big Lasso: Extend Lasso Model Fitting to Big Data in R
 
 [![Build Status](https://travis-ci.org/YaohuiZeng/biglasso.svg?branch=master)](https://travis-ci.org/YaohuiZeng/biglasso)
 [![CRAN_Status_Badge](http://www.r-pkg.org/badges/version/biglasso)](http://cran.r-project.org/package=biglasso)
@@ -10,24 +10,20 @@ data sets that cannot be loaded into memory. It utilizes memory-mapped files to 
 
 
 ## Features:
-------------
 1. It utilizes memory-mapping files to store the massive data on the disk and only reads those into memory whenever necessary during model fitting, thus can easily handle data-larger-than-RAM cases.
 2. It builds upon the pathwise coordinate descent algorithm combined with "warm start", "active set cycling", and feature screening strategies, which has been proved to be one of the most powerful lasso solvers.
 3. It incorporates some efficient feature screening rules, such as the sequential strong rule (SSR), the sequential EDPP rule (SEDPP), and our newly proposed and more powerful rules - SSR-Dome and SSR-BEDPP.  
 4. The underlying algorithm is implemented in C++ and is optimized to be memory- and computation-efficient. Parallel computing via OpenMP is also supported.
 
 ## Installation:
-------------
 * The stable version: `install.packages("biglasso")`
 * The latest version: `devtools::install_github("YaohuiZeng/biglasso")`
 
 
 ## Report bugs：
----------------
 * open an [issue](https://github.com/YaohuiZeng/biglasso/issues) or send an email to Yaohui Zeng at <yaohui-zeng@uiowa.edu>
 
 
 ## News:
---------
 * This package on GitHub has been updated to Version 1.2-3. See details in NEWS.
 * The newest stable version will be submitted to CRAN soon after testing.
