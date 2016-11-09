@@ -249,7 +249,7 @@ RcppExport SEXP cdfit_gaussian_hsr_bedpp(SEXP X_, SEXP y_, SEXP row_idx_,
   /* Variables used for BEDPP test */
   vector<double> xty;
   vector<double> sign_lammax_xtxmax;
-  double ynorm_sq;
+  double ynorm_sq = 0;
   int *bedpp_reject = Calloc(p, int);
   int *bedpp_reject_old = Calloc(p, int);
   int bedpp; // if 0, don't perform bedpp test

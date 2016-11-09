@@ -106,7 +106,7 @@ void dome_screen(int *accept, const vector<double> &xtxmax, const vector<int> &r
                  const vector<double> &tt, const vector<double> &xty, double ynorm, double psi, 
                  double lambda, double lambda_max, int n, int p) {
   int j;
-  double L = 0, U = 0;
+  double L, U;
   double delta_lam = lambda_max - lambda;
   double dlam_times_psi = delta_lam * psi; // temp result
   double n_time_lam = n * lambda; // temp result
@@ -127,6 +127,11 @@ void dome_screen(int *accept, const vector<double> &xtxmax, const vector<int> &r
     case 3: // in between
       L = - n_time_lam + delta_lam * xtxmax[j] + dlam_times_psi * tt[j];
       U = n_time_lam + delta_lam * xtxmax[j] - dlam_times_psi * tt[j];
+      break;
+    default:
+      L = 0;
+      U = 0;
+      break;
     }
     if (xty[j] > L && xty[j] < U) { // reject
       accept[j] = 0;
