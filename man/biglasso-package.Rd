@@ -7,7 +7,7 @@
 \title{Big Lasso: Extending Lasso Model Fitting to Big Data in R}
 
 \description{
-Extend lasso and elastic-net model fitting for ultrahigh-dimensional, multi-gigabyte data sets that cannot be loaded into available RAM. This package utilizes memory-mapped files to store the massive data on the disk and only read those into memory whenever necessary during model fitting. Moreover, some advanced feature screening rules are proposed and implemented to accelerate the model fitting. As a result, this package is much more memory- and computation-efficient as compared to existing lasso-fitting packages such as \href{http://CRAN.R-project.org/package=glmnet}{glmnet} and \href{http://CRAN.R-project.org/package=ncvreg}{ncvreg}, thus allowing for very powerful big data analysis even with only an ordinary laptop.
+Extend lasso and elastic-net model fitting for ultrahigh-dimensional, multi-gigabyte data sets that cannot be loaded into available RAM. This package utilizes memory-mapped files to store the massive data on the disk and only read those into memory whenever necessary during model fitting. Moreover, some advanced feature screening rules are proposed and implemented to accelerate the model fitting. As a result, this package is much more memory- and computation-efficient as compared to existing lasso-fitting packages such as \href{https://CRAN.R-project.org/package=glmnet}{glmnet} and \href{https://CRAN.R-project.org/package=ncvreg}{ncvreg}, thus allowing for very powerful big data analysis even with only an ordinary laptop.
 }
 
 \details{
@@ -31,7 +31,7 @@ This package aims to fill the gap by extending lasso model fitting to Big Data i
 }
 
 \note{
-The input design matrix X must be a \code{\link[bigmemory]{big.matrix}} object. This can be created by the function \code{\link[bigmemory]{as.big.matrix}} in the R package \href{http://cran.r-project.org/package=bigmemory}{bigmemory}. If the data (design matrix) is very large (e.g. 10 GB) and stored in an external file, which is often the case for big data, X can be created by calling the function \code{\link{setupX}}. \strong{In this case, there are several restrictions about the data file:} 
+The input design matrix X must be a \code{\link[bigmemory]{big.matrix}} object. This can be created by the function \code{\link[bigmemory]{as.big.matrix}} in the R package \href{https://CRAN.R-project.org//package=bigmemory}{bigmemory}. If the data (design matrix) is very large (e.g. 10 GB) and stored in an external file, which is often the case for big data, X can be created by calling the function \code{\link{setupX}}. \strong{In this case, there are several restrictions about the data file:} 
 
 \enumerate{
 \item the data file must be a well-formated ASCII-file, with each row corresponding to an observation and each column a variable;

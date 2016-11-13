@@ -30,7 +30,7 @@ setupX(filename, dir = getwd(), sep = ",",
 \details{
 For a data set, this function needs to be called only one time to set up the \code{big.matrix} object with two backing files (.bin, .desc) created in current working directory. Once set up, the data can be "loaded" into any (new) R session by calling \code{attach.big.matrix(discriptorfile)}.
 
-This function is a simple wrapper of \code{\link[bigmemory]{read.big.matrix}}. See \code{\link[bigmemory]{read.big.matrix}} and the package \href{http://CRAN.R-project.org/package=bigmemory}{bigmemory} for more details. 
+This function is a simple wrapper of \code{\link[bigmemory]{read.big.matrix}}. See \code{\link[bigmemory]{read.big.matrix}} and the package \href{https://CRAN.R-project.org/package=bigmemory}{bigmemory} for more details. 
 }
 
 \value{
