@@ -10,15 +10,15 @@
 
 #include "utilities.h"
 
-void free_memo_edpp(double *a, double *r, int *discard_beta, 
+void Free_memo_edpp(double *a, double *r, int *discard_beta, 
                     double *theta, double *v1, double *v2, double *o) {
-  free(a);
-  free(r);
-  free(discard_beta);
-  free(theta);
-  free(v1);
-  free(v2);
-  free(o);
+  Free(a);
+  Free(r);
+  Free(discard_beta);
+  Free(theta);
+  Free(v1);
+  Free(v2);
+  Free(o);
 }
 
 // V2 - <v1, v2> / ||v1||^2_2 * V1
@@ -174,7 +174,7 @@ RcppExport SEXP cdfit_gaussian_edpp(SEXP X_, SEXP y_, SEXP row_idx_, SEXP lambda
       }
       if (nv > dfmax) {
         for (int ll=l; ll<L; ll++) iter[ll] = NA_INTEGER;
-        free_memo_edpp(a, r, discard_beta, theta, v1, v2, o);
+        Free_memo_edpp(a, r, discard_beta, theta, v1, v2, o);
         return List::create(beta, center, scale, lambda, loss, iter, 
                             n_reject, Rcpp::wrap(col_idx));
       }
@@ -255,7 +255,7 @@ RcppExport SEXP cdfit_gaussian_edpp(SEXP X_, SEXP y_, SEXP row_idx_, SEXP lambda
     }
   }
   
-  free_memo_edpp(a, r, discard_beta, theta, v1, v2, o);
+  Free_memo_edpp(a, r, discard_beta, theta, v1, v2, o);
   return List::create(beta, center, scale, lambda, loss, iter, n_reject, Rcpp::wrap(col_idx));
 }
 

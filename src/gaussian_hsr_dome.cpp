@@ -304,9 +304,9 @@ RcppExport SEXP cdfit_gaussian_hsr_dome(SEXP X_, SEXP y_, SEXP row_idx_,
       }
       if (nv > dfmax) {
         for (int ll = l; ll < L; ll++) iter[ll] = NA_INTEGER;
-        free_memo_hsr(a, r, e1, e2);
-        free(dome_accept);
-        free(dome_accept_old);
+        Free_memo_hsr(a, r, e1, e2);
+        Free(dome_accept);
+        Free(dome_accept_old);
         return List::create(beta, center, scale, lambda, loss, iter, 
                             n_reject, n_dome_reject, Rcpp::wrap(col_idx));
       }
@@ -414,9 +414,9 @@ RcppExport SEXP cdfit_gaussian_hsr_dome(SEXP X_, SEXP y_, SEXP row_idx_,
     }
   }
   
-  free_memo_hsr(a, r, e1, e2);
-  free(dome_accept);
-  free(dome_accept_old);
+  Free_memo_hsr(a, r, e1, e2);
+  Free(dome_accept);
+  Free(dome_accept_old);
   return List::create(beta, center, scale, lambda, loss, iter, 
                       n_reject, n_dome_reject, Rcpp::wrap(col_idx));
 }

@@ -10,7 +10,7 @@
 
 #include "utilities.h"
 
-void free_memo_bin_hsr(double *s, double *w, double *a, double *r,
+void Free_memo_bin_hsr(double *s, double *w, double *a, double *r,
                        int *e1, int *e2, double *eta);
 
 void update_resid_eta(double *r, double *eta, XPtr<BigMatrix> xpMat, double shift, 
@@ -163,7 +163,7 @@ RcppExport SEXP cdfit_binomial_hsr_approx(SEXP X_, SEXP y_, SEXP row_idx_,
       }
       if (nv > dfmax) {
         for (int ll=l; ll<L; ll++) iter[ll] = NA_INTEGER;
-        free_memo_bin_hsr(s, w, a, r, e1, e2, eta);
+        Free_memo_bin_hsr(s, w, a, r, e1, e2, eta);
         return List::create(beta0, beta, center, scale, lambda, Dev, 
                             iter, n_reject, Rcpp::wrap(col_idx));
       }
@@ -217,7 +217,7 @@ RcppExport SEXP cdfit_binomial_hsr_approx(SEXP X_, SEXP y_, SEXP row_idx_,
           if (Dev[l] / nullDev < .01) {
             if (warn) warning("Model saturated; exiting...");
             for (int ll = l; ll < L; ll++) iter[ll] = NA_INTEGER;
-            free_memo_bin_hsr(s, w, a, r, e1, e2, eta);
+            Free_memo_bin_hsr(s, w, a, r, e1, e2, eta);
             return List::create(beta0, beta, center, scale, lambda, Dev, 
                                 iter, n_reject, Rcpp::wrap(col_idx));
           }
@@ -282,7 +282,7 @@ RcppExport SEXP cdfit_binomial_hsr_approx(SEXP X_, SEXP y_, SEXP row_idx_,
     }
   }
 
-  free_memo_bin_hsr(s, w, a, r, e1, e2, eta);
+  Free_memo_bin_hsr(s, w, a, r, e1, e2, eta);
   return List::create(beta0, beta, center, scale, lambda, Dev, 
                       iter, n_reject, Rcpp::wrap(col_idx));
 }

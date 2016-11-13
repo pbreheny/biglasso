@@ -222,10 +222,10 @@ void standardize_and_get_residual(NumericVector &center, NumericVector &scale,
 }
 
 void free_memo_hsr(double *a, double *r, int *e1, int *e2) {
-  free(a);
-  free(r);
-  free(e1);
-  free(e2);
+  Free(a);
+  Free(r);
+  Free(e1);
+  Free(e2);
 }
 
 // -----------------------------------------------------------------------------

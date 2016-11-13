@@ -196,7 +196,7 @@ RcppExport SEXP cdfit_gaussian_hsr(SEXP X_, SEXP y_, SEXP row_idx_,
       }
       if (nv > dfmax) {
         for (int ll=l; ll<L; ll++) iter[ll] = NA_INTEGER;
-        free_memo_hsr(a, r, e1, e2);
+        Free_memo_hsr(a, r, e1, e2);
         return List::create(beta, center, scale, lambda, loss, iter, n_reject, Rcpp::wrap(col_idx));
       }
       // strong set
@@ -271,7 +271,7 @@ RcppExport SEXP cdfit_gaussian_hsr(SEXP X_, SEXP y_, SEXP row_idx_,
     }
   }
 
-  free_memo_hsr(a, r, e1, e2);
+  Free_memo_hsr(a, r, e1, e2);
   return List::create(beta, center, scale, lambda, loss, iter, n_reject, Rcpp::wrap(col_idx));
 }
 

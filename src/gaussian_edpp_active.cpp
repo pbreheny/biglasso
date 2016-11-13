@@ -41,7 +41,7 @@ int check_edpp_set(int *ever_active, int *discard_beta, vector<double> &z,
   return violations;
 }
 
-void free_memo_edpp(double *a, double *r, int *discard_beta, 
+void Free_memo_edpp(double *a, double *r, int *discard_beta, 
                     double *theta, double *v1, double *v2, double *o);
 
 // V2 - <v1, v2> / ||v1||^2_2 * V1
@@ -165,8 +165,8 @@ RcppExport SEXP cdfit_gaussian_edpp_active(SEXP X_, SEXP y_, SEXP row_idx_, SEXP
       }
       if (nv > dfmax) {
         for (int ll=l; ll<L; ll++) iter[ll] = NA_INTEGER;
-        free(ever_active);
-        free_memo_edpp(a, r, discard_beta, theta, v1, v2, o);
+        Free(ever_active);
+        Free_memo_edpp(a, r, discard_beta, theta, v1, v2, o);
         return List::create(beta, center, scale, lambda, loss, iter, 
                             n_reject, Rcpp::wrap(col_idx));
       }
@@ -258,8 +258,8 @@ RcppExport SEXP cdfit_gaussian_edpp_active(SEXP X_, SEXP y_, SEXP row_idx_, SEXP
       }
     }
   }
-  free(ever_active);
-  free_memo_edpp(a, r, discard_beta, theta, v1, v2, o);
+  Free(ever_active);
+  Free_memo_edpp(a, r, discard_beta, theta, v1, v2, o);
   return List::create(beta, center, scale, lambda, loss, iter, 
                       n_reject, Rcpp::wrap(col_idx));
 }

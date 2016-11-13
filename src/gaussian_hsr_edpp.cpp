@@ -286,9 +286,9 @@ RcppExport SEXP cdfit_gaussian_hsr_bedpp(SEXP X_, SEXP y_, SEXP row_idx_,
       }
       if (nv > dfmax) {
         for (int ll = l; ll < L; ll++) iter[ll] = NA_INTEGER;
-        free_memo_hsr(a, r, e1, e2);
-        free(bedpp_reject);
-        free(bedpp_reject_old);
+        Free_memo_hsr(a, r, e1, e2);
+        Free(bedpp_reject);
+        Free(bedpp_reject_old);
         return List::create(beta, center, scale, lambda, loss, iter, 
                             n_reject, n_bedpp_reject, Rcpp::wrap(col_idx));
       }
@@ -392,10 +392,10 @@ RcppExport SEXP cdfit_gaussian_hsr_bedpp(SEXP X_, SEXP y_, SEXP row_idx_,
       bedpp = 0; // turn off bedpp for next iteration if not efficient
     }
   }
-  
-  free_memo_hsr(a, r, e1, e2);
-  free(bedpp_reject);
-  free(bedpp_reject_old);
+ 
+  Free_memo_hsr(a, r, e1, e2);
+  Free(bedpp_reject);
+  Free(bedpp_reject_old);
   return List::create(beta, center, scale, lambda, loss, iter, 
                       n_reject, n_bedpp_reject, Rcpp::wrap(col_idx));
 }
