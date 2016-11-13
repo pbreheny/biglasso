@@ -77,7 +77,7 @@ double wcrossprod_resid(XPtr<BigMatrix> xpMat, double *y, double sumYW_, int *ro
 double wsqsum_bm(XPtr<BigMatrix> xpMat, double *w, int *row_idx_, double center_, 
                  double scale_, int n_row, int j);
 
-void free_memo_hsr(double *a, double *r, int *e1, int *e2);
+void Free_memo_hsr(double *a, double *r, int *e1, int *e2);
 
 // standardize
 void standardize_and_get_residual(NumericVector &center, NumericVector &scale, 

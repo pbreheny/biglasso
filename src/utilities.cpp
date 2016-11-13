@@ -221,7 +221,7 @@ void standardize_and_get_residual(NumericVector &center, NumericVector &scale,
   *lambda_max_ptr = zmax / alpha;
 }
 
-void free_memo_hsr(double *a, double *r, int *e1, int *e2) {
+void Free_memo_hsr(double *a, double *r, int *e1, int *e2) {
   Free(a);
   Free(r);
   Free(e1);
