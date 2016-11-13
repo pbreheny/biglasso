@@ -173,7 +173,7 @@ double wsqsum_bm(XPtr<BigMatrix> xpMat, double *w, int *row_idx_, double center_
   for (int i = 0; i < n_row; i++) {
     sum_wx_sq += w[i] * pow(xCol[row_idx_[i]], 2);
     sum_wx += w[i] * xCol[row_idx_[i]];
-    sum_w += w[i];
+    sum_w += w[i]; // TODO: pre-compute SUM_W and
   }
   val = (sum_wx_sq - 2 * center_ * sum_wx + pow(center_, 2) * sum_w) / pow(scale_, 2);
   return val;
