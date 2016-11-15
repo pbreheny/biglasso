@@ -2,7 +2,7 @@ biglasso <- function(X, y, row.idx = 1:nrow(X),
                      penalty = c("lasso", "ridge", "enet"),
                      family = c("gaussian","binomial"), 
                      alg.logistic = c("Newton", "MM"),
-                     screen = c("SSR", "SEDPP", "SSR-Dome", "SSR-BEDPP","SEDPP-No-Active"),
+                     screen = c("SSR", "SEDPP", "SSR-Dome", "SSR-BEDPP","SEDPP-No-Active", "None"),
                      safe.thresh = 0,
                      ncores = 1, alpha = 1,
                      lambda.min = ifelse(nrow(X) > ncol(X),.001,.05), 
@@ -116,6 +116,14 @@ biglasso <- function(X, y, row.idx = 1:nrow(X),
                    eps, as.integer(max.iter), penalty.factor,
                    as.integer(dfmax), as.integer(ncores), safe.thresh, 
                    as.integer(verbose),
+                   PACKAGE = 'biglasso')
+    } else { # screen == 'None'
+      res <- .Call("cdfit_gaussian", X@address, yy, as.integer(row.idx-1),
+                   lambda, as.integer(nlambda), as.integer(lambda.log.scale),
+                   lambda.min, alpha,
+                   as.integer(user.lambda | any(penalty.factor==0)),
+                   eps, as.integer(max.iter), penalty.factor,
+                   as.integer(dfmax), as.integer(ncores), as.integer(verbose),
                    PACKAGE = 'biglasso')
     }
     
