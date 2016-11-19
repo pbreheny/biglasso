@@ -34,10 +34,19 @@ data sets that cannot be loaded into memory. It utilizes memory-mapped files to 
 ### Real data:
 
 The performance of the packages are also tested using diverse real data sets: 
-* [Breast cancer gene expression data](http://myweb.uiowa.edu/pbreheny/data/bcTCGA.html)(GENE); 
-* [MNIST handwritten image data](http://yann.lecun.com/exdb/mnist/)(MNIST);
+* [Breast cancer gene expression data](http://myweb.uiowa.edu/pbreheny/data/bcTCGA.html) (GENE); 
+* [MNIST handwritten image data](http://yann.lecun.com/exdb/mnist/) (MNIST);
 * [Cardiac fibrosis genome-wide association study data](https://arxiv.org/abs/1607.05636) (GWAS);
-* [Subset of New York Times bag-of-words data](https://archive.ics.uci.edu/ml/datasets/Bag+of+Words)(NYT).
+* [Subset of New York Times bag-of-words data](https://archive.ics.uci.edu/ml/datasets/Bag+of+Words) (NYT).
+
+| Package |     GENE    |    MNIST    |      GWAS    |      NYT     |
+|         |   `n=536`   |   `n=784`   |    `n=313`   |   `n=5,000`  | 
+|         | `p=17,322`  |  `p=60,000` |  `p=660,495` |  `p=55,000`  |
+|--------:|:-----------:|:-----------:|:------------:|:------------:|
+| picasso | 1.50 (0.01) | 6.86 (0.06) | 34.00 (0.47) | 44.24 (0.46) |
+| ncvreg  | 1.14 (0.02) | 5.60 (0.06) | 31.55 (0.18) | 32.78 (0.10) |
+| glmnet  | 1.02 (0.01) | 5.63 (0.05) | 23.23 (0.19) | 33.38 (0.08) |
+|biglasso | 0.54 (0.01) | 1.48 (0.10) | 17.17 (0.11) | 14.35 (1.29) |
 
 
 ## Installation:
