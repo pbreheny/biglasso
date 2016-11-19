@@ -27,7 +27,7 @@ data sets that cannot be loaded into memory. It utilizes memory-mapped files to 
 
 ![Alt text](/vignettes/2016-11-04_vary_p_pkgs_2.png?raw=true "Vary p")![Alt text](/vignettes/2016-11-05_vary_n_pkgs_2.png?raw=true "Vary n")
 
-<img src="/vignettes/2016-11-04_vary_p_pkgs_2.png" width="200" height="200" /><img src="/vignettes/2016-11-05_vary_n_pkgs_2.png" width="200" height="200" />
+<img src="/vignettes/2016-11-04_vary_p_pkgs_2.png" width="700" height="600" /><img src="/vignettes/2016-11-05_vary_n_pkgs_2.png" width="700" height="600" />
 
 ## Installation:
 * The stable version: `install.packages("biglasso")`
