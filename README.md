@@ -31,6 +31,15 @@ data sets that cannot be loaded into memory. It utilizes memory-mapped files to 
 
 <img src="/vignettes/2016-11-04_vary_p_pkgs_2.png" width="400" height="300" /><img src="/vignettes/2016-11-05_vary_n_pkgs_2.png" width="400" height="300" />
 
+### Real data:
+
+The performance of the packages are also tested using diverse real data sets: 
+* [Breast cancer gene expression data](http://myweb.uiowa.edu/pbreheny/data/bcTCGA.html)(GENE); 
+* [MNIST handwritten image data](http://yann.lecun.com/exdb/mnist/)(MNIST);
+* [Cardiac fibrosis genome-wide association study data](https://arxiv.org/abs/1607.05636) (GWAS);
+* [Subset of New York Times bag-of-words data](https://archive.ics.uci.edu/ml/datasets/Bag+of+Words)(NYT).
+
+
 ## Installation:
 * The stable version: `install.packages("biglasso")`
 * The latest version: `devtools::install_github("YaohuiZeng/biglasso")`
