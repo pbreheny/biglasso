@@ -15,6 +15,19 @@ data sets that cannot be loaded into memory. It utilizes memory-mapped files to 
 3. It incorporates some efficient feature screening rules, such as the sequential strong rule (SSR), the sequential EDPP rule (SEDPP), and our newly proposed and more powerful rules - SSR-Dome and SSR-BEDPP.  
 4. The underlying algorithm is implemented in C++ and is optimized to be memory- and computation-efficient. Parallel computing via OpenMP is also supported.
 
+
+## Benchmarks:
+
+### Simulated data:
+
+* **Packages** to be compared: `biglasso (1.2-3)`, `glmnet (2.0-5)`, `ncvreg (3.7-0)`, and `picasso (0.5-4)`. 
+* **Platform**: MacBook Pro with Intel Core i7 @ 2.3 GHz with 16 GB RAM.
+* **Experiments**: solving lasso-penalized linear regression over the entire path of 100 $\lambda$ values equally spaced on the scale of $\lambda / \lambda_{max}$ from 0.1 to 1; varying number of observations $n$ and number of features $p$; 20 replications, the mean (SE) computing time (in seconds) are reported.
+* **Data generating model**: $\mathbf{y} =  \mathbf{X} \boldsymbol \beta + 0.1 \boldsymbol \epsilon$, where $\mathbf{X}$ and $\boldsymbol \epsilon$ are i.i.d. sampled from $N(0, 1)$.
+
+![Alt text](/vignettes/2016-11-04_vary_p_pkgs_2.png?raw=true "Optional Title")
+
+
 ## Installation:
 * The stable version: `install.packages("biglasso")`
 * The latest version: `devtools::install_github("YaohuiZeng/biglasso")`
