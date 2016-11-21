@@ -29,7 +29,7 @@ data sets that cannot be loaded into memory. It utilizes memory-mapped files to 
 ![Alt text](/vignettes/2016-11-04_vary_p_pkgs_2.png?raw=true "Vary p")![Alt text](/vignettes/2016-11-05_vary_n_pkgs_2.png?raw=true "Vary n")
 -->
 
-<img src="/vignettes/2016-11-04_vary_p_pkgs_2.png" width="400" height="300" /><img src="/vignettes/2016-11-05_vary_n_pkgs_2.png" width="400" height="300" />
+<img src="/vignettes/2016-11-20_vary_p_pkgs.png" width="400" height="300" /><img src="/vignettes/2016-11-20_vary_n_pkgs.png" width="400" height="300" />
 
 ### Real data:
 
@@ -38,6 +38,7 @@ The performance of the packages are also tested using diverse real data sets:
 * [MNIST handwritten image data](http://yann.lecun.com/exdb/mnist/) (MNIST);
 * [Cardiac fibrosis genome-wide association study data](https://arxiv.org/abs/1607.05636) (GWAS);
 * [Subset of New York Times bag-of-words data](https://archive.ics.uci.edu/ml/datasets/Bag+of+Words) (NYT).
+
 
 | Package |     GENE    |    MNIST    |      GWAS    |      NYT     |
 |--------:|:-----------:|:-----------:|:------------:|:------------:|
