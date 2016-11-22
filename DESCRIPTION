@@ -15,4 +15,5 @@ BugReports: https://github.com/YaohuiZeng/biglasso/issues
 Depends: bigmemory (>= 4.0.0), Matrix, ncvreg
 Imports: Rcpp (>= 0.12.1), methods
 LinkingTo: Rcpp, RcppArmadillo, bigmemory, BH
-Suggests: parallel
+VignetteBuilder: knitr
+Suggests: parallel, knitr, testthat

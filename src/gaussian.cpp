@@ -120,7 +120,7 @@ RcppExport SEXP cdfit_gaussian(SEXP X_, SEXP y_, SEXP row_idx_,
   IntegerVector iter(L);
   IntegerVector n_reject(L);
   
-  double l1, l2, cutoff, shift;
+  double l1, l2, shift;
   double max_update, update, thresh; // for convergence check
   int i, j, jj, l, violations, lstart;
   int *e1 = Calloc(p, int); // ever active set
