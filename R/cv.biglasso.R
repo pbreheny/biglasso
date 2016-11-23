@@ -1,5 +1,7 @@
 cv.biglasso <- function(X, y, row.idx = 1:nrow(X), ncores = parallel::detectCores(), ...,
                         nfolds = 5, seed, cv.ind, trace = FALSE) {
+  #TODO: 
+  #   system-specific parallel: Windows parLapply; others: mclapply
   
   max.cores <- parallel::detectCores()
   if (ncores > max.cores) {

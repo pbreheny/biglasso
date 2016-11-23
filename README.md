@@ -59,5 +59,5 @@ The performance of the packages are also tested using diverse real data sets:
 
 
 ## News:
-* This package on GitHub has been updated to Version 1.2-3. See details in NEWS.
+* This package on GitHub has been updated to Version 1.2-4. See details in NEWS.
 * The newest stable version will be submitted to CRAN soon after testing.

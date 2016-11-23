@@ -28,7 +28,7 @@ int check_rest_set_bin(int *e1, int *e2, vector<double> &z, XPtr<BigMatrix> xpMa
                        double lambda, double sumResid, double alpha, 
                        double *r, double *m, int n, int p);
 
-// Coordinate descent for gaussian models
+// Coordinate descent for logistic models
 RcppExport SEXP cdfit_binomial_hsr_approx(SEXP X_, SEXP y_, SEXP row_idx_, 
                                           SEXP lambda_, SEXP nlambda_,
                                           SEXP lambda_min_, SEXP alpha_, SEXP user_, SEXP eps_, 
