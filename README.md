@@ -20,7 +20,7 @@ data sets that cannot be loaded into memory. It utilizes memory-mapped files to 
 
 ### Simulated data:
 
-* **Packages** to be compared: `biglasso (1.2-3)`, `glmnet (2.0-5)`, `ncvreg (3.7-0)`, and `picasso (0.5-4)`. 
+* **Packages** to be compared: `biglasso (1.2-3)` (with `screen = "SSR-BEDPP"`), `glmnet (2.0-5)`, `ncvreg (3.7-0)`, and `picasso (0.5-4)`. 
 * **Platform**: MacBook Pro with Intel Core i7 @ 2.3 GHz with 16 GB RAM.
 * **Experiments**: solving lasso-penalized linear regression over the entire path of 100 $\lambda$ values equally spaced on the scale of `lambda / lambda_max` from 0.1 to 1; varying number of observations `n` and number of features `p`; 20 replications, the mean (SE) computing time (in seconds) are reported.
 * **Data generating model**: `y =  X *  beta + 0.1 eps`, where `X` and `eps` are i.i.d. sampled from `N(0, 1)`.
@@ -39,6 +39,7 @@ The performance of the packages are also tested using diverse real data sets:
 * [Cardiac fibrosis genome-wide association study data](https://arxiv.org/abs/1607.05636) (GWAS);
 * [Subset of New York Times bag-of-words data](https://archive.ics.uci.edu/ml/datasets/Bag+of+Words) (NYT).
 
+The following table summarizes the mean (SE) computing time of solving the lasso along the entire path of 100 `lambda` values equally spaced on the scale of `lambda / lambda_max` from 0.1 to 1 over 20 replications.
 
 | Package |     GENE    |    MNIST    |      GWAS    |      NYT     |
 |--------:|:-----------:|:-----------:|:------------:|:------------:|
@@ -48,6 +49,19 @@ The performance of the packages are also tested using diverse real data sets:
 | ncvreg  | 1.14 (0.02) | 5.60 (0.06) | 31.55 (0.18) | 32.78 (0.10) |
 | glmnet  | 1.02 (0.01) | 5.63 (0.05) | 23.23 (0.19) | 33.38 (0.08) |
 |biglasso | 0.54 (0.01) | 1.48 (0.10) | 17.17 (0.11) | 14.35 (1.29) |
+
+
+### Big data: 
+
+To demonstrate the out-of-core computing capability of `biglasso`, a 31 GB real data set from a large-scale genome-wide association study is analyzed. The dimensionality of the design matrix is: `n = 2898, p = 1,339,511'. Note that the size of data is nearly 2x larger than the installed 16 GB of RAM.
+
+Again the entire solution path with 100 `lambda` values is obtained. The table below summarizes the overall computing time (in **minutes**) by screening rule ``SSR`` (which is what other three packages are using) and our new rule ``SSR-BEDPP`` implemented in `biglasso`. (Only 1 trial is conducted.)
+
+|      Rule | 1 core | 4 cores |
+|----------:|-------:|--------:|
+|       SSR | 284.56 | 142.55  |
+| SSR-BEDPP | 189.21 |  93.74  |
+
 
 ## Installation:
 * The stable version: `install.packages("biglasso")`
