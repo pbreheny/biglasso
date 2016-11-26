@@ -53,9 +53,9 @@ The following table summarizes the mean (SE) computing time of solving the lasso
 
 ### Big data: 
 
-To demonstrate the out-of-core computing capability of `biglasso`, a 31 GB real data set from a large-scale genome-wide association study is analyzed. The dimensionality of the design matrix is: `n = 2898, p = 1,339,511'. Note that the size of data is nearly 2x larger than the installed 16 GB of RAM.
+To demonstrate the out-of-core computing capability of `biglasso`, a 31 GB real data set from a large-scale genome-wide association study is analyzed. The dimensionality of the design matrix is: `n = 2898, p = 1,339,511`. **Note that the size of data is nearly 2x larger than the installed 16 GB of RAM.**
 
-Again the entire solution path with 100 `lambda` values is obtained. The table below summarizes the overall computing time (in **minutes**) by screening rule ``SSR`` (which is what other three packages are using) and our new rule ``SSR-BEDPP`` implemented in `biglasso`. (Only 1 trial is conducted.)
+Since other three packages cannot handle this data-larger-than-RAM case, we compare the performance of screening rules `SSR` and `SSR-BEDPP` based on our package `biglasso`. Again the entire solution path with 100 `lambda` values is obtained. The table below summarizes the overall computing time (in **minutes**) by screening rule ``SSR`` (which is what other three packages are using) and our new rule ``SSR-BEDPP``. (Only 1 trial is conducted.)
 
 |      Rule | 1 core | 4 cores |
 |----------:|-------:|--------:|
