@@ -81,7 +81,7 @@ The following table summarizes the mean (SE) computing time (in seconds) of solv
 </center>
 
 
-### Big data: 
+### Big data: Out-of-core computation
 
 To demonstrate the out-of-core computing capability of `biglasso`, a 31 GB real data set from a large-scale genome-wide association study is analyzed. The dimensionality of the design matrix is: `n = 2898, p = 1,339,511`. **Note that the size of data is nearly 2x larger than the installed 16 GB of RAM.**
 
