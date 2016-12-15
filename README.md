@@ -10,7 +10,7 @@
 
 ## Features:
 1. It utilizes memory-mapped files to store the massive data on the disk, only loading data into memory when necessary during model fitting. Consequently, it's able to seamlessly handle out-of-core computation.
-2. It is built upon pathwise coordinate descent algorithm with ``warm start'', ``active set cycling'', and ``feature screening'' strategies, which has been proven to be one of fastest lasso solvers.
+2. It is built upon pathwise coordinate descent algorithm with *warm start, active set cycling, and feature screening* strategies, which has been proven to be one of fastest lasso solvers.
 3. We develop new, hybrid feature screening rules that outperform state-of-the-art screening rules such as the sequential strong rule (SSR) and the sequential EDPP rule (SEDPP) with additional 1.5x to 4x speedup.
 4. The implementation is designed to be as memory-efficient as possible by eliminating extra copies of the data created by other R packages, making `biglasso` at least 2x more memory-efficient than `glmnet`.
 5. The underlying computation is implemented in C++, and parallel computing with OpenMP is also supported.
@@ -21,7 +21,7 @@
 ### Simulated data:
 
 * **Packages** to be compared: `biglasso (1.2-3)` (with `screen = "SSR-BEDPP"`), `glmnet (2.0-5)`, `ncvreg (3.7-0)`, and `picasso (0.5-4)`. 
-* **Platform**: MacBook Pro with Intel Core i7 @ 2.3 GHz with 16 GB RAM.
+* **Platform**: MacBook Pro with Intel Core i7 @ 2.3 GHz and 16 GB RAM.
 * **Experiments**: solving lasso-penalized linear regression over the entire path of 100 $\lambda$ values equally spaced on the scale of `lambda / lambda_max` from 0.1 to 1; varying number of observations `n` and number of features `p`; 20 replications, the mean (SE) computing time (in seconds) are reported.
 * **Data generating model**: `y =  X *  beta + 0.1 eps`, where `X` and `eps` are i.i.d. sampled from `N(0, 1)`.
 
@@ -34,6 +34,7 @@
 
 <img src="/vignettes/2016-11-20_vary_p_pkgs.png" width="400" height="300" /><img src="/vignettes/2016-11-20_vary_n_pkgs.png" width="400" height="300" />
 
+In all the settings, `biglasso` (1 core) is uniformly 2x faster than `glmnet` and `ncvreg`, and 2.5x faster than `picasso`. Moreover, the computing time of `biglasso` can be further reduced by half via parallel-computation of 4 cores.
 
 #### (2) `biglasso` is more memory-efficient:
 
@@ -51,7 +52,9 @@ The maximum RSS (in **GB**) used by a single fit and 10-fold cross validation is
 
 </center>
 
-Note: (1) the memory savings offered by `biglasso` would be even more significant if cross-validation were conducted in parallel. However, measuring memory usage across parallel processes is not straightforward and not implemented in `Syrupy`; (2) cross-validation is not implemented in `picasso` at this point.
+**Note**:
+..* the memory savings offered by `biglasso` would be even more significant if cross-validation were conducted in parallel. However, measuring memory usage across parallel processes is not straightforward and not implemented in `Syrupy`;
+..* cross-validation is not implemented in `picasso` at this point.
 
 
 ### Real data:
@@ -77,16 +80,19 @@ The following table summarizes the mean (SE) computing time (in seconds) of solv
 
 </center>
 
+
 ### Big data: 
 
 To demonstrate the out-of-core computing capability of `biglasso`, a 31 GB real data set from a large-scale genome-wide association study is analyzed. The dimensionality of the design matrix is: `n = 2898, p = 1,339,511`. **Note that the size of data is nearly 2x larger than the installed 16 GB of RAM.**
 
-Since other three packages cannot handle this data-larger-than-RAM case, we compare the performance of screening rules `SSR` and `SSR-BEDPP` based on our package `biglasso`. Again the entire solution path with 100 `lambda` values is obtained. The table below summarizes the overall computing time (in **minutes**) by screening rule ``SSR`` (which is what other three packages are using) and our new rule ``SSR-BEDPP``. (Only 1 trial is conducted.)
+Since other three packages cannot handle this data-larger-than-RAM case, we compare the performance of screening rules `SSR` and `SSR-BEDPP` based on our package `biglasso`. In addition, two cases in terms of `lambda_min` are considered: (1) `lam_min = 0.1 lam_max`; and (2) `lam_min = 0.5 lam_max`, as in practice there is typically less interest in lower values of `lambda`for very high-dimensional data such as this case. Again the entire solution path with 100 `lambda` values is obtained. The table below summarizes the overall computing time (in **minutes**) by screening rule ``SSR`` (which is what other three packages are using) and our new rule ``SSR-BEDPP``. (Only 1 trial is conducted.)
 
-|      Rule | 1 core | 4 cores |
-|----------:|-------:|--------:|
-|       SSR | 284.56 | 142.55  |
-| SSR-BEDPP | 189.21 |  93.74  |
+|               Cases                |   SSR  |  SSR-BEDP  |
+|:-----------------------------------|-------:|-----------:|
+| `lam_min / lam_max = 0.1`, 1 core  | 284.56 |   189.21   | 
+| `lam_min / lam_max = 0.1`, 4 cores | 142.55 |    93.74   |
+| `lam_min / lam_max = 0.5`, 1 core  | 285.61 |   102.75   | 
+| `lam_min / lam_max = 0.5`, 4 cores | 141.28 |    51.02   |
 
 
 ## Installation:
