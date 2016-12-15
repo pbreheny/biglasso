@@ -38,9 +38,9 @@ data sets that cannot be loaded into memory. It utilizes memory-mapped files to 
 #### (2) `biglasso` is more memory-efficient:
 
 
-To prove that `biglasso` is much more memory-efficient, we simulate a `1000 X 100000` large feature matrix. The raw data is 0.75 GB, and stored on the hard drive as an R data file and a memory-mapped file. We used [Syrupy](https://github.com/jeetsukumaran/Syrupy) to measure the memory used in RAM (i.e. the resident set size, RSS) every 1 second during lasso model fitting by each of the packages. 
+To prove that `biglasso` is much more memory-efficient, we simulate a `1000 X 100000` large feature matrix. The raw data is 0.75 GB. We used [Syrupy](https://github.com/jeetsukumaran/Syrupy) to measure the memory used in RAM (i.e. the resident set size, RSS) every 1 second during lasso model fitting by each of the packages. 
 
-The maximum RSS (in GB) used by a single fit and 10-fold cross validation during the model fitting is reported in the Table below. In the single fit case, `biglasso` consumes 0.84 GB memory in RAM, 50% of that used by `glmnet` and  22% of that used by `picasso`. Note that the memory consumed by `glmnet`, `ncvreg`, and `picasso` are respectively 2.2x, 2.1x, and 5.1x larger than the size of the raw data.
+The maximum RSS (in *GB*) used by a single fit and 10-fold cross validation is reported in the Table below. In the single fit case, `biglasso` consumes 0.84 GB memory in RAM, 50% of that used by `glmnet` and  22% of that used by `picasso`. Note that the memory consumed by `glmnet`, `ncvreg`, and `picasso` are respectively 2.2x, 2.1x, and 5.1x larger than the size of the raw data. More strikingly, `biglasso` does not require additional memory to perform cross-validation, unlike other packages.  For serial 10-fold cross-validation, `biglasso`  requires just 27% of the memory used by `glmnet` and 23% of that used by `ncvreg`, making it 3.6x and 4.3x more memory-efficient compared to these two, respectively.
 
 <center>
 
@@ -51,7 +51,7 @@ The maximum RSS (in GB) used by a single fit and 10-fold cross validation during
 
 </center>
 
-Note: (1) `biglasso` does not require additional memory to perform cross-validation, unlike other packages.  For serial 10-fold cross-validation, `biglasso`  requires just 27% of the memory used by `glmnet` and 23% of that used by `ncvreg`, making it 3.6x and 4.3x more memory-efficient compared to these two, respectively; (2) The memory savings offered by `biglasso` would be even more significant if cross-validation were conducted in parallel. However, measuring memory usage across parallel processes is not straightforward and not implemented in `Syrupy`.
+Note: (1) the memory savings offered by `biglasso` would be even more significant if cross-validation were conducted in parallel. However, measuring memory usage across parallel processes is not straightforward and not implemented in `Syrupy`; (2) cross-validation is not implemented in `picasso` at this point.
 
 
 ### Real data:
