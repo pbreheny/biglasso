@@ -1,9 +1,13 @@
 *   Minor change
 **  Major change
 
+1.2-5 (12/10/2016)
+  *  updated README.md with benchmarking results
+  *  added vignette
+
 1.2-4 (11/14/2016)
   *  added gaussian.cpp: solve lasso without screening, for research only.
-  *  added tests
+  *  added tests.
 
 1.2-3 (11/13/2016)
   *  changed convergence criteria of logistic regression to be the same as that in glmnet.

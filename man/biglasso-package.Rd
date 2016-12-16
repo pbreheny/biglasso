@@ -14,8 +14,8 @@ Extend lasso and elastic-net model fitting for ultrahigh-dimensional, multi-giga
   \tabular{ll}{
     Package: \tab biglasso\cr
     Type: \tab Package\cr
-    Version: \tab 1.2-4\cr
-    Date: \tab 2016-11-14\cr
+    Version: \tab 1.2-5\cr
+    Date: \tab 2016-12-10\cr
     License: \tab GPL-2\cr}
  
 Penalized regression models, in particular the lasso, have been extensively applied to analyzing high-dimensional data sets. However, due to the memory limit, existing R packages are not capable of fitting lasso models for ultrahigh-dimensional, multi-gigabyte data sets which have been increasingly seen in many areas such as genetics, biomedical imaging, genome sequencing and high-frequency finance. 
