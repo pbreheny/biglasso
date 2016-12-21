@@ -1,7 +1,7 @@
 Package: biglasso
 Version: 1.3-0
 Date: 2016-12-15
-Title: Big Lasso: Extending Lasso Model Fitting to Big Data in R
+Title: Extending Lasso Model Fitting to Big Data in R
 Author: Yaohui Zeng [aut,cre], Patrick Breheny [ctb]
 Maintainer: Yaohui Zeng <yaohui-zeng@uiowa.edu>
 Description: Extend lasso and elastic-net model fitting for ultrahigh-dimensional, 
