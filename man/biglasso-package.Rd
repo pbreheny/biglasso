@@ -7,26 +7,33 @@
 \title{Big Lasso: Extending Lasso Model Fitting to Big Data in R}
 
 \description{
-Extend lasso and elastic-net model fitting for ultrahigh-dimensional, multi-gigabyte data sets that cannot be loaded into available RAM. This package utilizes memory-mapped files to store the massive data on the disk and only read those into memory whenever necessary during model fitting. Moreover, some advanced feature screening rules are proposed and implemented to accelerate the model fitting. As a result, this package is much more memory- and computation-efficient as compared to existing lasso-fitting packages such as \href{https://CRAN.R-project.org/package=glmnet}{glmnet} and \href{https://CRAN.R-project.org/package=ncvreg}{ncvreg}, thus allowing for very powerful big data analysis even with only an ordinary laptop.
-}
+Extend lasso and elastic-net linear and logistic regression models for ultrahigh-dimensional, multi-gigabyte data sets that cannot be loaded into available RAM. This package utilizes memory-mapped files to store the massive data on the disk and only read those into memory whenever necessary during model fitting. Moreover, some advanced feature screening rules are proposed and implemented to accelerate the model fitting. As a result, this package is much more memory- and computation-efficient and highly scalable as compared to existing lasso-fitting packages such as \href{https://CRAN.R-project.org/package=glmnet}{glmnet} and \href{https://CRAN.R-project.org/package=ncvreg}{ncvreg}, thus allowing for powerful big data analysis even with only an ordinary laptop.}
 
 \details{
   \tabular{ll}{
     Package: \tab biglasso\cr
     Type: \tab Package\cr
-    Version: \tab 1.2-5\cr
-    Date: \tab 2016-12-10\cr
+    Version: \tab 1.2-6\cr
+    Date: \tab 2016-12-15\cr
     License: \tab GPL-2\cr}
  
 Penalized regression models, in particular the lasso, have been extensively applied to analyzing high-dimensional data sets. However, due to the memory limit, existing R packages are not capable of fitting lasso models for ultrahigh-dimensional, multi-gigabyte data sets which have been increasingly seen in many areas such as genetics, biomedical imaging, genome sequencing and high-frequency finance. 
 
 This package aims to fill the gap by extending lasso model fitting to Big Data in R. Version >= 1.2-3 represents a major redesign where the source code is converted into C++ (previously in C), and new feature screening rules, as well as OpenMP parallel computing, are implemented. Some key features of \code{biglasso} are summarized as below:
 \enumerate{
-\item It utilizes memory-mapping files to store the massive data on the disk and only reads those into memory whenever necessary during model fitting, thus can easily handle data-larger-than-RAM cases.
-\item It builds upon the pathwise coordinate descent algorithm combined with "warm start", "active set cycling", and feature screening strategies, which has been proved to be one of the most powerful lasso solvers.
-\item It incorporates some efficient feature screening rules, such as the sequential strong rule (SSR), the sequential EDPP rule (SEDPP), and our newly proposed and more powerful rules - SSR-Dome and SSR-BEDPP.  
-\item The whole algorithm is implemented in C++ and is optimized to be memory- and computation-efficient. Parallel computing via OpenMP is also supported wherever possible.
+\item it utilizes memory-mapped files to store the massive data on the disk, only loading data into memory when necessary during model fitting. Consequently, it's able to seamlessly data-larger-than-RAM cases.
+\item it is built upon pathwise coordinate descent algorithm with warm start, active set cycling, and feature screening strategies, which has been proven to be one of fastest lasso solvers.
+\item in incorporates our newly developed hybrid hybrid safe-strong rules that outperform state-of-the-art screening rules such as the sequential strong rule (SSR) and the sequential EDPP rule (SEDPP) with additional 1.5x to 4x speedup.
+\item the implementation is designed to be as memory-efficient as possible by eliminating extra copies of the data created by other R packages, making it at least 2x more memory-efficient than \code{glmnet}.
+\item the underlying computation is implemented in C++, and parallel computing with OpenMP is also supported.
 }
+
+For more information:
+\itemize{
+\item Some benchmarking results: \href{https://github.com/YaohuiZeng/biglasso}{https://github.com/YaohuiZeng/biglasso}.
+\item The tutorial of the package is in the vignette, or on GitHub: \href{https://github.com/YaohuiZeng/biglasso/blob/master/vignettes/biglasso.pdf}{https://github.com/YaohuiZeng/biglasso/blob/master/vignettes/biglasso.pdf}
+}
+
 
 }
 
@@ -57,7 +64,6 @@ Elapsed time (s) \tab 0.11 \tab 0.83 \tab 8.47 \tab 85.50 \cr
 %Elapsed time (s) \tab 2.50 \tab 11.43 \tab 83.69 \tab 1090.62 \cr
 %}
 }
-
 }
 
 \author{

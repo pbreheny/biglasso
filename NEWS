@@ -2,7 +2,8 @@
 **  Major change
 
 1.2-6 (12/15/2016)
-  ** added a newly proposed screening rule, SSR-Slores, for logistic regression
+  ** added a newly proposed screening rule, SSR-Slores, for lasso-penalized logistic regression
+  ** added SSR-BEDPP for elastic-net-penalized linear regression.
 
 1.2-5 (12/10/2016)
   *  updated README.md with benchmarking results

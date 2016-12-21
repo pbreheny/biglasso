@@ -23,12 +23,13 @@ biglasso <- function(X, y, row.idx = 1:nrow(X),
     alpha <- 1
   } else if (identical(penalty, 'ridge')) {
     alpha <- 1.0e-6 ## equivalent to ridge regression
-  } else {
+  } else if (identical(penalty, 'enet')) {
     if (alpha >= 1 || alpha <= 0) {
       stop("alpha must be between 0 and 1 for elastic net penalty.")
-    } else {
-      alpha <- alpha
     }
+    if (family == 'gaussian' && (!screen %in% c("SSR", "SSR-BEDPP"))) {
+      screen <- "SSR"
+    } 
   }
 
   if (nlambda < 2) stop("nlambda must be at least 2")
