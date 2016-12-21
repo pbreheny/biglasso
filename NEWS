@@ -1,6 +1,9 @@
 *   Minor change
 **  Major change
 
+1.2-6 (12/15/2016)
+  ** added a newly proposed screening rule, SSR-Slores, for logistic regression
+
 1.2-5 (12/10/2016)
   *  updated README.md with benchmarking results
   *  added vignette
@@ -18,7 +21,7 @@
   * added internal data set: the colon cancer data.
 
 1.2-1 (10/18/2016)
-  ** Implemented another new screening rule (HSR-BEDPP), also combining hybrid strong rule
+  ** Implemented another new screening rule (SSR-BEDPP), also combining hybrid strong rule
      with a safe rule (BEDPP).
   ** implemented EDPP rule with active set cycling strategy for linear regression.
   *  changed convergence criteria to be the same as that in glmnet.
@@ -28,7 +31,7 @@
     observations. These features are internally removed from model fitting.
 
 1.1-1 (8/31/2016)
-  ** Three sparse screening rules (HSR, EDPP, HSR-Dome) were implemented. Our 
+  ** Three sparse screening rules (SSR, EDPP, SSR-Dome) were implemented. Our 
      new proposed HSR-Dome combines HSR and Dome test for feature screening, 
      leading to even better performance as compared to 'glmnet'.	
   ** OpenMP parallel computing was added to speedup single model fitting.
