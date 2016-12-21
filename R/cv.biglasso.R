@@ -1,8 +1,10 @@
-cv.biglasso <- function(X, y, row.idx = 1:nrow(X), ncores = parallel::detectCores(), ...,
+cv.biglasso <- function(X, y, row.idx = 1:nrow(X), eval.metric = c("default", "MAPE"),
+                        ncores = parallel::detectCores(), ...,
                         nfolds = 5, seed, cv.ind, trace = FALSE) {
   #TODO: 
   #   system-specific parallel: Windows parLapply; others: mclapply
-  
+  eval.metric <- match.arg(eval.metric)
+
   max.cores <- parallel::detectCores()
   if (ncores > max.cores) {
     cat("The number of cores specified (", ncores, ") is larger than the number of avaiable cores (", max.cores, "). Use ", max.cores, " cores instead! \n", sep = "")
@@ -12,7 +14,7 @@ cv.biglasso <- function(X, y, row.idx = 1:nrow(X), ncores = parallel::detectCore
   fit <- biglasso(X = X, y = y, row.idx = row.idx, ncores = ncores, ...)
   n <- fit$n
   E <- Y <- matrix(NA, nrow=n, ncol=length(fit$lambda))
-  y <- fit$y
+  # y <- fit$y # this would cause error if eval.metric == "MAPE"
   
   if (fit$family == 'binomial') {
     PE <- E
@@ -37,7 +39,7 @@ cv.biglasso <- function(X, y, row.idx = 1:nrow(X), ncores = parallel::detectCore
   
   cv.args <- list(...)
   cv.args$lambda <- fit$lambda
-  
+
   parallel <- FALSE
   if (ncores > 1) {
     cluster <- parallel::makeCluster(ncores)
@@ -45,10 +47,11 @@ cv.biglasso <- function(X, y, row.idx = 1:nrow(X), ncores = parallel::detectCore
     parallel <- TRUE
     ## pass the descriptor info to each cluster ##
     xdesc <- describe(X)
-    parallel::clusterExport(cluster, c("cv.ind", "xdesc", "y", "cv.args", 'parallel'), 
+    parallel::clusterExport(cluster, c("cv.ind", "xdesc", "y", "cv.args", 
+                                       "parallel", "eval.metric"), 
                             envir=environment())
     parallel::clusterCall(cluster, function() {
-      
+     
       require(biglasso)
       # require(bigmemory)
       # require(Matrix)
@@ -58,23 +61,24 @@ cv.biglasso <- function(X, y, row.idx = 1:nrow(X), ncores = parallel::detectCore
       # source("~/GitHub/biglasso/R/loss.R")
     })
     fold.results <- parallel::parLapply(cl = cluster, X = 1:nfolds, fun = cvf, XX = xdesc, 
-                                        y = y, cv.ind = cv.ind, cv.args = cv.args, 
+                                        y = y, eval.metric = eval.metric, 
+                                        cv.ind = cv.ind, cv.args = cv.args, 
                                         parallel = parallel)
     parallel::stopCluster(cluster)
   }
-  
+ 
   for (i in 1:nfolds) {
     if (parallel) {
       res <- fold.results[[i]]
     } else {
       if (trace) cat("Starting CV fold #", i, sep="", "\n")
-      res <- cvf(i, X, y, cv.ind, cv.args)
+      res <- cvf(i, X, y, eval.metric, cv.ind, cv.args)
     }
-    E[cv.ind==i, 1:res$nl] <- res$loss
-    if (fit$family=="binomial") PE[cv.ind==i, 1:res$nl] <- res$pe
-    Y[cv.ind==i, 1:res$nl] <- res$yhat
+    E[cv.ind == i, 1:res$nl] <- res$loss
+    if (fit$family == "binomial") PE[cv.ind == i, 1:res$nl] <- res$pe
+    Y[cv.ind == i, 1:res$nl] <- res$yhat
   }
-  
+
   ## Eliminate saturated lambda values, if any
   ind <- which(apply(is.finite(E), 2, all))
   E <- E[,ind]
@@ -85,10 +89,12 @@ cv.biglasso <- function(X, y, row.idx = 1:nrow(X), ncores = parallel::detectCore
   cve <- apply(E, 2, mean)
   cvse <- apply(E, 2, sd) / sqrt(n)
   min <- which.min(cve)
-  
+
   val <- list(cve=cve, cvse=cvse, lambda=lambda, fit=fit, min=min, lambda.min=lambda[min],
-              null.dev=mean(loss.biglasso(y, rep(mean(y), n), fit$family)),
-              cv.ind = cv.ind)
+              null.dev=mean(loss.biglasso(y, rep(mean(y), n), 
+                                          fit$family, eval.metric = eval.metric)),
+              cv.ind = cv.ind,
+              eval.metric = eval.metric)
   if (fit$family=="binomial") {
     pe <- apply(PE, 2, mean)
     val$pe <- pe[is.finite(pe)]
@@ -97,8 +103,7 @@ cv.biglasso <- function(X, y, row.idx = 1:nrow(X), ncores = parallel::detectCore
   structure(val, class=c("cv.biglasso", "cv.ncvreg"))
 }
 
-
-cvf <- function(i, XX, y, cv.ind, cv.args, parallel= FALSE) {
+cvf <- function(i, XX, y, eval.metric, cv.ind, cv.args, parallel= FALSE) {
   # reference to the big.matrix by descriptor info
   if (parallel) {
     XX <- attach.big.matrix(XX)
@@ -108,12 +113,15 @@ cvf <- function(i, XX, y, cv.ind, cv.args, parallel= FALSE) {
   cv.args$row.idx <- which(cv.ind != i)
   cv.args$warn <- FALSE
   cv.args$ncores <- 1
+
   idx.test <- which(cv.ind == i)
   fit.i <- do.call("biglasso", cv.args)
-  
+
   y2 <- y[cv.ind==i]
   yhat <- matrix(predict(fit.i, XX, row.idx = idx.test, type="response"), length(y2))
-  loss <- loss.biglasso(y2, yhat, fit.i$family)
+
+  loss <- loss.biglasso(y2, yhat, fit.i$family, eval.metric = eval.metric)
+
   pe <- if (fit.i$family=="binomial") {(yhat < 0.5) == y2} else NULL
   list(loss=loss, pe=pe, nl=length(fit.i$lambda), yhat=yhat)
 }

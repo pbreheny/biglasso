@@ -12,7 +12,8 @@ solution paths for linear or logistic regression models penalized by lasso, ridg
 \usage{
 biglasso(X, y, row.idx = 1:nrow(X), penalty = c("lasso", "ridge", "enet"),
          family = c("gaussian","binomial"), alg.logistic = c("Newton", "MM"),
-         screen = c("SSR", "SEDPP", "SSR-Dome", "SSR-BEDPP","SEDPP-No-Active", "None"),
+         screen = c("SSR", "SEDPP", "SSR-BEDPP", "SSR-Slores", 
+                    "SSR-Dome", "SEDPP-No-Active", "None"),
          safe.thresh = 0, ncores = 1, alpha = 1, 
          lambda.min = ifelse(nrow(X) > ncol(X),.001,.05), 
          nlambda = 100, lambda.log.scale = TRUE, lambda, eps = 1e-7, 
@@ -29,7 +30,7 @@ biglasso(X, y, row.idx = 1:nrow(X), penalty = c("lasso", "ridge", "enet"),
   "ridge", or "enet" (elastic net).}
   \item{family}{Either "gaussian" or "binomial", depending on the response.}
   \item{alg.logistic}{The algorithm used in logistic regression. If "Newton" then the exact hessian is used (default); if "MM" then a majorization-minimization algorithm is used to set an upper-bound on the hessian matrix. This can be faster, particularly in data-larger-than-RAM case.}
-  \item{screen}{The feature screening rule used at each \code{lambda} that discards features to speed up computation: "SSR" (default) is the sequential strong rule; "SEDPP" is the (sequential) EDPP rule; "SSR-BEDPP" and "SSR-Dome" are our new proposed screening rules which combine the strong rule with a safe rule (BEDPP or Dome test). "SEDPP-No-Active" is the (sequential) EDPP rule without active set cycling in the algorithm, which is for research purpose only. "None" is to not apply a rule. \strong{Note that for logistic regression and/or the elastic net penalty}, only "SSR" is applicable for now.}
+  \item{screen}{The feature screening rule used at each \code{lambda} that discards features to speed up computation: "SSR" (default) is the sequential strong rule; "SEDPP" is the (sequential) EDPP rule. "SSR-BEDPP", "SSR-Dome", and "SSR-Slores" are our newly proposed screening rules which combine the strong rule with a safe rule (BEDPP, Dome test, or Slores rule). Among the three, the first two are for linear regression, and the last one is for logistic regression. Besides, "SEDPP-No-Active" is the (sequential) EDPP rule without active set cycling in the algorithm, which is for research purpose only. "None" is to not apply a rule. \strong{Note that for elastic net penalty}, only "SSR" is applicable for now.}
   \item{safe.thresh}{the threshold value between 0 and 1 that controls when to stop safe test in the "SSR-Dome" and "SSR-BEDPP" rules. For example, 0.01 means to stop Dome test at next lambda iteration if the number of features rejected by safe test at current lambda iteration is not larger than 1\% of the total number of features. So 1 means to always turn off safe test, whereas 0 (default) means to turn off safe test if the number of features rejected by safe test is 0 at current lambda.}
   \item{ncores}{The number of OpenMP threads used for parallel computing.}
   \item{alpha}{The elastic-net mixing parameter that controls the relative contribution from the lasso (l1) and the ridge (l2) penalty. The penalty is defined as \deqn{ \alpha||\beta||_1  + (1-\alpha)/2||\beta||_2^2.} \code{alpha=1} is the lasso penalty, \code{alpha=0} the ridge penalty, \code{alpha} in between 0 and 1 is the elastic-net ("enet") penalty. }

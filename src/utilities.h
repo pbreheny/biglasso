@@ -46,12 +46,20 @@ double gLoss(double *r, int n);
 // get X[i, j]: i-th row, j-th column element
 double get_elem_bm(XPtr<BigMatrix> xpMat, double center_, double scale_, int i, int j);
 
+// //crossprod for big.matrix, no standardization (raw)
+// double crossprod_bm_raw(XPtr<BigMatrix> xpMat, double *y, int *row_idx, int n, int j);
+
 //crossprod - given specific rows of X
 double crossprod_bm(XPtr<BigMatrix> xpMat, double *y_, int *row_idx_, double center_, 
                     double scale_, int n_row, int j);
 
-double crossprod_bmC(SEXP xP, double *y_, int *row_idx_, double center_, 
-                     double scale_, int n_row, int j);
+// crossprod of columns X_j and X_k
+double crossprod_bm_Xj_Xk(XPtr<BigMatrix> xMat, int *row_idx,
+                          NumericVector &center, NumericVector &scale,
+                          int n, int j, int k);
+
+// double crossprod_bmC(SEXP xP, double *y_, int *row_idx_, double center_,
+//                      double scale_, int n_row, int j);
 
 //crossprod_resid - given specific rows of X: separate computation
 double crossprod_resid(XPtr<BigMatrix> xpMat, double *y_, double sumY_, int *row_idx_, 

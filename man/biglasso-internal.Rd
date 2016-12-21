@@ -6,7 +6,7 @@
 \description{Internal biglasso functions}
 
 \usage{
-loss.biglasso(y,yhat,family)
+loss.biglasso(y, yhat, family, eval.metric)
 }
 
 \author{

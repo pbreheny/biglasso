@@ -79,6 +79,17 @@ double get_elem_bm(XPtr<BigMatrix> xpMat, double center_, double scale_, int i, 
   return res;
 }
 
+// //crossprod for big.matrix, no standardization (raw)
+// double crossprod_bm_raw(XPtr<BigMatrix> xpMat, double *y, int *row_idx, int n, int j) {
+//   double res = 0.0;
+//   MatrixAccessor<double> xAcc(*xpMat);
+//   double *xCol = xAcc[j];
+//   for (int i = 0; i < n; i++) {
+//     res += xCol[row_idx[i]] * y[i];
+//   }
+//   return res;
+// }
+
 //crossprod - given specific rows of X
 double crossprod_bm(XPtr<BigMatrix> xpMat, double *y_, int *row_idx_, double center_, 
                                double scale_, int n_row, int j) {
@@ -94,6 +105,24 @@ double crossprod_bm(XPtr<BigMatrix> xpMat, double *y_, int *row_idx_, double cen
   sum = (sum_xy - center_ * sum_y) / scale_;
 
   return sum;
+}
+
+// crossprod of columns X_j and X_k
+double crossprod_bm_Xj_Xk(XPtr<BigMatrix> xMat, int *row_idx,
+                          NumericVector &center, NumericVector &scale,
+                          int n, int j, int k) {
+  MatrixAccessor<double> xAcc(*xMat);
+  double *xCol_j = xAcc[j];
+  double *xCol_k = xAcc[k];
+  double sum_xj_xk = 0.0;
+  double res = 0.0;
+
+  for (int i = 0; i < n; i++) {
+    sum_xj_xk += xCol_j[row_idx[i]] * xCol_k[row_idx[i]];
+  }
+  res = (sum_xj_xk - n * center[j] * center[k]) / (scale[j] * scale[k]);
+
+  return res;
 }
 
 //crossprod_resid - given specific rows of X: separate computation

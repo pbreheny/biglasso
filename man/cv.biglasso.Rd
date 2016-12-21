@@ -9,7 +9,8 @@ Perform k-fold cross validation for penalized regression models over a grid of
 values for the regularization parameter lambda.}
 
 \usage{
-cv.biglasso(X, y, row.idx = 1:nrow(X), ncores = parallel::detectCores(), ...,
+cv.biglasso(X, y, row.idx = 1:nrow(X), eval.metric = c("default", "MAPE"),
+            ncores = parallel::detectCores(), ...,
             nfolds = 5, seed, cv.ind, trace = FALSE)
 }
 
@@ -18,6 +19,7 @@ cv.biglasso(X, y, row.idx = 1:nrow(X), ncores = parallel::detectCores(), ...,
   \item{y}{The response vector, as in \code{biglasso}.}
   \item{row.idx}{The integer vector of row indices of \code{X} that used for fitting 
   the model. as in \code{biglasso}.}
+  \item{eval.metric}{The evaluation metric for the cross-validated error and for choosing optimal \code{lambda}. "default" for linear regression is MSE (mean squared error), for logistic regression is misclassification error. "MAPE", for linear regression only, is the Mean Absolute Percentage Error.}
   \item{ncores}{The number of cores to use for parallel execution across a cluster 
   created by the \code{parallel} package. (This is different from \code{ncores} 
   in \code{\link{biglasso}}, which is the number of OpenMP threads.)}

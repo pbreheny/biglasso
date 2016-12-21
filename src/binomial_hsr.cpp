@@ -96,10 +96,9 @@ int check_rest_set_bin(int *e1, int *e2, vector<double> &z, XPtr<BigMatrix> xpMa
   return violations;
 }
 
-
 // Coordinate descent for logistic models
 RcppExport SEXP cdfit_binomial_hsr(SEXP X_, SEXP y_, SEXP row_idx_, 
-                                   SEXP lambda_, SEXP nlambda_,
+                                   SEXP lambda_, SEXP nlambda_, SEXP lam_scale_,
                                    SEXP lambda_min_, SEXP alpha_, SEXP user_, SEXP eps_, 
                                    SEXP max_iter_, SEXP multiplier_, SEXP dfmax_, 
                                    SEXP ncore_, SEXP warn_,
@@ -112,7 +111,7 @@ RcppExport SEXP cdfit_binomial_hsr(SEXP X_, SEXP y_, SEXP row_idx_,
   int n = Rf_length(row_idx_); // number of observations used for fitting model
   int p = xMat->ncol();
   int L = INTEGER(nlambda_)[0];
-  
+  int lam_scale = INTEGER(lam_scale_)[0];
   double eps = REAL(eps_)[0];
   int max_iter = INTEGER(max_iter_)[0];
   double *m = REAL(multiplier_);
@@ -194,13 +193,21 @@ RcppExport SEXP cdfit_binomial_hsr(SEXP X_, SEXP y_, SEXP row_idx_,
   double sumS = sum(s, n); // temp result sum of s
   double sumWResid = 0.0; // temp result: sum of w * r
 
+  // set up lambda
   if (user == 0) {
-    // set up lambda, equally spaced on log scale
-    double log_lambda_max = log(lambda_max);
-    double log_lambda_min = log(lambda_min*lambda_max);
-    double delta = (log_lambda_max - log_lambda_min) / (L-1);
-    for (l = 0; l < L; l++) {
-      lambda[l] = exp(log_lambda_max - l * delta);
+    if (lam_scale) { // set up lambda, equally spaced on log scale
+      double log_lambda_max = log(lambda_max);
+      double log_lambda_min = log(lambda_min*lambda_max);
+      
+      double delta = (log_lambda_max - log_lambda_min) / (L-1);
+      for (l = 0; l < L; l++) {
+        lambda[l] = exp(log_lambda_max - l * delta);
+      }
+    } else { // equally spaced on linear scale
+      double delta = (lambda_max - lambda_min*lambda_max) / (L-1);
+      for (l = 0; l < L; l++) {
+        lambda[l] = lambda_max - l * delta;
+      }
     }
     Dev[0] = nullDev;
     lstart = 1;
@@ -209,7 +216,7 @@ RcppExport SEXP cdfit_binomial_hsr(SEXP X_, SEXP y_, SEXP row_idx_,
     lstart = 0;
     lambda = Rcpp::as<NumericVector>(lambda_);
   }
-
+  
   for (l = lstart; l < L; l++) {
     if(verbose) {
       // output time

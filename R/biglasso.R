@@ -2,9 +2,9 @@ biglasso <- function(X, y, row.idx = 1:nrow(X),
                      penalty = c("lasso", "ridge", "enet"),
                      family = c("gaussian","binomial"), 
                      alg.logistic = c("Newton", "MM"),
-                     screen = c("SSR", "SEDPP", "SSR-Dome", "SSR-BEDPP","SEDPP-No-Active", "None"),
-                     safe.thresh = 0,
-                     ncores = 1, alpha = 1,
+                     screen = c("SSR", "SEDPP", "SSR-BEDPP", "SSR-Slores", 
+                                "SSR-Dome", "SEDPP-No-Active", "None"),
+                     safe.thresh = 0, ncores = 1, alpha = 1,
                      lambda.min = ifelse(nrow(X) > ncol(X),.001,.05), 
                      nlambda = 100, lambda.log.scale = TRUE,
                      lambda, eps = 1e-7, max.iter = 1000, 
@@ -12,7 +12,7 @@ biglasso <- function(X, y, row.idx = 1:nrow(X),
                      penalty.factor = rep(1, ncol(X)), 
                      warn = TRUE, output.time = FALSE,
                      verbose = FALSE) {
-  # Coersion
+
   family <- match.arg(family)
   penalty <- match.arg(penalty)
   alg.logistic <- match.arg(alg.logistic)
@@ -22,7 +22,7 @@ biglasso <- function(X, y, row.idx = 1:nrow(X),
   if (identical(penalty, "lasso")) {
     alpha <- 1
   } else if (identical(penalty, 'ridge')) {
-    alpha <- 0.0001 ## equivalent to ridge regression
+    alpha <- 1.0e-6 ## equivalent to ridge regression
   } else {
     if (alpha >= 1 || alpha <= 0) {
       stop("alpha must be between 0 and 1 for elastic net penalty.")
@@ -47,8 +47,10 @@ biglasso <- function(X, y, row.idx = 1:nrow(X),
       stop("Attemping to use family='binomial' with non-binary data")
     }
     if (!identical(sort(unique(y)), 0:1)) {
-      y <- as.numeric(y==max(y))
+      y <- as.numeric(y == max(y))
     }
+    n.pos <- sum(y) # number of 1's
+    ylab <- ifelse(y == 0, -1, 1) # response label vector of {-1, 1}
   }
 
   if (family=="gaussian") {
@@ -59,9 +61,11 @@ biglasso <- function(X, y, row.idx = 1:nrow(X),
 
   p <- ncol(X)
   if (length(penalty.factor) != p) stop("penalty.factor does not match up with X")
-  if (storage.mode(penalty.factor) != "double") storage.mode(penalty.factor) <- "double"
+  ## for now penalty.factor is only applicable for "SSR"
+  if (screen != "SSR") penalty.factor <- rep(1, p) 
+  storage.mode(penalty.factor) <- "double"
+  
   n <- length(row.idx) ## subset of X. idx: indices of rows.
-
   if (missing(lambda)) {
     user.lambda <- FALSE
     lambda <- rep(0.0, nlambda);
@@ -153,13 +157,24 @@ biglasso <- function(X, y, row.idx = 1:nrow(X),
                    as.integer(verbose),
                    PACKAGE = 'biglasso')
     } else {
-      res <- .Call("cdfit_binomial_hsr", X@address, yy, as.integer(row.idx-1), 
-                   lambda, as.integer(nlambda), lambda.min, alpha, 
-                   as.integer(user.lambda | any(penalty.factor==0)),
-                   eps, as.integer(max.iter), penalty.factor, 
-                   as.integer(dfmax), as.integer(ncores), as.integer(warn),
-                   as.integer(verbose),
-                   PACKAGE = 'biglasso')
+      if (screen == "SSR-Slores") {
+        res <- .Call("cdfit_binomial_hsr_slores", X@address, yy, as.integer(n.pos),
+                     as.integer(ylab), as.integer(row.idx-1), 
+                     lambda, as.integer(nlambda), as.integer(lambda.log.scale),
+                     lambda.min, alpha, as.integer(user.lambda | any(penalty.factor==0)),
+                     eps, as.integer(max.iter), penalty.factor, 
+                     as.integer(dfmax), as.integer(ncores), as.integer(warn), safe.thresh,
+                     as.integer(verbose),
+                     PACKAGE = 'biglasso')
+      } else {
+        res <- .Call("cdfit_binomial_hsr", X@address, yy, as.integer(row.idx-1), 
+                     lambda, as.integer(nlambda), as.integer(lambda.log.scale),
+                     lambda.min, alpha, as.integer(user.lambda | any(penalty.factor==0)),
+                     eps, as.integer(max.iter), penalty.factor, 
+                     as.integer(dfmax), as.integer(ncores), as.integer(warn),
+                     as.integer(verbose),
+                     PACKAGE = 'biglasso')
+      }
     }
     a <- res[[1]]
     b <- Matrix(res[[2]], sparse = T)
@@ -169,7 +184,14 @@ biglasso <- function(X, y, row.idx = 1:nrow(X),
     loss <- res[[6]]
     iter <- res[[7]]
     rejections <- res[[8]]
-    col.idx <- res[[9]]
+    
+    if (screen == "SSR-Slores") {
+      safe_rejections <- res[[9]]
+      col.idx <- res[[10]]
+    } else {
+      col.idx <- res[[9]]
+    }
+    
   } else {
     stop("Current version only supports Gaussian or Binominal response!")
   }
@@ -218,7 +240,7 @@ biglasso <- function(X, y, row.idx = 1:nrow(X),
     col.idx = col.idx,
     rejections = rejections
   )
-  if (screen == 'SSR-Dome' || screen == 'SSR-BEDPP') {
+  if (screen == 'SSR-Dome' || screen == 'SSR-BEDPP' || screen == 'SSR-Slores') {
     return.val$safe_rejections <- safe_rejections
   }
   
