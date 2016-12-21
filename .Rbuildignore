@@ -3,7 +3,7 @@
 .Rbuildignore
 .Rhistory
 .DS_Store
-test*
+test.*
 ^.*\.Rproj$
 ^\.Rproj\.user$
 ^\.travis\.yml$

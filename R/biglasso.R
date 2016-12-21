@@ -131,7 +131,7 @@ biglasso <- function(X, y, row.idx = 1:nrow(X),
                    as.integer(dfmax), as.integer(ncores), as.integer(verbose),
                    PACKAGE = 'biglasso')
     }
-    
+   
     a <- rep(mean(y), nlambda)
     b <- Matrix(res[[1]], sparse = T)
     center <- res[[2]]

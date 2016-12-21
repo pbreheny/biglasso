@@ -4,7 +4,7 @@
 
 \docType{package}
 
-\title{Big Lasso: Extending Lasso Model Fitting to Big Data in R}
+\title{Extending Lasso Model Fitting to Big Data in R}
 
 \description{
 Extend lasso and elastic-net linear and logistic regression models for ultrahigh-dimensional, multi-gigabyte data sets that cannot be loaded into available RAM. This package utilizes memory-mapped files to store the massive data on the disk and only read those into memory whenever necessary during model fitting. Moreover, some advanced feature screening rules are proposed and implemented to accelerate the model fitting. As a result, this package is much more memory- and computation-efficient and highly scalable as compared to existing lasso-fitting packages such as \href{https://CRAN.R-project.org/package=glmnet}{glmnet} and \href{https://CRAN.R-project.org/package=ncvreg}{ncvreg}, thus allowing for powerful big data analysis even with only an ordinary laptop.}
@@ -13,7 +13,7 @@ Extend lasso and elastic-net linear and logistic regression models for ultrahigh
   \tabular{ll}{
     Package: \tab biglasso\cr
     Type: \tab Package\cr
-    Version: \tab 1.2-6\cr
+    Version: \tab 1.3-0\cr
     Date: \tab 2016-12-15\cr
     License: \tab GPL-2\cr}
  
@@ -28,12 +28,11 @@ This package aims to fill the gap by extending lasso model fitting to Big Data i
 \item the underlying computation is implemented in C++, and parallel computing with OpenMP is also supported.
 }
 
-For more information:
+\strong{For more information:}
 \itemize{
-\item Some benchmarking results: \href{https://github.com/YaohuiZeng/biglasso}{https://github.com/YaohuiZeng/biglasso}.
-\item The tutorial of the package is in the vignette, or on GitHub: \href{https://github.com/YaohuiZeng/biglasso/blob/master/vignettes/biglasso.pdf}{https://github.com/YaohuiZeng/biglasso/blob/master/vignettes/biglasso.pdf}
+\item Benchmarking results: \href{https://github.com/YaohuiZeng/biglasso}{https://github.com/YaohuiZeng/biglasso}.
+\item Tutorial: \href{https://github.com/YaohuiZeng/biglasso/blob/master/vignettes/biglasso.pdf}{https://github.com/YaohuiZeng/biglasso/blob/master/vignettes/biglasso.pdf}
 }
-
 
 }
 

@@ -46,7 +46,7 @@ cv.biglasso <- function(X, y, row.idx = 1:nrow(X), eval.metric = c("default", "M
     if (!("cluster" %in% class(cluster))) stop("cluster is not of class 'cluster'; see ?makeCluster")
     parallel <- TRUE
     ## pass the descriptor info to each cluster ##
-    xdesc <- describe(X)
+    xdesc <- bigmemory::describe(X)
     parallel::clusterExport(cluster, c("cv.ind", "xdesc", "y", "cv.args", 
                                        "parallel", "eval.metric"), 
                             envir=environment())
@@ -66,7 +66,7 @@ cv.biglasso <- function(X, y, row.idx = 1:nrow(X), eval.metric = c("default", "M
                                         parallel = parallel)
     parallel::stopCluster(cluster)
   }
- 
+
   for (i in 1:nfolds) {
     if (parallel) {
       res <- fold.results[[i]]

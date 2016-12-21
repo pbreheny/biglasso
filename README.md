@@ -1,5 +1,5 @@
 
-# Big Lasso: Extend Lasso Model Fitting to Big Data in R
+# biglasso: Extend Lasso Model Fitting to Big Data in R
 
 [![Build Status](https://travis-ci.org/YaohuiZeng/biglasso.svg?branch=master)](https://travis-ci.org/YaohuiZeng/biglasso)
 [![CRAN_Status_Badge](http://www.r-pkg.org/badges/version/biglasso)](https://CRAN.R-project.org/package=biglasso)
@@ -105,5 +105,5 @@ Since other three packages cannot handle this data-larger-than-RAM case, we comp
 
 
 ## News:
-* This package on GitHub has been updated to Version 1.2-6. See details in NEWS.
+* This package on GitHub has been updated to Version 1.2-5. See details in NEWS.
 * The newest stable version will be submitted to CRAN soon after testing.

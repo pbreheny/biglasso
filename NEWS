@@ -1,13 +1,16 @@
 *   Minor change
 **  Major change
 
+1.3-0 (12/15/2016)
+  * version 1.3-0 for CRAN submission
+  
 1.2-6 (12/15/2016)
   ** added a newly proposed screening rule, SSR-Slores, for lasso-penalized logistic regression
   ** added SSR-BEDPP for elastic-net-penalized linear regression.
 
 1.2-5 (12/10/2016)
   *  updated README.md with benchmarking results
-  *  added vignette
+  *  added tutorial (vignette)
 
 1.2-4 (11/14/2016)
   *  added gaussian.cpp: solve lasso without screening, for research only.
