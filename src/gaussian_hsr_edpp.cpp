@@ -115,16 +115,16 @@ void bedpp_init(vector<double>& sign_lammax_xtxmax,
 // Basic (non-sequential) EDPP test
 void bedpp_screen(int *bedpp_reject, const vector<double>& sign_lammax_xtxmax,
                   const vector<double>& XTy, double ynorm_sq, int *row_idx, 
-                  vector<int>& col_idx, double lambda, 
-                  double lambda_max, int n, int p) {
+                  vector<int>& col_idx, double lambda, double lambda_max, 
+                  double alpha, int n, int p) {
   double LHS = 0.0;
-  double RHS = 2 * n * lambda * lambda_max - (lambda_max - lambda) * 
-    sqrt(n * ynorm_sq - pow(n * lambda_max, 2));
+  double RHS = 2 * n * alpha * lambda * lambda_max - (lambda_max - lambda) * 
+    sqrt(n * ynorm_sq - pow(n * alpha * lambda_max, 2));
   int j;
   
   #pragma omp parallel for private(j, LHS) schedule(static)
   for (j = 0; j < p; j++) { // p = p_keep
-    LHS = (lambda + lambda_max) * XTy[j] - (lambda_max - lambda) * sign_lammax_xtxmax[j];
+    LHS = (lambda + lambda_max) * XTy[j] - (lambda_max - lambda) * alpha * sign_lammax_xtxmax[j];
     if (fabs(LHS) < RHS) {
       bedpp_reject[j] = 1;
     } else {
@@ -299,7 +299,7 @@ RcppExport SEXP cdfit_gaussian_hsr_bedpp(SEXP X_, SEXP y_, SEXP row_idx_,
     
     if (bedpp) {
       bedpp_screen(bedpp_reject, sign_lammax_xtxmax, xty, ynorm_sq, row_idx, 
-                   col_idx, lambda[l], lambda_max, n, p);
+                   col_idx, lambda[l], lambda_max, alpha, n, p);
       n_bedpp_reject[l] = sum(bedpp_reject, p);
       
       // update z[j] for features which are rejected at previous lambda but accepted at current one.
