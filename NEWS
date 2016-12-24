@@ -1,6 +1,9 @@
 *   Minor change
 **  Major change
 
+1.3-1 (12/24/2016)
+  * fixed bug in SSR-Slores related to numeric equality comparison
+
 1.3-0 (12/15/2016)
   * version 1.3-0 for CRAN submission
   
