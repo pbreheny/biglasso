@@ -116,13 +116,14 @@ void slores_screen(int *slores_reject, vector<double>& theta_lam,
                    int *row_idx, vector<int> &col_idx,
                    NumericVector &center, NumericVector &scale, int xmax_idx,
                    IntegerVector& ylab, double lambda, 
-                   double lambda_max, int n_pos, int n, int p, int l) {
+                   double lambda_max, int n_pos, int n, int p) {
   
+  double TOLERANCE = 1e-8;
   double d, r, a2, cutoff_xi_pos, a1_xi_pos, a0, Delta;
-  double u2star_xi_pos, u2star_xi_neg, T_temp_pos, T_temp_neg;
+  double u2star_xi_pos, u2star_xi_neg, T_temp_pos, T_temp_neg, tmp_pos, tmp_neg;
   NumericVector T_xi_pos(p);
   NumericVector T_xi_neg(p);
-  
+ 
   if (lambda == lambda_max) {
     r = 0.0;
     d = 0.0;
@@ -133,16 +134,9 @@ void slores_screen(int *slores_reject, vector<double>& theta_lam,
   }
   a2 = n * n * (1 - d * d);
 
-  // if (l < 10) {
-  //   Rprintf("l = %d\n", l);
-  //   Rprintf("===========================================\n");
-  //   Rprintf("\t r = %f; d = %f; a2 = %f; n * lambda = %f\n", r, d, a2, n*lambda);
-  //   Rprintf("--------------------------------------------\n");
-  // }
-  
   int j;
-  #pragma omp parallel for private(j, cutoff_xi_pos, a1_xi_pos, a0, Delta, \
-                                    u2star_xi_pos, u2star_xi_neg, T_temp_pos, T_temp_neg) \
+  #pragma omp parallel for private(j, cutoff_xi_pos, a1_xi_pos, a0, Delta, u2star_xi_pos, \
+                                   u2star_xi_neg, T_temp_pos, T_temp_neg, tmp_pos, tmp_neg) \
                                     schedule(static)
   for (j = 0; j < p; j++) {
     cutoff_xi_pos = 0.0;
@@ -154,18 +148,20 @@ void slores_screen(int *slores_reject, vector<double>& theta_lam,
     a1_xi_pos = 2 * prod_PX_Pxmax_xi_pos[j] * n * (1- d * d);
     a0 = pow(prod_PX_Pxmax_xi_pos[j], 2) - pow(d * n, 2);
     Delta = pow(a1_xi_pos, 2) - 4 * a2 * a0;
-    if (abs(Delta) <= 1e-6) Delta = 0.0; // for xmax
+    if (Delta < 0.0) Delta = 0.0; // in case of -0.0 (at xmax)
 
     cutoff_xi_pos = prod_PX_Pxmax_xi_pos[j] / n;
     if (cutoff_xi_pos >= d) {
       T_xi_pos[j] = r * sqrt(n) - X_theta_lam_xi_pos[j];
     } else {
       u2star_xi_pos = 0.5 * (-a1_xi_pos + sqrt(Delta)) / a2;
-      T_temp_pos = sqrt(n + n * pow(u2star_xi_pos, 2) + 2 * u2star_xi_pos * prod_PX_Pxmax_xi_pos[j]);
+      tmp_pos = n + n * pow(u2star_xi_pos, 2) + 2 * u2star_xi_pos * prod_PX_Pxmax_xi_pos[j];
+      if (tmp_pos < 0.0) tmp_pos = 0.0; // in case of -0.0 (at xmax)
+      T_temp_pos = sqrt(tmp_pos);
       T_xi_pos[j] = r * T_temp_pos - u2star_xi_pos * n * (lambda_max - lambda) - X_theta_lam_xi_pos[j];
     }
-  
-    if (T_xi_pos[j] > n * lambda) { // cannot reject since T_xi_pos >= n * lambda, no need to compute T_xi_neg
+    
+    if (T_xi_pos[j] + TOLERANCE >= n * lambda) { // cannot reject since T_xi_pos >= n * lambda, no need to compute T_xi_neg
       slores_reject[j] = 0;
     } else {
       // compute T_xi_neg: two cases
@@ -175,23 +171,38 @@ void slores_screen(int *slores_reject, vector<double>& theta_lam,
       } else {
         // a1_xi_neg = -a1_xi_pos;
         u2star_xi_neg = 0.5 * (a1_xi_pos + sqrt(Delta)) / a2;
-        T_temp_neg = sqrt(n + n * pow(u2star_xi_neg, 2) + 2 * u2star_xi_neg * prod_PX_Pxmax_xi_pos[j]);
+        tmp_neg = n + n * pow(u2star_xi_neg, 2) + 2 * u2star_xi_neg * prod_PX_Pxmax_xi_pos[j];
+        if (tmp_neg < 0.0) tmp_neg = 0.0; // in case of -0.0 (at xmax)
+        T_temp_neg = sqrt(tmp_neg);
         T_xi_neg[j] = r * T_temp_neg - u2star_xi_neg * n * (lambda_max - lambda) + X_theta_lam_xi_pos[j];
       }
-      if (T_xi_neg[j] > n * lambda) { // cannot reject since T_xi_neg > n * lambda
+      if (T_xi_neg[j] + TOLERANCE >= n * lambda) { // cannot reject since T_xi_neg > n * lambda
         slores_reject[j] = 0;
       } else {
         slores_reject[j] = 1; // both T_xi_pos and T_xi_pos are less than n * lambda
       }
     }
-    
+    // debug
     // if (l < 10) {
-    //   if (col_idx[j] == 248) {
-    //     Rprintf("\t\t j = %d: a1_xi_pos=%f, a0=%f, Delta=%f, sqrt(Delta)=%f, cutoff_xi_pos=%f, u2star_xi_pos=%f, T_xi_pos[%d]=%f\n", 
+    //   Rprintf("l = %d\n", l);
+    //   Rprintf("===========================================\n");
+    //   Rprintf("\t r = %f; d = %f; a2 = %f; n * lambda = %f\n", r, d, a2, n*lambda);
+    //   Rprintf("--------------------------------------------\n");
+    // }
+    // if (l < 10) {
+    //   if (col_idx[j] == xmax_idx) {
+    //     Rprintf("T_xi_pos[j] = %15.15f; n * lambda = %15.15f\n; T_xi_pos == n * lambda ? %s\n", 
+    //             T_xi_pos[j], n * lambda, T_xi_pos[j] == n * lambda ? "true" : "false");
+    //     Rprintf("--------------------------------------------\n");
+    //     Rprintf("T_xi_pos[j] = %15.15f; n * lambda = %15.15f\n; T_xi_pos almost equal to n * lambda ? %s\n", 
+    //             T_xi_pos[j], n * lambda, abs(T_xi_pos[j] - n * lambda) <=  TOLERANCE ? "true" : "false");
+    //     Rprintf("--------------------------------------------\n");
+    //     Rprintf("\t j = %d: a1_xi_pos=%f, a0=%f, Delta=%f, sqrt(Delta)=%f, cutoff_xi_pos=%f, u2star_xi_pos=%f, T_xi_pos[%d]=%f\n",
     //             j, a1_xi_pos, a0, Delta, sqrt(Delta), cutoff_xi_pos, u2star_xi_pos, j, T_xi_pos[j]);
-    //     Rprintf("\t\t j = %d: u2star_xi_neg=%f, T_xi_neg[%d]=%f\n", 
-    //             j, u2star_xi_neg, j, T_xi_neg[j]);
-    //     Rprintf("\t\t slores_reject[%d] = %d\n", j, slores_reject[j]);
+    //     Rprintf("\t prod_PX_Pxmax_xi_pos[%d]=%f, T_temp_pos=%f, X_theta_lam_xi_pos[%d]=%f, tmp_pos=%f\n", 
+    //             j, prod_PX_Pxmax_xi_pos[j], T_temp_pos, j, X_theta_lam_xi_pos[j], tmp_pos);
+    //     Rprintf("\t u2star_xi_neg=%f, T_xi_neg[%d]=%f\n", u2star_xi_neg, j, T_xi_neg[j]);
+    //     Rprintf("\t slores_reject[%d] = %d\n", j, slores_reject[j]);
     //   }
     // }
   }
@@ -385,7 +396,7 @@ RcppExport SEXP cdfit_binomial_hsr_slores(SEXP X_, SEXP y_, SEXP n_pos_, SEXP yl
       slores_screen(slores_reject, theta_lam, g_theta_lam, prod_deriv_theta_lam,
                     X_theta_lam_xi_pos, prod_PX_Pxmax_xi_pos,
                     row_idx, col_idx, center, scale, xmax_idx, ylabel, 
-                    lambda[l], lambda_max, n_pos, n, p, l);
+                    lambda[l], lambda_max, n_pos, n, p);
       n_slores_reject[l] = sum(slores_reject, p);
       
       // update z[j] for features which are rejected at previous lambda but accepted at current one.
