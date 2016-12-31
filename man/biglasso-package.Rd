@@ -4,7 +4,7 @@
 
 \docType{package}
 
-\title{Extending Lasso Model Fitting to Big Data in R}
+\title{Extending Lasso Model Fitting to Big Data}
 
 \description{
 Extend lasso and elastic-net linear and logistic regression models for ultrahigh-dimensional, multi-gigabyte data sets that cannot be loaded into available RAM. This package utilizes memory-mapped files to store the massive data on the disk and only read those into memory whenever necessary during model fitting. Moreover, some advanced feature screening rules are proposed and implemented to accelerate the model fitting. As a result, this package is much more memory- and computation-efficient and highly scalable as compared to existing lasso-fitting packages such as \href{https://CRAN.R-project.org/package=glmnet}{glmnet} and \href{https://CRAN.R-project.org/package=ncvreg}{ncvreg}, thus allowing for powerful big data analysis even with only an ordinary laptop.}
