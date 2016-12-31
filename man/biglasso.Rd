@@ -86,7 +86,7 @@ Several advanced feature screening rules are implemented. For lasso-penalized li
   \item{screen}{Same as above.}
   \item{col.idx}{The indices of features that have 'scale' value greater than 1e-6. Features with 'scale' less than 1e-6 are removed from model fitting.}
   \item{rejections}{The number of features rejected at each value of \code{lambda}.}
-  \item{safe_rejections}{The number of features rejected by safe rules at each value of \code{lambda}. Only for "SSR-Dome" and "SSR-BEDPP" cases.}
+  \item{safe_rejections}{The number of features rejected by safe rules at each value of \code{lambda}. Only for "SSR-Dome", "SSR-BEDPP" and "SSR-Slores" cases.}
 }
 
 \author{

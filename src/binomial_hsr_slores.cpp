@@ -124,7 +124,7 @@ void slores_screen(int *slores_reject, vector<double>& theta_lam,
   NumericVector T_xi_pos(p);
   NumericVector T_xi_neg(p);
  
-  if (lambda == lambda_max) {
+  if (fabs(lambda - lambda_max) <= TOLERANCE) {
     r = 0.0;
     d = 0.0;
   } else {
@@ -306,7 +306,7 @@ RcppExport SEXP cdfit_binomial_hsr_slores(SEXP X_, SEXP y_, SEXP n_pos_, SEXP yl
     s[i] = y[i] - ybar;
     eta[i] = a0;
   }
-  thresh = eps * nullDev;
+  thresh = eps * nullDev / n;
   double sumS = sum(s, n); // temp result sum of s
   double sumWResid = 0.0; // temp result: sum of w * r
 

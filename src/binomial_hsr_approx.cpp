@@ -122,8 +122,8 @@ RcppExport SEXP cdfit_binomial_hsr_approx(SEXP X_, SEXP y_, SEXP row_idx_,
     s[i] = y[i] - ybar;
     eta[i] = a0;
   }
-  thresh = eps * nullDev; // threshold for convergence
- 
+  thresh = eps * nullDev / n; // threshold for convergence
+
   double sumS; // temp result sum of s
   double sumResid; // temp result sum of current residuals
   // double sumWResid = 0.0; // temp result: sum of w * r

@@ -189,7 +189,8 @@ RcppExport SEXP cdfit_binomial_hsr(SEXP X_, SEXP y_, SEXP row_idx_,
     s[i] = y[i] - ybar;
     eta[i] = a0;
   }
-  thresh = eps * nullDev;
+  thresh = eps * nullDev / n;
+  
   double sumS = sum(s, n); // temp result sum of s
   double sumWResid = 0.0; // temp result: sum of w * r
 
