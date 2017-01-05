@@ -9,8 +9,7 @@
 
 ## Documentation:
 
-* **[R manual](https://cran.r-project.org/web/packages/biglasso/biglasso.pdf)**: 
-* **[User guide](https://cran.r-project.org/web/packages/biglasso/vignettes/biglasso.pdf)**:
+* **[R manual](https://cran.r-project.org/web/packages/biglasso/biglasso.pdf)** * **[User guide](https://cran.r-project.org/web/packages/biglasso/vignettes/biglasso.pdf)**:
 
 ## Features:
 1. It utilizes memory-mapped files to store the massive data on the disk, only loading data into memory when necessary during model fitting. Consequently, it's able to seamlessly handle out-of-core computation.
