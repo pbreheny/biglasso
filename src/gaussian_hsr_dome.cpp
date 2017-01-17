@@ -72,15 +72,16 @@ void dome_init(vector<double> &xtxmax, vector<int> &region, // region: whether x
                XPtr<BigMatrix> xMat, int xmax_idx, double ynorm, double lambda_max,
                int *row_idx, vector<int> &col_idx, NumericVector &center,
                NumericVector &scale, int n, int p) {
+  
   MatrixAccessor<double> xAcc(*xMat);
   double *xCol, *xCol_max;
-  double sum_xjxmax;
+  double sum_xjxmax, tmp;
   double sum_xmax = center[xmax_idx] * n;
   double cutoff = n * lambda_max / ynorm;
   int j, jj;
   xCol_max = xAcc[xmax_idx];
 
-  #pragma omp parallel for private(j, sum_xjxmax) schedule(static) 
+  #pragma omp parallel for private(j, sum_xjxmax, tmp) schedule(static) 
   for (j = 0; j < p; j++) {
     jj = col_idx[j];
     xCol = xAcc[jj];
@@ -88,8 +89,14 @@ void dome_init(vector<double> &xtxmax, vector<int> &region, // region: whether x
     for (int i = 0; i < n; i++) {
       sum_xjxmax = sum_xjxmax + xCol[row_idx[i]] * xCol_max[row_idx[i]];
     }
+    
     xtxmax[j] = (sum_xjxmax - center[jj] * sum_xmax) / (scale[jj] * scale[xmax_idx]);
-    tt[j] = sqrt(n - xtxmax[j]*xtxmax[j] / n);
+    tmp = n - xtxmax[j]*xtxmax[j] / n;
+    if (tmp < 0.0) {
+      tt[j] = 0;
+    } else {
+      tt[j] = sqrt(tmp);
+    }
 
     if (xtxmax[j] < - cutoff) {
       region[j] = 1;
@@ -106,7 +113,7 @@ void dome_screen(int *accept, const vector<double> &xtxmax, const vector<int> &r
                  const vector<double> &tt, const vector<double> &xty, double ynorm, double psi, 
                  double lambda, double lambda_max, int n, int p) {
   int j;
-  double L, U;
+  double L, U, TOLERANCE = 1E-8;
   double delta_lam = lambda_max - lambda;
   double dlam_times_psi = delta_lam * psi; // temp result
   double n_time_lam = n * lambda; // temp result
@@ -133,7 +140,7 @@ void dome_screen(int *accept, const vector<double> &xtxmax, const vector<int> &r
       U = 0;
       break;
     }
-    if (xty[j] > L && xty[j] < U) { // reject
+    if (xty[j] > L + TOLERANCE && xty[j] + TOLERANCE < U) { // reject
       accept[j] = 0;
     } else {
       accept[j] = 1;
