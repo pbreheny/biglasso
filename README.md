@@ -11,13 +11,13 @@
 ## News:
 * This package on GitHub has been updated to Version 1.3-1. See details in NEWS.
 * The newest stable version will be submitted to CRAN soon after testing.
-* This package was recently ranked top 3 for [2017 ASA Chambers Statistical Software Award](http://stat-computing.org/awards/jmc/).
+* This package was ranked top 3 for [2017 ASA Chambers Statistical Software Award](http://stat-computing.org/awards/jmc/).
 * The technical paper of this package was selected as a Winner of [2017 ASA Student Paper Competiton from Section on Statistical Computing](http://stat-computing.org/awards/student/index.html).
 
 
 ## Documentation:
 
-* Here is the [R Reference manual](https://cran.r-project.org/web/packages/biglasso/biglasso.pdf) and [User guide](https://cran.r-project.org/web/packages/biglasso/vignettes/biglasso.pdf)
+* Here are the [R Reference manual](https://cran.r-project.org/web/packages/biglasso/biglasso.pdf) and [User guide](https://cran.r-project.org/web/packages/biglasso/vignettes/biglasso.pdf)
 
 ## Features:
 1. It utilizes memory-mapped files to store the massive data on the disk, only loading data into memory when necessary during model fitting. Consequently, it's able to seamlessly handle out-of-core computation.
