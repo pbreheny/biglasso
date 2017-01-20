@@ -107,9 +107,15 @@ Since other three packages cannot handle this data-larger-than-RAM case, we comp
 
 
 ## Installation:
-* The stable version: `install.packages("biglasso")`
-* The latest version: `devtools::install_github("YaohuiZeng/biglasso")`
+* The stable version: 
+```R
+install.packages("biglasso")
+```
 
+* The latest version: 
+```R
+devtools::install_github("YaohuiZeng/biglasso")`
+```
 
 ## Report bugs：
 * open an [issue](https://github.com/YaohuiZeng/biglasso/issues) or send an email to Yaohui Zeng at <yaohui-zeng@uiowa.edu>
