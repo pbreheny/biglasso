@@ -10,7 +10,6 @@
 
 ## News:
 * This package on GitHub has been updated to Version 1.3-2. See details in NEWS.
-* The newest stable version will be submitted to CRAN soon after testing.
 * This package was ranked top 3 for [2017 ASA Chambers Statistical Software Award](http://stat-computing.org/awards/jmc/).
 * The technical paper of this package was selected as a Winner of [2017 ASA Student Paper Competiton from Section on Statistical Computing](http://stat-computing.org/awards/student/index.html).
 
