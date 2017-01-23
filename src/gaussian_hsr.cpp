@@ -30,7 +30,7 @@ int check_strong_set(int *e1, int *e2, vector<double> &z, XPtr<BigMatrix> xpMat,
         sum = sum + xCol[row_idx[i]] * r[i];
       }
       z[j] = (sum - center[jj] * sumResid) / (scale[jj] * n);
-     
+    
       l1 = lambda * m[jj] * alpha;
       if(fabs(z[j]) > l1) {
         e1[j] = 1;

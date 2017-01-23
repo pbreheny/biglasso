@@ -1,43 +1,13 @@
 
 #include "utilities.h"
 
-void Free_memo(double *a, double *r, int *e1) {
+void Free_memo_nac(double *a, double *r) {
   Free(a);
   Free(r);
-  Free(e1);
 }
 
-// check KKT conditions over features in the rest set
-int check_inactive_set(int *e1, vector<double> &z, XPtr<BigMatrix> xpMat, int *row_idx, 
-                   vector<int> &col_idx, NumericVector &center, NumericVector &scale,
-                   double lambda, double sumResid, double alpha, double *r, double *m, int n, int p) {
-  
-  MatrixAccessor<double> xAcc(*xpMat);
-  double *xCol, sum, l1;
-  int j, jj, violations = 0;
-  #pragma omp parallel for private(j, sum, l1) reduction(+:violations) schedule(static) 
-  for (j = 0; j < p; j++) {
-    if (e1[j] == 0) {
-      jj = col_idx[j];
-      xCol = xAcc[jj];
-      sum = 0.0;
-      for (int i=0; i < n; i++) {
-        sum = sum + xCol[row_idx[i]] * r[i];
-      }
-      z[j] = (sum - center[jj] * sumResid) / (scale[jj] * n);
-      
-      l1 = lambda * m[jj] * alpha;
-      if(fabs(z[j]) > l1) {
-        e1[j] = 1;
-        violations++;
-      }
-    }
-  }
-  return violations;
-}
-
-// Coordinate descent for gaussian models
-RcppExport SEXP cdfit_gaussian(SEXP X_, SEXP y_, SEXP row_idx_, 
+// Coordinate descent for gaussian models (no active cycling)
+RcppExport SEXP cdfit_gaussian_nac(SEXP X_, SEXP y_, SEXP row_idx_, 
                                    SEXP lambda_, SEXP nlambda_, 
                                    SEXP lam_scale_, SEXP lambda_min_, 
                                    SEXP alpha_, SEXP user_, SEXP eps_, 
@@ -113,8 +83,7 @@ RcppExport SEXP cdfit_gaussian(SEXP X_, SEXP y_, SEXP row_idx_,
   
   double l1, l2, shift;
   double max_update, update, thresh; // for convergence check
-  int i, j, jj, l, violations, lstart;
-  int *e1 = Calloc(p, int); // ever active set
+  int i, j, jj, l, lstart;
   double *r = Calloc(n, double);
   for (i = 0; i < n; i++) r[i] = y[i];
   double sumResid = sum(r, n);
@@ -160,54 +129,44 @@ RcppExport SEXP cdfit_gaussian(SEXP X_, SEXP y_, SEXP row_idx_,
       }
       if (nv > dfmax) {
         for (int ll=l; ll<L; ll++) iter[ll] = NA_INTEGER;
-        Free_memo(a, r, e1);
+        Free_memo_nac(a, r);
         return List::create(beta, center, scale, lambda, loss, iter, n_reject, Rcpp::wrap(col_idx));
       }
     } 
     
-    while(iter[l] < max_iter){
-      while(iter[l] < max_iter) {
-        iter[l]++;
+    while(iter[l] < max_iter) {
+      iter[l]++;
+      max_update = 0.0;
+      for (j = 0; j < p; j++) {
+        jj = col_idx[j];
+        z[j] = crossprod_resid(xMat, r, sumResid, row_idx, center[jj], scale[jj], n, jj) / n + a[j];
+        l1 = lambda[l] * m[jj] * alpha;
+        l2 = lambda[l] * m[jj] * (1-alpha);
+        beta(j, l) = lasso(z[j], l1, l2, 1);
         
-        //solve lasso over ever-active set
-        max_update = 0.0;
-        for (j = 0; j < p; j++) {
-          if (e1[j]) {
-            jj = col_idx[j];
-            z[j] = crossprod_resid(xMat, r, sumResid, row_idx, center[jj], scale[jj], n, jj) / n + a[j];
-            l1 = lambda[l] * m[jj] * alpha;
-            l2 = lambda[l] * m[jj] * (1-alpha);
-            beta(j, l) = lasso(z[j], l1, l2, 1);
-            
-            shift = beta(j, l) - a[j];
-            if (shift !=0) {
-              // compute objective update for checking convergence
-              //update =  z[j] * shift - 0.5 * (1 + l2) * (pow(beta(j, l), 2) - pow(a[j], 2)) - l1 * (fabs(beta(j, l)) -  fabs(a[j]));
-              update = pow(beta(j, l) - a[j], 2);
-              if (update > max_update) {
-                max_update = update;
-              }
-              update_resid(xMat, r, shift, row_idx, center[jj], scale[jj], n, jj); // update r
-              sumResid = sum(r, n); //update sum of residual
-              a[j] = beta(j, l); //update a
-            }
+        shift = beta(j, l) - a[j];
+        if (shift !=0) {
+          // compute objective update for checking convergence
+          //update =  z[j] * shift - 0.5 * (1 + l2) * (pow(beta(j, l), 2) - pow(a[j], 2)) - l1 * (fabs(beta(j, l)) -  fabs(a[j]));
+          update = pow(beta(j, l) - a[j], 2);
+          if (update > max_update) {
+            max_update = update;
           }
+          update_resid(xMat, r, shift, row_idx, center[jj], scale[jj], n, jj); // update r
+          sumResid = sum(r, n); //update sum of residual
+          a[j] = beta(j, l); //update a
         }
-        // Check for convergence
-        if (max_update < thresh) break;
       }
       
-      // Scan for violations in inactive set
-      violations = check_inactive_set(e1, z, xMat, row_idx, col_idx, 
-                                      center, scale, lambda[l], sumResid, alpha, r, m, n, p); 
-      if (violations==0) {
+      // Check for convergence
+      if (max_update < thresh) {
         loss[l] = gLoss(r, n);
         break;
       }
     }
   }
 
-  Free_memo(a, r, e1);
+  Free_memo_nac(a, r);
   return List::create(beta, center, scale, lambda, loss, iter, n_reject, Rcpp::wrap(col_idx));
 }
 

@@ -108,5 +108,5 @@ Since other three packages cannot handle this data-larger-than-RAM case, we comp
 
 
 ## News:
-* This package on GitHub has been updated to Version 1.3-1. See details in NEWS.
+* This package on GitHub has been updated to Version 1.3-2. See details in NEWS.
 * The newest stable version will be submitted to CRAN soon after testing.

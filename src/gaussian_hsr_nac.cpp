@@ -1,14 +1,15 @@
 
 #include "utilities.h"
 
-void Free_memo(double *a, double *r, int *e1) {
+// free memory (no active cycling)
+void Free_memo_hsr_nac(double *a, double *r, int *e2) {
   Free(a);
   Free(r);
-  Free(e1);
+  Free(e2);
 }
 
-// check KKT conditions over features in the rest set
-int check_inactive_set(int *e1, vector<double> &z, XPtr<BigMatrix> xpMat, int *row_idx, 
+// check KKT conditions over features in the rest set (no active cycling)
+int check_rest_set_nac(int *e2, vector<double> &z, XPtr<BigMatrix> xpMat, int *row_idx, 
                    vector<int> &col_idx, NumericVector &center, NumericVector &scale,
                    double lambda, double sumResid, double alpha, double *r, double *m, int n, int p) {
   
@@ -17,7 +18,7 @@ int check_inactive_set(int *e1, vector<double> &z, XPtr<BigMatrix> xpMat, int *r
   int j, jj, violations = 0;
   #pragma omp parallel for private(j, sum, l1) reduction(+:violations) schedule(static) 
   for (j = 0; j < p; j++) {
-    if (e1[j] == 0) {
+    if (e2[j] == 0) {
       jj = col_idx[j];
       xCol = xAcc[jj];
       sum = 0.0;
@@ -28,7 +29,7 @@ int check_inactive_set(int *e1, vector<double> &z, XPtr<BigMatrix> xpMat, int *r
       
       l1 = lambda * m[jj] * alpha;
       if(fabs(z[j]) > l1) {
-        e1[j] = 1;
+        e2[j] = 1;
         violations++;
       }
     }
@@ -36,8 +37,8 @@ int check_inactive_set(int *e1, vector<double> &z, XPtr<BigMatrix> xpMat, int *r
   return violations;
 }
 
-// Coordinate descent for gaussian models
-RcppExport SEXP cdfit_gaussian(SEXP X_, SEXP y_, SEXP row_idx_, 
+// Coordinate descent for gaussian models (no active cycling)
+RcppExport SEXP cdfit_gaussian_hsr_nac(SEXP X_, SEXP y_, SEXP row_idx_, 
                                    SEXP lambda_, SEXP nlambda_, 
                                    SEXP lam_scale_, SEXP lambda_min_, 
                                    SEXP alpha_, SEXP user_, SEXP eps_, 
@@ -111,10 +112,10 @@ RcppExport SEXP cdfit_gaussian(SEXP X_, SEXP y_, SEXP row_idx_,
   IntegerVector iter(L);
   IntegerVector n_reject(L);
   
-  double l1, l2, shift;
+  double l1, l2, cutoff, shift;
   double max_update, update, thresh; // for convergence check
   int i, j, jj, l, violations, lstart;
-  int *e1 = Calloc(p, int); // ever active set
+  int *e2 = Calloc(p, int); // strong set
   double *r = Calloc(n, double);
   for (i = 0; i < n; i++) r[i] = y[i];
   double sumResid = sum(r, n);
@@ -138,6 +139,7 @@ RcppExport SEXP cdfit_gaussian(SEXP X_, SEXP y_, SEXP row_idx_,
       }
     }
     lstart = 1;
+    n_reject[0] = p;
   } else {
     lstart = 0;
     lambda = Rcpp::as<NumericVector>(lambda_);
@@ -160,19 +162,37 @@ RcppExport SEXP cdfit_gaussian(SEXP X_, SEXP y_, SEXP row_idx_,
       }
       if (nv > dfmax) {
         for (int ll=l; ll<L; ll++) iter[ll] = NA_INTEGER;
-        Free_memo(a, r, e1);
+        Free_memo_hsr_nac(a, r, e2);
         return List::create(beta, center, scale, lambda, loss, iter, n_reject, Rcpp::wrap(col_idx));
       }
-    } 
+      // strong set
+      cutoff = 2 * lambda[l] - lambda[l-1];
+      for (j = 0; j < p; j++) {
+        if (fabs(z[j]) > (cutoff * alpha * m[col_idx[j]])) {
+          e2[j] = 1;
+        } else {
+          e2[j] = 0;
+        }
+      } 
+    } else {
+      // strong set
+      cutoff = 2*lambda[l] - lambda_max;
+      for (j = 0; j < p; j++) {
+        if (fabs(z[j]) > (cutoff * alpha * m[col_idx[j]])) {
+          e2[j] = 1;
+        } else {
+          e2[j] = 0;
+        }
+      }
+    }
+    n_reject[l] = p - sum(e2, p);
     
     while(iter[l] < max_iter){
       while(iter[l] < max_iter) {
         iter[l]++;
-        
-        //solve lasso over ever-active set
         max_update = 0.0;
         for (j = 0; j < p; j++) {
-          if (e1[j]) {
+          if (e2[j]) {
             jj = col_idx[j];
             z[j] = crossprod_resid(xMat, r, sumResid, row_idx, center[jj], scale[jj], n, jj) / n + a[j];
             l1 = lambda[l] * m[jj] * alpha;
@@ -197,17 +217,16 @@ RcppExport SEXP cdfit_gaussian(SEXP X_, SEXP y_, SEXP row_idx_,
         if (max_update < thresh) break;
       }
       
-      // Scan for violations in inactive set
-      violations = check_inactive_set(e1, z, xMat, row_idx, col_idx, 
-                                      center, scale, lambda[l], sumResid, alpha, r, m, n, p); 
-      if (violations==0) {
+      // Scan for violations in rest set
+      violations = check_rest_set_nac(e2, z, xMat, row_idx, col_idx, center, scale, lambda[l], sumResid, alpha, r, m, n, p);
+      if (violations == 0) {
         loss[l] = gLoss(r, n);
         break;
       }
     }
   }
 
-  Free_memo(a, r, e1);
+  Free_memo_hsr_nac(a, r, e2);
   return List::create(beta, center, scale, lambda, loss, iter, n_reject, Rcpp::wrap(col_idx));
 }
 

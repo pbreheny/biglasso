@@ -3,7 +3,8 @@ biglasso <- function(X, y, row.idx = 1:nrow(X),
                      family = c("gaussian","binomial"), 
                      alg.logistic = c("Newton", "MM"),
                      screen = c("SSR", "SEDPP", "SSR-BEDPP", "SSR-Slores", 
-                                "SSR-Dome", "SEDPP-No-Active", "None"),
+                                "SSR-Dome", "None", "NS-NAC", "SSR-NAC", 
+                                "SEDPP-NAC", "SSR-Dome-NAC", "SSR-BEDPP-NAC"),
                      safe.thresh = 0, ncores = 1, alpha = 1,
                      lambda.min = ifelse(nrow(X) > ncol(X),.001,.05), 
                      nlambda = 100, lambda.log.scale = TRUE,
@@ -11,6 +12,7 @@ biglasso <- function(X, y, row.idx = 1:nrow(X),
                      dfmax = ncol(X)+1,
                      penalty.factor = rep(1, ncol(X)), 
                      warn = TRUE, output.time = FALSE,
+                     return.time = TRUE,
                      verbose = FALSE) {
 
   family <- match.arg(family)
@@ -80,58 +82,108 @@ biglasso <- function(X, y, row.idx = 1:nrow(X),
     cat("\nStart biglasso: ", format(Sys.time()), '\n')
   }
   if (family == 'gaussian') {
-    if (screen == "SEDPP") {
-      res <- .Call("cdfit_gaussian_edpp_active", X@address, yy, as.integer(row.idx-1),
-                   lambda, as.integer(nlambda), as.integer(lambda.log.scale),
-                   lambda.min, alpha,
-                   as.integer(user.lambda | any(penalty.factor==0)),
-                   eps, as.integer(max.iter), penalty.factor,
-                   as.integer(dfmax), as.integer(ncores),
-                   PACKAGE = 'biglasso')
-    } else if (screen == 'SEDPP-No-Active') {
-      res <- .Call("cdfit_gaussian_edpp", X@address, yy, as.integer(row.idx-1),
-                   lambda, as.integer(nlambda), as.integer(lambda.log.scale),
-                   lambda.min, alpha,
-                   as.integer(user.lambda | any(penalty.factor==0)),
-                   eps, as.integer(max.iter), penalty.factor,
-                   as.integer(dfmax), as.integer(ncores),
-                   PACKAGE = 'biglasso')
-    } else if (screen == "SSR") {
-      res <- .Call("cdfit_gaussian_hsr", X@address, yy, as.integer(row.idx-1),
-                   lambda, as.integer(nlambda), as.integer(lambda.log.scale),
-                   lambda.min, alpha,
-                   as.integer(user.lambda | any(penalty.factor==0)),
-                   eps, as.integer(max.iter), penalty.factor,
-                   as.integer(dfmax), as.integer(ncores), as.integer(verbose),
-                   PACKAGE = 'biglasso')
-    } else if (screen == 'SSR-Dome') {
-      res <- .Call("cdfit_gaussian_hsr_dome", X@address, yy, as.integer(row.idx-1),
-                   lambda, as.integer(nlambda), as.integer(lambda.log.scale),
-                   lambda.min, alpha,
-                   as.integer(user.lambda | any(penalty.factor==0)),
-                   eps, as.integer(max.iter), penalty.factor,
-                   as.integer(dfmax), as.integer(ncores), safe.thresh, 
-                   as.integer(verbose),
-                   PACKAGE = 'biglasso')
-    } else if (screen == 'SSR-BEDPP') {
-      res <- .Call("cdfit_gaussian_hsr_bedpp", X@address, yy, as.integer(row.idx-1),
-                   lambda, as.integer(nlambda), as.integer(lambda.log.scale),
-                   lambda.min, alpha,
-                   as.integer(user.lambda | any(penalty.factor==0)),
-                   eps, as.integer(max.iter), penalty.factor,
-                   as.integer(dfmax), as.integer(ncores), safe.thresh, 
-                   as.integer(verbose),
-                   PACKAGE = 'biglasso')
-    } else { # screen == 'None'
-      res <- .Call("cdfit_gaussian", X@address, yy, as.integer(row.idx-1),
-                   lambda, as.integer(nlambda), as.integer(lambda.log.scale),
-                   lambda.min, alpha,
-                   as.integer(user.lambda | any(penalty.factor==0)),
-                   eps, as.integer(max.iter), penalty.factor,
-                   as.integer(dfmax), as.integer(ncores), as.integer(verbose),
-                   PACKAGE = 'biglasso')
-    }
-   
+    time <- system.time(
+      {
+        switch(screen,
+               "None" = {
+                 res <- .Call("cdfit_gaussian", X@address, yy, as.integer(row.idx-1),
+                              lambda, as.integer(nlambda), as.integer(lambda.log.scale),
+                              lambda.min, alpha,
+                              as.integer(user.lambda | any(penalty.factor==0)),
+                              eps, as.integer(max.iter), penalty.factor,
+                              as.integer(dfmax), as.integer(ncores), as.integer(verbose),
+                              PACKAGE = 'biglasso')
+               },
+               "SEDPP" = {
+                 res <- .Call("cdfit_gaussian_edpp_active", X@address, yy, as.integer(row.idx-1),
+                              lambda, as.integer(nlambda), as.integer(lambda.log.scale),
+                              lambda.min, alpha,
+                              as.integer(user.lambda | any(penalty.factor==0)),
+                              eps, as.integer(max.iter), penalty.factor,
+                              as.integer(dfmax), as.integer(ncores),
+                              PACKAGE = 'biglasso')
+               },
+               "SSR" = {
+                 res <- .Call("cdfit_gaussian_hsr", X@address, yy, as.integer(row.idx-1),
+                              lambda, as.integer(nlambda), as.integer(lambda.log.scale),
+                              lambda.min, alpha,
+                              as.integer(user.lambda | any(penalty.factor==0)),
+                              eps, as.integer(max.iter), penalty.factor,
+                              as.integer(dfmax), as.integer(ncores), as.integer(verbose),
+                              PACKAGE = 'biglasso')
+               },
+               "SSR-Dome" = {
+                 res <- .Call("cdfit_gaussian_hsr_dome", X@address, yy, as.integer(row.idx-1),
+                              lambda, as.integer(nlambda), as.integer(lambda.log.scale),
+                              lambda.min, alpha,
+                              as.integer(user.lambda | any(penalty.factor==0)),
+                              eps, as.integer(max.iter), penalty.factor,
+                              as.integer(dfmax), as.integer(ncores), safe.thresh, 
+                              as.integer(verbose),
+                              PACKAGE = 'biglasso')
+               },
+               "SSR-BEDPP" = {
+                 res <- .Call("cdfit_gaussian_hsr_bedpp", X@address, yy, as.integer(row.idx-1),
+                              lambda, as.integer(nlambda), as.integer(lambda.log.scale),
+                              lambda.min, alpha,
+                              as.integer(user.lambda | any(penalty.factor==0)),
+                              eps, as.integer(max.iter), penalty.factor,
+                              as.integer(dfmax), as.integer(ncores), safe.thresh, 
+                              as.integer(verbose),
+                              PACKAGE = 'biglasso')
+               },
+               "NS-NAC" = {
+                 res <- .Call("cdfit_gaussian_nac", X@address, yy, as.integer(row.idx-1),
+                              lambda, as.integer(nlambda), as.integer(lambda.log.scale),
+                              lambda.min, alpha,
+                              as.integer(user.lambda | any(penalty.factor==0)),
+                              eps, as.integer(max.iter), penalty.factor,
+                              as.integer(dfmax), as.integer(ncores), as.integer(verbose),
+                              PACKAGE = 'biglasso')
+               },
+               "SEDPP-NAC" = {
+                 res <- .Call("cdfit_gaussian_edpp", X@address, yy, as.integer(row.idx-1),
+                              lambda, as.integer(nlambda), as.integer(lambda.log.scale),
+                              lambda.min, alpha,
+                              as.integer(user.lambda | any(penalty.factor==0)),
+                              eps, as.integer(max.iter), penalty.factor,
+                              as.integer(dfmax), as.integer(ncores),
+                              PACKAGE = 'biglasso')
+               },
+               "SSR-NAC" = {
+                 res <- .Call("cdfit_gaussian_hsr_nac", X@address, yy, as.integer(row.idx-1),
+                              lambda, as.integer(nlambda), as.integer(lambda.log.scale),
+                              lambda.min, alpha,
+                              as.integer(user.lambda | any(penalty.factor==0)),
+                              eps, as.integer(max.iter), penalty.factor,
+                              as.integer(dfmax), as.integer(ncores), as.integer(verbose),
+                              PACKAGE = 'biglasso')
+               },
+               "SSR-Dome-NAC" = {
+                 res <- .Call("cdfit_gaussian_hsr_dome_nac", X@address, yy, as.integer(row.idx-1),
+                              lambda, as.integer(nlambda), as.integer(lambda.log.scale),
+                              lambda.min, alpha,
+                              as.integer(user.lambda | any(penalty.factor==0)),
+                              eps, as.integer(max.iter), penalty.factor,
+                              as.integer(dfmax), as.integer(ncores), safe.thresh, 
+                              as.integer(verbose),
+                              PACKAGE = 'biglasso')
+               },
+               "SSR-BEDPP-NAC" = {
+                 res <- .Call("cdfit_gaussian_hsr_bedpp_nac", X@address, yy, as.integer(row.idx-1),
+                              lambda, as.integer(nlambda), as.integer(lambda.log.scale),
+                              lambda.min, alpha,
+                              as.integer(user.lambda | any(penalty.factor==0)),
+                              eps, as.integer(max.iter), penalty.factor,
+                              as.integer(dfmax), as.integer(ncores), safe.thresh, 
+                              as.integer(verbose),
+                              PACKAGE = 'biglasso')
+               },
+               stop("Invalid screening method!")
+               )
+      }
+    )
+    
     a <- rep(mean(y), nlambda)
     b <- Matrix(res[[1]], sparse = T)
     center <- res[[2]]
@@ -141,42 +193,46 @@ biglasso <- function(X, y, row.idx = 1:nrow(X),
     iter <- res[[6]]
     rejections <- res[[7]]
     
-    if (screen == 'SSR-Dome' || screen == 'SSR-BEDPP') {
+    if (screen %in% c("SSR-Dome", "SSR-BEDPP", "SSR-Dome-NAC", "SSR-BEDPP-NAC")) {
       safe_rejections <- res[[8]]
       col.idx <- res[[9]]
     } else {
       col.idx <- res[[8]]
     }
-    
+   
   } else if (family == 'binomial') {
-    if (alg.logistic == 'MM') {
-      res <- .Call("cdfit_binomial_hsr_approx", X@address, yy, as.integer(row.idx-1), 
-                   lambda, as.integer(nlambda), lambda.min, alpha, 
-                   as.integer(user.lambda | any(penalty.factor==0)),
-                   eps, as.integer(max.iter), penalty.factor, 
-                   as.integer(dfmax), as.integer(ncores), as.integer(warn),
-                   as.integer(verbose),
-                   PACKAGE = 'biglasso')
-    } else {
-      if (screen == "SSR-Slores") {
-        res <- .Call("cdfit_binomial_hsr_slores", X@address, yy, as.integer(n.pos),
-                     as.integer(ylab), as.integer(row.idx-1), 
-                     lambda, as.integer(nlambda), as.integer(lambda.log.scale),
-                     lambda.min, alpha, as.integer(user.lambda | any(penalty.factor==0)),
-                     eps, as.integer(max.iter), penalty.factor, 
-                     as.integer(dfmax), as.integer(ncores), as.integer(warn), safe.thresh,
-                     as.integer(verbose),
-                     PACKAGE = 'biglasso')
-      } else {
-        res <- .Call("cdfit_binomial_hsr", X@address, yy, as.integer(row.idx-1), 
-                     lambda, as.integer(nlambda), as.integer(lambda.log.scale),
-                     lambda.min, alpha, as.integer(user.lambda | any(penalty.factor==0)),
+    
+    time <- system.time(
+      if (alg.logistic == 'MM') {
+        res <- .Call("cdfit_binomial_hsr_approx", X@address, yy, as.integer(row.idx-1), 
+                     lambda, as.integer(nlambda), lambda.min, alpha, 
+                     as.integer(user.lambda | any(penalty.factor==0)),
                      eps, as.integer(max.iter), penalty.factor, 
                      as.integer(dfmax), as.integer(ncores), as.integer(warn),
                      as.integer(verbose),
                      PACKAGE = 'biglasso')
+      } else {
+        if (screen == "SSR-Slores") {
+          res <- .Call("cdfit_binomial_hsr_slores", X@address, yy, as.integer(n.pos),
+                       as.integer(ylab), as.integer(row.idx-1), 
+                       lambda, as.integer(nlambda), as.integer(lambda.log.scale),
+                       lambda.min, alpha, as.integer(user.lambda | any(penalty.factor==0)),
+                       eps, as.integer(max.iter), penalty.factor, 
+                       as.integer(dfmax), as.integer(ncores), as.integer(warn), safe.thresh,
+                       as.integer(verbose),
+                       PACKAGE = 'biglasso')
+        } else {
+          res <- .Call("cdfit_binomial_hsr", X@address, yy, as.integer(row.idx-1), 
+                       lambda, as.integer(nlambda), as.integer(lambda.log.scale),
+                       lambda.min, alpha, as.integer(user.lambda | any(penalty.factor==0)),
+                       eps, as.integer(max.iter), penalty.factor, 
+                       as.integer(dfmax), as.integer(ncores), as.integer(warn),
+                       as.integer(verbose),
+                       PACKAGE = 'biglasso')
+        }
       }
-    }
+    )
+    
     a <- res[[1]]
     b <- Matrix(res[[2]], sparse = T)
     center <- res[[3]]
@@ -241,9 +297,11 @@ biglasso <- function(X, y, row.idx = 1:nrow(X),
     col.idx = col.idx,
     rejections = rejections
   )
-  if (screen == 'SSR-Dome' || screen == 'SSR-BEDPP' || screen == 'SSR-Slores') {
+  
+  if (screen %in% c("SSR-Dome", "SSR-BEDPP", "SSR-Dome-NAC", "SSR-BEDPP-NAC", "SSR-Slores")) {
     return.val$safe_rejections <- safe_rejections
-  }
+  } 
+  if (return.time) return.val$time <- as.numeric(time['elapsed'])
   
   val <- structure(return.val, class = c("biglasso", 'ncvreg'))
   val
