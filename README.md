@@ -4,12 +4,20 @@
 [![Build Status](https://travis-ci.org/YaohuiZeng/biglasso.svg?branch=master)](https://travis-ci.org/YaohuiZeng/biglasso)
 [![CRAN_Status_Badge](http://www.r-pkg.org/badges/version/biglasso)](https://CRAN.R-project.org/package=biglasso)
 [![CRAN RStudio mirror downloads](http://cranlogs.r-pkg.org/badges/grand-total/biglasso)](http://www.r-pkg.org/pkg/biglasso)
+![downloads](http://cranlogs.r-pkg.org/badges/biglasso)
 
 `biglasso` extends lasso and elastic-net linear and logistic regression models for ultrahigh-dimensional, multi-gigabyte data sets that cannot be loaded into memory. It utilizes memory-mapped files to store the massive data on the disk and only read those into memory whenever necessary during model fitting. Moreover, some advanced feature screening rules are proposed and implemented to accelerate the model fitting. **As a result, this package is much more memory- and computation-efficient and highly scalable as compared to existing lasso-fitting packages such as [glmnet](https://CRAN.R-project.org/package=glmnet) and [ncvreg](https://CRAN.R-project.org/package=ncvreg)**. Bechmarking experiments using both simulated and real data sets show that `biglasso` is not only 1.5x to 4x times faster than existing packages, but also at least 2x more memory-efficient. More importantly, to the best of our knowledge, `biglasso` is the first R package that enables users to fit lasso models with data sets that are larger than available RAM, thus allowing for powerful big data analysis on an ordinary laptop.
 
+## News:
+* This package on GitHub has been updated to Version 1.3-1. See details in NEWS.
+* The newest stable version will be submitted to CRAN soon after testing.
+* This package was ranked top 3 for [2017 ASA Chambers Statistical Software Award](http://stat-computing.org/awards/jmc/).
+* The technical paper of this package was selected as a Winner of [2017 ASA Student Paper Competiton from Section on Statistical Computing](http://stat-computing.org/awards/student/index.html).
+
+
 ## Documentation:
 
-* Here is the [R Reference manual](https://cran.r-project.org/web/packages/biglasso/biglasso.pdf) and [User guide](https://cran.r-project.org/web/packages/biglasso/vignettes/biglasso.pdf)
+* Here are the [R Reference manual](https://cran.r-project.org/web/packages/biglasso/biglasso.pdf) and [User guide](https://cran.r-project.org/web/packages/biglasso/vignettes/biglasso.pdf)
 
 ## Features:
 1. It utilizes memory-mapped files to store the massive data on the disk, only loading data into memory when necessary during model fitting. Consequently, it's able to seamlessly handle out-of-core computation.
@@ -99,14 +107,24 @@ Since other three packages cannot handle this data-larger-than-RAM case, we comp
 
 
 ## Installation:
-* The stable version: `install.packages("biglasso")`
-* The latest version: `devtools::install_github("YaohuiZeng/biglasso")`
+* The stable version: 
+```R
+install.packages("biglasso")
+```
 
+* The latest version: 
+```R
+devtools::install_github("YaohuiZeng/biglasso")`
+```
 
 ## Report bugs：
 * open an [issue](https://github.com/YaohuiZeng/biglasso/issues) or send an email to Yaohui Zeng at <yaohui-zeng@uiowa.edu>
 
 
+<<<<<<< HEAD
 ## News:
 * This package on GitHub has been updated to Version 1.3-2. See details in NEWS.
 * The newest stable version will be submitted to CRAN soon after testing.
+=======
+
+>>>>>>> 230e25ba7f17d69badb2e4b910bf418ee31ed26b
