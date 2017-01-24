@@ -1,18 +1,8 @@
-// #include <RcppArmadillo.h>
-// #include <iostream>
-// #include <vector>
-// #include <algorithm>
-// #include "bigmemory/BigMatrix.h"
-// #include "bigmemory/MatrixAccessor.hpp"
-// #include "bigmemory/bigmemoryDefines.h"
-// #include <time.h>
-// #include <omp.h>
 
 #include "utilities.h"
 
 // update zj
-void update_zj(vector<double> &z,
-               int *bedpp_accept, int *bedpp_accept_old,
+void update_zj(vector<double> &z, int *bedpp_accept, int *bedpp_accept_old,
                XPtr<BigMatrix> xpMat, int *row_idx,vector<int> &col_idx,
                NumericVector &center, NumericVector &scale, 
                double sumResid, double *r, double *m, int n, int p);
@@ -20,31 +10,29 @@ void update_zj(vector<double> &z,
 // check strong set
 int check_strong_set(int *e1, int *e2, vector<double> &z, XPtr<BigMatrix> xpMat, 
                      int *row_idx, vector<int> &col_idx,
-                     NumericVector &center, NumericVector &scale,
+                     NumericVector &center, NumericVector &scale, double *a,
                      double lambda, double sumResid, double alpha, 
                      double *r, double *m, int n, int p);
 
 // check rest set
 int check_rest_set(int *e1, int *e2, vector<double> &z, XPtr<BigMatrix> xpMat, 
                    int *row_idx, vector<int> &col_idx,
-                   NumericVector &center, NumericVector &scale,
+                   NumericVector &center, NumericVector &scale, double *a,
                    double lambda, double sumResid, double alpha, double *r, 
                    double *m, int n, int p);
 
 // check rest set with dome screening
 int check_rest_set_hsr_dome(int *e1, int *e2, int *dome_accept, vector<double> &z, 
-                            XPtr<BigMatrix> xpMat, 
-                            int *row_idx,vector<int> &col_idx,
-                            NumericVector &center, 
-                            NumericVector &scale, double lambda, 
-                            double sumResid, double alpha, double *r, 
+                            XPtr<BigMatrix> xpMat, int *row_idx,vector<int> &col_idx,
+                            NumericVector &center, NumericVector &scale, double *a,
+                            double lambda, double sumResid, double alpha, double *r, 
                             double *m, int n, int p) {
   
   MatrixAccessor<double> xAcc(*xpMat);
-  double *xCol, sum, l1;
+  double *xCol, sum, l1, l2;
   int j, jj, violations = 0;
   
-  #pragma omp parallel for private(j, sum, l1) reduction(+:violations) schedule(static) 
+  #pragma omp parallel for private(j, sum, l1, l2) reduction(+:violations) schedule(static) 
   for (j = 0; j < p; j++) {
     if (dome_accept[j] && e2[j] == 0) {
       jj = col_idx[j];
@@ -56,7 +44,8 @@ int check_rest_set_hsr_dome(int *e1, int *e2, int *dome_accept, vector<double> &
       z[j] = (sum - center[jj] * sumResid) / (scale[jj] * n);
      
       l1 = lambda * m[jj] * alpha;
-      if(fabs(z[j]) > l1) {
+      l2 = lambda * m[jj] * (1 - alpha);
+      if (fabs(z[j] - a[j] * l2) > l1) {
         e1[j] = e2[j] = 1;
         violations++;
       }
@@ -332,8 +321,7 @@ RcppExport SEXP cdfit_gaussian_hsr_dome(SEXP X_, SEXP y_, SEXP row_idx_,
       n_dome_reject[l] = p - accept_size;
       
       // update z[j] for features which are rejected at previous lambda but accepted at current one.
-      update_zj(z, dome_accept, dome_accept_old, xMat, row_idx, col_idx, 
-                center, scale, sumResid, r, m, n, p);
+      update_zj(z, dome_accept, dome_accept_old, xMat, row_idx, col_idx, center, scale, sumResid, r, m, n, p);
       
       #pragma omp parallel for private(j) schedule(static) 
       for (j = 0; j < p; j++) {
@@ -394,20 +382,14 @@ RcppExport SEXP cdfit_gaussian_hsr_dome(SEXP X_, SEXP y_, SEXP row_idx_,
         }
         
         // Scan for violations in strong set
-        violations = check_strong_set(e1, e2, z, xMat, row_idx, col_idx,
-                                      center, scale, lambda[l], sumResid, 
-                                      alpha, r, m, n, p);
+        violations = check_strong_set(e1, e2, z, xMat, row_idx, col_idx, center, scale, a, lambda[l], sumResid, alpha, r, m, n, p);
         if (violations == 0) break;
       }
 
       if (dome) {
-        violations = check_rest_set_hsr_dome(e1, e2, dome_accept, z, xMat, 
-                                             row_idx, col_idx,
-                                             center, scale, lambda[l], 
-                                             sumResid, alpha, r, m, n, p);
+        violations = check_rest_set_hsr_dome(e1, e2, dome_accept, z, xMat, row_idx, col_idx, center, scale, a, lambda[l], sumResid, alpha, r, m, n, p);
       } else {
-        violations = check_rest_set(e1, e2, z, xMat, row_idx, col_idx, center,  
-                                    scale, lambda[l], sumResid, alpha, r, m, n, p);
+        violations = check_rest_set(e1, e2, z, xMat, row_idx, col_idx, center, scale, a, lambda[l], sumResid, alpha, r, m, n, p);
       }
       
       if (violations == 0) {
@@ -424,7 +406,6 @@ RcppExport SEXP cdfit_gaussian_hsr_dome(SEXP X_, SEXP y_, SEXP row_idx_,
   Free_memo_hsr(a, r, e1, e2);
   Free(dome_accept);
   Free(dome_accept_old);
-  return List::create(beta, center, scale, lambda, loss, iter, 
-                      n_reject, n_dome_reject, Rcpp::wrap(col_idx));
+  return List::create(beta, center, scale, lambda, loss, iter, n_reject, n_dome_reject, Rcpp::wrap(col_idx));
 }
 

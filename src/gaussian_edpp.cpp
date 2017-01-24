@@ -1,12 +1,3 @@
-// #include <RcppArmadillo.h>
-// #include <iostream>
-// #include <vector>
-// #include <algorithm>
-// #include "bigmemory/BigMatrix.h"
-// #include "bigmemory/MatrixAccessor.hpp"
-// #include "bigmemory/bigmemoryDefines.h"
-// #include <time.h>
-// #include <omp.h>
 
 #include "utilities.h"
 
@@ -222,7 +213,6 @@ RcppExport SEXP cdfit_gaussian_edpp(SEXP X_, SEXP y_, SEXP row_idx_, SEXP lambda
 
     while (iter[l] < max_iter) {
       iter[l]++;
-     
       max_update = 0.0;
       for (j = 0; j < p; j++) {
         if (discard_beta[j] == 0) {
@@ -247,7 +237,6 @@ RcppExport SEXP cdfit_gaussian_edpp(SEXP X_, SEXP y_, SEXP row_idx_, SEXP lambda
         }
       }
       // Check for convergence
-      // converged = checkConvergence(beta, a, eps, l+1, p);
       if (max_update < thresh) {
         loss[l] = gLoss(r, n);
         break;

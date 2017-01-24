@@ -1,12 +1,3 @@
-// #include <RcppArmadillo.h>
-// #include <iostream>
-// #include <vector>
-// #include <algorithm>
-// #include "bigmemory/BigMatrix.h"
-// #include "bigmemory/MatrixAccessor.hpp"
-// #include "bigmemory/bigmemoryDefines.h"
-// #include <time.h>
-// #include <omp.h>
 
 #include "utilities.h"
 
@@ -36,15 +27,14 @@ void update_resid_eta(double *r, double *eta, XPtr<BigMatrix> xpMat, double shif
 
 int check_strong_set_bin(int *e1, int *e2, vector<double> &z, XPtr<BigMatrix> xpMat, 
                          int *row_idx, vector<int> &col_idx,
-                         NumericVector &center, NumericVector &scale,
+                         NumericVector &center, NumericVector &scale, double *a,
                          double lambda, double sumResid, double alpha, 
                          double *r, double *m, int n, int p) {
   MatrixAccessor<double> xAcc(*xpMat);
-  
-  double *xCol, sum, l1;
+  double *xCol, sum, l1, l2;
   int j, jj, violations = 0;
   
-  #pragma omp parallel for private(j, sum, l1) reduction(+:violations) schedule(static) 
+  #pragma omp parallel for private(j, sum, l1, l2) reduction(+:violations) schedule(static) 
   for (j = 0; j < p; j++) {
     if (e1[j] == 0 && e2[j] == 1) {
       jj = col_idx[j];
@@ -56,7 +46,8 @@ int check_strong_set_bin(int *e1, int *e2, vector<double> &z, XPtr<BigMatrix> xp
       z[j] = (sum - center[jj] * sumResid) / (scale[jj] * n);
       
       l1 = lambda * m[jj] * alpha;
-      if(fabs(z[j]) > l1) {
+      l2 = lambda * m[jj] * (1 - alpha);
+      if (fabs(z[j] - a[j] * l2) > l1) {
         e1[j] = 1;
         violations++;
       }
@@ -67,27 +58,28 @@ int check_strong_set_bin(int *e1, int *e2, vector<double> &z, XPtr<BigMatrix> xp
 
 int check_rest_set_bin(int *e1, int *e2, vector<double> &z, XPtr<BigMatrix> xpMat, 
                        int *row_idx, vector<int> &col_idx,
-                       NumericVector &center, NumericVector &scale,
+                       NumericVector &center, NumericVector &scale, double *a,
                        double lambda, double sumResid, double alpha, 
                        double *r, double *m, int n, int p) {
   
   MatrixAccessor<double> xAcc(*xpMat);
-  double *xCol, sum, l1;
+  double *xCol, sum, l1, l2;
   int j, jj, violations = 0;
   
-  #pragma omp parallel for private(j, sum, l1) reduction(+:violations) schedule(static) 
+  #pragma omp parallel for private(j, sum, l1, l2) reduction(+:violations) schedule(static) 
   for (j = 0; j < p; j++) {
     if (e2[j] == 0) {
       jj = col_idx[j];
       xCol = xAcc[jj];
-      
       sum = 0.0;
       for (int i=0; i < n; i++) {
         sum = sum + xCol[row_idx[i]] * r[i];
       }
       z[j] = (sum - center[jj] * sumResid) / (scale[jj] * n);
+      
       l1 = lambda * m[jj] * alpha;
-      if(fabs(z[j]) > l1) {
+      l2 = lambda * m[jj] * (1 - alpha);
+      if (fabs(z[j] - a[j] * l2) > l1) {
         e1[j] = e2[j] = 1;
         violations++;
       }
@@ -101,8 +93,7 @@ RcppExport SEXP cdfit_binomial_hsr(SEXP X_, SEXP y_, SEXP row_idx_,
                                    SEXP lambda_, SEXP nlambda_, SEXP lam_scale_,
                                    SEXP lambda_min_, SEXP alpha_, SEXP user_, SEXP eps_, 
                                    SEXP max_iter_, SEXP multiplier_, SEXP dfmax_, 
-                                   SEXP ncore_, SEXP warn_,
-                                   SEXP verbose_) {
+                                   SEXP ncore_, SEXP warn_, SEXP verbose_) {
   XPtr<BigMatrix> xMat(X_);
   double *y = REAL(y_);
   int *row_idx = INTEGER(row_idx_);
@@ -342,11 +333,11 @@ RcppExport SEXP cdfit_binomial_hsr(SEXP X_, SEXP y_, SEXP row_idx_,
         }
         // Scan for violations in strong set
         sumS = sum(s, n);
-        violations = check_strong_set_bin(e1, e2, z, xMat, row_idx, col_idx, center, scale, lambda[l], sumS, alpha, s, m, n, p);
+        violations = check_strong_set_bin(e1, e2, z, xMat, row_idx, col_idx, center, scale, a, lambda[l], sumS, alpha, s, m, n, p);
         if (violations==0) break;
       }
       // Scan for violations in rest
-      violations = check_rest_set_bin(e1, e2, z, xMat, row_idx, col_idx, center, scale, lambda[l], sumS, alpha, s, m, n, p);
+      violations = check_rest_set_bin(e1, e2, z, xMat, row_idx, col_idx, center, scale, a, lambda[l], sumS, alpha, s, m, n, p);
       if (violations==0) break;
     }
   }

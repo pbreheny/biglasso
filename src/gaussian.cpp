@@ -9,13 +9,13 @@ void Free_memo(double *a, double *r, int *e1) {
 
 // check KKT conditions over features in the rest set
 int check_inactive_set(int *e1, vector<double> &z, XPtr<BigMatrix> xpMat, int *row_idx, 
-                   vector<int> &col_idx, NumericVector &center, NumericVector &scale,
+                   vector<int> &col_idx, NumericVector &center, NumericVector &scale, double *a,
                    double lambda, double sumResid, double alpha, double *r, double *m, int n, int p) {
   
   MatrixAccessor<double> xAcc(*xpMat);
-  double *xCol, sum, l1;
+  double *xCol, sum, l1, l2;
   int j, jj, violations = 0;
-  #pragma omp parallel for private(j, sum, l1) reduction(+:violations) schedule(static) 
+  #pragma omp parallel for private(j, sum, l1, l2) reduction(+:violations) schedule(static) 
   for (j = 0; j < p; j++) {
     if (e1[j] == 0) {
       jj = col_idx[j];
@@ -27,7 +27,8 @@ int check_inactive_set(int *e1, vector<double> &z, XPtr<BigMatrix> xpMat, int *r
       z[j] = (sum - center[jj] * sumResid) / (scale[jj] * n);
       
       l1 = lambda * m[jj] * alpha;
-      if(fabs(z[j]) > l1) {
+      l2 = lambda * m[jj] * (1 - alpha);
+      if (fabs(z[j] - a[j] * l2) > l1) {
         e1[j] = 1;
         violations++;
       }
@@ -198,8 +199,7 @@ RcppExport SEXP cdfit_gaussian(SEXP X_, SEXP y_, SEXP row_idx_,
       }
       
       // Scan for violations in inactive set
-      violations = check_inactive_set(e1, z, xMat, row_idx, col_idx, 
-                                      center, scale, lambda[l], sumResid, alpha, r, m, n, p); 
+      violations = check_inactive_set(e1, z, xMat, row_idx, col_idx, center, scale, a, lambda[l], sumResid, alpha, r, m, n, p); 
       if (violations==0) {
         loss[l] = gLoss(r, n);
         break;

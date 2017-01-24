@@ -1,30 +1,20 @@
-// #include <RcppArmadillo.h>
-// #include <iostream>
-// #include <vector>
-// #include <algorithm>
-// #include "bigmemory/BigMatrix.h"
-// #include "bigmemory/MatrixAccessor.hpp"
-// #include "bigmemory/bigmemoryDefines.h"
-// #include <time.h>
-// #include <omp.h>
 
 #include "utilities.h"
 
-void Free_memo_bin_hsr(double *s, double *w, double *a, double *r,
-                       int *e1, int *e2, double *eta);
+void Free_memo_bin_hsr(double *s, double *w, double *a, double *r, int *e1, int *e2, double *eta);
 
 void update_resid_eta(double *r, double *eta, XPtr<BigMatrix> xpMat, double shift, 
                       int *row_idx_, double center_, double scale_, int n, int j);
 
 int check_strong_set_bin(int *e1, int *e2, vector<double> &z, XPtr<BigMatrix> xpMat, 
                          int *row_idx, vector<int> &col_idx,
-                         NumericVector &center, NumericVector &scale,
+                         NumericVector &center, NumericVector &scale, double *a,
                          double lambda, double sumResid, double alpha, 
                          double *r, double *m, int n, int p);
 
 int check_rest_set_bin(int *e1, int *e2, vector<double> &z, XPtr<BigMatrix> xpMat, 
                        int *row_idx, vector<int> &col_idx,
-                       NumericVector &center, NumericVector &scale,
+                       NumericVector &center, NumericVector &scale, double *a,
                        double lambda, double sumResid, double alpha, 
                        double *r, double *m, int n, int p);
 
@@ -33,8 +23,7 @@ RcppExport SEXP cdfit_binomial_hsr_approx(SEXP X_, SEXP y_, SEXP row_idx_,
                                           SEXP lambda_, SEXP nlambda_,
                                           SEXP lambda_min_, SEXP alpha_, SEXP user_, SEXP eps_, 
                                           SEXP max_iter_, SEXP multiplier_, SEXP dfmax_, 
-                                          SEXP ncore_, SEXP warn_,
-                                          SEXP verbose_) {
+                                          SEXP ncore_, SEXP warn_, SEXP verbose_) {
   XPtr<BigMatrix> xMat(X_);
   double *y = REAL(y_);
   int *row_idx = INTEGER(row_idx_);
@@ -263,27 +252,23 @@ RcppExport SEXP cdfit_binomial_hsr_approx(SEXP X_, SEXP y_, SEXP row_idx_,
               }
             }
           }
-         
           // Check for convergence
           if (max_update < thresh) break;
         }
+        
         // Scan for violations in strong set
         sumS = sum(s, n);
-        violations = check_strong_set_bin(e1, e2, z, xMat, row_idx, col_idx, 
-                                          center, scale, lambda[l], 
-                                          sumS, alpha, s, m, n, p);
+        violations = check_strong_set_bin(e1, e2, z, xMat, row_idx, col_idx, center, scale, a, lambda[l], sumS, alpha, s, m, n, p);
         if (violations==0) break;
       }
+      
       // Scan for violations in rest
-      violations = check_rest_set_bin(e1, e2, z, xMat, row_idx, col_idx,
-                                      center, scale, lambda[l], 
-                                      sumS, alpha, s, m, n, p);
+      violations = check_rest_set_bin(e1, e2, z, xMat, row_idx, col_idx,center, scale, a, lambda[l], sumS, alpha, s, m, n, p);
       if (violations==0) break;
     }
   }
 
   Free_memo_bin_hsr(s, w, a, r, e1, e2, eta);
-  return List::create(beta0, beta, center, scale, lambda, Dev, 
-                      iter, n_reject, Rcpp::wrap(col_idx));
+  return List::create(beta0, beta, center, scale, lambda, Dev, iter, n_reject, Rcpp::wrap(col_idx));
 }
 

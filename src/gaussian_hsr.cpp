@@ -13,14 +13,14 @@
 // check KKT conditions over features in the strong set
 int check_strong_set(int *e1, int *e2, vector<double> &z, XPtr<BigMatrix> xpMat, 
                      int *row_idx, vector<int> &col_idx,
-                     NumericVector &center, NumericVector &scale,
+                     NumericVector &center, NumericVector &scale, double *a,
                      double lambda, double sumResid, double alpha, 
                      double *r, double *m, int n, int p) {
   MatrixAccessor<double> xAcc(*xpMat);
-  double *xCol, sum, l1;
+  double *xCol, sum, l1, l2;
   int j, jj, violations = 0;
   
-  #pragma omp parallel for private(j, sum, l1) reduction(+:violations) schedule(static) 
+  #pragma omp parallel for private(j, sum, l1, l2) reduction(+:violations) schedule(static) 
   for (j = 0; j < p; j++) {
     if (e1[j] == 0 && e2[j] == 1) {
       jj = col_idx[j];
@@ -32,7 +32,8 @@ int check_strong_set(int *e1, int *e2, vector<double> &z, XPtr<BigMatrix> xpMat,
       z[j] = (sum - center[jj] * sumResid) / (scale[jj] * n);
     
       l1 = lambda * m[jj] * alpha;
-      if(fabs(z[j]) > l1) {
+      l2 = lambda * m[jj] * (1 - alpha);
+      if(fabs(z[j] - a[j] * l2) > l1) {
         e1[j] = 1;
         violations++;
       }
@@ -43,13 +44,13 @@ int check_strong_set(int *e1, int *e2, vector<double> &z, XPtr<BigMatrix> xpMat,
 
 // check KKT conditions over features in the rest set
 int check_rest_set(int *e1, int *e2, vector<double> &z, XPtr<BigMatrix> xpMat, int *row_idx, 
-                   vector<int> &col_idx, NumericVector &center, NumericVector &scale,
+                   vector<int> &col_idx, NumericVector &center, NumericVector &scale, double *a,
                    double lambda, double sumResid, double alpha, double *r, double *m, int n, int p) {
   
   MatrixAccessor<double> xAcc(*xpMat);
-  double *xCol, sum, l1;
+  double *xCol, sum, l1, l2;
   int j, jj, violations = 0;
-  #pragma omp parallel for private(j, sum, l1) reduction(+:violations) schedule(static) 
+  #pragma omp parallel for private(j, sum, l1, l2) reduction(+:violations) schedule(static) 
   for (j = 0; j < p; j++) {
     if (e2[j] == 0) {
       jj = col_idx[j];
@@ -61,7 +62,8 @@ int check_rest_set(int *e1, int *e2, vector<double> &z, XPtr<BigMatrix> xpMat, i
       z[j] = (sum - center[jj] * sumResid) / (scale[jj] * n);
       
       l1 = lambda * m[jj] * alpha;
-      if(fabs(z[j]) > l1) {
+      l2 = lambda * m[jj] * (1 - alpha);
+      if (fabs(z[j] - a[j] * l2) > l1) {
         e1[j] = e2[j] = 1;
         violations++;
       }
@@ -255,15 +257,12 @@ RcppExport SEXP cdfit_gaussian_hsr(SEXP X_, SEXP y_, SEXP row_idx_,
         }
         
         // Scan for violations in strong set
-        violations = check_strong_set(e1, e2, z, xMat, row_idx, col_idx, 
-                                      center, scale, lambda[l], 
-                                      sumResid, alpha, r, m, n, p); 
+        violations = check_strong_set(e1, e2, z, xMat, row_idx, col_idx, center, scale, a, lambda[l], sumResid, alpha, r, m, n, p); 
         if (violations==0) break;
       }
       
       // Scan for violations in rest set
-      violations = check_rest_set(e1, e2, z, xMat, row_idx, col_idx, center,
-                                  scale, lambda[l], sumResid, alpha, r, m, n, p);
+      violations = check_rest_set(e1, e2, z, xMat, row_idx, col_idx, center, scale, a, lambda[l], sumResid, alpha, r, m, n, p);
       if (violations == 0) {
         loss[l] = gLoss(r, n);
         break;

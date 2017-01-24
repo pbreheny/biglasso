@@ -1,26 +1,27 @@
-// #include <RcppArmadillo.h>
-// #include <iostream>
-// #include <vector>
-// #include <algorithm>
-// #include "bigmemory/BigMatrix.h"
-// #include "bigmemory/MatrixAccessor.hpp"
-// #include "bigmemory/bigmemoryDefines.h"
-// #include <time.h>
-// #include <omp.h>
 
 #include "utilities.h"
+
+void Free_memo_edpp(double *a, double *r, int *discard_beta, double *theta, double *v1, double *v2, double *o);
+
+// V2 - <v1, v2> / ||v1||^2_2 * V1
+void update_pv2(double *pv2, double *v1, double *v2, int n);
+
+// apply EDPP 
+void edpp_screen(int *discard_beta, XPtr<BigMatrix> xpMat, double *o, 
+                 int *row_idx, vector<int> &col_idx, NumericVector &center, 
+                 NumericVector &scale, int n, int p, double rhs);
 
 // check edpp set
 int check_edpp_set(int *ever_active, int *discard_beta, vector<double> &z, 
                    XPtr<BigMatrix> xpMat, int *row_idx, vector<int> &col_idx,
-                   NumericVector &center, NumericVector &scale,
+                   NumericVector &center, NumericVector &scale, double *a,
                    double lambda, double sumResid, double alpha, 
                    double *r, double *m, int n, int p) {
   MatrixAccessor<double> xAcc(*xpMat);
-  double *xCol, sum, l1;
+  double *xCol, sum, l1, l2;
   int j, jj, violations = 0;
   
-  #pragma omp parallel for private(j, sum, l1) reduction(+:violations) schedule(static) 
+  #pragma omp parallel for private(j, sum, l1, l2) reduction(+:violations) schedule(static) 
   for (j = 0; j < p; j++) {
     if (ever_active[j] == 0 && discard_beta[j] == 0) {
       jj = col_idx[j];
@@ -30,9 +31,9 @@ int check_edpp_set(int *ever_active, int *discard_beta, vector<double> &z,
         sum = sum + xCol[row_idx[i]] * r[i];
       }
       z[j] = (sum - center[jj] * sumResid) / (scale[jj] * n);
-      
       l1 = lambda * m[jj] * alpha;
-      if(fabs(z[j]) > l1) {
+      l2 = lambda * m[jj] * (1 - alpha);
+      if (fabs(z[j] - a[j] * l2) > l1) {
         ever_active[j] = 1;
         violations++;
       }
@@ -40,18 +41,6 @@ int check_edpp_set(int *ever_active, int *discard_beta, vector<double> &z,
   }
   return violations;
 }
-
-void Free_memo_edpp(double *a, double *r, int *discard_beta, 
-                    double *theta, double *v1, double *v2, double *o);
-
-// V2 - <v1, v2> / ||v1||^2_2 * V1
-void update_pv2(double *pv2, double *v1, double *v2, int n);
-
-// apply EDPP 
-void edpp_screen(int *discard_beta, XPtr<BigMatrix> xpMat, double *o, 
-                 int *row_idx, vector<int> &col_idx,
-                 NumericVector &center, NumericVector &scale, int n, int p, 
-                 double rhs);
 
 // Coordinate descent for gaussian models
 RcppExport SEXP cdfit_gaussian_edpp_active(SEXP X_, SEXP y_, SEXP row_idx_, SEXP lambda_, 
@@ -167,8 +156,7 @@ RcppExport SEXP cdfit_gaussian_edpp_active(SEXP X_, SEXP y_, SEXP row_idx_, SEXP
         for (int ll=l; ll<L; ll++) iter[ll] = NA_INTEGER;
         Free(ever_active);
         Free_memo_edpp(a, r, discard_beta, theta, v1, v2, o);
-        return List::create(beta, center, scale, lambda, loss, iter, 
-                            n_reject, Rcpp::wrap(col_idx));
+        return List::create(beta, center, scale, lambda, loss, iter,  n_reject, Rcpp::wrap(col_idx));
       }
       // update theta and v1
       for (i = 0; i < n; i++) {
@@ -176,8 +164,7 @@ RcppExport SEXP cdfit_gaussian_edpp_active(SEXP X_, SEXP y_, SEXP row_idx_, SEXP
         if (lambda[l-1] < lambda_max) {
           v1[i] = y[i] / lambda[l-1] - theta[i];
         } else {
-          v1[i] = sign(xty) * get_elem_bm(xMat, center[xmax_idx], 
-                       scale[xmax_idx], row_idx[i], xmax_idx);        
+          v1[i] = sign(xty) * get_elem_bm(xMat, center[xmax_idx], scale[xmax_idx], row_idx[i], xmax_idx);        
         }
       }
     } else { // lam[0]
@@ -186,8 +173,7 @@ RcppExport SEXP cdfit_gaussian_edpp_active(SEXP X_, SEXP y_, SEXP row_idx_, SEXP
         if (lambda[l] < lambda_max) {
           v1[i] = y[i] / lambda[l] - theta[i];
         } else {
-          v1[i] = sign(xty) * get_elem_bm(xMat, center[xmax_idx], 
-                       scale[xmax_idx], row_idx[i], xmax_idx);        
+          v1[i] = sign(xty) * get_elem_bm(xMat, center[xmax_idx], scale[xmax_idx], row_idx[i], xmax_idx);        
         }
       }
     } 
@@ -244,23 +230,20 @@ RcppExport SEXP cdfit_gaussian_edpp_active(SEXP X_, SEXP y_, SEXP row_idx_, SEXP
           }
         }
         // Check for convergence
-        // converged = checkConvergence(beta, a, eps, l+1, p);
         if (max_update < thresh) break;
       }
     
       // Scan for violations in edpp set
-      violations = check_edpp_set(ever_active, discard_beta, z, xMat, row_idx, 
-                                  col_idx, center, scale, lambda[l], sumResid, 
-                                  alpha, r, m, n, p); 
+      violations = check_edpp_set(ever_active, discard_beta, z, xMat, row_idx, col_idx, center, scale, a, lambda[l], sumResid, alpha, r, m, n, p); 
       if (violations == 0) {
         loss[l] = gLoss(r, n);
         break;
       }
     }
   }
+  
   Free(ever_active);
   Free_memo_edpp(a, r, discard_beta, theta, v1, v2, o);
-  return List::create(beta, center, scale, lambda, loss, iter, 
-                      n_reject, Rcpp::wrap(col_idx));
+  return List::create(beta, center, scale, lambda, loss, iter, n_reject, Rcpp::wrap(col_idx));
 }
 

@@ -1,38 +1,40 @@
 
 #include "utilities.h"
 
-void Free_memo_bin_hsr(double *s, double *w, double *a, double *r, 
-                       int *e1, int *e2, double *eta);
+void Free_memo_bin_hsr(double *s, double *w, double *a, double *r, int *e1, int *e2, double *eta);
 
 void update_resid_eta(double *r, double *eta, XPtr<BigMatrix> xpMat, double shift, 
                       int *row_idx_, double center_, double scale_, int n, int j);
 
 int check_strong_set_bin(int *e1, int *e2, vector<double> &z, XPtr<BigMatrix> xpMat, 
                          int *row_idx, vector<int> &col_idx,
-                         NumericVector &center, NumericVector &scale,
+                         NumericVector &center, NumericVector &scale, double *a,
                          double lambda, double sumResid, double alpha, 
                          double *r, double *m, int n, int p);
 
 int check_rest_set_bin(int *e1, int *e2, vector<double> &z, XPtr<BigMatrix> xpMat, 
                        int *row_idx, vector<int> &col_idx,
-                       NumericVector &center, NumericVector &scale,
+                       NumericVector &center, NumericVector &scale, double *a,
                        double lambda, double sumResid, double alpha, 
                        double *r, double *m, int n, int p);
 
+void update_zj(vector<double> &z, int *bedpp_reject, int *bedpp_reject_old,
+               XPtr<BigMatrix> xpMat, int *row_idx,vector<int> &col_idx,
+               NumericVector &center, NumericVector &scale, 
+               double sumResid, double *r, double *m, int n, int p);
+
 // check rest set with slores screening
 int check_rest_set_hsr_slores(int *e1, int *e2, int *reject, vector<double> &z, 
-                              XPtr<BigMatrix> xpMat, 
-                              int *row_idx, vector<int> &col_idx,
-                              NumericVector &center, 
-                              NumericVector &scale, double lambda, 
-                              double sumResid, double alpha, double *r, 
+                              XPtr<BigMatrix> xpMat, int *row_idx, vector<int> &col_idx,
+                              NumericVector &center, NumericVector &scale, double *a,
+                              double lambda, double sumResid, double alpha, double *r, 
                               double *m, int n, int p) {
   
   MatrixAccessor<double> xAcc(*xpMat);
-  double *xCol, sum, l1;
+  double *xCol, sum, l1, l2;
   int j, jj, violations = 0;
   
-#pragma omp parallel for private(j, sum, l1) reduction(+:violations) schedule(static) 
+  #pragma omp parallel for private(j, sum, l1, l2) reduction(+:violations) schedule(static) 
   for (j = 0; j < p; j++) {
     if (reject[j] == 0 && e2[j] == 0) { // set not rejected by slores but by hsr
       jj = col_idx[j];
@@ -44,7 +46,8 @@ int check_rest_set_hsr_slores(int *e1, int *e2, int *reject, vector<double> &z,
       z[j] = (sum - center[jj] * sumResid) / (scale[jj] * n);
       
       l1 = lambda * m[jj] * alpha;
-      if(fabs(z[j]) > l1) {
+      l2 = lambda * m[jj] * (1 - alpha);
+      if (fabs(z[j] - a[j] * l2) > l1) {
         e1[j] = e2[j] = 1;
         violations++;
       }
@@ -52,12 +55,6 @@ int check_rest_set_hsr_slores(int *e1, int *e2, int *reject, vector<double> &z,
   }
   return violations;
 }
-
-void update_zj(vector<double> &z,
-               int *bedpp_reject, int *bedpp_reject_old,
-               XPtr<BigMatrix> xpMat, int *row_idx,vector<int> &col_idx,
-               NumericVector &center, NumericVector &scale, 
-               double sumResid, double *r, double *m, int n, int p);
 
 // dual function
 double dual(vector<double>& theta, double lambda, double lambda_max, int n) {
@@ -508,19 +505,19 @@ RcppExport SEXP cdfit_binomial_hsr_slores(SEXP X_, SEXP y_, SEXP n_pos_, SEXP yl
         // Scan for violations in strong set
         sumS = sum(s, n);
         violations = check_strong_set_bin(e1, e2, z, xMat, row_idx, col_idx, 
-                                          center, scale, lambda[l], sumS, alpha, 
-                                          s, m, n, p);
+                                          center, scale, a, lambda[l], sumS, 
+                                          alpha, s, m, n, p);
         if (violations == 0) break;
       }
       
       // Scan for violations in rest
       if (slores) {
         violations = check_rest_set_hsr_slores(e1, e2, slores_reject, z, xMat, 
-                                               row_idx, col_idx, center, scale, 
+                                               row_idx, col_idx, center, scale, a,
                                                lambda[l], sumS, alpha, s, m, n, p);
       } else {
         violations = check_rest_set_bin(e1, e2, z, xMat, row_idx, col_idx, center, 
-                                        scale, lambda[l], sumS, alpha, s, m, n, p);
+                                        scale, a, lambda[l], sumS, alpha, s, m, n, p);
       }
       
       if (violations == 0) break;
