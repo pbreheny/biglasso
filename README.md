@@ -16,7 +16,7 @@
 
 ## Documentation:
 
-* Here are the [R Reference manual](https://cran.r-project.org/web/packages/biglasso/biglasso.pdf) and [User guide](https://cran.r-project.org/web/packages/biglasso/vignettes/biglasso.pdf)
+* Here are the [R Reference manual](https://CRAN.R-project.org/package=biglasso/biglasso.pdf) and [User guide](https://CRAN.R-project.org/package=biglasso/vignettes/biglasso.pdf)
 * Here is the [techincal paper of the package](https://arxiv.org/abs/1701.05936)
 
 
