@@ -13,10 +13,10 @@ Extend lasso and elastic-net linear and logistic regression models for ultrahigh
   \tabular{ll}{
     Package: \tab biglasso\cr
     Type: \tab Package\cr
-    Version: \tab 1.3-2\cr
-    Date: \tab 2017-01-16\cr
+    Version: \tab 1.3-3\cr
+    Date: \tab 2017-01-24\cr
     License: \tab GPL-3\cr}
- 
+
 Penalized regression models, in particular the lasso, have been extensively applied to analyzing high-dimensional data sets. However, due to the memory limit, existing R packages are not capable of fitting lasso models for ultrahigh-dimensional, multi-gigabyte data sets which have been increasingly seen in many areas such as genetics, biomedical imaging, genome sequencing and high-frequency finance. 
 
 This package aims to fill the gap by extending lasso model fitting to Big Data in R. Version >= 1.2-3 represents a major redesign where the source code is converted into C++ (previously in C), and new feature screening rules, as well as OpenMP parallel computing, are implemented. Some key features of \code{biglasso} are summarized as below:
@@ -69,6 +69,16 @@ Elapsed time (s) \tab 0.11 \tab 0.83 \tab 8.47 \tab 85.50 \cr
   Yaohui Zeng and Patrick Breheny
   
   Maintainer: Yaohui Zeng <yaohui-zeng@uiowa.edu>
+}
+
+\references{
+  \itemize{
+    \item Zeng, Y., and Breheny, P. (2016). The biglasso Package: A Memory- and Computation-Efficient Solver for Lasso Model Fitting with Big Data in R. \url{https://arxiv.org/abs/1701.05936}.
+    \item Tibshirani, R., Bien, J., Friedman, J., Hastie, T., Simon, N., Taylor, J., and Tibshirani, R. J. (2012). Strong rules for discarding predictors in lasso-type problems. \emph{Journal of the Royal Statistical Society: Series B (Statistical Methodology)}, \strong{74}(2), 245-266.
+    \item Wang, J., Zhou, J., Wonka, P., and Ye, J. (2013). Lasso screening rules via dual polytope projection. \emph{In Advances in Neural Information Processing Systems}, pp. 1070-1078.
+    \item Xiang, Z. J., and Ramadge, P. J. (2012). Fast lasso screening tests based on correlations. \emph{In Acoustics, Speech and Signal Processing (ICASSP), 2012 IEEE International Conference on} (pp. 2137-2140). IEEE.
+    \item Wang, J., Zhou, J., Liu, J., Wonka, P., and Ye, J. (2014). A safe screening rule for sparse logistic regression. \emph{In Advances in Neural Information Processing Systems}, pp. 1053-1061.
+  }
 }
 
 \keyword{package}

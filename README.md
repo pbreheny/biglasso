@@ -3,13 +3,13 @@
 
 [![Build Status](https://travis-ci.org/YaohuiZeng/biglasso.svg?branch=master)](https://travis-ci.org/YaohuiZeng/biglasso)
 [![CRAN_Status_Badge](http://www.r-pkg.org/badges/version/biglasso)](https://CRAN.R-project.org/package=biglasso)
-[![CRAN RStudio mirror downloads](http://cranlogs.r-pkg.org/badges/grand-total/biglasso)](http://www.r-pkg.org/pkg/biglasso)
-![downloads](http://cranlogs.r-pkg.org/badges/biglasso)
+[![CRAN RStudio mirror overall downloads](http://cranlogs.r-pkg.org/badges/grand-total/biglasso)](http://www.r-pkg.org/pkg/biglasso)
+![CRAN Downloads month](http://cranlogs.r-pkg.org/badges/biglasso)
 
 `biglasso` extends lasso and elastic-net linear and logistic regression models for ultrahigh-dimensional, multi-gigabyte data sets that cannot be loaded into memory. It utilizes memory-mapped files to store the massive data on the disk and only read those into memory whenever necessary during model fitting. Moreover, some advanced feature screening rules are proposed and implemented to accelerate the model fitting. **As a result, this package is much more memory- and computation-efficient and highly scalable as compared to existing lasso-fitting packages such as [glmnet](https://CRAN.R-project.org/package=glmnet) and [ncvreg](https://CRAN.R-project.org/package=ncvreg)**. Bechmarking experiments using both simulated and real data sets show that `biglasso` is not only 1.5x to 4x times faster than existing packages, but also at least 2x more memory-efficient. More importantly, to the best of our knowledge, `biglasso` is the first R package that enables users to fit lasso models with data sets that are larger than available RAM, thus allowing for powerful big data analysis on an ordinary laptop.
 
 ## News:
-* This package on GitHub has been updated to Version 1.3-2. See details in NEWS.
+* This package on GitHub has been updated to Version 1.3-3. See details in NEWS.
 * This package was ranked top 3 for [2017 ASA Chambers Statistical Software Award](http://stat-computing.org/awards/jmc/).
 * The technical paper of this package was selected as a Winner of [2017 ASA Student Paper Competiton from Section on Statistical Computing](http://stat-computing.org/awards/student/index.html).
 
@@ -17,6 +17,8 @@
 ## Documentation:
 
 * Here are the [R Reference manual](https://cran.r-project.org/web/packages/biglasso/biglasso.pdf) and [User guide](https://cran.r-project.org/web/packages/biglasso/vignettes/biglasso.pdf)
+* Here is the [techincal paper of the package](https://arxiv.org/abs/1701.05936)
+
 
 ## Features:
 1. It utilizes memory-mapped files to store the massive data on the disk, only loading data into memory when necessary during model fitting. Consequently, it's able to seamlessly handle out-of-core computation.
@@ -115,6 +117,13 @@ install.packages("biglasso")
 ```R
 devtools::install_github("YaohuiZeng/biglasso")
 ```
+
+## Reference:
+* Zeng, Y., and Breheny, P. (2016). The biglasso Package: A Memory- and Computation-Efficient Solver for Lasso Model Fitting with Big Data in R. arXiv preprint arXiv:1701.05936. URL [https://arxiv.org/abs/1701.05936](https://arxiv.org/abs/1701.05936).
+* Tibshirani, R., Bien, J., Friedman, J., Hastie, T., Simon, N., Taylor, J., and Tibshirani, R. J. (2012). Strong rules for discarding predictors in lasso-type problems. Journal of the Royal Statistical Society: Series B (Statistical Methodology), 74 (2), 245-266.
+* Wang, J., Zhou, J., Wonka, P., and Ye, J. (2013). Lasso screening rules via dual polytope projection. In Advances in Neural Information Processing Systems, pp. 1070-1078.
+* Xiang, Z. J., and Ramadge, P. J. (2012, March). Fast lasso screening tests based on correlations. In Acoustics, Speech and Signal Processing (ICASSP), 2012 IEEE International Conference on (pp. 2137-2140). IEEE.
+* Wang, J., Zhou, J., Liu, J., Wonka, P., and Ye, J. (2014). A safe screening rule for sparse logistic regression. In Advances in Neural Information Processing Systems, pp. 1053-1061.
 
 ## Report bugs：
 * open an [issue](https://github.com/YaohuiZeng/biglasso/issues) or send an email to Yaohui Zeng at <yaohui-zeng@uiowa.edu>

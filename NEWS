@@ -1,6 +1,10 @@
 *   Minor change
 **  Major change
 
+1.3-3 (01/24/2017)
+  * fixed bugs related to KKT checking for elastic net
+  * added references for screening rules and the technical paper of biglasso package
+
 1.3-2 (01/16/2017)
   * added screening methods without active cycling (-NAC) for comparison, research usage only.
   * fixed a bug related to numeric comparison in Dome test.
