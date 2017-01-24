@@ -32,6 +32,7 @@ This package aims to fill the gap by extending lasso model fitting to Big Data i
 \itemize{
 \item Benchmarking results: \href{https://github.com/YaohuiZeng/biglasso}{https://github.com/YaohuiZeng/biglasso}.
 \item Tutorial: \href{https://github.com/YaohuiZeng/biglasso/blob/master/vignettes/biglasso.pdf}{https://github.com/YaohuiZeng/biglasso/blob/master/vignettes/biglasso.pdf}
+\item Technical paper: \href{https://arxiv.org/abs/1701.05936}{https://arxiv.org/abs/1701.05936}
 }
 
 }
