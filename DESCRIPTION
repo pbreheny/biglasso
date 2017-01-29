@@ -12,7 +12,7 @@ Description: Extend lasso and elastic-net model fitting for ultrahigh-dimensiona
 License: GPL-3
 URL: https://github.com/YaohuiZeng/biglasso, https://arxiv.org/abs/1701.05936
 BugReports: https://github.com/YaohuiZeng/biglasso/issues
-Depends: bigmemory (>= 4.0.0), Matrix, ncvreg
+Depends: R (>= 3.2.0), bigmemory (>= 4.5.0), Matrix, ncvreg
 Imports: Rcpp (>= 0.12.1), methods
 LinkingTo: Rcpp, RcppArmadillo, bigmemory, BH
 VignetteBuilder: R.rsp
