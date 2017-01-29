@@ -257,10 +257,10 @@ biglasso <- function(X, y, row.idx = 1:nrow(X),
   }
   # p.keep <- length(col.idx)
   col.idx <- col.idx + 1 # indices (in R) for which variables have scale > 1e-6
- 
+
   ## Eliminate saturated lambda values, if any
   ind <- !is.na(iter)
-  if (family != "gaussian") a <- a[ind]
+  a <- a[ind]
   b <- b[, ind, drop=FALSE]
   iter <- iter[ind]
   lambda <- lambda[ind]
