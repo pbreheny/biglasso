@@ -1,3 +1,22 @@
+#' Internal biglasso functions
+#' 
+#' Internal biglasso functions
+#' 
+#' These are not intended for use by users.\code{loss.biglasso} calculates the 
+#' value of the loss function for the given predictions (used for cross-validation).
+#' 
+#' @param y The observed response vector. 
+#' @param yhat The predicted response vector.
+#' @param family Either "gaussian" or "binomial", depending on the response.
+#' @param eval.metric The evaluation metric for the cross-validated error and
+#' for choosing optimal \code{lambda}. "default" for linear regression is MSE
+#' (mean squared error), for logistic regression is misclassification error.
+#' "MAPE", for linear regression only, is the Mean Absolute Percentage Error.
+#' @author Yaohui Zeng and Patrick Breheny
+#' 
+#' Maintainer: Yaohui Zeng <yaohui-zeng@@uiowa.edu>
+#' @keywords internal
+#'
 loss.biglasso <- function(y, yhat, family, eval.metric) {
   n <- length(y)
   if (family=="gaussian") {

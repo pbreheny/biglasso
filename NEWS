@@ -1,6 +1,8 @@
 *   Minor change
 **  Major change
 
+1.3-5 (03/29/2017)
+  * redocumented using Roxygen2
 
 1.3-4 (01/29/2017)
   * fixed a bug related to `dfmax` option. (thanks you Florian Privé!)

@@ -1,3 +1,73 @@
+#' Cross-validation for biglasso
+#' 
+#' Perform k-fold cross validation for penalized regression models over a grid
+#' of values for the regularization parameter lambda.
+#' 
+#' The function calls \code{biglasso} \code{nfolds} times, each time leaving
+#' out 1/\code{nfolds} of the data.  The cross-validation error is based on the
+#' residual sum of squares when \code{family="gaussian"} and the binomial
+#' deviance when \code{family="binomial"}.\cr \cr The S3 class object
+#' \code{cv.biglasso} inherits class \code{\link[ncvreg]{cv.ncvreg}}.  So S3
+#' functions such as \code{"summary", "plot"} can be directly applied to the
+#' \code{cv.biglasso} object.
+#' 
+#' @param X The design matrix, without an intercept, as in
+#' \code{\link{biglasso}}.
+#' @param y The response vector, as in \code{biglasso}.
+#' @param row.idx The integer vector of row indices of \code{X} that used for
+#' fitting the model. as in \code{biglasso}.
+#' @param eval.metric The evaluation metric for the cross-validated error and
+#' for choosing optimal \code{lambda}. "default" for linear regression is MSE
+#' (mean squared error), for logistic regression is misclassification error.
+#' "MAPE", for linear regression only, is the Mean Absolute Percentage Error.
+#' @param ncores The number of cores to use for parallel execution across a
+#' cluster created by the \code{parallel} package. (This is different from
+#' \code{ncores} in \code{\link{biglasso}}, which is the number of OpenMP
+#' threads.)
+#' @param ... Additional arguments to \code{biglasso}.
+#' @param nfolds The number of cross-validation folds.  Default is 5.
+#' @param seed The seed of the random number generator in order to obtain
+#' reproducible results.
+#' @param cv.ind Which fold each observation belongs to.  By default the
+#' observations are randomly assigned by \code{cv.biglasso}.
+#' @param trace If set to TRUE, cv.biglasso will inform the user of its
+#' progress by announcing the beginning of each CV fold.  Default is FALSE.
+#' @return An object with S3 class \code{"cv.biglasso"} which inherits from
+#' class \code{"cv.ncvreg"}.  The following variables are contained in the
+#' class (adopted from \code{\link[ncvreg]{cv.ncvreg}}).  \item{cve}{The error
+#' for each value of \code{lambda}, averaged across the cross-validation
+#' folds.} \item{cvse}{The estimated standard error associated with each value
+#' of for \code{cve}.} \item{lambda}{The sequence of regularization parameter
+#' values along which the cross-validation error was calculated.}
+#' \item{fit}{The fitted \code{biglasso} object for the whole data.}
+#' \item{min}{The index of \code{lambda} corresponding to \code{lambda.min}.}
+#' \item{lambda.min}{The value of \code{lambda} with the minimum
+#' cross-validation error.} \item{null.dev}{The deviance for the intercept-only
+#' model.} \item{pe}{If \code{family="binomial"}, the cross-validation
+#' prediction error for each value of \code{lambda}.} \item{cv.ind}{Same as
+#' above.}
+#' @author Yaohui Zeng and Patrick Breheny
+#' 
+#' Maintainer: Yaohui Zeng <yaohui-zeng@@uiowa.edu>
+#' @seealso \code{\link{biglasso}}, \code{\link{plot.cv.biglasso}},
+#' \code{\link{summary.cv.biglasso}}, \code{\link{setupX}}
+#' @examples
+#' 
+#' ## cv.biglasso
+#' data(colon)
+#' X <- colon$X
+#' y <- colon$y
+#' X.bm <- as.big.matrix(X)
+#' 
+#' ## logistic regression
+#' cvfit <- cv.biglasso(X.bm, y, family = 'binomial', seed = 1234, ncores = 2)
+#' par(mfrow = c(2, 2))
+#' plot(cvfit, type = 'all')
+#' summary(cvfit)
+#' 
+#' 
+#' @export cv.biglasso
+#' 
 cv.biglasso <- function(X, y, row.idx = 1:nrow(X), eval.metric = c("default", "MAPE"),
                         ncores = parallel::detectCores(), ...,
                         nfolds = 5, seed, cv.ind, trace = FALSE) {

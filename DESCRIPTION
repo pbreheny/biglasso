@@ -1,6 +1,6 @@
 Package: biglasso
-Version: 1.3-3
-Date: 2017-01-24
+Version: 1.3.5
+Date: 2017-03-29
 Title: Extending Lasso Model Fitting to Big Data
 Author: Yaohui Zeng [aut,cre], Patrick Breheny [ctb]
 Maintainer: Yaohui Zeng <yaohui-zeng@uiowa.edu>
@@ -17,3 +17,4 @@ Imports: Rcpp (>= 0.12.1), methods
 LinkingTo: Rcpp, RcppArmadillo, bigmemory, BH
 VignetteBuilder: R.rsp
 Suggests: parallel, testthat, R.rsp
+RoxygenNote: 6.0.1
