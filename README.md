@@ -37,14 +37,19 @@
 * **Experiments**: solving lasso-penalized linear regression over the entire path of 100 $\lambda$ values equally spaced on the scale of `lambda / lambda_max` from 0.1 to 1; varying number of observations `n` and number of features `p`; 20 replications, the mean (SE) computing time (in seconds) are reported.
 * **Data generating model**: `y =  X *  beta + 0.1 eps`, where `X` and `eps` are i.i.d. sampled from `N(0, 1)`.
 
-<!---
-![Alt text](/vignettes/2016-11-04_vary_p_pkgs_2.png?raw=true "Vary p")![Alt text](/vignettes/2016-11-05_vary_n_pkgs_2.png?raw=true "Vary n")
+<!--
+![Alt text](/vignettes/2016-11-20_vary_p_pkgs.png?raw=true "Vary p")
+![Alt text](/vignettes/2016-11-20_vary_n_pkgs.png?raw=true "Vary n")
 -->
-
 
 #### (1) `biglasso` is more computation-efficient:
 
+![Alt text](/vignettes/2016-11-20_vary_p_pkgs.png)
+![Alt text](/vignettes/2016-11-20_vary_n_pkgs.png)
+
+<!--
 <img src="/vignettes/2016-11-20_vary_p_pkgs.png" width="400" height="300" /><img src="/vignettes/2016-11-20_vary_n_pkgs.png" width="400" height="300" />
+-->
 
 In all the settings, `biglasso` (1 core) is uniformly 2x faster than `glmnet` and `ncvreg`, and 2.5x faster than `picasso`. Moreover, the computing time of `biglasso` can be further reduced by half via parallel-computation of 4 cores.
 
