@@ -3,7 +3,6 @@
 \name{predict.cv.biglasso}
 \alias{predict.cv.biglasso}
 \alias{coef.cv.biglasso}
-\alias{coef.cv.biglasso}
 \title{Model predictions based on a fitted \code{\link{cv.biglasso}} object}
 \usage{
 \method{predict}{cv.biglasso}(object, X, row.idx = 1:nrow(X),

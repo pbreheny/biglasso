@@ -1,6 +1,6 @@
 #' Summarizing inferences based on cross-validation
 #' 
-#' Summary method for \code{cv.biglasso} objects
+#' Summary method for \code{cv.biglasso} objects.
 #' 
 #' @name summary.cv.biglasso
 #' @rdname summary.cv.biglasso

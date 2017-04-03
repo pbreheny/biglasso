@@ -51,22 +51,19 @@
 #' @name biglasso-package
 #' @docType package
 #' 
-#' @note The input design matrix X must be a \code{\link[bigmemory]{big.matrix}} 
-#' object. This can be created by the function \code{\link[bigmemory]{as.big.matrix}} 
-#' in the R package \href{https://CRAN.R-project.org//package=bigmemory}{bigmemory}. 
-#' If the data (design matrix) is very large (e.g. 10 GB) and stored in an external file,
-#' which is often the case for big data, X can be created by calling the
-#' function \code{\link{setupX}}. \strong{In this case, there are several
-#' restrictions about the data file:}
-#' 
+#' @note The input design matrix X must be a \code{\link[bigmemory]{big.matrix}} object. 
+#' This can be created by the function \code{as.big.matrix} in the R package 
+#' \href{https://CRAN.R-project.org//package=bigmemory}{bigmemory}. 
+#' If the data (design matrix) is very large (e.g. 10 GB) and stored in an external 
+#' file, which is often the case for big data, X can be created by calling the
+#' function \code{\link{setupX}}.
+#' \strong{In this case, there are several restrictions about the data file:}
 #' \enumerate{ \item the data file must be a well-formated ASCII-file, with
 #' each row corresponding to an observation and each column a variable; \item
 #' the data file must contain only one single type. Current version only
 #' supports \code{double} type; \item the data file must contain only numeric
 #' variables. If there are categorical variables, the user needs to create
-#' dummy variables for each categorical varable (by adding additional columns).
-#' }
-#' 
+#' dummy variables for each categorical varable (by adding additional columns).}
 #' Future versions will try to address these restrictions.
 #' 
 #' Denote the number of observations and variables be, respectively, \code{n}
@@ -79,15 +76,16 @@
 #' 100 values of the tuning parameter. In all cases, assume 20 non-zero
 #' coefficients equal +/- 2 in the true model. (Based on Version 1.2-3,
 #' screening rule "SSR-BEDPP" is used)
-#' 
 #' \itemize{ \item For wide data case (\code{p > n}), \code{n = 1,000}:
 #' \tabular{ccccc}{ \code{p} \tab 1,000 \tab 10,000 \tab 100,000 \tab 1,000,000
 #' \cr Size of \code{X} \tab 9.5 MB \tab 95 MB \tab 950 MB \tab 9.5 GB \cr
-#' Elapsed time (s) \tab 0.11 \tab 0.83 \tab 8.47 \tab 85.50 \cr } %\item For
-#' long data case (\code{n >> p}), \code{p = 1,000}: %\tabular{ccccc}{
-#' %\code{n} \tab 1,000 \tab 10,000 \tab 100,000 \tab 1,000,000 \cr %Size of
-#' \code{X} \tab 9.5 MB \tab 95 MB \tab 950 MB \tab 9.5 GB \cr %Elapsed time
-#' (s) \tab 2.50 \tab 11.43 \tab 83.69 \tab 1090.62 \cr %} }
+#' Elapsed time (s) \tab 0.11 \tab 0.83 \tab 8.47 \tab 85.50 \cr }
+#' %\item For long data case (\code{n >> p}), \code{p = 1,000}: 
+#' %\tabular{ccccc}{
+#' %\code{n} \tab 1,000 \tab 10,000 \tab 100,000 \tab 1,000,000 \cr 
+#' %Size of \code{X} \tab 9.5 MB \tab 95 MB \tab 950 MB \tab 9.5 GB \cr 
+#' %Elapsed time (s) \tab 2.50 \tab 11.43 \tab 83.69 \tab 1090.62 \cr %} 
+#' }
 #' 
 #' @author Yaohui Zeng and Patrick Breheny
 #' 

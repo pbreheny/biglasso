@@ -95,9 +95,8 @@ predict.biglasso <- function(object, X, row.idx = 1:nrow(X),
   }
 }
 
-#'
-#' @rdname predict.biglasso
 #' @method coef biglasso
+#' @rdname predict.biglasso
 #' @export
 #'
 coef.biglasso <- function(object, lambda, which = 1:length(object$lambda), drop = TRUE, ...) {

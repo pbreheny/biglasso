@@ -2,7 +2,10 @@
 #' 
 #' Extract predictions from a fitted \code{\link{cv.biglasso}} object.
 #' 
-#' @aliases predict.cv.biglasso coef.cv.biglasso
+#' @name predict.cv.biglasso
+#' @rdname predict.cv.biglasso
+#' @method predict cv.biglasso
+#' 
 #' @param object A fitted \code{"cv.biglasso"} model object.
 #' @param X Matrix of values at which predictions are to be made. It must be a
 #' \code{\link[bigmemory]{big.matrix}} object. Not used for
@@ -58,9 +61,8 @@ predict.cv.biglasso <- function(object, X, row.idx = 1:nrow(X),
                    lambda = lambda, which = which, ...)
 }
 
-#'
+#' @method coef cv.biglasso
 #' @rdname predict.cv.biglasso
-#'
 #' @export
 #' 
 coef.cv.biglasso <- function(object, lambda = object$lambda.min, which = object$min, ...) {

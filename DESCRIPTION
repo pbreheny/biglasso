@@ -1,5 +1,5 @@
 Package: biglasso
-Version: 1.3.5
+Version: 1.3-5
 Date: 2017-03-29
 Title: Extending Lasso Model Fitting to Big Data
 Author: Yaohui Zeng [aut,cre], Patrick Breheny [ctb]

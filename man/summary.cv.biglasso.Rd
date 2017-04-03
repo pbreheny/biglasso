@@ -38,7 +38,7 @@ parameter estimate.} \item{pe}{For logistic regression models, the
 prediction error (misclassification error).}
 }
 \description{
-Summary method for \code{cv.biglasso} objects
+Summary method for \code{cv.biglasso} objects.
 }
 \examples{
 ## See examples in "cv.biglasso" and "biglasso-package"
