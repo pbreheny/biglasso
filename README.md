@@ -126,7 +126,7 @@ devtools::install_github("YaohuiZeng/biglasso")
 ```
 
 ## Reference:
-* Zeng, Y., and Breheny, P. (2016). The biglasso Package: A Memory- and Computation-Efficient Solver for Lasso Model Fitting with Big Data in R. arXiv preprint arXiv:1701.05936. URL [https://arxiv.org/abs/1701.05936](https://arxiv.org/abs/1701.05936).
+* Zeng, Y., and Breheny, P. (2017). The biglasso Package: A Memory- and Computation-Efficient Solver for Lasso Model Fitting with Big Data in R. arXiv preprint arXiv:1701.05936. URL [https://arxiv.org/abs/1701.05936](https://arxiv.org/abs/1701.05936).
 * Tibshirani, R., Bien, J., Friedman, J., Hastie, T., Simon, N., Taylor, J., and Tibshirani, R. J. (2012). Strong rules for discarding predictors in lasso-type problems. Journal of the Royal Statistical Society: Series B (Statistical Methodology), 74 (2), 245-266.
 * Wang, J., Zhou, J., Wonka, P., and Ye, J. (2013). Lasso screening rules via dual polytope projection. In Advances in Neural Information Processing Systems, pp. 1070-1078.
 * Xiang, Z. J., and Ramadge, P. J. (2012, March). Fast lasso screening tests based on correlations. In Acoustics, Speech and Signal Processing (ICASSP), 2012 IEEE International Conference on (pp. 2137-2140). IEEE.
