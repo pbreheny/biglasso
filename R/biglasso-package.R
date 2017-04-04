@@ -90,7 +90,7 @@
 #' @author Yaohui Zeng and Patrick Breheny
 #' 
 #' Maintainer: Yaohui Zeng <yaohui-zeng@@uiowa.edu>
-#' @references \itemize{ \item Zeng, Y., and Breheny, P. (2016). The biglasso
+#' @references \itemize{ \item Zeng, Y., and Breheny, P. (2017). The biglasso
 #' Package: A Memory- and Computation-Efficient Solver for Lasso Model Fitting
 #' with Big Data in R. \url{https://arxiv.org/abs/1701.05936}.  \item
 #' Tibshirani, R., Bien, J., Friedman, J., Hastie, T., Simon, N., Taylor, J.,

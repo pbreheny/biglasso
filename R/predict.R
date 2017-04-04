@@ -71,10 +71,9 @@ predict.biglasso <- function(object, X, row.idx = 1:nrow(X),
   if (!inherits(X, 'big.matrix')) {
     stop("X must be a big.matrix object.")
   }
-  
+ 
   beta.T <- as(beta, "dgTMatrix") 
-  temp <- .Call("get_eta", X@address, as.integer(row.idx-1), beta, beta.T@i, 
-                beta.T@j, PACKAGE = 'biglasso')
+  temp <- get_eta(X@address, as.integer(row.idx-1), beta, beta.T@i, beta.T@j)
   eta <- sweep(temp, 2, alpha, "+")
   # dimnames(eta) <- list(c(1:nrow(eta)), round(object$lambda, digits = 4))
   
