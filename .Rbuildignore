@@ -3,7 +3,7 @@
 .Rbuildignore
 .Rhistory
 .DS_Store
-.README.md
+README.md
 test.*
 ^.*\.Rproj$
 ^\.Rproj\.user$
