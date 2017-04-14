@@ -131,7 +131,6 @@ static R_CallMethodDef callMethods[] = {
   {"cdfit_gaussian_hsr_nac", (DL_FUNC) &cdfit_gaussian_hsr_nac, 15},
   {"cdfit_gaussian_edpp", (DL_FUNC) &cdfit_gaussian_edpp, 14},
   {"cdfit_gaussian_hsr_dome_nac", (DL_FUNC) &cdfit_gaussian_hsr_dome_nac, 16},
-  {"cdfit_gaussian_hsr_dome_nac", (DL_FUNC) &cdfit_gaussian_hsr_dome_nac, 16},
   {"cdfit_gaussian_hsr_bedpp_nac", (DL_FUNC) &cdfit_gaussian_hsr_bedpp_nac, 16},
   {"biglasso_get_eta", (DL_FUNC) &biglasso_get_eta, 5},
   {NULL, NULL, 0}
