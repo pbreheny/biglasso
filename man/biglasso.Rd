@@ -7,12 +7,12 @@
 biglasso(X, y, row.idx = 1:nrow(X), penalty = c("lasso", "ridge", "enet"),
   family = c("gaussian", "binomial"), alg.logistic = c("Newton", "MM"),
   screen = c("SSR", "SEDPP", "SSR-BEDPP", "SSR-Slores", "SSR-Dome", "None",
-  "NS-NAC", "SSR-NAC", "SEDPP-NAC", "SSR-Dome-NAC", "SSR-BEDPP-NAC"),
-  safe.thresh = 0, ncores = 1, alpha = 1, lambda.min = ifelse(nrow(X) >
-  ncol(X), 0.001, 0.05), nlambda = 100, lambda.log.scale = TRUE, lambda,
-  eps = 1e-07, max.iter = 1000, dfmax = ncol(X) + 1,
-  penalty.factor = rep(1, ncol(X)), warn = TRUE, output.time = FALSE,
-  return.time = TRUE, verbose = FALSE)
+  "NS-NAC", "SSR-NAC", "SEDPP-NAC", "SSR-Dome-NAC", "SSR-BEDPP-NAC",
+  "SSR-Slores-NAC"), safe.thresh = 0, ncores = 1, alpha = 1,
+  lambda.min = ifelse(nrow(X) > ncol(X), 0.001, 0.05), nlambda = 100,
+  lambda.log.scale = TRUE, lambda, eps = 1e-07, max.iter = 1000,
+  dfmax = ncol(X) + 1, penalty.factor = rep(1, ncol(X)), warn = TRUE,
+  output.time = FALSE, return.time = TRUE, verbose = FALSE)
 }
 \arguments{
 \item{X}{The design matrix, without an intercept. It must be a

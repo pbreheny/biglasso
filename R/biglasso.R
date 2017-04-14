@@ -157,7 +157,8 @@ biglasso <- function(X, y, row.idx = 1:nrow(X),
                      alg.logistic = c("Newton", "MM"),
                      screen = c("SSR", "SEDPP", "SSR-BEDPP", "SSR-Slores", 
                                 "SSR-Dome", "None", "NS-NAC", "SSR-NAC", 
-                                "SEDPP-NAC", "SSR-Dome-NAC", "SSR-BEDPP-NAC"),
+                                "SEDPP-NAC", "SSR-Dome-NAC", "SSR-BEDPP-NAC",
+                                "SSR-Slores-NAC"),
                      safe.thresh = 0, ncores = 1, alpha = 1,
                      lambda.min = ifelse(nrow(X) > ncol(X),.001,.05), 
                      nlambda = 100, lambda.log.scale = TRUE,
@@ -374,7 +375,17 @@ biglasso <- function(X, y, row.idx = 1:nrow(X),
                        as.integer(dfmax), as.integer(ncores), as.integer(warn), safe.thresh,
                        as.integer(verbose),
                        PACKAGE = 'biglasso')
-        } else {
+        } else if (screen == "SSR-Slores-NAC") {
+          res <- .Call("cdfit_binomial_hsr_slores_nac", X@address, yy, as.integer(n.pos),
+                       as.integer(ylab), as.integer(row.idx-1), 
+                       lambda, as.integer(nlambda), as.integer(lambda.log.scale),
+                       lambda.min, alpha, as.integer(user.lambda | any(penalty.factor==0)),
+                       eps, as.integer(max.iter), penalty.factor, 
+                       as.integer(dfmax), as.integer(ncores), as.integer(warn), safe.thresh,
+                       as.integer(verbose),
+                       PACKAGE = 'biglasso')
+        } 
+        else {
           res <- .Call("cdfit_binomial_hsr", X@address, yy, as.integer(row.idx-1), 
                        lambda, as.integer(nlambda), as.integer(lambda.log.scale),
                        lambda.min, alpha, as.integer(user.lambda | any(penalty.factor==0)),
@@ -385,7 +396,7 @@ biglasso <- function(X, y, row.idx = 1:nrow(X),
         }
       }
     )
-    
+   
     a <- res[[1]]
     b <- Matrix(res[[2]], sparse = T)
     center <- res[[3]]
@@ -395,7 +406,7 @@ biglasso <- function(X, y, row.idx = 1:nrow(X),
     iter <- res[[7]]
     rejections <- res[[8]]
     
-    if (screen == "SSR-Slores") {
+    if (screen %in% c("SSR-Slores", "SSR-Slores-NAC")) {
       safe_rejections <- res[[9]]
       col.idx <- res[[10]]
     } else {
@@ -451,7 +462,9 @@ biglasso <- function(X, y, row.idx = 1:nrow(X),
     rejections = rejections
   )
   
-  if (screen %in% c("SSR-Dome", "SSR-BEDPP", "SSR-Dome-NAC", "SSR-BEDPP-NAC", "SSR-Slores")) {
+  if (screen %in% c("SSR-Dome", "SSR-Dome-NAC", 
+                    "SSR-BEDPP", "SSR-BEDPP-NAC", 
+                    "SSR-Slores", "SSR-Slores-NAC")) {
     return.val$safe_rejections <- safe_rejections
   } 
   if (return.time) return.val$time <- as.numeric(time['elapsed'])
