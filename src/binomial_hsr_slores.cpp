@@ -73,6 +73,7 @@ void slores_init(vector<double>& theta_lam,
                  double *g_theta_lam_ptr, double *prod_deriv_theta_lam_ptr,
                  vector<double>& X_theta_lam_xi_pos,
                  vector<double>& prod_PX_Pxmax_xi_pos,
+                 vector<double>& cutoff_xi_pos,
                  XPtr<BigMatrix> xMat, double *y, vector<double>& z, int xmax_idx,
                  int *row_idx, vector<int> &col_idx,
                  NumericVector &center, NumericVector &scale,
@@ -102,6 +103,7 @@ void slores_init(vector<double>& theta_lam,
   for (j = 0; j < p; j++) {
     X_theta_lam_xi_pos[j] = -z[j] * n; // = -xTy
     prod_PX_Pxmax_xi_pos[j] = -sign_xmaxTy * crossprod_bm_Xj_Xk(xMat, row_idx, center, scale, n, col_idx[j], xmax_idx); 
+    cutoff_xi_pos[j] = prod_PX_Pxmax_xi_pos[j] / n;
   }
 }
 
@@ -110,13 +112,15 @@ void slores_screen(int *slores_reject, vector<double>& theta_lam,
                    double g_theta_lam, double prod_deriv_theta_lam,
                    vector<double>& X_theta_lam_xi_pos,
                    vector<double>& prod_PX_Pxmax_xi_pos,
+                   vector<double>& cutoff_xi_pos,
                    int *row_idx, vector<int> &col_idx,
                    NumericVector &center, NumericVector &scale, int xmax_idx,
                    IntegerVector& ylab, double lambda, 
                    double lambda_max, int n_pos, int n, int p) {
   
   double TOLERANCE = 1e-8;
-  double d, r, a2, cutoff_xi_pos, a1_xi_pos, a0, Delta;
+  double d, r, a2, a1_xi_pos, a0, Delta;
+  double d_sq, one_minus_d_sq, n_sq, d_sq_times_n_sq;
   double u2star_xi_pos, u2star_xi_neg, T_temp_pos, T_temp_neg, tmp_pos, tmp_neg;
   NumericVector T_xi_pos(p);
   NumericVector T_xi_neg(p);
@@ -129,26 +133,26 @@ void slores_screen(int *slores_reject, vector<double>& theta_lam,
       (1 - lambda / lambda_max) * prod_deriv_theta_lam));
     d = sqrt(n) * (lambda_max - lambda) / r;
   }
-  a2 = n * n * (1 - d * d);
+  d_sq = pow(d, 2);
+  one_minus_d_sq = 1 - d_sq;
+  n_sq  = pow(n, 2);
+  d_sq_times_n_sq = pow(d * n, 2);
+  a2 = n_sq * one_minus_d_sq;
 
   int j;
-  #pragma omp parallel for private(j, cutoff_xi_pos, a1_xi_pos, a0, Delta, u2star_xi_pos, \
-                                   u2star_xi_neg, T_temp_pos, T_temp_neg, tmp_pos, tmp_neg) \
-                                    schedule(static)
+  #pragma omp parallel for private(j, a1_xi_pos, a0, Delta, u2star_xi_pos, u2star_xi_neg, T_temp_pos, T_temp_neg, tmp_pos, tmp_neg) schedule(static)
   for (j = 0; j < p; j++) {
-    cutoff_xi_pos = 0.0;
-    a1_xi_pos = 0.0; 
-    a0 = 0.0; Delta = 0.0;
-    u2star_xi_pos = 0.0; u2star_xi_neg = 0.0;
-    T_temp_pos = 0.0; T_temp_neg = 0.0;
+    // a1_xi_pos = 0.0;
+    // a0 = 0.0; Delta = 0.0;
+    // u2star_xi_pos = 0.0; u2star_xi_neg = 0.0;
+    // T_temp_pos = 0.0; T_temp_neg = 0.0;
     
-    a1_xi_pos = 2 * prod_PX_Pxmax_xi_pos[j] * n * (1- d * d);
-    a0 = pow(prod_PX_Pxmax_xi_pos[j], 2) - pow(d * n, 2);
+    a1_xi_pos = 2 * prod_PX_Pxmax_xi_pos[j] * n * one_minus_d_sq;
+    a0 = pow(prod_PX_Pxmax_xi_pos[j], 2) - d_sq_times_n_sq;
     Delta = pow(a1_xi_pos, 2) - 4 * a2 * a0;
     if (Delta < 0.0) Delta = 0.0; // in case of -0.0 (at xmax)
 
-    cutoff_xi_pos = prod_PX_Pxmax_xi_pos[j] / n;
-    if (cutoff_xi_pos >= d) {
+    if (cutoff_xi_pos[j] >= d) {
       T_xi_pos[j] = r * sqrt(n) - X_theta_lam_xi_pos[j];
     } else {
       u2star_xi_pos = 0.5 * (-a1_xi_pos + sqrt(Delta)) / a2;
@@ -158,12 +162,12 @@ void slores_screen(int *slores_reject, vector<double>& theta_lam,
       T_xi_pos[j] = r * T_temp_pos - u2star_xi_pos * n * (lambda_max - lambda) - X_theta_lam_xi_pos[j];
     }
     
-    if (T_xi_pos[j] + TOLERANCE >= n * lambda) { // cannot reject since T_xi_pos >= n * lambda, no need to compute T_xi_neg
+    if (T_xi_pos[j] + TOLERANCE > n * lambda) { // cannot reject since T_xi_pos >= n * lambda, no need to compute T_xi_neg
       slores_reject[j] = 0;
     } else {
       // compute T_xi_neg: two cases
       // cutoff_xi_neg = -cutoff_xi_pos;
-      if (-cutoff_xi_pos >= d) {
+      if (-cutoff_xi_pos[j] >= d) {
         T_xi_neg[j] = r * sqrt(n) + X_theta_lam_xi_pos[j];
       } else {
         // a1_xi_neg = -a1_xi_pos;
@@ -173,33 +177,31 @@ void slores_screen(int *slores_reject, vector<double>& theta_lam,
         T_temp_neg = sqrt(tmp_neg);
         T_xi_neg[j] = r * T_temp_neg - u2star_xi_neg * n * (lambda_max - lambda) + X_theta_lam_xi_pos[j];
       }
-      if (T_xi_neg[j] + TOLERANCE >= n * lambda) { // cannot reject since T_xi_neg > n * lambda
+      if (T_xi_neg[j] + TOLERANCE > n * lambda) { // cannot reject since T_xi_neg > n * lambda
         slores_reject[j] = 0;
       } else {
         slores_reject[j] = 1; // both T_xi_pos and T_xi_pos are less than n * lambda
       }
     }
     // debug
-    // if (l < 10) {
-    //   Rprintf("l = %d\n", l);
-    //   Rprintf("===========================================\n");
-    //   Rprintf("\t r = %f; d = %f; a2 = %f; n * lambda = %f\n", r, d, a2, n*lambda);
-    //   Rprintf("--------------------------------------------\n");
-    // }
-    // if (l < 10) {
+    // if (l < 3) {
     //   if (col_idx[j] == xmax_idx) {
-    //     Rprintf("T_xi_pos[j] = %15.15f; n * lambda = %15.15f\n; T_xi_pos == n * lambda ? %s\n", 
-    //             T_xi_pos[j], n * lambda, T_xi_pos[j] == n * lambda ? "true" : "false");
+    //     Rprintf("l = %d\n", l);
+    //     Rprintf("===========================================\n");
+    //     Rprintf("\t r = %f; d = %f; a2 = %f; n * lambda = %f\n", r, d, a2, n*lambda);
     //     Rprintf("--------------------------------------------\n");
-    //     Rprintf("T_xi_pos[j] = %15.15f; n * lambda = %15.15f\n; T_xi_pos almost equal to n * lambda ? %s\n", 
-    //             T_xi_pos[j], n * lambda, abs(T_xi_pos[j] - n * lambda) <=  TOLERANCE ? "true" : "false");
+    //     Rprintf("l = %d; T_xi_pos[j] = %15.15f; n * lambda = %15.15f\n; T_xi_pos == n * lambda ? %s\n",
+    //             l, T_xi_pos[j], n * lambda, T_xi_pos[j] == n * lambda ? "true" : "false");
+    //     Rprintf("--------------------------------------------\n");
+    //     // Rprintf("T_xi_pos[j] = %15.15f; n * lambda = %15.15f\n; T_xi_pos almost equal to n * lambda ? %s\n",
+    //     //         T_xi_pos[j], n * lambda, abs(T_xi_pos[j] - n * lambda) <=  TOLERANCE ? "true" : "false");
     //     Rprintf("--------------------------------------------\n");
     //     Rprintf("\t j = %d: a1_xi_pos=%f, a0=%f, Delta=%f, sqrt(Delta)=%f, cutoff_xi_pos=%f, u2star_xi_pos=%f, T_xi_pos[%d]=%f\n",
-    //             j, a1_xi_pos, a0, Delta, sqrt(Delta), cutoff_xi_pos, u2star_xi_pos, j, T_xi_pos[j]);
-    //     Rprintf("\t prod_PX_Pxmax_xi_pos[%d]=%f, T_temp_pos=%f, X_theta_lam_xi_pos[%d]=%f, tmp_pos=%f\n", 
+    //             j, a1_xi_pos, a0, Delta, sqrt(Delta), cutoff_xi_pos[j], u2star_xi_pos, j, T_xi_pos[j]);
+    //     Rprintf("\t prod_PX_Pxmax_xi_pos[%d]=%f, T_temp_pos=%f, X_theta_lam_xi_pos[%d]=%f, tmp_pos=%f\n",
     //             j, prod_PX_Pxmax_xi_pos[j], T_temp_pos, j, X_theta_lam_xi_pos[j], tmp_pos);
     //     Rprintf("\t u2star_xi_neg=%f, T_xi_neg[%d]=%f\n", u2star_xi_neg, j, T_xi_neg[j]);
-    //     Rprintf("\t slores_reject[%d] = %d\n", j, slores_reject[j]);
+    //     Rprintf("\t l = %d, slores_reject[%d] = %d\n", l, j, slores_reject[j]);
     //   }
     // }
   }
@@ -339,24 +341,27 @@ RcppExport SEXP cdfit_binomial_hsr_slores(SEXP X_, SEXP y_, SEXP n_pos_, SEXP yl
   double *prod_deriv_theta_lam_ptr = &prod_deriv_theta_lam;
   vector<double> X_theta_lam_xi_pos; 
   vector<double> prod_PX_Pxmax_xi_pos;
+  vector<double> cutoff_xi_pos;
   int *slores_reject = Calloc(p, int);
   int *slores_reject_old = Calloc(p, int);
-
+  for (int j = 0; j < p; j++) slores_reject_old[j] = 1;
+  
   int slores; // if 0, don't perform Slores rule
   if (slores_thresh < 1) {
     slores = 1; // turn on slores
     theta_lam.resize(n);
     X_theta_lam_xi_pos.resize(p);
     prod_PX_Pxmax_xi_pos.resize(p);
+    cutoff_xi_pos.resize(p);
 
-    slores_init(theta_lam, g_theta_lam_ptr, prod_deriv_theta_lam_ptr, 
+    slores_init(theta_lam, g_theta_lam_ptr, prod_deriv_theta_lam_ptr, cutoff_xi_pos,
                 X_theta_lam_xi_pos, prod_PX_Pxmax_xi_pos, 
                 xMat, y, z, xmax_idx, row_idx, col_idx, 
                 center, scale, ylabel, n_pos, n, p);
   } else {
     slores = 0;
   }
-
+  
   if (slores == 1 && user == 0) n_slores_reject[0] = p;
 
   for (l = lstart; l < L; l++) {
@@ -391,20 +396,20 @@ RcppExport SEXP cdfit_binomial_hsr_slores(SEXP X_, SEXP y_, SEXP n_pos_, SEXP yl
 
     if (slores) {
       slores_screen(slores_reject, theta_lam, g_theta_lam, prod_deriv_theta_lam,
-                    X_theta_lam_xi_pos, prod_PX_Pxmax_xi_pos,
+                    X_theta_lam_xi_pos, prod_PX_Pxmax_xi_pos, cutoff_xi_pos,
                     row_idx, col_idx, center, scale, xmax_idx, ylabel, 
                     lambda[l], lambda_max, n_pos, n, p);
       n_slores_reject[l] = sum(slores_reject, p);
       
       // update z[j] for features which are rejected at previous lambda but accepted at current one.
-      update_zj(z, slores_reject, slores_reject_old, xMat, row_idx, col_idx, 
-                center, scale, sumS, s, m, n, p);
+      update_zj(z, slores_reject, slores_reject_old, xMat, row_idx, col_idx, center, scale, sumS, s, m, n, p);
       
       #pragma omp parallel for private(j) schedule(static) 
       for (j = 0; j < p; j++) {
         slores_reject_old[j] = slores_reject[j];
         // hsr screening
-        if (slores_reject[j] == 0 && (fabs(z[j]) >= (cutoff * alpha * m[col_idx[j]]))) {
+        // if (slores_reject[j] == 0 && (fabs(z[j]) > (cutoff * alpha * m[col_idx[j]]))) {
+        if (fabs(z[j]) > (cutoff * alpha * m[col_idx[j]])) {
           e2[j] = 1;
         } else {
           e2[j] = 0;
@@ -415,7 +420,7 @@ RcppExport SEXP cdfit_binomial_hsr_slores(SEXP X_, SEXP y_, SEXP n_pos_, SEXP yl
       // hsr screening over all
       #pragma omp parallel for private(j) schedule(static) 
       for (j = 0; j < p; j++) {
-        if (fabs(z[j]) >= (cutoff * alpha * m[col_idx[j]])) {
+        if (fabs(z[j]) > (cutoff * alpha * m[col_idx[j]])) {
           e2[j] = 1;
         } else {
           e2[j] = 0;
@@ -456,10 +461,8 @@ RcppExport SEXP cdfit_binomial_hsr_slores(SEXP X_, SEXP y_, SEXP n_pos_, SEXP yl
             Free(slores_reject);
             Free(slores_reject_old);
             Free_memo_bin_hsr(s, w, a, r, e1, e2, eta);
-            return List::create(beta0, beta, center, scale, lambda, Dev,
-                                iter, n_reject, n_slores_reject, Rcpp::wrap(col_idx));
+            return List::create(beta0, beta, center, scale, lambda, Dev, iter, n_reject, n_slores_reject, Rcpp::wrap(col_idx));
           }
-          
           // Intercept
           xwr = crossprod(w, r, n, 0);
           xwx = sum(w, n);
@@ -473,7 +476,6 @@ RcppExport SEXP cdfit_binomial_hsr_slores(SEXP X_, SEXP y_, SEXP n_pos_, SEXP yl
             }
           }
           sumWResid = wsum(r, w, n); // update temp result: sum of w * r, used for computing xwr;
-
           max_update = 0.0;
           for (j = 0; j < p; j++) {
             if (e1[j]) {
@@ -489,12 +491,10 @@ RcppExport SEXP cdfit_binomial_hsr_slores(SEXP X_, SEXP y_, SEXP n_pos_, SEXP yl
               if (shift != 0) {
                 // update change of objective function
                 // update = - u * shift + (0.5 * v + 0.5 * l2) * (pow(beta(j, l), 2) - pow(a[j], 2)) + l1 * (fabs(beta(j, l)) - fabs(a[j]));
-                
                 update = pow(beta(j, l) - a[j], 2) * v;
                 if (update > max_update) max_update = update;
                 update_resid_eta(r, eta, xMat, shift, row_idx, center[jj], scale[jj], n, jj); // update r
                 sumWResid = wsum(r, w, n); // update temp result w * r, used for computing xwr;
-
                 a[j] = beta(j, l); // update a
               }
             }
@@ -504,35 +504,24 @@ RcppExport SEXP cdfit_binomial_hsr_slores(SEXP X_, SEXP y_, SEXP n_pos_, SEXP yl
         }
         // Scan for violations in strong set
         sumS = sum(s, n);
-        violations = check_strong_set_bin(e1, e2, z, xMat, row_idx, col_idx, 
-                                          center, scale, a, lambda[l], sumS, 
-                                          alpha, s, m, n, p);
+        violations = check_strong_set_bin(e1, e2, z, xMat, row_idx, col_idx, center, scale, a, lambda[l], sumS, alpha, s, m, n, p);
         if (violations == 0) break;
       }
-      
       // Scan for violations in rest
       if (slores) {
-        violations = check_rest_set_hsr_slores(e1, e2, slores_reject, z, xMat, 
-                                               row_idx, col_idx, center, scale, a,
-                                               lambda[l], sumS, alpha, s, m, n, p);
+        violations = check_rest_set_hsr_slores(e1, e2, slores_reject, z, xMat, row_idx, col_idx, center, scale, a, lambda[l], sumS, alpha, s, m, n, p);
       } else {
-        violations = check_rest_set_bin(e1, e2, z, xMat, row_idx, col_idx, center, 
-                                        scale, a, lambda[l], sumS, alpha, s, m, n, p);
+        violations = check_rest_set_bin(e1, e2, z, xMat, row_idx, col_idx, center, scale, a, lambda[l], sumS, alpha, s, m, n, p);
       }
-      
       if (violations == 0) break;
-      
-      
       if (n_slores_reject[l] <= p * slores_thresh) {
         slores = 0; // turn off slores screening for next iteration if not efficient
       }
     }
   }
-  
   Free(slores_reject);
   Free(slores_reject_old);
   Free_memo_bin_hsr(s, w, a, r, e1, e2, eta);
   return List::create(beta0, beta, center, scale, lambda, Dev, iter, n_reject, n_slores_reject, Rcpp::wrap(col_idx));
-  
 }
 

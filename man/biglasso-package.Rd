@@ -19,7 +19,7 @@ powerful big data analysis even with only an ordinary laptop.
 }
 \details{
 \tabular{ll}{ Package: \tab biglasso\cr Type: \tab Package\cr Version: \tab
-1.3-5\cr Date: \tab 2017-03-29\cr License: \tab GPL-3\cr}
+1.3-6\cr Date: \tab 2017-04-12\cr License: \tab GPL-3\cr}
 
 Penalized regression models, in particular the lasso, have been extensively
 applied to analyzing high-dimensional data sets. However, due to the memory
@@ -131,7 +131,7 @@ summary(cvfit)
 
 }
 \references{
-\itemize{ \item Zeng, Y., and Breheny, P. (2016). The biglasso
+\itemize{ \item Zeng, Y., and Breheny, P. (2017). The biglasso
 Package: A Memory- and Computation-Efficient Solver for Lasso Model Fitting
 with Big Data in R. \url{https://arxiv.org/abs/1701.05936}.  \item
 Tibshirani, R., Bien, J., Friedman, J., Hastie, T., Simon, N., Taylor, J.,
