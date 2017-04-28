@@ -109,12 +109,12 @@ void bedpp_screen(int *bedpp_reject, const vector<double>& sign_lammax_xtxmax,
                   double alpha, int n, int p) {
   double LHS = 0.0;
   double RHS = 2 * n * alpha * lambda * lambda_max - (lambda_max - lambda) * 
-    sqrt(n * ynorm_sq - pow(n * alpha * lambda_max, 2));
+    sqrt(n * ynorm_sq * (1 + lambda * (1 - alpha)) - pow(n * alpha * lambda_max, 2));
   int j;
   
   #pragma omp parallel for private(j, LHS) schedule(static)
   for (j = 0; j < p; j++) { // p = p_keep
-    LHS = (lambda + lambda_max) * XTy[j] - (lambda_max - lambda) * alpha * sign_lammax_xtxmax[j];
+    LHS = (lambda + lambda_max) * XTy[j] - (lambda_max - lambda) * alpha * sign_lammax_xtxmax[j] / (1 + lambda * (1 - alpha));
     if (fabs(LHS) < RHS) {
       bedpp_reject[j] = 1;
     } else {
@@ -179,7 +179,7 @@ RcppExport SEXP cdfit_gaussian_hsr_bedpp(SEXP X_, SEXP y_, SEXP row_idx_,
     strftime (buff1, 100, "%Y-%m-%d %H:%M:%S.000", localtime (&now1));
     Rprintf("\nPreprocessing start: %s\n", buff1);
   }
-
+  
   // standardize: get center, scale; get p_keep_ptr, col_idx; get z, lambda_max, xmax_idx;
   standardize_and_get_residual(center, scale, p_keep_ptr, col_idx, z, lambda_max_ptr, xmax_ptr, xMat, 
                                y, row_idx, lambda_min, alpha, n, p);
