@@ -118,7 +118,7 @@
 #' cases.}
 #' @author Yaohui Zeng and Patrick Breheny
 #'
-#' Maintainer: Yaohui Zeng <yaohui-zeng@@uiowa.edu>
+#' Maintainer: Yaohui Zeng <yaohui.zeng@@gmail.com>
 #' @seealso \code{\link{biglasso-package}}, \code{\link{setupX}},
 #' \code{\link{cv.biglasso}}, \code{\link{plot.biglasso}},
 #' \code{\link[ncvreg]{ncvreg}}
@@ -128,7 +128,7 @@
 #' data(colon)
 #' X <- colon$X
 #' y <- colon$y
-#' X.bm <- as.big.matrix(X)
+#' X.bm <- as.big.matrix(X, backingfile = "")
 #' # lasso, default
 #' par(mfrow=c(1,2))
 #' fit.lasso <- biglasso(X.bm, y, family = 'gaussian')
@@ -141,7 +141,7 @@
 #' data(colon)
 #' X <- colon$X
 #' y <- colon$y
-#' X.bm <- as.big.matrix(X)
+#' X.bm <- as.big.matrix(X, backingfile = "")
 #' # lasso, default
 #' par(mfrow = c(1, 2))
 #' fit.bin.lasso <- biglasso(X.bm, y, penalty = 'lasso', family = "binomial")

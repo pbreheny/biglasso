@@ -14,7 +14,7 @@
 #' "MAPE", for linear regression only, is the Mean Absolute Percentage Error.
 #' @author Yaohui Zeng and Patrick Breheny
 #' 
-#' Maintainer: Yaohui Zeng <yaohui-zeng@@uiowa.edu>
+#' Maintainer: Yaohui Zeng <yaohui.zeng@@gmail.com>
 #' @keywords internal
 #'
 loss.biglasso <- function(y, yhat, family, eval.metric) {

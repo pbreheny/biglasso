@@ -34,7 +34,7 @@
 #' @return The object returned depends on \code{type}.
 #' @author Yaohui Zeng and Patrick Breheny
 #' 
-#' Maintainer: Yaohui Zeng <yaohui-zeng@@uiowa.edu>
+#' Maintainer: Yaohui Zeng <yaohui.zeng@@gmail.com>
 #' @seealso \code{\link{biglasso}}, \code{\link{cv.biglasso}}
 #' @keywords models regression
 #' @examples
@@ -42,7 +42,7 @@
 #' data(colon)
 #' X <- colon$X
 #' y <- colon$y
-#' X.bm <- as.big.matrix(X)
+#' X.bm <- as.big.matrix(X, backingfile = "")
 #' fit <- biglasso(X.bm, y, penalty = 'lasso', family = "binomial")
 #' coef <- coef(fit, lambda=0.05, drop = TRUE)
 #' coef[which(coef != 0)]

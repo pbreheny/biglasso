@@ -44,7 +44,7 @@
 #' \code{\link{biglasso}} and \code{\link{cv.biglasso}}.
 #' @author Yaohui Zeng and Patrick Breheny
 #' 
-#' Maintainer: Yaohui Zeng <yaohui-zeng@@uiowa.edu>
+#' Maintainer: Yaohui Zeng <yaohui.zeng@@gmail.com>
 #' @seealso \code{\link{biglasso}}, \code{\link{cv.ncvreg}}
 #' @examples
 #' ## see the example in "biglasso-package"

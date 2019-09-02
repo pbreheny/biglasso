@@ -26,7 +26,7 @@
 #' y <- colon$y
 #' str(X)
 #' dim(X)
-#' X.bm <- as.big.matrix(X) # convert to big.matrix object
+#' X.bm <- as.big.matrix(X, backingfile = "") # convert to big.matrix object
 #' str(X.bm)
 #' dim(X.bm)
 NULL

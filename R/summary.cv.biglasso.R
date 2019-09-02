@@ -29,7 +29,7 @@
 #' prediction error (misclassification error).}
 #' @author Yaohui Zeng and Patrick Breheny
 #' 
-#' Maintainer: Yaohui Zeng <yaohui-zeng@@uiowa.edu>
+#' Maintainer: Yaohui Zeng <yaohui.zeng@@gmail.com>
 #' @seealso \code{\link{biglasso}}, \code{\link{cv.biglasso}},
 #' \code{\link{plot.cv.biglasso}}
 #' @keywords models regression
