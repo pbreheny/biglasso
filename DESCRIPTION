@@ -1,9 +1,9 @@
 Package: biglasso
-Version: 1.3-6
-Date: 2017-04-12
+Version: 1.3-7
+Date: 2019-08-31
 Title: Extending Lasso Model Fitting to Big Data
 Author: Yaohui Zeng [aut,cre], Patrick Breheny [ctb]
-Maintainer: Yaohui Zeng <yaohui-zeng@uiowa.edu>
+Maintainer: Yaohui Zeng <yaohui.zeng@gmail.edu>
 Description: Extend lasso and elastic-net model fitting for ultrahigh-dimensional, 
     multi-gigabyte data sets that cannot be loaded into memory. It's much more 
     memory- and computation-efficient as compared to existing lasso-fitting packages 

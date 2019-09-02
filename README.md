@@ -11,13 +11,13 @@
 ## News:
 * This package on GitHub has been updated to Version 1.3-6. See details in NEWS.
 * This package was ranked top 3 for [2017 ASA Chambers Statistical Software Award](http://stat-computing.org/awards/jmc/).
-* The technical paper of this package was selected as a Winner of [2017 ASA Student Paper Competiton from Section on Statistical Computing](http://stat-computing.org/awards/student/index.html).
+* The technical paper of this package was selected as a Winner of [2017 ASA Student Paper Competiton from Section on Statistical Computing](http://stat-computing.org/awards/student/winners.html).
 
 
 ## Documentation:
 
 * Here are the [R Reference manual](https://CRAN.R-project.org/package=biglasso/biglasso.pdf) and [User guide](https://CRAN.R-project.org/package=biglasso/vignettes/biglasso.pdf)
-* Here is the [techincal paper of the package](https://arxiv.org/abs/1701.05936)
+* Here are the technical papers of the package: i) [The software paper](https://arxiv.org/abs/1701.05936); and ii) [the paper of hybrid safe-strong rules](https://arxiv.org/abs/1704.08742)
 
 
 ## Features:
@@ -53,7 +53,6 @@
 In all the settings, `biglasso` (1 core) is uniformly 2x faster than `glmnet` and `ncvreg`, and 2.5x faster than `picasso`. Moreover, the computing time of `biglasso` can be further reduced by half via parallel-computation of 4 cores.
 
 #### (2) `biglasso` is more memory-efficient:
-
 
 To prove that `biglasso` is much more memory-efficient, we simulate a `1000 X 100000` large feature matrix. The raw data is 0.75 GB. We used [Syrupy](https://github.com/jeetsukumaran/Syrupy) to measure the memory used in RAM (i.e. the resident set size, RSS) every 1 second during lasso model fitting by each of the packages. 
 
