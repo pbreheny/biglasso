@@ -52,7 +52,7 @@ along with the estimates at value of \code{lambda}.  For \code{rsq} and
 \author{
 Yaohui Zeng and Patrick Breheny
 
-Maintainer: Yaohui Zeng <yaohui-zeng@uiowa.edu>
+Maintainer: Yaohui Zeng <yaohui.zeng@gmail.com>
 }
 \keyword{models}
 \keyword{regression}

@@ -54,7 +54,7 @@ Extract predictions from a fitted \code{\link{cv.biglasso}} object.
 data(colon)
 X <- colon$X
 y <- colon$y
-X.bm <- as.big.matrix(X)
+X.bm <- as.big.matrix(X, backingfile = "")
 fit <- biglasso(X.bm, y, penalty = 'lasso', family = "binomial")
 cvfit <- cv.biglasso(X.bm, y, penalty = 'lasso', family = "binomial", seed = 1234, ncores = 2)
 coef <- coef(cvfit)
@@ -70,7 +70,7 @@ predict(cvfit, X.bm, type = "class")
 \author{
 Yaohui Zeng and Patrick Breheny
 
-Maintainer: Yaohui Zeng <yaohui-zeng@uiowa.edu>
+Maintainer: Yaohui Zeng <yaohui.zeng@gmail.com>
 }
 \keyword{models}
 \keyword{regression}

@@ -50,7 +50,7 @@ Summary method for \code{cv.biglasso} objects.
 \author{
 Yaohui Zeng and Patrick Breheny
 
-Maintainer: Yaohui Zeng <yaohui-zeng@uiowa.edu>
+Maintainer: Yaohui Zeng <yaohui.zeng@gmail.com>
 }
 \keyword{models}
 \keyword{regression}

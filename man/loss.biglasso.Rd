@@ -28,6 +28,6 @@ value of the loss function for the given predictions (used for cross-validation)
 \author{
 Yaohui Zeng and Patrick Breheny
 
-Maintainer: Yaohui Zeng <yaohui-zeng@uiowa.edu>
+Maintainer: Yaohui Zeng <yaohui.zeng@gmail.com>
 }
 \keyword{internal}

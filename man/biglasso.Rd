@@ -163,7 +163,7 @@ data sets. For logistic regression and/or the elastic net penalty, only
 data(colon)
 X <- colon$X
 y <- colon$y
-X.bm <- as.big.matrix(X)
+X.bm <- as.big.matrix(X, backingfile = "")
 # lasso, default
 par(mfrow=c(1,2))
 fit.lasso <- biglasso(X.bm, y, family = 'gaussian')
@@ -176,7 +176,7 @@ plot(fit.enet, log.l = TRUE, main = 'elastic net, alpha = 0.5')
 data(colon)
 X <- colon$X
 y <- colon$y
-X.bm <- as.big.matrix(X)
+X.bm <- as.big.matrix(X, backingfile = "")
 # lasso, default
 par(mfrow = c(1, 2))
 fit.bin.lasso <- biglasso(X.bm, y, penalty = 'lasso', family = "binomial")
@@ -194,5 +194,5 @@ plot(fit.bin.enet, log.l = TRUE, main = 'elastic net, alpha = 0.5')
 \author{
 Yaohui Zeng and Patrick Breheny
 
-Maintainer: Yaohui Zeng <yaohui-zeng@uiowa.edu>
+Maintainer: Yaohui Zeng <yaohui.zeng@gmail.com>
 }

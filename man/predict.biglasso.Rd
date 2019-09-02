@@ -57,7 +57,7 @@ fitted \code{\link{biglasso}} object.
 data(colon)
 X <- colon$X
 y <- colon$y
-X.bm <- as.big.matrix(X)
+X.bm <- as.big.matrix(X, backingfile = "")
 fit <- biglasso(X.bm, y, penalty = 'lasso', family = "binomial")
 coef <- coef(fit, lambda=0.05, drop = TRUE)
 coef[which(coef != 0)]
@@ -73,7 +73,7 @@ predict(fit, type="nvars", lambda=c(0.05, 0.1))
 \author{
 Yaohui Zeng and Patrick Breheny
 
-Maintainer: Yaohui Zeng <yaohui-zeng@uiowa.edu>
+Maintainer: Yaohui Zeng <yaohui.zeng@gmail.com>
 }
 \keyword{models}
 \keyword{regression}

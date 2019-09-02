@@ -150,6 +150,6 @@ Advances in Neural Information Processing Systems}, pp. 1053-1061.  }
 \author{
 Yaohui Zeng and Patrick Breheny
 
-Maintainer: Yaohui Zeng <yaohui-zeng@uiowa.edu>
+Maintainer: Yaohui Zeng <yaohui.zeng@gmail.com>
 }
 \keyword{package}
