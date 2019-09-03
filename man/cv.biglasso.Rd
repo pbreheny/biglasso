@@ -70,7 +70,7 @@ functions such as \code{"summary", "plot"} can be directly applied to the
 \code{cv.biglasso} object.
 }
 \examples{
-
+\dontrun{
 ## cv.biglasso
 data(colon)
 X <- colon$X
@@ -82,7 +82,7 @@ cvfit <- cv.biglasso(X.bm, y, family = 'binomial', seed = 1234, ncores = 2)
 par(mfrow = c(2, 2))
 plot(cvfit, type = 'all')
 summary(cvfit)
-
+}
 
 }
 \seealso{

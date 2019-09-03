@@ -52,7 +52,7 @@
 #' @seealso \code{\link{biglasso}}, \code{\link{plot.cv.biglasso}},
 #' \code{\link{summary.cv.biglasso}}, \code{\link{setupX}}
 #' @examples
-#' 
+#' \dontrun{
 #' ## cv.biglasso
 #' data(colon)
 #' X <- colon$X
@@ -64,7 +64,7 @@
 #' par(mfrow = c(2, 2))
 #' plot(cvfit, type = 'all')
 #' summary(cvfit)
-#' 
+#' }
 #' 
 #' @export cv.biglasso
 #' 

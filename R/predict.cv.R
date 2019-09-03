@@ -35,7 +35,7 @@
 #' @seealso \code{\link{biglasso}}, \code{\link{cv.biglasso}}
 #' @keywords models regression
 #' @examples
-#' 
+#' \dontrun{
 #' ## predict.cv.biglasso
 #' data(colon)
 #' X <- colon$X
@@ -48,7 +48,7 @@
 #' predict(cvfit, X.bm, type = "response")
 #' predict(cvfit, X.bm, type = "link")
 #' predict(cvfit, X.bm, type = "class")
-#'
+#' }
 #' @export
 #' 
 predict.cv.biglasso <- function(object, X, row.idx = 1:nrow(X),

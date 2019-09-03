@@ -49,7 +49,7 @@ The object returned depends on \code{type}.
 Extract predictions from a fitted \code{\link{cv.biglasso}} object.
 }
 \examples{
-
+\dontrun{
 ## predict.cv.biglasso
 data(colon)
 X <- colon$X
@@ -62,7 +62,7 @@ coef[which(coef != 0)]
 predict(cvfit, X.bm, type = "response")
 predict(cvfit, X.bm, type = "link")
 predict(cvfit, X.bm, type = "class")
-
+}
 }
 \seealso{
 \code{\link{biglasso}}, \code{\link{cv.biglasso}}
