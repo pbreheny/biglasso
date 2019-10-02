@@ -1,27 +1,30 @@
-
 #include "utilities.h"
 
-void Free_memo_edpp(double *a, double *r, int *discard_beta, double *theta, double *v1, double *v2, double *o);
-
-// V2 - <v1, v2> / ||v1||^2_2 * V1
-void update_pv2(double *pv2, double *v1, double *v2, int n);
-
 // apply EDPP 
-void edpp_screen(int *discard_beta, XPtr<BigMatrix> xpMat, double *o, 
-                 int *row_idx, vector<int> &col_idx, NumericVector &center, 
-                 NumericVector &scale, int n, int p, double rhs);
+
+void edpp_screen_batch(int *discard_beta, int n, int p, 
+                       double rhs2, double *Xtr, double *lhs2, double c, double c1) {
+  int j;
+  for(j = 0; j < p; j ++) {
+    if(fabs(c1 * Xtr[j] + c / 2 * lhs2[j]) < n - c / 2 * rhs2) {
+      discard_beta[j] = 1;
+    } else {
+      discard_beta[j] = 0;
+    }
+  }
+}
 
 // check edpp set
 int check_edpp_set(int *ever_active, int *discard_beta, vector<double> &z, 
                    XPtr<BigMatrix> xpMat, int *row_idx, vector<int> &col_idx,
                    NumericVector &center, NumericVector &scale, double *a,
                    double lambda, double sumResid, double alpha, 
-                   double *r, double *m, int n, int p) {
+                   double *r, double *m, int n, int p);/* {
   MatrixAccessor<double> xAcc(*xpMat);
   double *xCol, sum, l1, l2;
   int j, jj, violations = 0;
   
-  #pragma omp parallel for private(j, sum, l1, l2) reduction(+:violations) schedule(static) 
+#pragma omp parallel for private(j, sum, l1, l2) reduction(+:violations) schedule(static) 
   for (j = 0; j < p; j++) {
     if (ever_active[j] == 0 && discard_beta[j] == 0) {
       jj = col_idx[j];
@@ -40,14 +43,14 @@ int check_edpp_set(int *ever_active, int *discard_beta, vector<double> &z,
     }
   }
   return violations;
-}
+}*/
 
 // Coordinate descent for gaussian models
-RcppExport SEXP cdfit_gaussian_edpp_active(SEXP X_, SEXP y_, SEXP row_idx_, SEXP lambda_, 
-                                    SEXP nlambda_, SEXP lam_scale_,
-                                    SEXP lambda_min_, SEXP alpha_, 
-                                    SEXP user_, SEXP eps_, SEXP max_iter_, 
-                                    SEXP multiplier_, SEXP dfmax_, SEXP ncore_) {
+RcppExport SEXP cdfit_gaussian_edpp_batch(SEXP X_, SEXP y_, SEXP row_idx_, SEXP lambda_, 
+                                           SEXP nlambda_, SEXP lam_scale_,
+                                           SEXP lambda_min_, SEXP alpha_, 
+                                           SEXP user_, SEXP eps_, SEXP max_iter_, 
+                                           SEXP multiplier_, SEXP dfmax_, SEXP ncore_) {
   XPtr<BigMatrix> xMat(X_);
   double *y = REAL(y_);
   int *row_idx = INTEGER(row_idx_);
@@ -91,14 +94,14 @@ RcppExport SEXP cdfit_gaussian_edpp_active(SEXP X_, SEXP y_, SEXP row_idx_, SEXP
                                lambda_max_ptr, xmax_ptr, xMat, 
                                y, row_idx, lambda_min, alpha, n, p);
   p = p_keep; // set p = p_keep, only loop over columns whose scale > 1e-6
-
+  
   // Objects to be returned to R
   arma::sp_mat beta = arma::sp_mat(p, L); //Beta
   double *a = Calloc(p, double); //Beta from previous iteration
   NumericVector loss(L);
   IntegerVector iter(L);
   IntegerVector n_reject(L);
- 
+  
   double l1, l2, shift;
   double max_update, update, thresh; // for convergence check
   int i, j, jj, l, violations, lstart; //temp index
@@ -111,12 +114,21 @@ RcppExport SEXP cdfit_gaussian_edpp_active(SEXP X_, SEXP y_, SEXP row_idx_, SEXP
   thresh = eps * loss[0] / n;
   
   // EDPP
-  double *theta = Calloc(n, double);
-  double *v1 = Calloc(n, double);
-  double *v2 = Calloc(n, double);
-  double *pv2 = Calloc(n, double);
-  double *o = Calloc(n, double);
-  double pv2_norm = 0;
+  double c;
+  double *lhs2 = Calloc(p, double); //Second term on LHS
+  double rhs2; // second term on RHS
+  double *Xty = Calloc(p, double);
+  double *Xtr = Calloc(p, double); // Xtr at previous recalculation of EDPP
+  for(j = 0; j < p; j++) {
+    Xty[j] = z[j] * n;
+    Xtr[j] = Xty[j];
+  }
+  double *yhat = Calloc(n, double); // yhat at previous recalculation of EDPP
+  double yhat_norm2;
+  double ytyhat;
+  double y_norm2 = 0; // ||y||^2
+  for(i = 0; i < n; i++) y_norm2 += y[i] * y[i];
+  bool SEDPP = false; // Whether using SEDPP or BEDPP
   
   // lambda, equally spaced on log scale
   if (user == 0) {
@@ -142,62 +154,72 @@ RcppExport SEXP cdfit_gaussian_edpp_active(SEXP X_, SEXP y_, SEXP row_idx_, SEXP
     lambda = Rcpp::as<NumericVector>(lambda_);
   } 
   
+  double lambda_prev = lambda[lstart]; // lambda at previous recalculation of EDPP
   // compute v1 for lambda_max
-  double xty = crossprod_bm(xMat, y, row_idx, center[xmax_idx], scale[xmax_idx], n, xmax_idx);
+  double xty = sign(crossprod_bm(xMat, y, row_idx, center[xmax_idx], scale[xmax_idx], n, xmax_idx));
+  
+  
   
   // Path
   for (l = lstart; l < L; l++) {
-    if (l != 0 ) {
+    c = (lambda_prev - lambda[l]) / lambda_prev / lambda[l];
+    if(l != lstart) {
       int nv = 0;
       for (int j=0; j<p; j++) {
         if (a[j] != 0) nv++;
       }
       if (nv > dfmax) {
         for (int ll=l; ll<L; ll++) iter[ll] = NA_INTEGER;
-        Free(ever_active);
-        Free_memo_edpp(a, r, discard_beta, theta, v1, v2, o);
+	Free(ever_active); Free(r); Free(a); Free(discard_beta); Free(lhs2); Free(Xty); Free(Xtr); Free(yhat);
         return List::create(beta, center, scale, lambda, loss, iter,  n_reject, Rcpp::wrap(col_idx));
       }
-      // update theta and v1
-      for (i = 0; i < n; i++) {
-        theta[i] = r[i] / lambda[l-1];
-        if (lambda[l-1] < lambda_max) {
-          v1[i] = y[i] / lambda[l-1] - theta[i];
-        } else {
-          v1[i] = sign(xty) * get_elem_bm(xMat, center[xmax_idx], scale[xmax_idx], row_idx[i], xmax_idx);        
-        }
+      // Apply EDPP to discard features
+      if(SEDPP) { // Apply SEDPP check
+        edpp_screen_batch(discard_beta, n, p, rhs2, Xtr, lhs2, c,
+                          1 / lambda_prev);
+      } else { // Apply BEDPP check
+        edpp_screen_batch(discard_beta, n, p, rhs2, Xtr, lhs2, c,
+                          (1 / lambda_prev + 1 / lambda[l]) / 2);
       }
-    } else { // lam[0]
-      for (i = 0; i < n; i++) {
-        theta[i] = r[i] / lambda_max;
-        if (lambda[l] < lambda_max) {
-          v1[i] = y[i] / lambda[l] - theta[i];
-        } else {
-          v1[i] = sign(xty) * get_elem_bm(xMat, center[xmax_idx], scale[xmax_idx], row_idx[i], xmax_idx);        
+      n_reject[l] = sum(discard_beta, p);
+      if(n_reject[l] < p - dfmax * 2) { // Recalculate SEDPP if not discarding enough
+        SEDPP = true;
+	lambda_prev = lambda[l-1];
+	c = (lambda_prev - lambda[l]) / lambda_prev / lambda[l];
+        yhat_norm2 = 0;
+        ytyhat = 0;
+        for(i = 0; i < n; i ++){
+          yhat[i] = y[i] - r[i];
+          yhat_norm2 += yhat[i] * yhat[i];
+          ytyhat += y[i] * yhat[i];
         }
+        #pragma omp parallel for schedule(static) default(none) private(j, jj) \
+	  shared(col_idx, Xtr, xMat, r, sumResid, row_idx, center, scale, n, p, lhs2, Xty, yhat, ytyhat, yhat_norm2) 
+        for(j = 0; j < p; j ++) {
+          jj = col_idx[j];
+          Xtr[j] = crossprod_resid(xMat, r, sumResid, row_idx, center[jj], scale[jj], n, jj);
+          lhs2[j] = Xty[j] - ytyhat / yhat_norm2 * 
+            crossprod_bm(xMat, yhat, row_idx, center[jj], scale[jj], n, jj);
+        }
+        rhs2 = sqrt(n * (y_norm2 - ytyhat * ytyhat / yhat_norm2));
+        // Reapply SEDPP
+        edpp_screen_batch(discard_beta, n, p, rhs2, Xtr, lhs2, c,
+                          1 / lambda_prev);
+        n_reject[l] = sum(discard_beta, p);
       }
-    } 
-    // update v2:
-    for (i = 0; i < n; i++) {
-      v2[i] = y[i] / lambda[l] - theta[i];
+    } else { //First check with lambda max
+      double xjtx;
+      for(j = 0; j < p; j ++) {
+        jj = col_idx[j];
+        xjtx = crossprod_bm_Xj_Xk(xMat, row_idx, center, scale, n, jj, xmax_idx);
+        lhs2[j] = -xty * lambda[l] * xjtx;
+      }
+      rhs2 = sqrt(n * y_norm2 - pow(n * lambda[l], 2));
+      edpp_screen_batch(discard_beta, n, p, rhs2, Xtr, lhs2, c,
+                        1 / lambda_prev);
+      n_reject[l] = sum(discard_beta, p);
     }
-    //update pv2:
-    update_pv2(pv2, v1, v2, n);
-    // update norm of pv2;
-    for (i = 0; i < n; i++) {
-      pv2_norm += pow(pv2[i], 2);
-    }
-    pv2_norm = pow(pv2_norm, 0.5);
-    // update o
-    for (i = 0; i < n; i++) {
-      o[i] = theta[i] + 0.5 * pv2[i];
-    }
-    double rhs = n - 0.5 * pv2_norm * sqrt(n); 
-    
-    // apply EDPP
-    edpp_screen(discard_beta, xMat, o, row_idx, col_idx, center, scale, n, p, rhs);
-    n_reject[l] = sum(discard_beta, p);
-    
+     
     while (iter[l] < max_iter) {
       while (iter[l] < max_iter) {
         iter[l]++;
@@ -232,7 +254,7 @@ RcppExport SEXP cdfit_gaussian_edpp_active(SEXP X_, SEXP y_, SEXP row_idx_, SEXP
         // Check for convergence
         if (max_update < thresh) break;
       }
-    
+      
       // Scan for violations in edpp set
       violations = check_edpp_set(ever_active, discard_beta, z, xMat, row_idx, col_idx, center, scale, a, lambda[l], sumResid, alpha, r, m, n, p); 
       if (violations == 0) {
@@ -242,8 +264,6 @@ RcppExport SEXP cdfit_gaussian_edpp_active(SEXP X_, SEXP y_, SEXP row_idx_, SEXP
     }
   }
   
-  Free(ever_active);
-  Free_memo_edpp(a, r, discard_beta, theta, v1, v2, o);
+  Free(ever_active); Free(r); Free(a); Free(discard_beta); Free(lhs2); Free(Xty); Free(Xtr); Free(yhat);
   return List::create(beta, center, scale, lambda, loss, iter, n_reject, Rcpp::wrap(col_idx));
 }
-
