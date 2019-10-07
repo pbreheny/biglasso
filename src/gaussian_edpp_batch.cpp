@@ -2,11 +2,11 @@
 
 // apply EDPP 
 
-void edpp_screen_batch(int *discard_beta, int n, int p, 
-                       double rhs2, double *Xtr, double *lhs2, double c, double c1) {
+void edpp_screen_batch(int *discard_beta, int n, int p, double rhs2, double *Xtr, double *lhs2,
+		       double c, double c1, double *m, double alpha, vector<int> &col_idx) {
   int j;
   for(j = 0; j < p; j ++) {
-    if(fabs(c1 * Xtr[j] + c / 2 * lhs2[j]) < n - c / 2 * rhs2) {
+    if(fabs(c1 * Xtr[j] + c / 2 * lhs2[j]) < n * alpha * m[col_idx[j]] - c / 2 * rhs2) {
       discard_beta[j] = 1;
     } else {
       discard_beta[j] = 0;
@@ -176,10 +176,10 @@ RcppExport SEXP cdfit_gaussian_edpp_batch(SEXP X_, SEXP y_, SEXP row_idx_, SEXP 
       // Apply EDPP to discard features
       if(SEDPP) { // Apply SEDPP check
         edpp_screen_batch(discard_beta, n, p, rhs2, Xtr, lhs2, c,
-                          1 / lambda_prev);
+                          1 / lambda_prev, m, alpha, col_idx);
       } else { // Apply BEDPP check
         edpp_screen_batch(discard_beta, n, p, rhs2, Xtr, lhs2, c,
-                          (1 / lambda_prev + 1 / lambda[l]) / 2);
+                          (1 / lambda_prev + 1 / lambda[l]) / 2, m, alpha, col_idx);
       }
       n_reject[l] = sum(discard_beta, p);
       if(n_reject[l] < p - dfmax * 2) { // Recalculate SEDPP if not discarding enough
@@ -204,7 +204,7 @@ RcppExport SEXP cdfit_gaussian_edpp_batch(SEXP X_, SEXP y_, SEXP row_idx_, SEXP 
         rhs2 = sqrt(n * (y_norm2 - ytyhat * ytyhat / yhat_norm2));
         // Reapply SEDPP
         edpp_screen_batch(discard_beta, n, p, rhs2, Xtr, lhs2, c,
-                          1 / lambda_prev);
+                          1 / lambda_prev, m, alpha, col_idx);
         n_reject[l] = sum(discard_beta, p);
       }
     } else { //First check with lambda max
@@ -212,11 +212,11 @@ RcppExport SEXP cdfit_gaussian_edpp_batch(SEXP X_, SEXP y_, SEXP row_idx_, SEXP 
       for(j = 0; j < p; j ++) {
         jj = col_idx[j];
         xjtx = crossprod_bm_Xj_Xk(xMat, row_idx, center, scale, n, jj, xmax_idx);
-        lhs2[j] = -xty * lambda[l] * xjtx;
+        lhs2[j] = -xty * lambda[l] * xjtx * m[col_idx[j]] * alpha;
       }
-      rhs2 = sqrt(n * y_norm2 - pow(n * lambda[l], 2));
+      rhs2 = sqrt(n * y_norm2 - pow(n * lambda[l] * alpha, 2));
       edpp_screen_batch(discard_beta, n, p, rhs2, Xtr, lhs2, c,
-                        1 / lambda_prev);
+                        1 / lambda_prev, m, alpha, col_idx);
       n_reject[l] = sum(discard_beta, p);
     }
      
