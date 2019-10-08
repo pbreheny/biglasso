@@ -182,7 +182,7 @@ RcppExport SEXP cdfit_gaussian_edpp_batch(SEXP X_, SEXP y_, SEXP row_idx_, SEXP 
                           (1 / lambda_prev + 1 / lambda[l]) / 2, m, alpha, col_idx);
       }
       n_reject[l] = sum(discard_beta, p);
-      if(n_reject[l] < p - dfmax * 2) { // Recalculate SEDPP if not discarding enough
+      if(n_reject[l] < n_reject[l-1] - 0.1 * p) { // Recalculate SEDPP if not discarding enough
         SEDPP = true;
 	lambda_prev = lambda[l-1];
 	c = (lambda_prev - lambda[l]) / lambda_prev / lambda[l];
@@ -198,8 +198,8 @@ RcppExport SEXP cdfit_gaussian_edpp_batch(SEXP X_, SEXP y_, SEXP row_idx_, SEXP 
         for(j = 0; j < p; j ++) {
           jj = col_idx[j];
           Xtr[j] = crossprod_resid(xMat, r, sumResid, row_idx, center[jj], scale[jj], n, jj);
-          lhs2[j] = Xty[j] - ytyhat / yhat_norm2 * 
-            crossprod_bm(xMat, yhat, row_idx, center[jj], scale[jj], n, jj);
+          lhs2[j] = Xty[j] - ytyhat / yhat_norm2 * (Xty[j] - Xtr[j]);
+            //crossprod_bm(xMat, yhat, row_idx, center[jj], scale[jj], n, jj);
         }
         rhs2 = sqrt(n * (y_norm2 - ytyhat * ytyhat / yhat_norm2));
         // Reapply SEDPP
