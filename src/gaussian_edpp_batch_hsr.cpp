@@ -3,23 +3,37 @@
 // apply EDPP 
 
 void edpp_screen_batch(int *discard_beta, int n, int p, double rhs2, double *Xtr, double *lhs2,
-		       double c, double c1, double *m, double alpha, vector<int> &col_idx) {
+		       double c, double c1, double *m, double alpha, vector<int> &col_idx);/* {
   int j;
   for(j = 0; j < p; j ++) {
-    if(fabs(c1 * Xtr[j] + c / 2 * lhs2[j]) < n * alpha * m[col_idx[j]] - c / 2 * rhs2) {
+    if(fabs(c1 * Xtr[j] + c / 2 * lhs2[j]) < n - c / 2 * rhs2) {
       discard_beta[j] = 1;
     } else {
       discard_beta[j] = 0;
     }
   }
 }
+*/
 
+void update_zj(vector<double> &z,
+               int *reject, int *reject_old,
+               XPtr<BigMatrix> xpMat, int *row_idx,vector<int> &col_idx,
+               NumericVector &center, NumericVector &scale, 
+               double sumResid, double *r, double *m, int n, int p);
+
+int check_strong_set(int *ever_active, int *strong_set, vector<double> &z, XPtr<BigMatrix> xpMat, 
+                     int *row_idx, vector<int> &col_idx,
+                     NumericVector &center, NumericVector &scale, double *a,
+                     double lambda, double sumResid, double alpha, 
+                     double *r, double *m, int n, int p);
+  
 // check edpp set
+/*
 int check_edpp_set(int *ever_active, int *discard_beta, vector<double> &z, 
                    XPtr<BigMatrix> xpMat, int *row_idx, vector<int> &col_idx,
                    NumericVector &center, NumericVector &scale, double *a,
                    double lambda, double sumResid, double alpha, 
-                   double *r, double *m, int n, int p);/* {
+                   double *r, double *m, int n, int p); {
   MatrixAccessor<double> xAcc(*xpMat);
   double *xCol, sum, l1, l2;
   int j, jj, violations = 0;
@@ -45,8 +59,38 @@ int check_edpp_set(int *ever_active, int *discard_beta, vector<double> &z,
   return violations;
 }*/
 
+int check_edpp_rest_set(int *ever_active, int *strong_set, int *discard_beta, vector<double> &z,
+			XPtr<BigMatrix> xpMat, int *row_idx, vector<int> &col_idx,
+			NumericVector &center, NumericVector &scale, double *a, double lambda,
+			double sumResid, double alpha, double *r, double *m, int n, int p) {
+  
+  MatrixAccessor<double> xAcc(*xpMat);
+  double *xCol, sum, l1, l2;
+  int j, jj, violations = 0;
+  #pragma omp parallel for private(j, sum, l1, l2) reduction(+:violations) schedule(static) 
+  for (j = 0; j < p; j++) {
+    if (strong_set[j] == 0 && discard_beta[j] == 0) {
+      jj = col_idx[j];
+      xCol = xAcc[jj];
+      sum = 0.0;
+      for (int i=0; i < n; i++) {
+        sum = sum + xCol[row_idx[i]] * r[i];
+      }
+      z[j] = (sum - center[jj] * sumResid) / (scale[jj] * n);
+      
+      l1 = lambda * m[jj] * alpha;
+      l2 = lambda * m[jj] * (1 - alpha);
+      if (fabs(z[j] - a[j] * l2) > l1) {
+        ever_active[j] = strong_set[j] = 1;
+        violations++;
+      }
+    }
+  }
+  return violations;
+}
+
 // Coordinate descent for gaussian models
-RcppExport SEXP cdfit_gaussian_edpp_batch(SEXP X_, SEXP y_, SEXP row_idx_, SEXP lambda_, 
+RcppExport SEXP cdfit_gaussian_edpp_batch_hsr(SEXP X_, SEXP y_, SEXP row_idx_, SEXP lambda_, 
                                            SEXP nlambda_, SEXP lam_scale_,
                                            SEXP lambda_min_, SEXP alpha_, 
                                            SEXP user_, SEXP eps_, SEXP max_iter_, 
@@ -101,12 +145,15 @@ RcppExport SEXP cdfit_gaussian_edpp_batch(SEXP X_, SEXP y_, SEXP row_idx_, SEXP 
   NumericVector loss(L);
   IntegerVector iter(L);
   IntegerVector n_reject(L);
+  IntegerVector n_safe_reject(L);
   
   double l1, l2, shift;
   double max_update, update, thresh; // for convergence check
   int i, j, jj, l, violations, lstart; //temp index
   int *ever_active = Calloc(p, int); // ever-active set
+  int *strong_set = Calloc(p, int); // strong set
   int *discard_beta = Calloc(p, int); // index set of discarded features;
+  int *discard_old = Calloc(p, int);
   double *r = Calloc(n, double);
   for (i = 0; i < n; i++) r[i] = y[i];
   double sumResid = sum(r, n);
@@ -129,7 +176,9 @@ RcppExport SEXP cdfit_gaussian_edpp_batch(SEXP X_, SEXP y_, SEXP row_idx_, SEXP 
   double y_norm2 = 0; // ||y||^2
   for(i = 0; i < n; i++) y_norm2 += y[i] * y[i];
   bool SEDPP = false; // Whether using SEDPP or BEDPP
+  double cutoff = 0; // cutoff for strong rule
   int gain = 0; // gain from recalculating SEDPP
+  
   // lambda, equally spaced on log scale
   if (user == 0) {
     if (lam_scale) {
@@ -148,6 +197,7 @@ RcppExport SEXP cdfit_gaussian_edpp_batch(SEXP X_, SEXP y_, SEXP row_idx_, SEXP 
       }
     }
     lstart = 1;
+    n_safe_reject[0] = p;
     n_reject[0] = p;
   } else {
     lstart = 0;
@@ -170,8 +220,8 @@ RcppExport SEXP cdfit_gaussian_edpp_batch(SEXP X_, SEXP y_, SEXP row_idx_, SEXP 
       }
       if (nv > dfmax) {
         for (int ll=l; ll<L; ll++) iter[ll] = NA_INTEGER;
-	Free(ever_active); Free(r); Free(a); Free(discard_beta); Free(lhs2); Free(Xty); Free(Xtr); Free(yhat);
-        return List::create(beta, center, scale, lambda, loss, iter,  n_reject, Rcpp::wrap(col_idx));
+	Free(ever_active); Free(r); Free(a); Free(discard_beta); Free(lhs2); Free(Xty); Free(Xtr); Free(yhat); Free(discard_old); Free(strong_set);
+        return List::create(beta, center, scale, lambda, loss, iter,  n_reject, n_safe_reject, Rcpp::wrap(col_idx));
       }
       // Apply EDPP to discard features
       if(SEDPP) { // Apply SEDPP check
@@ -181,8 +231,8 @@ RcppExport SEXP cdfit_gaussian_edpp_batch(SEXP X_, SEXP y_, SEXP row_idx_, SEXP 
         edpp_screen_batch(discard_beta, n, p, rhs2, Xtr, lhs2, c,
                           (1 / lambda[l_prev] + 1 / lambda[l]) / 2, m, alpha, col_idx);
       }
-      n_reject[l] = sum(discard_beta, p);
-      gain += n_reject[l_prev + 1] - n_reject[l];
+      n_safe_reject[l] = sum(discard_beta, p);
+      gain += n_safe_reject[l_prev + 1] - n_safe_reject[l];
       if(gain > 1.0 * p) { // Recalculate SEDPP if not discarding enough
         SEDPP = true;
 	l_prev = l-1;
@@ -206,7 +256,7 @@ RcppExport SEXP cdfit_gaussian_edpp_batch(SEXP X_, SEXP y_, SEXP row_idx_, SEXP 
         // Reapply SEDPP
         edpp_screen_batch(discard_beta, n, p, rhs2, Xtr, lhs2, c,
                           1 / lambda[l_prev], m, alpha, col_idx);
-        n_reject[l] = sum(discard_beta, p);
+        n_safe_reject[l] = sum(discard_beta, p);
 	gain = 0;
       }
     } else { //First check with lambda max
@@ -214,59 +264,78 @@ RcppExport SEXP cdfit_gaussian_edpp_batch(SEXP X_, SEXP y_, SEXP row_idx_, SEXP 
       for(j = 0; j < p; j ++) {
         jj = col_idx[j];
         xjtx = crossprod_bm_Xj_Xk(xMat, row_idx, center, scale, n, jj, xmax_idx);
-        lhs2[j] = -xty * lambda[l] * xjtx * m[col_idx[j]] * alpha;
+        lhs2[j] = -xty * lambda[l] * xjtx;
       }
-      rhs2 = sqrt(n * y_norm2 - pow(n * lambda[l] * alpha, 2));
+      rhs2 = sqrt(n * y_norm2 - pow(n * lambda[l], 2));
       edpp_screen_batch(discard_beta, n, p, rhs2, Xtr, lhs2, c,
                         1 / lambda[l_prev], m, alpha, col_idx);
-      n_reject[l] = sum(discard_beta, p);
+      n_safe_reject[l] = sum(discard_beta, p);
       gain = 0;
     }
-     
-    while (iter[l] < max_iter) {
+    
+    // strong set
+    update_zj(z, discard_beta, discard_old, xMat, row_idx, col_idx, center, scale, 
+	      sumResid, r, m, n, p);
+    if(l != lstart) cutoff = 2 * lambda[l] - lambda[l-1];
+    for(j = 0; j < p; j++) {
+      if(discard_beta[j]) continue;
+      if(fabs(z[j]) > cutoff * alpha * m[col_idx[j]]) {
+	strong_set[j] = 1;
+      } else {
+	strong_set[j] = 0;
+      }
+    }
+    n_reject[l] = p - sum(strong_set, p);
+    for(j = 0; j < p; j++) discard_old[j] = discard_beta[j];
+    
+    while(iter[l] < max_iter) {
       while (iter[l] < max_iter) {
-        iter[l]++;
+	while (iter[l] < max_iter) {
+	  iter[l]++;
         
-        max_update = 0.0;
-        for (j = 0; j < p; j++) {
-          if (ever_active[j]) {
-            jj = col_idx[j];
-            z[j] = crossprod_resid(xMat, r, sumResid, row_idx, center[jj], scale[jj], n, jj) / n + a[j];
-            l1 = lambda[l] * m[jj] * alpha;
-            l2 = lambda[l] * m[jj] * (1-alpha);
-            beta(j, l) = lasso(z[j], l1, l2, 1);
-            
-            shift = beta(j, l) - a[j];
-            if (shift != 0) {
-              // compute objective update for checking convergence
-              //update =  z[j] * shift - 0.5 * (1 + l2) * (pow(beta(j, l+1), 2) - pow(a[j], 2)) - l1 * (fabs(beta(j, l+1)) -  fabs(a[j]));
-              update = pow(beta(j, l) - a[j], 2);
-              if (update > max_update) {
-                max_update = update;
-              }
-              update_resid(xMat, r, shift, row_idx, center[jj], scale[jj], n, jj);
-              sumResid = sum(r, n); //update sum of residual
-              a[j] = beta(j, l); //update a
-            }
-            // update ever active sets
-            if (beta(j, l) != 0) {
-              ever_active[j] = 1;
-            } 
-          }
-        }
-        // Check for convergence
-        if (max_update < thresh) break;
+	  max_update = 0.0;
+	  for (j = 0; j < p; j++) {
+	    if (ever_active[j]) {
+	      jj = col_idx[j];
+	      z[j] = crossprod_resid(xMat, r, sumResid, row_idx, center[jj], scale[jj], n, jj) / n + a[j];
+	      l1 = lambda[l] * m[jj] * alpha;
+	      l2 = lambda[l] * m[jj] * (1-alpha);
+	      beta(j, l) = lasso(z[j], l1, l2, 1);
+	      
+	      shift = beta(j, l) - a[j];
+	      if (shift != 0) {
+		// compute objective update for checking convergence
+		//update =  z[j] * shift - 0.5 * (1 + l2) * (pow(beta(j, l+1), 2) - pow(a[j], 2)) - l1 * (fabs(beta(j, l+1)) -  fabs(a[j]));
+		update = pow(beta(j, l) - a[j], 2);
+		if (update > max_update) {
+		  max_update = update;
+		}
+		update_resid(xMat, r, shift, row_idx, center[jj], scale[jj], n, jj);
+		sumResid = sum(r, n); //update sum of residual
+		a[j] = beta(j, l); //update a
+	      }
+	      // update ever active sets
+	      if (beta(j, l) != 0) {
+		ever_active[j] = 1;
+	      } 
+	    }
+	  }
+	  // Check for convergence
+	  if (max_update < thresh) break;
+	}
+	violations = check_strong_set(ever_active, strong_set, z, xMat, row_idx, col_idx, center, scale, a, lambda[l], sumResid, alpha, r, m, n, p); 
+        if (violations==0) break;
+      }	
+	// Scan for violations in edpp set
+      violations = check_edpp_rest_set(ever_active, strong_set, discard_beta, z, xMat, row_idx, col_idx, center, scale, a, lambda[l], sumResid, alpha, r, m, n, p); 
+      if (violations == 0) {
+	loss[l] = gLoss(r, n);
+	break;
       }
       
-      // Scan for violations in edpp set
-      violations = check_edpp_set(ever_active, discard_beta, z, xMat, row_idx, col_idx, center, scale, a, lambda[l], sumResid, alpha, r, m, n, p); 
-      if (violations == 0) {
-        loss[l] = gLoss(r, n);
-        break;
-      }
     }
   }
   
-  Free(ever_active); Free(r); Free(a); Free(discard_beta); Free(lhs2); Free(Xty); Free(Xtr); Free(yhat);
-  return List::create(beta, center, scale, lambda, loss, iter, n_reject, Rcpp::wrap(col_idx));
+  Free(ever_active); Free(r); Free(a); Free(discard_beta); Free(lhs2); Free(Xty); Free(Xtr); Free(yhat); Free(discard_old); Free(strong_set);
+  return List::create(beta, center, scale, lambda, loss, iter, n_reject, n_safe_reject, Rcpp::wrap(col_idx));
 }

@@ -158,7 +158,7 @@ biglasso <- function(X, y, row.idx = 1:nrow(X),
                      screen = c("SSR", "SEDPP", "SSR-BEDPP", "SSR-Slores", 
                                 "SSR-Dome", "None", "NS-NAC", "SSR-NAC", 
                                 "SEDPP-NAC", "SSR-Dome-NAC", "SSR-BEDPP-NAC",
-                                "SSR-Slores-NAC", "SEDPP-Batch"),
+                                "SSR-Slores-NAC", "SEDPP-Batch", "SEDPP-Batch-SSR"),
                      safe.thresh = 0, ncores = 1, alpha = 1,
                      lambda.min = ifelse(nrow(X) > ncol(X),.001,.05), 
                      nlambda = 100, lambda.log.scale = TRUE,
@@ -183,7 +183,7 @@ biglasso <- function(X, y, row.idx = 1:nrow(X),
     if (alpha >= 1 || alpha <= 0) {
       stop("alpha must be between 0 and 1 for elastic net penalty.")
     }
-    if (family == 'gaussian' && (!screen %in% c("SSR", "SSR-BEDPP", "SEDPP-Batch"))) {
+    if (family == 'gaussian' && (!screen %in% c("SSR", "SSR-BEDPP", "SEDPP-Batch", "SEDPP-Batch-SSR"))) {
       screen <- "SSR"
     } 
   }
@@ -259,6 +259,15 @@ biglasso <- function(X, y, row.idx = 1:nrow(X),
                },
                "SEDPP-Batch" = {
                  res <- .Call("cdfit_gaussian_edpp_batch", X@address, yy, as.integer(row.idx-1),
+                              lambda, as.integer(nlambda), as.integer(lambda.log.scale),
+                              lambda.min, alpha,
+                              as.integer(user.lambda | any(penalty.factor==0)),
+                              eps, as.integer(max.iter), penalty.factor,
+                              as.integer(dfmax), as.integer(ncores),
+                              PACKAGE = 'biglasso')
+               },
+               "SEDPP-Batch-SSR" = {
+                 res <- .Call("cdfit_gaussian_edpp_batch_hsr", X@address, yy, as.integer(row.idx-1),
                               lambda, as.integer(nlambda), as.integer(lambda.log.scale),
                               lambda.min, alpha,
                               as.integer(user.lambda | any(penalty.factor==0)),
@@ -356,7 +365,7 @@ biglasso <- function(X, y, row.idx = 1:nrow(X),
     iter <- res[[6]]
     rejections <- res[[7]]
     
-    if (screen %in% c("SSR-Dome", "SSR-BEDPP", "SSR-Dome-NAC", "SSR-BEDPP-NAC")) {
+    if (screen %in% c("SSR-Dome", "SSR-BEDPP", "SSR-Dome-NAC", "SSR-BEDPP-NAC", "SEDPP-Batch-SSR")) {
       safe_rejections <- res[[8]]
       col.idx <- res[[9]]
     } else {
@@ -473,7 +482,7 @@ biglasso <- function(X, y, row.idx = 1:nrow(X),
   
   if (screen %in% c("SSR-Dome", "SSR-Dome-NAC", 
                     "SSR-BEDPP", "SSR-BEDPP-NAC", 
-                    "SSR-Slores", "SSR-Slores-NAC")) {
+                    "SSR-Slores", "SSR-Slores-NAC", "SEDPP-Batch-SSR")) {
     return.val$safe_rejections <- safe_rejections
   } 
   if (return.time) return.val$time <- as.numeric(time['elapsed'])
