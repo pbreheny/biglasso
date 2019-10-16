@@ -91,10 +91,10 @@ int check_edpp_rest_set(int *ever_active, int *strong_set, int *discard_beta, ve
 
 // Coordinate descent for gaussian models
 RcppExport SEXP cdfit_gaussian_edpp_batch_hsr(SEXP X_, SEXP y_, SEXP row_idx_, SEXP lambda_, 
-                                           SEXP nlambda_, SEXP lam_scale_,
-                                           SEXP lambda_min_, SEXP alpha_, 
-                                           SEXP user_, SEXP eps_, SEXP max_iter_, 
-                                           SEXP multiplier_, SEXP dfmax_, SEXP ncore_) {
+					      SEXP nlambda_, SEXP lam_scale_,
+					      SEXP lambda_min_, SEXP alpha_, 
+					      SEXP user_, SEXP eps_, SEXP max_iter_, 
+					      SEXP multiplier_, SEXP dfmax_, SEXP ncore_, SEXP safe_thresh_) {
   XPtr<BigMatrix> xMat(X_);
   double *y = REAL(y_);
   int *row_idx = INTEGER(row_idx_);
@@ -109,6 +109,7 @@ RcppExport SEXP cdfit_gaussian_edpp_batch_hsr(SEXP X_, SEXP y_, SEXP row_idx_, S
   int max_iter = INTEGER(max_iter_)[0];
   double *m = REAL(multiplier_);
   int dfmax = INTEGER(dfmax_)[0];
+  double safe_thresh = REAL(safe_thresh_)[0];
   
   NumericVector lambda(L);
   NumericVector center(p);
@@ -233,7 +234,7 @@ RcppExport SEXP cdfit_gaussian_edpp_batch_hsr(SEXP X_, SEXP y_, SEXP row_idx_, S
       }
       n_safe_reject[l] = sum(discard_beta, p);
       gain += n_safe_reject[l_prev + 1] - n_safe_reject[l];
-      if(gain > 1.0 * p) { // Recalculate SEDPP if not discarding enough
+      if(gain > (1.0 - safe_thresh) * p) { // Recalculate SEDPP if not discarding enough
         SEDPP = true;
 	l_prev = l-1;
 	c = (lambda[l_prev] - lambda[l]) / lambda[l_prev] / lambda[l];
