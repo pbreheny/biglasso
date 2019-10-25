@@ -1,5 +1,5 @@
 #include "utilities.h"
-#include "gperftools/profiler.h"
+//#include "gperftools/profiler.h"
 
 // apply EDPP 
 
@@ -75,7 +75,7 @@ RcppExport SEXP cdfit_gaussian_edpp_batch(SEXP X_, SEXP y_, SEXP row_idx_, SEXP 
 					  SEXP lambda_min_, SEXP alpha_, 
 					  SEXP user_, SEXP eps_, SEXP max_iter_, 
 					  SEXP multiplier_, SEXP dfmax_, SEXP ncore_, SEXP safe_thresh_) {
-  ProfilerStart("SEDPP-Batch.out");
+  //ProfilerStart("SEDPP-Batch.out");
   XPtr<BigMatrix> xMat(X_);
   double *y = REAL(y_);
   int *row_idx = INTEGER(row_idx_);
@@ -288,6 +288,6 @@ RcppExport SEXP cdfit_gaussian_edpp_batch(SEXP X_, SEXP y_, SEXP row_idx_, SEXP 
   }
   
   Free(ever_active); Free(r); Free(a); Free(discard_beta); Free(lhs2); Free(Xty); Free(Xtr); Free(yhat);
-  ProfilerStop();
+  //ProfilerStop();
   return List::create(beta, center, scale, lambda, loss, iter, n_reject, Rcpp::wrap(col_idx));
 }
