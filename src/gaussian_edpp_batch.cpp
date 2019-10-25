@@ -1,4 +1,5 @@
 #include "utilities.h"
+#include "gperftools/profiler.h"
 
 // apply EDPP 
 
@@ -45,12 +46,36 @@ int check_edpp_set(int *ever_active, int *discard_beta, vector<double> &z,
   return violations;
 }*/
 
+//Recalculate SEDPP rule
+void sedpp_recal(XPtr<BigMatrix> xpMat, double *r, double sumResid, double *lhs2, double *Xty,
+		 double *Xtr, double *yhat, double ytyhat, double yhat_norm2,
+		 int *row_idx, vector<int>& col_idx, NumericVector& center, 
+               NumericVector& scale, int n, int p) {
+  MatrixAccessor<double> xAcc(*xpMat);
+  double *xCol;
+  int j, jj;
+  double sum;
+  #pragma omp parallel for schedule(static) private(j, jj, xCol, sum)
+  for(j = 0; j < p; j++){
+    jj = col_idx[j];
+    xCol = xAcc[jj];
+    sum = 0.0;
+    for(int i = 0; i < n; i++) {
+      sum = sum + xCol[row_idx[i]] * r[i];
+    }
+    sum = (sum - center[jj] * sumResid) / scale[jj];
+    Xtr[j] = sum;
+    lhs2[j] = Xty[j] - ytyhat / yhat_norm2 * (Xty[j] - sum);
+  }
+}
+
 // Coordinate descent for gaussian models
 RcppExport SEXP cdfit_gaussian_edpp_batch(SEXP X_, SEXP y_, SEXP row_idx_, SEXP lambda_, 
 					  SEXP nlambda_, SEXP lam_scale_,
 					  SEXP lambda_min_, SEXP alpha_, 
 					  SEXP user_, SEXP eps_, SEXP max_iter_, 
 					  SEXP multiplier_, SEXP dfmax_, SEXP ncore_, SEXP safe_thresh_) {
+  ProfilerStart("SEDPP-Batch.out");
   XPtr<BigMatrix> xMat(X_);
   double *y = REAL(y_);
   int *row_idx = INTEGER(row_idx_);
@@ -195,14 +220,8 @@ RcppExport SEXP cdfit_gaussian_edpp_batch(SEXP X_, SEXP y_, SEXP row_idx_, SEXP 
           yhat_norm2 += yhat[i] * yhat[i];
           ytyhat += y[i] * yhat[i];
         }
-        #pragma omp parallel for schedule(static) default(none) private(j, jj) \
-	  shared(col_idx, Xtr, xMat, r, sumResid, row_idx, center, scale, n, p, lhs2, Xty, yhat, ytyhat, yhat_norm2) 
-        for(j = 0; j < p; j ++) {
-          jj = col_idx[j];
-          Xtr[j] = crossprod_resid(xMat, r, sumResid, row_idx, center[jj], scale[jj], n, jj);
-          lhs2[j] = Xty[j] - ytyhat / yhat_norm2 * (Xty[j] - Xtr[j]);
-            //crossprod_bm(xMat, yhat, row_idx, center[jj], scale[jj], n, jj);
-        }
+	sedpp_recal(xMat, r, sumResid, lhs2, Xty, Xtr, yhat, ytyhat, yhat_norm2, row_idx, col_idx,
+		    center, scale, n, p);
         rhs2 = sqrt(n * (y_norm2 - ytyhat * ytyhat / yhat_norm2));
         // Reapply SEDPP
         edpp_screen_batch(discard_beta, n, p, rhs2, Xtr, lhs2, c,
@@ -269,5 +288,6 @@ RcppExport SEXP cdfit_gaussian_edpp_batch(SEXP X_, SEXP y_, SEXP row_idx_, SEXP 
   }
   
   Free(ever_active); Free(r); Free(a); Free(discard_beta); Free(lhs2); Free(Xty); Free(Xtr); Free(yhat);
+  ProfilerStop();
   return List::create(beta, center, scale, lambda, loss, iter, n_reject, Rcpp::wrap(col_idx));
 }
