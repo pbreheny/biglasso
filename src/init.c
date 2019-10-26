@@ -52,13 +52,13 @@ extern SEXP cdfit_gaussian_edpp_batch(SEXP X_, SEXP y_, SEXP row_idx_, SEXP lamb
 				      SEXP nlambda_, SEXP lam_scale_,
 				      SEXP lambda_min_, SEXP alpha_, 
 				      SEXP user_, SEXP eps_, SEXP max_iter_, 
-				      SEXP multiplier_, SEXP dfmax_, SEXP ncore_, SEXP safe_thresh_);
+				      SEXP multiplier_, SEXP dfmax_, SEXP ncore_, SEXP recal_thresh_);
 
 extern SEXP cdfit_gaussian_edpp_batch_hsr(SEXP X_, SEXP y_, SEXP row_idx_, SEXP lambda_, 
 					  SEXP nlambda_, SEXP lam_scale_,
 					  SEXP lambda_min_, SEXP alpha_, 
 					  SEXP user_, SEXP eps_, SEXP max_iter_, 
-					  SEXP multiplier_, SEXP dfmax_, SEXP ncore_, SEXP safe_thresh);
+					  SEXP multiplier_, SEXP dfmax_, SEXP ncore_, SEXP recal_thresh);
 
 extern SEXP cdfit_gaussian_hsr(SEXP X_, SEXP y_, SEXP row_idx_, 
                                SEXP lambda_, SEXP nlambda_, 

@@ -101,7 +101,7 @@ RcppExport SEXP cdfit_gaussian_edpp_batch_hsr(SEXP X_, SEXP y_, SEXP row_idx_, S
 					      SEXP nlambda_, SEXP lam_scale_,
 					      SEXP lambda_min_, SEXP alpha_, 
 					      SEXP user_, SEXP eps_, SEXP max_iter_, 
-					      SEXP multiplier_, SEXP dfmax_, SEXP ncore_, SEXP safe_thresh_) {
+					      SEXP multiplier_, SEXP dfmax_, SEXP ncore_, SEXP recal_thresh_) {
   //ProfilerStart("SEDPP-Batch-SSR.out");
   XPtr<BigMatrix> xMat(X_);
   double *y = REAL(y_);
@@ -117,7 +117,7 @@ RcppExport SEXP cdfit_gaussian_edpp_batch_hsr(SEXP X_, SEXP y_, SEXP row_idx_, S
   int max_iter = INTEGER(max_iter_)[0];
   double *m = REAL(multiplier_);
   int dfmax = INTEGER(dfmax_)[0];
-  double safe_thresh = REAL(safe_thresh_)[0];
+  double recal_thresh = REAL(recal_thresh_)[0];
   
   NumericVector lambda(L);
   NumericVector center(p);
@@ -232,17 +232,7 @@ RcppExport SEXP cdfit_gaussian_edpp_batch_hsr(SEXP X_, SEXP y_, SEXP row_idx_, S
 	Free(ever_active); Free(r); Free(a); Free(discard_beta); Free(lhs2); Free(Xty); Free(Xtr); Free(yhat); Free(discard_old); Free(strong_set);
         return List::create(beta, center, scale, lambda, loss, iter,  n_reject, n_safe_reject, Rcpp::wrap(col_idx));
       }
-      // Apply EDPP to discard features
-      if(SEDPP) { // Apply SEDPP check
-        edpp_screen_batch(discard_beta, n, p, rhs2, Xtr, lhs2, c,
-                          1 / lambda[l_prev], m, alpha, col_idx);
-      } else { // Apply BEDPP check
-        edpp_screen_batch(discard_beta, n, p, rhs2, Xtr, lhs2, c,
-                          (1 / lambda[l_prev] + 1 / lambda[l]) / 2, m, alpha, col_idx);
-      }
-      n_safe_reject[l] = sum(discard_beta, p);
-      gain += n_safe_reject[l_prev + 1] - n_safe_reject[l];
-      if(gain > (1.0 - safe_thresh) * p) { // Recalculate SEDPP if not discarding enough
+      if(gain > recal_thresh * p) { // Recalculate SEDPP if not discarding enough
         SEDPP = true;
 	l_prev = l-1;
 	c = (lambda[l_prev] - lambda[l]) / lambda[l_prev] / lambda[l];
@@ -261,7 +251,19 @@ RcppExport SEXP cdfit_gaussian_edpp_batch_hsr(SEXP X_, SEXP y_, SEXP row_idx_, S
                           1 / lambda[l_prev], m, alpha, col_idx);
         n_safe_reject[l] = sum(discard_beta, p);
 	gain = 0;
+      } else {
+	// Apply EDPP to discard features
+	if(SEDPP) { // Apply SEDPP check
+	  edpp_screen_batch(discard_beta, n, p, rhs2, Xtr, lhs2, c,
+			    1 / lambda[l_prev], m, alpha, col_idx);
+	} else { // Apply BEDPP check
+	  edpp_screen_batch(discard_beta, n, p, rhs2, Xtr, lhs2, c,
+			    (1 / lambda[l_prev] + 1 / lambda[l]) / 2, m, alpha, col_idx);
+	}
+	n_safe_reject[l] = sum(discard_beta, p);
+	gain += n_safe_reject[l_prev + 1] - n_safe_reject[l];
       }
+      
     } else { //First check with lambda max
       double xjtx;
       for(j = 0; j < p; j ++) {

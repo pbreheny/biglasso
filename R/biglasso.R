@@ -53,6 +53,8 @@
 #' the total number of features. So 1 means to always turn off safe test,
 #' whereas 0 (default) means to turn off safe test if the number of features
 #' rejected by safe test is 0 at current lambda.
+#' @param recal.thresh the non negative threshold value that controls when to
+#' recalculate SEDPP rules. Smaller value means recalculating more often.
 #' @param ncores The number of OpenMP threads used for parallel computing.
 #' @param alpha The elastic-net mixing parameter that controls the relative
 #' contribution from the lasso (l1) and the ridge (l2) penalty. The penalty is
@@ -159,7 +161,7 @@ biglasso <- function(X, y, row.idx = 1:nrow(X),
                                 "SSR-Dome", "None", "NS-NAC", "SSR-NAC", 
                                 "SEDPP-NAC", "SSR-Dome-NAC", "SSR-BEDPP-NAC",
                                 "SSR-Slores-NAC", "SEDPP-Batch", "SEDPP-Batch-SSR"),
-                     safe.thresh = 0, ncores = 1, alpha = 1,
+                     safe.thresh = 0, recal.thresh = 0.5, ncores = 1, alpha = 1,
                      lambda.min = ifelse(nrow(X) > ncol(X),.001,.05), 
                      nlambda = 100, lambda.log.scale = TRUE,
                      lambda, eps = 1e-7, max.iter = 1000, 
@@ -263,7 +265,7 @@ biglasso <- function(X, y, row.idx = 1:nrow(X),
                               lambda.min, alpha,
                               as.integer(user.lambda | any(penalty.factor==0)),
                               eps, as.integer(max.iter), penalty.factor,
-                              as.integer(dfmax), as.integer(ncores), safe.thresh,
+                              as.integer(dfmax), as.integer(ncores), recal.thresh,
                               PACKAGE = 'biglasso')
                },
                "SEDPP-Batch-SSR" = {
@@ -272,7 +274,7 @@ biglasso <- function(X, y, row.idx = 1:nrow(X),
                               lambda.min, alpha,
                               as.integer(user.lambda | any(penalty.factor==0)),
                               eps, as.integer(max.iter), penalty.factor,
-                              as.integer(dfmax), as.integer(ncores), safe.thresh,
+                              as.integer(dfmax), as.integer(ncores), recal.thresh,
                               PACKAGE = 'biglasso')
                },
                "SSR" = {
