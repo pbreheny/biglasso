@@ -52,13 +52,13 @@ extern SEXP cdfit_gaussian_edpp_batch(SEXP X_, SEXP y_, SEXP row_idx_, SEXP lamb
 				      SEXP nlambda_, SEXP lam_scale_,
 				      SEXP lambda_min_, SEXP alpha_, 
 				      SEXP user_, SEXP eps_, SEXP max_iter_, 
-				      SEXP multiplier_, SEXP dfmax_, SEXP ncore_, SEXP recal_thresh_);
+				      SEXP multiplier_, SEXP dfmax_, SEXP ncore_, SEXP recal_thresh_, SEXP verbose_);
 
 extern SEXP cdfit_gaussian_edpp_batch_hsr(SEXP X_, SEXP y_, SEXP row_idx_, SEXP lambda_, 
 					  SEXP nlambda_, SEXP lam_scale_,
 					  SEXP lambda_min_, SEXP alpha_, 
 					  SEXP user_, SEXP eps_, SEXP max_iter_, 
-					  SEXP multiplier_, SEXP dfmax_, SEXP ncore_, SEXP recal_thresh);
+					  SEXP multiplier_, SEXP dfmax_, SEXP ncore_, SEXP recal_thresh, SEXP verbose_);
 
 extern SEXP cdfit_gaussian_hsr(SEXP X_, SEXP y_, SEXP row_idx_, 
                                SEXP lambda_, SEXP nlambda_, 
@@ -136,8 +136,8 @@ static R_CallMethodDef callMethods[] = {
   {"cdfit_binomial_hsr_slores_nac", (DL_FUNC) &cdfit_binomial_hsr_slores_nac, 19},
   {"cdfit_gaussian", (DL_FUNC) &cdfit_gaussian, 15},
   {"cdfit_gaussian_edpp_active", (DL_FUNC) &cdfit_gaussian_edpp_active, 14},
-  {"cdfit_gaussian_edpp_batch", (DL_FUNC) &cdfit_gaussian_edpp_batch, 15},
-  {"cdfit_gaussian_edpp_batch_hsr", (DL_FUNC) &cdfit_gaussian_edpp_batch_hsr, 15},
+  {"cdfit_gaussian_edpp_batch", (DL_FUNC) &cdfit_gaussian_edpp_batch, 16},
+  {"cdfit_gaussian_edpp_batch_hsr", (DL_FUNC) &cdfit_gaussian_edpp_batch_hsr, 16},
   {"cdfit_gaussian_hsr", (DL_FUNC) &cdfit_gaussian_hsr, 15},
   {"cdfit_gaussian_hsr_dome", (DL_FUNC) &cdfit_gaussian_hsr_dome, 16},
   {"cdfit_gaussian_hsr_bedpp", (DL_FUNC) &cdfit_gaussian_hsr_bedpp, 16},

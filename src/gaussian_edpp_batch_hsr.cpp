@@ -97,11 +97,10 @@ int check_edpp_rest_set(int *ever_active, int *strong_set, int *discard_beta, ve
 }
 
 // Coordinate descent for gaussian models
-RcppExport SEXP cdfit_gaussian_edpp_batch_hsr(SEXP X_, SEXP y_, SEXP row_idx_, SEXP lambda_, 
-					      SEXP nlambda_, SEXP lam_scale_,
-					      SEXP lambda_min_, SEXP alpha_, 
-					      SEXP user_, SEXP eps_, SEXP max_iter_, 
-					      SEXP multiplier_, SEXP dfmax_, SEXP ncore_, SEXP recal_thresh_) {
+RcppExport SEXP cdfit_gaussian_edpp_batch_hsr(SEXP X_, SEXP y_, SEXP row_idx_, SEXP lambda_, SEXP nlambda_,
+					      SEXP lam_scale_, SEXP lambda_min_, SEXP alpha_, SEXP user_,
+					      SEXP eps_, SEXP max_iter_, SEXP multiplier_, SEXP dfmax_,
+					      SEXP ncore_, SEXP recal_thresh_, SEXP verbose_) {
   //ProfilerStart("SEDPP-Batch-SSR.out");
   XPtr<BigMatrix> xMat(X_);
   double *y = REAL(y_);
@@ -113,6 +112,7 @@ RcppExport SEXP cdfit_gaussian_edpp_batch_hsr(SEXP X_, SEXP y_, SEXP row_idx_, S
   int lam_scale = INTEGER(lam_scale_)[0];
   int L = INTEGER(nlambda_)[0];
   int user = INTEGER(user_)[0];
+  int verbose = INTEGER(verbose_)[0];
   double eps = REAL(eps_)[0];
   int max_iter = INTEGER(max_iter_)[0];
   double *m = REAL(multiplier_);
@@ -142,11 +142,27 @@ RcppExport SEXP cdfit_gaussian_edpp_batch_hsr(SEXP X_, SEXP y_, SEXP row_idx_, S
   omp_set_dynamic(0);
   omp_set_num_threads(useCores);
 #endif
+
+  if (verbose) {
+    char buff1[100];
+    time_t now1 = time (0);
+    strftime (buff1, 100, "%Y-%m-%d %H:%M:%S.000", localtime (&now1));
+    Rprintf("\nPreprocessing start: %s\n", buff1);
+  }
   
   standardize_and_get_residual(center, scale, p_keep_ptr, col_idx, z, 
                                lambda_max_ptr, xmax_ptr, xMat, 
                                y, row_idx, lambda_min, alpha, n, p);
   p = p_keep; // set p = p_keep, only loop over columns whose scale > 1e-6
+
+  if (verbose) {
+    char buff1[100];
+    time_t now1 = time (0);
+    strftime (buff1, 100, "%Y-%m-%d %H:%M:%S.000", localtime (&now1));
+    Rprintf("Preprocessing end: %s\n", buff1);
+    Rprintf("\n-----------------------------------------------\n");
+  }
+
   
   // Objects to be returned to R
   arma::sp_mat beta = arma::sp_mat(p, L); //Beta
@@ -221,6 +237,13 @@ RcppExport SEXP cdfit_gaussian_edpp_batch_hsr(SEXP X_, SEXP y_, SEXP row_idx_, S
   
   // Path
   for (l = lstart; l < L; l++) {
+    if(verbose) {
+      // output time
+      char buff[100];
+      time_t now = time (0);
+      strftime (buff, 100, "%Y-%m-%d %H:%M:%S.000", localtime (&now));
+      Rprintf("Lambda %d. Now time: %s\n", l, buff);
+    }
     c = (lambda[l_prev] - lambda[l]) / lambda[l_prev] / lambda[l];
     if(l != lstart) {
       int nv = 0;
@@ -232,7 +255,14 @@ RcppExport SEXP cdfit_gaussian_edpp_batch_hsr(SEXP X_, SEXP y_, SEXP row_idx_, S
 	Free(ever_active); Free(r); Free(a); Free(discard_beta); Free(lhs2); Free(Xty); Free(Xtr); Free(yhat); Free(discard_old); Free(strong_set);
         return List::create(beta, center, scale, lambda, loss, iter,  n_reject, n_safe_reject, Rcpp::wrap(col_idx));
       }
-      if(gain > recal_thresh * p) { // Recalculate SEDPP if not discarding enough
+      if(gain > recal_thresh * p && l != L - 1) { // Recalculate SEDPP if not discarding enough
+	if(verbose) {
+          // output time
+          char buff[100];
+          time_t now = time (0);
+          strftime (buff, 100, "%Y-%m-%d %H:%M:%S.000", localtime (&now));
+          Rprintf("Start recalculating SEDPP rule at lambda %d. Now time: %s\n", l, buff);
+        }
         SEDPP = true;
 	l_prev = l-1;
 	c = (lambda[l_prev] - lambda[l]) / lambda[l_prev] / lambda[l];
@@ -246,6 +276,14 @@ RcppExport SEXP cdfit_gaussian_edpp_batch_hsr(SEXP X_, SEXP y_, SEXP row_idx_, S
 	sedpp_recal(xMat, r, sumResid, lhs2, Xty, Xtr, yhat, ytyhat, yhat_norm2, row_idx, col_idx,
 		    center, scale, n, p);
         rhs2 = sqrt(n * (y_norm2 - ytyhat * ytyhat / yhat_norm2));
+	if(verbose) {
+          // output time
+          char buff[100];
+          time_t now = time (0);
+          strftime (buff, 100, "%Y-%m-%d %H:%M:%S.000", localtime (&now));
+          Rprintf("Done recalculating SEDPP rule at lambda %d. Now time: %s\n", l, buff);
+        }
+
         // Reapply SEDPP
         edpp_screen_batch(discard_beta, n, p, rhs2, Xtr, lhs2, c,
                           1 / lambda[l_prev], m, alpha, col_idx);
@@ -265,6 +303,13 @@ RcppExport SEXP cdfit_gaussian_edpp_batch_hsr(SEXP X_, SEXP y_, SEXP row_idx_, S
       }
       
     } else { //First check with lambda max
+      if(verbose) {
+        // output time
+        char buff[100];
+        time_t now = time (0);
+        strftime (buff, 100, "%Y-%m-%d %H:%M:%S.000", localtime (&now));
+        Rprintf("Start calculating BEDPP rule. Now time: %s\n", buff);
+      }
       double xjtx;
       for(j = 0; j < p; j ++) {
         jj = col_idx[j];
@@ -272,6 +317,13 @@ RcppExport SEXP cdfit_gaussian_edpp_batch_hsr(SEXP X_, SEXP y_, SEXP row_idx_, S
         lhs2[j] = -xty * lambda[l] * xjtx;
       }
       rhs2 = sqrt(n * y_norm2 - pow(n * lambda[l], 2));
+      if(verbose) {
+        // output time
+        char buff[100];
+        time_t now = time (0);
+        strftime (buff, 100, "%Y-%m-%d %H:%M:%S.000", localtime (&now));
+        Rprintf("Done calculating BEDPP rule. Now time: %s\n", buff);
+      }
       edpp_screen_batch(discard_beta, n, p, rhs2, Xtr, lhs2, c,
                         1 / lambda[l_prev], m, alpha, col_idx);
       n_safe_reject[l] = sum(discard_beta, p);
