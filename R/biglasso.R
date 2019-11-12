@@ -85,6 +85,7 @@
 #' coefficients are thought to be more likely than others to be in the model.
 #' Current package doesn't allow unpenalized coefficients. That
 #' is\code{penalty.factor} cannot be 0.
+#' @param weights Vector of weights. It should be the same length as \code{row.idx}.
 #' @param warn Return warning messages for failures to converge and model
 #' saturation?  Default is TRUE.
 #' @param output.time Whether to print out the start and end time of the model
@@ -157,7 +158,7 @@ biglasso <- function(X, y, row.idx = 1:nrow(X),
                      penalty = c("lasso", "ridge", "enet"),
                      family = c("gaussian","binomial"), 
                      alg.logistic = c("Newton", "MM"),
-                     screen = c("SSR", "SEDPP", "SSR-BEDPP", "SSR-Slores", 
+                     screen = c("SSR", "SEDPP", "SSR-BEDPP", "SSR-Slores", "SSR-Slores-Batch",
                                 "SSR-Dome", "None", "NS-NAC", "SSR-NAC", 
                                 "SEDPP-NAC", "SSR-Dome-NAC", "SSR-BEDPP-NAC",
                                 "SSR-Slores-NAC", "SEDPP-Batch", "SEDPP-Batch-SSR"),
@@ -166,7 +167,8 @@ biglasso <- function(X, y, row.idx = 1:nrow(X),
                      nlambda = 100, lambda.log.scale = TRUE,
                      lambda, eps = 1e-7, max.iter = 1000, 
                      dfmax = ncol(X)+1,
-                     penalty.factor = rep(1, ncol(X)), 
+                     penalty.factor = rep(1, ncol(X)),
+                     weights = rep(1, length(row.idx)) / length(row.idx),
                      warn = TRUE, output.time = FALSE,
                      return.time = TRUE,
                      verbose = FALSE) {
@@ -225,6 +227,8 @@ biglasso <- function(X, y, row.idx = 1:nrow(X),
   storage.mode(penalty.factor) <- "double"
   
   n <- length(row.idx) ## subset of X. idx: indices of rows.
+  if(length(weights) != n) stop("weights does not match up with row.idx or X.")
+  weights = abs(weights) / sum(abs(weights))  
   if (missing(lambda)) {
     user.lambda <- FALSE
     lambda <- rep(0.0, nlambda);
@@ -404,8 +408,16 @@ biglasso <- function(X, y, row.idx = 1:nrow(X),
                        as.integer(dfmax), as.integer(ncores), as.integer(warn), safe.thresh,
                        as.integer(verbose),
                        PACKAGE = 'biglasso')
-        } 
-        else {
+        } else if(screen == "SSR-Slores-Batch") {
+          res <- .Call("cdfit_binomial_hsr_slores_batch", X@address, yy, as.integer(n.pos),
+                       as.integer(ylab), as.integer(row.idx-1), 
+                       lambda, as.integer(nlambda), as.integer(lambda.log.scale),
+                       lambda.min, alpha, as.integer(user.lambda | any(penalty.factor==0)),
+                       eps, as.integer(max.iter), penalty.factor, 
+                       as.integer(dfmax), as.integer(ncores), as.integer(warn), safe.thresh,
+                       recal.thresh, as.integer(verbose),
+                       PACKAGE = 'biglasso')
+        } else {
           res <- .Call("cdfit_binomial_hsr", X@address, yy, as.integer(row.idx-1), 
                        lambda, as.integer(nlambda), as.integer(lambda.log.scale),
                        lambda.min, alpha, as.integer(user.lambda | any(penalty.factor==0)),
@@ -426,7 +438,7 @@ biglasso <- function(X, y, row.idx = 1:nrow(X),
     iter <- res[[7]]
     rejections <- res[[8]]
     
-    if (screen %in% c("SSR-Slores", "SSR-Slores-NAC")) {
+    if (screen %in% c("SSR-Slores", "SSR-Slores-Batch" ,"SSR-Slores-NAC")) {
       safe_rejections <- res[[9]]
       col.idx <- res[[10]]
     } else {
@@ -483,7 +495,7 @@ biglasso <- function(X, y, row.idx = 1:nrow(X),
   )
   
   if (screen %in% c("SSR-Dome", "SSR-Dome-NAC", 
-                    "SSR-BEDPP", "SSR-BEDPP-NAC", 
+                    "SSR-BEDPP", "SSR-BEDPP-NAC", "SSR-Slores-Batch",
                     "SSR-Slores", "SSR-Slores-NAC", "SEDPP-Batch-SSR")) {
     return.val$safe_rejections <- safe_rejections
   } 
