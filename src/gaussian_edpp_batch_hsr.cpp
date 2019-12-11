@@ -255,7 +255,7 @@ RcppExport SEXP cdfit_gaussian_edpp_batch_hsr(SEXP X_, SEXP y_, SEXP row_idx_, S
 	Free(ever_active); Free(r); Free(a); Free(discard_beta); Free(lhs2); Free(Xty); Free(Xtr); Free(yhat); Free(discard_old); Free(strong_set);
         return List::create(beta, center, scale, lambda, loss, iter,  n_reject, n_safe_reject, Rcpp::wrap(col_idx));
       }
-      if(gain > recal_thresh * p && l != L - 1) { // Recalculate SEDPP if not discarding enough
+      if(gain - n_safe_reject[l - 1] * (l - l_prev) > recal_thresh * p && l != L - 1) { // Recalculate SEDPP if not discarding enough
 	if(verbose) {
           // output time
           char buff[100];
@@ -289,7 +289,7 @@ RcppExport SEXP cdfit_gaussian_edpp_batch_hsr(SEXP X_, SEXP y_, SEXP row_idx_, S
         edpp_screen_batch(discard_beta, n, p, rhs2, Xtr, lhs2, c,
                           1 / lambda[l_prev], m, alpha, col_idx);
         n_safe_reject[l] = sum(discard_beta, p);
-	gain = 0;
+	gain = n_safe_reject[l];
       } else {
 	// Apply EDPP to discard features
 	if(SEDPP) { // Apply SEDPP check
@@ -300,7 +300,7 @@ RcppExport SEXP cdfit_gaussian_edpp_batch_hsr(SEXP X_, SEXP y_, SEXP row_idx_, S
 			    (1 / lambda[l_prev] + 1 / lambda[l]) / 2, m, alpha, col_idx);
 	}
 	n_safe_reject[l] = sum(discard_beta, p);
-	gain += n_safe_reject[l_prev + 1] - n_safe_reject[l];
+	gain += n_safe_reject[l];
       }
       
     } else { //First check with lambda max
@@ -328,7 +328,7 @@ RcppExport SEXP cdfit_gaussian_edpp_batch_hsr(SEXP X_, SEXP y_, SEXP row_idx_, S
       edpp_screen_batch(discard_beta, n, p, rhs2, Xtr, lhs2, c,
                         1 / lambda[l_prev], m, alpha, col_idx);
       n_safe_reject[l] = sum(discard_beta, p);
-      gain = 0;
+      gain = n_safe_reject[l];
     }
     
     // strong set

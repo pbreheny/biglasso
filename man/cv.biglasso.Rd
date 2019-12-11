@@ -4,9 +4,9 @@
 \alias{cv.biglasso}
 \title{Cross-validation for biglasso}
 \usage{
-cv.biglasso(X, y, row.idx = 1:nrow(X), eval.metric = c("default", "MAPE"),
-  ncores = parallel::detectCores(), ..., nfolds = 5, seed, cv.ind,
-  trace = FALSE)
+cv.biglasso(X, y, row.idx = 1:nrow(X), eval.metric = c("default",
+  "MAPE"), ncores = parallel::detectCores(), ..., nfolds = 5, seed,
+  cv.ind, trace = FALSE)
 }
 \arguments{
 \item{X}{The design matrix, without an intercept, as in

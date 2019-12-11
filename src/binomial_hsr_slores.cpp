@@ -387,7 +387,7 @@ RcppExport SEXP cdfit_binomial_hsr_slores(SEXP X_, SEXP y_, SEXP n_pos_, SEXP yl
         Free(slores_reject);
         Free(slores_reject_old);
         Free_memo_bin_hsr(s, w, a, r, e1, e2, eta);
-	ProfilerStop();
+	//ProfilerStop();
         return List::create(beta0, beta, center, scale, lambda, Dev, 
                             iter, n_reject, Rcpp::wrap(col_idx));
       }
