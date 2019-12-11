@@ -1,4 +1,4 @@
-#include "gperftools/profiler.h"
+//#include "gperftools/profiler.h"
 #include "utilities.h"
 
 void Free_memo_bin_hsr(double *s, double *w, double *a, double *r, int *e1, int *e2, double *eta);
@@ -151,7 +151,7 @@ void slores_recal(vector<double>& theta_lam, vector<double> &z,
     z[j] = (sum_xr - center[jj] * sumResid) / scale[jj] / n;
     sum = (sum - center[jj] * sum_thetab) / scale[jj];
     X_theta_lam_xi_pos[j] = sum; 
-    if(jj == xmax_idx && fabs(sum / n / lambda_prev) < 1 - 1e-8){
+    if(jj == xmax_idx && fabs(sum / n / lambda_prev) < 1 - 0.1){
       Rcpp::Rcerr << "beta[xmaxidx] may not be active with xmaxTtheta/nlambda=" << fabs(sum / n / lambda_prev) << std::endl;
     } 
   }
@@ -181,7 +181,7 @@ RcppExport SEXP cdfit_binomial_hsr_slores_batch(SEXP X_, SEXP y_, SEXP n_pos_, S
 						SEXP eps_, SEXP max_iter_, SEXP multiplier_, 
 						SEXP dfmax_, SEXP ncore_, SEXP warn_,
 						SEXP safe_thresh_, SEXP recal_thresh_, SEXP verbose_) {
-  ProfilerStart("Slores-Batch.out");
+  //ProfilerStart("Slores-Batch.out");
   XPtr<BigMatrix> xMat(X_);
   double *y = REAL(y_);
   int n_pos = INTEGER(n_pos_)[0];
@@ -356,7 +356,7 @@ RcppExport SEXP cdfit_binomial_hsr_slores_batch(SEXP X_, SEXP y_, SEXP n_pos_, S
         Free(slores_reject);
         Free(slores_reject_old);
         Free_memo_bin_hsr(s, w, a, r, e1, e2, eta);
-	ProfilerStop();
+	//ProfilerStop();
         return List::create(beta0, beta, center, scale, lambda, Dev, 
                             iter, n_reject, Rcpp::wrap(col_idx));
       }
@@ -367,7 +367,7 @@ RcppExport SEXP cdfit_binomial_hsr_slores_batch(SEXP X_, SEXP y_, SEXP n_pos_, S
 
     if (slores) {
       // recalculate rule if not discarding enough
-      if(gain > recal_thresh * p && l != L - 1) {
+      if(gain - n_slores_reject[l - 1] * (l - l_prev) > recal_thresh * p && l != L - 1) {
         l_prev = l - 1;
         slores_recal(theta_lam, z, sumS, s, g_theta_lam_ptr, prod_deriv_theta_lam_ptr,
                      X_theta_lam_xi_pos, lambda[l_prev], xMat, eta, xmax_idx, 
@@ -377,7 +377,7 @@ RcppExport SEXP cdfit_binomial_hsr_slores_batch(SEXP X_, SEXP y_, SEXP n_pos_, S
                       row_idx, col_idx, center, scale, xmax_idx, ylabel, 
                       lambda[l], lambda[l_prev], n_pos, n, p);
         n_slores_reject[l] = sum(slores_reject, p);
-        gain = 0;
+        gain = n_slores_reject[l];
         
       } else {
         slores_screen(slores_reject, theta_lam, g_theta_lam, prod_deriv_theta_lam,
@@ -385,7 +385,7 @@ RcppExport SEXP cdfit_binomial_hsr_slores_batch(SEXP X_, SEXP y_, SEXP n_pos_, S
                       row_idx, col_idx, center, scale, xmax_idx, ylabel, 
                       lambda[l], lambda[l_prev], n_pos, n, p);
         n_slores_reject[l] = sum(slores_reject, p);
-        gain += n_slores_reject[l_prev + 1] - n_slores_reject[l];
+        gain += n_slores_reject[l];
         
         // update z[j] for features which are rejected at previous lambda but accepted at current one.
         //update_zj(z, slores_reject, slores_reject_old, xMat, row_idx, col_idx, center, scale, sumS, s, m, n, p);
@@ -511,7 +511,7 @@ RcppExport SEXP cdfit_binomial_hsr_slores_batch(SEXP X_, SEXP y_, SEXP n_pos_, S
   Free(slores_reject);
   Free(slores_reject_old);
   Free_memo_bin_hsr(s, w, a, r, e1, e2, eta);
-  ProfilerStop();
+  //ProfilerStop();
   return List::create(beta0, beta, center, scale, lambda, Dev, iter, n_reject, n_slores_reject, Rcpp::wrap(col_idx));
 }
 

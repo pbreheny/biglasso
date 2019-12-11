@@ -276,6 +276,7 @@ RcppExport SEXP cdfit_gaussian_edpp_batch_hsr(SEXP X_, SEXP y_, SEXP row_idx_, S
 	sedpp_recal(xMat, r, sumResid, lhs2, Xty, Xtr, yhat, ytyhat, yhat_norm2, row_idx, col_idx,
 		    center, scale, n, p);
         rhs2 = sqrt(n * (y_norm2 - ytyhat * ytyhat / yhat_norm2));
+	for(j = 0; j < p; j++) z[j] = Xtr[j] / n;
 	if(verbose) {
           // output time
           char buff[100];
@@ -331,8 +332,8 @@ RcppExport SEXP cdfit_gaussian_edpp_batch_hsr(SEXP X_, SEXP y_, SEXP row_idx_, S
     }
     
     // strong set
-    update_zj(z, discard_beta, discard_old, xMat, row_idx, col_idx, center, scale, 
-	      sumResid, r, m, n, p);
+    //update_zj(z, discard_beta, discard_old, xMat, row_idx, col_idx, center, scale, 
+    //sumResid, r, m, n, p);
     if(l != lstart) cutoff = 2 * lambda[l] - lambda[l-1];
     for(j = 0; j < p; j++) {
       if(discard_beta[j]) continue;
