@@ -5,9 +5,9 @@
 \alias{coef.biglasso}
 \title{Model predictions based on a fitted \code{biglasso} object}
 \usage{
-\method{predict}{biglasso}(object, X, row.idx = 1:nrow(X), type = c("link",
-  "response", "class", "coefficients", "vars", "nvars"), lambda,
-  which = 1:length(object$lambda), ...)
+\method{predict}{biglasso}(object, X, row.idx = 1:nrow(X),
+  type = c("link", "response", "class", "coefficients", "vars", "nvars"),
+  lambda, which = 1:length(object$lambda), ...)
 
 \method{coef}{biglasso}(object, lambda, which = 1:length(object$lambda),
   drop = TRUE, ...)

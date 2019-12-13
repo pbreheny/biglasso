@@ -1,4 +1,4 @@
-
+//#include "gperftools/profiler.h"
 #include "utilities.h"
 
 int check_rest_set(int *e1, int *e2, vector<double> &z, XPtr<BigMatrix> xpMat, 
@@ -133,6 +133,7 @@ RcppExport SEXP cdfit_gaussian_hsr_bedpp(SEXP X_, SEXP y_, SEXP row_idx_,
                                         SEXP dfmax_, SEXP ncore_, 
                                         SEXP safe_thresh_,
                                         SEXP verbose_) {
+  //ProfilerStart("HSR.out");
   XPtr<BigMatrix> xMat(X_);
   double *y = REAL(y_);
   int *row_idx = INTEGER(row_idx_);
@@ -378,6 +379,7 @@ RcppExport SEXP cdfit_gaussian_hsr_bedpp(SEXP X_, SEXP y_, SEXP row_idx_,
   Free_memo_hsr(a, r, e1, e2);
   Free(bedpp_reject);
   Free(bedpp_reject_old);
+  //ProfilerStop();
   return List::create(beta, center, scale, lambda, loss, iter, n_reject, n_bedpp_reject, Rcpp::wrap(col_idx));
 }
 

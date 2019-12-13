@@ -1,4 +1,4 @@
-
+//#include "gperftools/profiler.h"
 #include "utilities.h"
 
 void Free_memo_bin_hsr(double *s, double *w, double *a, double *r, int *e1, int *e2, double *eta);
@@ -215,6 +215,7 @@ RcppExport SEXP cdfit_binomial_hsr_slores(SEXP X_, SEXP y_, SEXP n_pos_, SEXP yl
                                           SEXP eps_, SEXP max_iter_, SEXP multiplier_, 
                                           SEXP dfmax_, SEXP ncore_, SEXP warn_,
                                           SEXP safe_thresh_, SEXP verbose_) {
+  //ProfilerStart("Slores.out");
   XPtr<BigMatrix> xMat(X_);
   double *y = REAL(y_);
   int n_pos = INTEGER(n_pos_)[0];
@@ -386,6 +387,7 @@ RcppExport SEXP cdfit_binomial_hsr_slores(SEXP X_, SEXP y_, SEXP n_pos_, SEXP yl
         Free(slores_reject);
         Free(slores_reject_old);
         Free_memo_bin_hsr(s, w, a, r, e1, e2, eta);
+	//ProfilerStop();
         return List::create(beta0, beta, center, scale, lambda, Dev, 
                             iter, n_reject, Rcpp::wrap(col_idx));
       }
@@ -522,6 +524,7 @@ RcppExport SEXP cdfit_binomial_hsr_slores(SEXP X_, SEXP y_, SEXP n_pos_, SEXP yl
   Free(slores_reject);
   Free(slores_reject_old);
   Free_memo_bin_hsr(s, w, a, r, e1, e2, eta);
+  //ProfilerStop();
   return List::create(beta0, beta, center, scale, lambda, Dev, iter, n_reject, n_slores_reject, Rcpp::wrap(col_idx));
 }
 

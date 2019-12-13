@@ -4,14 +4,17 @@
 \alias{biglasso}
 \title{Fit lasso penalized regression path for big data}
 \usage{
-biglasso(X, y, row.idx = 1:nrow(X), penalty = c("lasso", "ridge", "enet"),
-  family = c("gaussian", "binomial"), alg.logistic = c("Newton", "MM"),
-  screen = c("SSR", "SEDPP", "SSR-BEDPP", "SSR-Slores", "SSR-Dome", "None",
+biglasso(X, y, row.idx = 1:nrow(X), penalty = c("lasso", "ridge",
+  "enet"), family = c("gaussian", "binomial"),
+  alg.logistic = c("Newton", "MM"), screen = c("SSR", "SEDPP",
+  "SSR-BEDPP", "SSR-Slores", "SSR-Slores-Batch", "SSR-Dome", "None",
   "NS-NAC", "SSR-NAC", "SEDPP-NAC", "SSR-Dome-NAC", "SSR-BEDPP-NAC",
-  "SSR-Slores-NAC"), safe.thresh = 0, ncores = 1, alpha = 1,
+  "SSR-Slores-NAC", "SEDPP-Batch", "SEDPP-Batch-SSR"), safe.thresh = 0,
+  recal.thresh = 1, ncores = 1, alpha = 1,
   lambda.min = ifelse(nrow(X) > ncol(X), 0.001, 0.05), nlambda = 100,
   lambda.log.scale = TRUE, lambda, eps = 1e-07, max.iter = 1000,
-  dfmax = ncol(X) + 1, penalty.factor = rep(1, ncol(X)), warn = TRUE,
+  dfmax = ncol(X) + 1, penalty.factor = rep(1, ncol(X)),
+  weights = rep(1, length(row.idx))/length(row.idx), warn = TRUE,
   output.time = FALSE, return.time = TRUE, verbose = FALSE)
 }
 \arguments{
@@ -59,6 +62,9 @@ the total number of features. So 1 means to always turn off safe test,
 whereas 0 (default) means to turn off safe test if the number of features
 rejected by safe test is 0 at current lambda.}
 
+\item{recal.thresh}{the non negative threshold value that controls when to
+recalculate SEDPP rules. Smaller value means recalculating more often.}
+
 \item{ncores}{The number of OpenMP threads used for parallel computing.}
 
 \item{alpha}{The elastic-net mixing parameter that controls the relative
@@ -98,6 +104,8 @@ vector of length equal to the number of columns of \code{X}.  The purpose of
 coefficients are thought to be more likely than others to be in the model.
 Current package doesn't allow unpenalized coefficients. That
 is\code{penalty.factor} cannot be 0.}
+
+\item{weights}{Vector of weights. It should be the same length as \code{row.idx}.}
 
 \item{warn}{Return warning messages for failures to converge and model
 saturation?  Default is TRUE.}
