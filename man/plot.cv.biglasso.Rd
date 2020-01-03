@@ -4,9 +4,15 @@
 \alias{plot.cv.biglasso}
 \title{Plots the cross-validation curve from a "cv.biglasso" object}
 \usage{
-\method{plot}{cv.biglasso}(x, log.l = TRUE, type = c("cve", "rsq",
-  "scale", "snr", "pred", "all"), selected = TRUE,
-  vertical.line = TRUE, col = "red", ...)
+\method{plot}{cv.biglasso}(
+  x,
+  log.l = TRUE,
+  type = c("cve", "rsq", "scale", "snr", "pred", "all"),
+  selected = TRUE,
+  vertical.line = TRUE,
+  col = "red",
+  ...
+)
 }
 \arguments{
 \item{x}{A \code{"cv.biglasso"} object.}

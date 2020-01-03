@@ -26,6 +26,7 @@ test_that("Test against OLS:", {
   fit.ssr <- biglasso(X.bm, y, screen = 'SSR', eps = eps, lambda = 0)
   fit.ssr.dome <- biglasso(X.bm, y, screen = 'SSR-Dome', eps = eps, lambda = 0)
   fit.ssr.edpp <- biglasso(X.bm, y, screen = 'SSR-BEDPP', eps = eps, lambda = 0)
+  fit.batch <- biglasso(X.bm, y, screen = 'SEDPP-Batch-SSR', eps = eps, lambda = 0)
   
   expect_equal(as.numeric(beta), as.numeric(fit$beta), tolerance = tolerance)
   expect_equal(as.numeric(beta), as.numeric(fit.edpp$beta), tolerance = tolerance)
@@ -33,7 +34,7 @@ test_that("Test against OLS:", {
   expect_equal(as.numeric(beta), as.numeric(fit.ssr$beta), tolerance = tolerance)
   expect_equal(as.numeric(beta), as.numeric(fit.ssr.dome$beta), tolerance = tolerance)
   expect_equal(as.numeric(beta), as.numeric(fit.ssr.edpp$beta), tolerance = tolerance)
-  expect_equal(as.numeric(beta), as.numeric(fit.edpp.no.active$beta), tolerance = tolerance)
+  expect_equal(as.numeric(beta), as.numeric(fit.batch$beta), tolerance = tolerance)
 
 })
 
@@ -58,6 +59,7 @@ fit.edpp <- biglasso(X.bm, y, screen = 'SEDPP', eps = eps)
 fit.ssr <- biglasso(X.bm, y, screen = 'SSR', eps = eps)
 fit.ssr.dome <- biglasso(X.bm, y, screen = 'SSR-Dome', eps = eps)
 fit.ssr.edpp <- biglasso(X.bm, y, screen = 'SSR-BEDPP', eps = eps)
+fit.batch <- biglasso(X.bm, y, screen = 'SEDPP-Batch-SSR', eps = eps)
 
 # cvfit <- cv.biglasso(X.bm, y, screen = 'None', eps = eps, 
 #                      ncores = 1, nfolds = 5, seed = 1234)
@@ -71,6 +73,8 @@ cvfit.ssr.dome <- cv.biglasso(X.bm, y, screen = 'SSR-Dome', eps = eps,
                               ncores = 1, nfolds = 5, seed = 1234)
 cvfit.ssr.edpp <- cv.biglasso(X.bm, y, screen = 'SSR-BEDPP', eps = eps,
                               ncores = 1, nfolds = 5, seed = 1234)
+cvfit.batch <- cv.biglasso(X.bm, y, screen = 'SEDPP-Batch-SSR', eps = eps,
+                              ncores = 1, nfolds = 5, seed = 1234)
 
 ## parallel computing
 fit.edpp2 <- biglasso(X.bm, y, screen = 'SEDPP', eps = eps, ncores = 2)
@@ -78,6 +82,7 @@ fit.edpp2 <- biglasso(X.bm, y, screen = 'SEDPP', eps = eps, ncores = 2)
 fit.ssr2 <- biglasso(X.bm, y, screen = 'SSR', eps = eps, ncores = 2)
 fit.ssr.dome2 <- biglasso(X.bm, y, screen = 'SSR-Dome', eps = eps, ncores = 2)
 fit.ssr.edpp2 <- biglasso(X.bm, y, screen = 'SSR-BEDPP', eps = eps, ncores = 2)
+fit.batch2 <- biglasso(X.bm, y, screen = 'SEDPP-Batch-SSR', eps = eps, ncores = 2)
 
 test_that("Test against ncvreg for entire path:", {
   # expect_equal(as.numeric(fit.ncv$beta), as.numeric(fit$beta), tolerance = tolerance)
@@ -86,6 +91,7 @@ test_that("Test against ncvreg for entire path:", {
   expect_equal(as.numeric(fit.ncv$beta), as.numeric(fit.ssr$beta), tolerance = tolerance)
   expect_equal(as.numeric(fit.ncv$beta), as.numeric(fit.ssr.dome$beta), tolerance = tolerance)
   expect_equal(as.numeric(fit.ncv$beta), as.numeric(fit.ssr.edpp$beta), tolerance = tolerance)
+  expect_equal(as.numeric(fit.ncv$beta), as.numeric(fit.batch$beta), tolerance = tolerance)
 })
 
 test_that("Test parallel computing: ",{
@@ -97,11 +103,14 @@ test_that("Test parallel computing: ",{
   fit.ssr.dome2$time <- NA
   fit.ssr.edpp$time <- NA
   fit.ssr.edpp2$time <- NA
+  fit.batch$time <- NA
+  fit.batch2$time <- NA
   expect_identical(fit.edpp, fit.edpp2)
   # expect_identical(fit.edpp.no.active, fit.edpp.no.active2)
   expect_identical(fit.ssr, fit.ssr2)
   expect_identical(fit.ssr.dome, fit.ssr.dome2)
   expect_identical(fit.ssr.edpp, fit.ssr.edpp2)
+  expect_identical(fit.batch, fit.batch2)
 })
 
 test_that("Test cross validation: ",{
@@ -111,16 +120,19 @@ test_that("Test cross validation: ",{
   expect_equal(as.numeric(cvfit.ncv$cve), as.numeric(cvfit.ssr$cve), tolerance = tolerance)
   expect_equal(as.numeric(cvfit.ncv$cve), as.numeric(cvfit.ssr.dome$cve), tolerance = tolerance)
   expect_equal(as.numeric(cvfit.ncv$cve), as.numeric(cvfit.ssr.edpp$cve), tolerance = tolerance)
+  expect_equal(as.numeric(cvfit.ncv$cve), as.numeric(cvfit.batch$cve), tolerance = tolerance)
   
   expect_equal(as.numeric(cvfit.ncv$cvse), as.numeric(cvfit.edpp$cvse), tolerance = tolerance)
   expect_equal(as.numeric(cvfit.ncv$cvse), as.numeric(cvfit.ssr$cvse), tolerance = tolerance)
   expect_equal(as.numeric(cvfit.ncv$cvse), as.numeric(cvfit.ssr.dome$cvse), tolerance = tolerance)
   expect_equal(as.numeric(cvfit.ncv$cvse), as.numeric(cvfit.ssr.edpp$cvse), tolerance = tolerance)
+  expect_equal(as.numeric(cvfit.ncv$cvse), as.numeric(cvfit.batch$cvse), tolerance = tolerance)
   
   expect_equal(as.numeric(cvfit.ncv$lambda.min), as.numeric(cvfit.edpp$lambda.min), tolerance = tolerance)
   expect_equal(as.numeric(cvfit.ncv$lambda.min), as.numeric(cvfit.ssr$lambda.min), tolerance = tolerance)
   expect_equal(as.numeric(cvfit.ncv$lambda.min), as.numeric(cvfit.ssr.dome$lambda.min), tolerance = tolerance)
   expect_equal(as.numeric(cvfit.ncv$lambda.min), as.numeric(cvfit.ssr.edpp$lambda.min), tolerance = tolerance)
+  expect_equal(as.numeric(cvfit.ncv$lambda.min), as.numeric(cvfit.batch$lambda.min), tolerance = tolerance)
   
 })
 

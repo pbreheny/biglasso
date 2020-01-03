@@ -36,16 +36,19 @@
 #' discards features to speed up computation: "SSR" (default) is the sequential
 #' strong rule; "SEDPP" is the (sequential) EDPP rule. "SSR-BEDPP", "SSR-Dome",
 #' and "SSR-Slores" are our newly proposed screening rules which combine the
-#' strong rule with a safe rule (BEDPP, Dome test, or Slores rule). Among the
-#' three, the first two are for lasso-penalized linear regression, and the last
-#' one is for lasso-penalized logistic regression. "None" is to not apply a
-#' screening rule. \strong{Note that:} (1) for linear regression with elastic
-#' net penalty, both "SSR" and "SSR-BEDPP" are applicable since version 1.3-0;
-#' (2) only "SSR" is applicable to elastic-net-penalized logistic regression;
-#' (3) active set cycling strategy is incorporated with these screening rules
-#' by default. All other options with suffix "-NAC" are the corresponding
-#' versions without active set cycling update. These rules are for research
-#' purpose only.
+#' strong rule with a safe rule (BEDPP, Dome test, or Slores rule).
+#' "SEDPP-Batch-SSR" and "SSR-Slores-Batch" are newly proposed rules which do 
+#' screening in batches of lambda values. Among them, "SSR-BEDPP", "SSR-Dome"
+#' and "SEDPP-Batch-SSR" are for lasso-penalized linear regression, and 
+#' "SSR-Slores" and "SSR-Slores-Batch" are for lasso-penalized logistic
+#' regression. "None" is to not apply a screening rule. \strong{Note that:}
+#' (1) for linear regression with elastic net penalty, both "SSR" and
+#' "SSR-BEDPP" are applicable since version 1.3-0; (2) only "SSR" is
+#' applicable to elastic-net-penalized logistic regression; (3) active set
+#' cycling strategy is incorporated with these screening rules by default.
+#' All other options with suffix "-NAC" are the corresponding versions
+#' without active set cycling update. These rules are for research purpose
+#' only.
 #' @param safe.thresh the threshold value between 0 and 1 that controls when to
 #' stop safe test in the "SSR-Dome" and "SSR-BEDPP" rules. For example, 0.01
 #' means to stop Dome test at next lambda iteration if the number of features
@@ -54,7 +57,8 @@
 #' whereas 0 (default) means to turn off safe test if the number of features
 #' rejected by safe test is 0 at current lambda.
 #' @param recal.thresh the non negative threshold value that controls when to
-#' recalculate SEDPP rules. Smaller value means recalculating more often.
+#' start a new batch and recalculate safe rules (for "SEDPP-Batch-SSR" and
+#' "SSR-Slores-Batch"). Smaller value means recalculating more often.
 #' @param ncores The number of OpenMP threads used for parallel computing.
 #' @param alpha The elastic-net mixing parameter that controls the relative
 #' contribution from the lasso (l1) and the ridge (l2) penalty. The penalty is
@@ -117,7 +121,8 @@
 #' less than 1e-6 are removed from model fitting.} \item{rejections}{The number
 #' of features rejected at each value of \code{lambda}.}
 #' \item{safe_rejections}{The number of features rejected by safe rules at each
-#' value of \code{lambda}. Only for "SSR-Dome", "SSR-BEDPP" and "SSR-Slores"
+#' value of \code{lambda}. Only for "SSR-Dome", "SSR-BEDPP", "SEDPP-Batch-SSR",
+#' "SSR-Slores" and "SSR-Slores-Batch"
 #' cases.}
 #' @author Yaohui Zeng and Patrick Breheny
 #'

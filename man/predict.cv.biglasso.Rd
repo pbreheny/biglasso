@@ -5,12 +5,17 @@
 \alias{coef.cv.biglasso}
 \title{Model predictions based on a fitted \code{\link{cv.biglasso}} object}
 \usage{
-\method{predict}{cv.biglasso}(object, X, row.idx = 1:nrow(X),
+\method{predict}{cv.biglasso}(
+  object,
+  X,
+  row.idx = 1:nrow(X),
   type = c("link", "response", "class", "coefficients", "vars", "nvars"),
-  lambda = object$lambda.min, which = object$min, ...)
+  lambda = object$lambda.min,
+  which = object$min,
+  ...
+)
 
-\method{coef}{cv.biglasso}(object, lambda = object$lambda.min,
-  which = object$min, ...)
+\method{coef}{cv.biglasso}(object, lambda = object$lambda.min, which = object$min, ...)
 }
 \arguments{
 \item{object}{A fitted \code{"cv.biglasso"} model object.}

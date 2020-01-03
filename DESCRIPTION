@@ -17,4 +17,4 @@ Imports: Rcpp (>= 0.12.1), methods
 LinkingTo: Rcpp, RcppArmadillo (>= 0.8.600), bigmemory, BH
 VignetteBuilder: R.rsp
 Suggests: parallel, testthat, R.rsp
-RoxygenNote: 6.1.1
+RoxygenNote: 7.0.2

@@ -4,18 +4,34 @@
 \alias{biglasso}
 \title{Fit lasso penalized regression path for big data}
 \usage{
-biglasso(X, y, row.idx = 1:nrow(X), penalty = c("lasso", "ridge",
-  "enet"), family = c("gaussian", "binomial"),
-  alg.logistic = c("Newton", "MM"), screen = c("SSR", "SEDPP",
-  "SSR-BEDPP", "SSR-Slores", "SSR-Slores-Batch", "SSR-Dome", "None",
-  "NS-NAC", "SSR-NAC", "SEDPP-NAC", "SSR-Dome-NAC", "SSR-BEDPP-NAC",
-  "SSR-Slores-NAC", "SEDPP-Batch", "SEDPP-Batch-SSR"), safe.thresh = 0,
-  recal.thresh = 1, ncores = 1, alpha = 1,
-  lambda.min = ifelse(nrow(X) > ncol(X), 0.001, 0.05), nlambda = 100,
-  lambda.log.scale = TRUE, lambda, eps = 1e-07, max.iter = 1000,
-  dfmax = ncol(X) + 1, penalty.factor = rep(1, ncol(X)),
-  weights = rep(1, length(row.idx))/length(row.idx), warn = TRUE,
-  output.time = FALSE, return.time = TRUE, verbose = FALSE)
+biglasso(
+  X,
+  y,
+  row.idx = 1:nrow(X),
+  penalty = c("lasso", "ridge", "enet"),
+  family = c("gaussian", "binomial"),
+  alg.logistic = c("Newton", "MM"),
+  screen = c("SSR", "SEDPP", "SSR-BEDPP", "SSR-Slores", "SSR-Slores-Batch", "SSR-Dome",
+    "None", "NS-NAC", "SSR-NAC", "SEDPP-NAC", "SSR-Dome-NAC", "SSR-BEDPP-NAC",
+    "SSR-Slores-NAC", "SEDPP-Batch", "SEDPP-Batch-SSR"),
+  safe.thresh = 0,
+  recal.thresh = 1,
+  ncores = 1,
+  alpha = 1,
+  lambda.min = ifelse(nrow(X) > ncol(X), 0.001, 0.05),
+  nlambda = 100,
+  lambda.log.scale = TRUE,
+  lambda,
+  eps = 1e-07,
+  max.iter = 1000,
+  dfmax = ncol(X) + 1,
+  penalty.factor = rep(1, ncol(X)),
+  weights = rep(1, length(row.idx))/length(row.idx),
+  warn = TRUE,
+  output.time = FALSE,
+  return.time = TRUE,
+  verbose = FALSE
+)
 }
 \arguments{
 \item{X}{The design matrix, without an intercept. It must be a
@@ -43,16 +59,19 @@ case.}
 discards features to speed up computation: "SSR" (default) is the sequential
 strong rule; "SEDPP" is the (sequential) EDPP rule. "SSR-BEDPP", "SSR-Dome",
 and "SSR-Slores" are our newly proposed screening rules which combine the
-strong rule with a safe rule (BEDPP, Dome test, or Slores rule). Among the
-three, the first two are for lasso-penalized linear regression, and the last
-one is for lasso-penalized logistic regression. "None" is to not apply a
-screening rule. \strong{Note that:} (1) for linear regression with elastic
-net penalty, both "SSR" and "SSR-BEDPP" are applicable since version 1.3-0;
-(2) only "SSR" is applicable to elastic-net-penalized logistic regression;
-(3) active set cycling strategy is incorporated with these screening rules
-by default. All other options with suffix "-NAC" are the corresponding
-versions without active set cycling update. These rules are for research
-purpose only.}
+strong rule with a safe rule (BEDPP, Dome test, or Slores rule).
+"SEDPP-Batch-SSR" and "SSR-Slores-Batch" are newly proposed rules which do 
+screening in batches of lambda values. Among them, "SSR-BEDPP", "SSR-Dome"
+and "SEDPP-Batch-SSR" are for lasso-penalized linear regression, and 
+"SSR-Slores" and "SSR-Slores-Batch" are for lasso-penalized logistic
+regression. "None" is to not apply a screening rule. \strong{Note that:}
+(1) for linear regression with elastic net penalty, both "SSR" and
+"SSR-BEDPP" are applicable since version 1.3-0; (2) only "SSR" is
+applicable to elastic-net-penalized logistic regression; (3) active set
+cycling strategy is incorporated with these screening rules by default.
+All other options with suffix "-NAC" are the corresponding versions
+without active set cycling update. These rules are for research purpose
+only.}
 
 \item{safe.thresh}{the threshold value between 0 and 1 that controls when to
 stop safe test in the "SSR-Dome" and "SSR-BEDPP" rules. For example, 0.01
@@ -63,7 +82,8 @@ whereas 0 (default) means to turn off safe test if the number of features
 rejected by safe test is 0 at current lambda.}
 
 \item{recal.thresh}{the non negative threshold value that controls when to
-recalculate SEDPP rules. Smaller value means recalculating more often.}
+start a new batch and recalculate safe rules (for "SEDPP-Batch-SSR" and
+"SSR-Slores-Batch"). Smaller value means recalculating more often.}
 
 \item{ncores}{The number of OpenMP threads used for parallel computing.}
 
@@ -143,7 +163,8 @@ features that have 'scale' value greater than 1e-6. Features with 'scale'
 less than 1e-6 are removed from model fitting.} \item{rejections}{The number
 of features rejected at each value of \code{lambda}.}
 \item{safe_rejections}{The number of features rejected by safe rules at each
-value of \code{lambda}. Only for "SSR-Dome", "SSR-BEDPP" and "SSR-Slores"
+value of \code{lambda}. Only for "SSR-Dome", "SSR-BEDPP", "SEDPP-Batch-SSR",
+"SSR-Slores" and "SSR-Slores-Batch"
 cases.}
 }
 \description{

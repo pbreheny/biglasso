@@ -4,10 +4,15 @@
 \alias{setupX}
 \title{Set up design matrix X by reading data from big data file}
 \usage{
-setupX(filename, dir = getwd(), sep = ",",
-  backingfile = paste0(unlist(strsplit(filename, split = "\\\\."))[1],
-  ".bin"), descriptorfile = paste0(unlist(strsplit(filename, split =
-  "\\\\."))[1], ".desc"), type = "double", ...)
+setupX(
+  filename,
+  dir = getwd(),
+  sep = ",",
+  backingfile = paste0(unlist(strsplit(filename, split = "\\\\."))[1], ".bin"),
+  descriptorfile = paste0(unlist(strsplit(filename, split = "\\\\."))[1], ".desc"),
+  type = "double",
+  ...
+)
 }
 \arguments{
 \item{filename}{The name of the data file. For example, "dat.txt".}

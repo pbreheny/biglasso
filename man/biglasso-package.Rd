@@ -101,7 +101,7 @@ Elapsed time (s) \tab 0.11 \tab 0.83 \tab 8.47 \tab 85.50 \cr }
 xfname <- 'x_e3_5e5.txt' 
 yfname <- 'y_e3_5e5.txt' # response vector
 time <- system.time(
-  X <- setupX(xfname, sep = '\\t') # create backing files (.bin, .desc)
+  X <- setupX(xfname, sep = '\t') # create backing files (.bin, .desc)
 )
 print(time) # ~ 7 minutes; this is just one-time operation
 dim(X)
