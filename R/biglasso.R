@@ -47,8 +47,9 @@
 #' applicable to elastic-net-penalized logistic regression; (3) active set
 #' cycling strategy is incorporated with these screening rules by default.
 #' All other options with suffix "-NAC" are the corresponding versions
-#' without active set cycling update. These rules are for research purpose
-#' only.
+#' without active set cycling update. "SEDPP-Batchfix-SSR" is an version
+#' of "SEDPP-Batch-SSR" with fixed batch sizes. These rules are for research
+#' purpose only.
 #' @param safe.thresh the threshold value between 0 and 1 that controls when to
 #' stop safe test in the "SSR-Dome" and "SSR-BEDPP" rules. For example, 0.01
 #' means to stop Dome test at next lambda iteration if the number of features
@@ -164,9 +165,9 @@ biglasso <- function(X, y, row.idx = 1:nrow(X),
                      family = c("gaussian","binomial"), 
                      alg.logistic = c("Newton", "MM"),
                      screen = c("SSR", "SEDPP", "SSR-BEDPP", "SSR-Slores", "SSR-Slores-Batch",
-                                "SSR-Dome", "None", "NS-NAC", "SSR-NAC", 
-                                "SEDPP-NAC", "SSR-Dome-NAC", "SSR-BEDPP-NAC",
-                                "SSR-Slores-NAC", "SEDPP-Batch", "SEDPP-Batch-SSR"),
+                                "SSR-Dome", "None", "NS-NAC", "SSR-NAC", "SEDPP-NAC",
+                                "SSR-Dome-NAC", "SSR-BEDPP-NAC", "SSR-Slores-NAC",
+                                "SEDPP-Batch", "SEDPP-Batch-SSR", "SEDPP-Batchfix-SSR"),
                      safe.thresh = 0, recal.thresh = 1, ncores = 1, alpha = 1,
                      lambda.min = ifelse(nrow(X) > ncol(X),.001,.05), 
                      nlambda = 100, lambda.log.scale = TRUE,
@@ -192,7 +193,8 @@ biglasso <- function(X, y, row.idx = 1:nrow(X),
     if (alpha >= 1 || alpha <= 0) {
       stop("alpha must be between 0 and 1 for elastic net penalty.")
     }
-    if (family == 'gaussian' && (!screen %in% c("SSR", "SSR-BEDPP", "SEDPP-Batch", "SEDPP-Batch-SSR"))) {
+    if (family == 'gaussian' && (!screen %in% c("SSR", "SSR-BEDPP", "SEDPP-Batch",
+                                                "SEDPP-Batch-SSR", "SEDPP-Batchfix-SSR"))) {
       screen <- "SSR"
     } 
   }
@@ -286,6 +288,15 @@ biglasso <- function(X, y, row.idx = 1:nrow(X),
                               as.integer(dfmax), as.integer(ncores), recal.thresh, as.integer(verbose),
                               PACKAGE = 'biglasso')
                },
+               "SEDPP-Batchfix-SSR" = {
+                 res <- .Call("cdfit_gaussian_edpp_batchfix_hsr", X@address, yy, as.integer(row.idx-1),
+                              lambda, as.integer(nlambda), as.integer(lambda.log.scale),
+                              lambda.min, alpha,
+                              as.integer(user.lambda | any(penalty.factor==0)),
+                              eps, as.integer(max.iter), penalty.factor,
+                              as.integer(dfmax), as.integer(ncores), as.integer(recal.thresh), as.integer(verbose),
+                              PACKAGE = 'biglasso')
+               },
                "SSR" = {
                  res <- .Call("cdfit_gaussian_hsr", X@address, yy, as.integer(row.idx-1),
                               lambda, as.integer(nlambda), as.integer(lambda.log.scale),
@@ -376,7 +387,8 @@ biglasso <- function(X, y, row.idx = 1:nrow(X),
     iter <- res[[6]]
     rejections <- res[[7]]
     
-    if (screen %in% c("SSR-Dome", "SSR-BEDPP", "SSR-Dome-NAC", "SSR-BEDPP-NAC", "SEDPP-Batch-SSR")) {
+    if (screen %in% c("SSR-Dome", "SSR-BEDPP", "SSR-Dome-NAC", "SSR-BEDPP-NAC",
+                      "SEDPP-Batch-SSR", "SEDPP-Batchfix-SSR")) {
       safe_rejections <- res[[8]]
       col.idx <- res[[9]]
     } else {
@@ -499,9 +511,9 @@ biglasso <- function(X, y, row.idx = 1:nrow(X),
     rejections = rejections
   )
   
-  if (screen %in% c("SSR-Dome", "SSR-Dome-NAC", 
-                    "SSR-BEDPP", "SSR-BEDPP-NAC", "SSR-Slores-Batch",
-                    "SSR-Slores", "SSR-Slores-NAC", "SEDPP-Batch-SSR")) {
+    if (screen %in% c("SSR-Dome", "SSR-Dome-NAC", "SSR-BEDPP", "SSR-BEDPP-NAC",
+                      "SSR-Slores-Batch", "SSR-Slores", "SSR-Slores-NAC",
+                      "SEDPP-Batch-SSR", "SEDPP-Batchfix-SSR")) {
     return.val$safe_rejections <- safe_rejections
   } 
   if (return.time) return.val$time <- as.numeric(time['elapsed'])
