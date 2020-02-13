@@ -134,25 +134,19 @@ void slores_recal(vector<double>& theta_lam, vector<double> &z,
   MatrixAccessor<double> xAcc(*xMat);
   double *xCol;
   int j, jj;
-  double sum, sum_xr, sum_thetab, thetab;
-  #pragma omp parallel for private(j, jj, xCol, sum, sum_thetab, thetab) schedule(static)
+  double sum_xr;
+  #pragma omp parallel for private(j, jj, xCol, sum_xr) schedule(static)
   for (j = 0; j < p; j++) {
     jj = col_idx[j];
     xCol = xAcc[jj];
-    sum = 0.0;
     sum_xr = 0.0;
-    sum_thetab = 0;
     for(int i = 0; i < n; i++) {
-      thetab = theta_lam[i] * ylab[i];
-      sum = sum + xCol[row_idx[i]] * thetab;
       sum_xr = sum_xr + xCol[row_idx[i]] * r[i];
-      sum_thetab = sum_thetab + thetab;
     }
     z[j] = (sum_xr - center[jj] * sumResid) / scale[jj] / n;
-    sum = (sum - center[jj] * sum_thetab) / scale[jj];
-    X_theta_lam_xi_pos[j] = sum; 
-    if(jj == xmax_idx && fabs(sum / n / lambda_prev) < 1 - 0.1){
-      Rcpp::Rcerr << "beta[xmaxidx] may not be active with xmaxTtheta/nlambda=" << fabs(sum / n / lambda_prev) << std::endl;
+    X_theta_lam_xi_pos[j] = -z[j] * n; 
+    if(jj == xmax_idx && fabs(sum_xr / n / lambda_prev) < 1 - 0.1){
+      Rcpp::Rcerr << "beta[xmaxidx] may not be active with xmaxTtheta/nlambda=" << fabs(sum_xr / n / lambda_prev) << std::endl;
     } 
   }
   

@@ -58,8 +58,9 @@
 #' whereas 0 (default) means to turn off safe test if the number of features
 #' rejected by safe test is 0 at current lambda.
 #' @param recal.thresh the non negative threshold value that controls when to
-#' start a new batch and recalculate safe rules (for "SEDPP-Batch-SSR" and
-#' "SSR-Slores-Batch"). Smaller value means recalculating more often.
+#' start a new batch and recalculate safe rules for batched methods
+#' ("SEDPP-Batch-SSR" and "SSR-Slores-Batch"). Smaller value means
+#' starting new batches more often.
 #' @param ncores The number of OpenMP threads used for parallel computing.
 #' @param alpha The elastic-net mixing parameter that controls the relative
 #' contribution from the lasso (l1) and the ridge (l2) penalty. The penalty is
