@@ -2,10 +2,10 @@
 # Generator token: 10BE3573-1514-4C36-9D1C-5A225CD40393
 
 standardize_bm <- function(xP, row_idx_) {
-    .Call('biglasso_standardize_bm', PACKAGE = 'biglasso', xP, row_idx_)
+    .Call(`_biglasso_standardize_bm`, xP, row_idx_)
 }
 
 get_eta <- function(xP, row_idx_, beta, idx_p, idx_l) {
-    .Call('biglasso_get_eta', PACKAGE = 'biglasso', xP, row_idx_, beta, idx_p, idx_l)
+    .Call(`_biglasso_get_eta`, xP, row_idx_, beta, idx_p, idx_l)
 }
 
