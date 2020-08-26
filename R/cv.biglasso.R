@@ -181,6 +181,7 @@ cvf <- function(i, XX, y, eval.metric, cv.ind, cv.args, parallel= FALSE) {
   cv.args$X <- XX
   cv.args$y <- y
   cv.args$row.idx <- which(cv.ind != i)
+  cv.args$weights <- cv.args$weights[cv.args$row.idx]
   cv.args$warn <- FALSE
   cv.args$ncores <- 1
 
