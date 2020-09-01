@@ -13,7 +13,7 @@ biglasso(
   alg.logistic = c("Newton", "MM"),
   screen = c("SSR", "SEDPP", "SSR-BEDPP", "SSR-Slores", "SSR-Slores-Batch", "SSR-Dome",
     "None", "NS-NAC", "SSR-NAC", "SEDPP-NAC", "SSR-Dome-NAC", "SSR-BEDPP-NAC",
-    "SSR-Slores-NAC", "SEDPP-Batch", "SEDPP-Batch-SSR"),
+    "SSR-Slores-NAC", "SEDPP-Batch", "SEDPP-Batch-SSR", "SEDPP-Batchfix-SSR"),
   safe.thresh = 0,
   recal.thresh = 1,
   ncores = 1,
@@ -70,8 +70,9 @@ regression. "None" is to not apply a screening rule. \strong{Note that:}
 applicable to elastic-net-penalized logistic regression; (3) active set
 cycling strategy is incorporated with these screening rules by default.
 All other options with suffix "-NAC" are the corresponding versions
-without active set cycling update. These rules are for research purpose
-only.}
+without active set cycling update. "SEDPP-Batchfix-SSR" is an version
+of "SEDPP-Batch-SSR" with fixed batch sizes. These rules are for research
+purpose only.}
 
 \item{safe.thresh}{the threshold value between 0 and 1 that controls when to
 stop safe test in the "SSR-Dome" and "SSR-BEDPP" rules. For example, 0.01
@@ -82,8 +83,9 @@ whereas 0 (default) means to turn off safe test if the number of features
 rejected by safe test is 0 at current lambda.}
 
 \item{recal.thresh}{the non negative threshold value that controls when to
-start a new batch and recalculate safe rules (for "SEDPP-Batch-SSR" and
-"SSR-Slores-Batch"). Smaller value means recalculating more often.}
+start a new batch and recalculate safe rules for batched methods
+("SEDPP-Batch-SSR" and "SSR-Slores-Batch"). Smaller value means
+starting new batches more often.}
 
 \item{ncores}{The number of OpenMP threads used for parallel computing.}
 
