@@ -47,10 +47,11 @@ y <- rnorm(n, X %*% b)
 eps <- 1e-8
 tolerance <- 1e-3
 lambda.min <- 0.05
+fold = sample(rep(1:5, length.out = n))
 
 fit.ncv <- ncvreg(X, y, penalty = 'lasso', eps = sqrt(eps), lambda.min = lambda.min)
 cvfit.ncv <- cv.ncvreg(X, y, penalty = 'lasso', eps = sqrt(eps), 
-                       lambda.min = lambda.min, seed = 1234, nfolds = 5)
+                       lambda.min = lambda.min, fold = fold)
 
 X.bm <- as.big.matrix(X)
 # fit <- biglasso(X.bm, y, screen = 'None', eps = eps)
@@ -64,17 +65,17 @@ fit.batch <- biglasso(X.bm, y, screen = 'SEDPP-Batch-SSR', eps = eps)
 # cvfit <- cv.biglasso(X.bm, y, screen = 'None', eps = eps, 
 #                      ncores = 1, nfolds = 5, seed = 1234)
 cvfit.edpp <- cv.biglasso(X.bm, y, screen = 'SEDPP', eps = eps,
-                          ncores = 1, nfolds = 5, seed = 1234)
+                          ncores = 1, cv.ind = fold)
 # cvfit.edpp.no.active <- cv.biglasso(X.bm, y, screen = 'SEDPP-No-Active', eps = eps,
 #                                     ncores = 1, nfolds = 5, seed = 1234)
 cvfit.ssr <- cv.biglasso(X.bm, y, screen = 'SSR', eps = eps,
-                         ncores = 1, nfolds = 5, seed = 1234)
+                         ncores = 1, cv.ind = fold)
 cvfit.ssr.dome <- cv.biglasso(X.bm, y, screen = 'SSR-Dome', eps = eps,
-                              ncores = 1, nfolds = 5, seed = 1234)
+                              ncores = 1, cv.ind = fold)
 cvfit.ssr.edpp <- cv.biglasso(X.bm, y, screen = 'SSR-BEDPP', eps = eps,
-                              ncores = 1, nfolds = 5, seed = 1234)
+                              ncores = 1, cv.ind = fold)
 cvfit.batch <- cv.biglasso(X.bm, y, screen = 'SEDPP-Batch-SSR', eps = eps,
-                              ncores = 1, nfolds = 5, seed = 1234)
+                              ncores = 1, cv.ind = fold)
 
 ## parallel computing
 fit.edpp2 <- biglasso(X.bm, y, screen = 'SEDPP', eps = eps, ncores = 2)
@@ -149,6 +150,7 @@ eps <- 1e-8
 tolerance <- 1e-3
 lambda.min <- 0.05
 alpha <- 0.5
+fold = sample(rep(1:5, length.out = n))
 
 fit.ncv <- ncvreg(X, y, penalty = 'lasso', eps = sqrt(eps), 
                   lambda.min = lambda.min, alpha = alpha)
@@ -157,11 +159,11 @@ fit.ssr <- biglasso(X.bm, y, penalty = 'enet', screen = 'SSR', eps = eps, alpha 
 fit.ssr.edpp <- biglasso(X.bm, y, penalty = 'enet', screen = 'SSR-BEDPP', eps = eps, alpha = alpha)
 
 cvfit.ncv <- cv.ncvreg(X, y, penalty = 'lasso', eps = sqrt(eps), alpha = alpha,
-                       lambda.min = lambda.min, seed = 1234, nfolds = 5)
+                       lambda.min = lambda.min, fold = fold)
 cvfit.ssr <- cv.biglasso(X.bm, y, screen = 'SSR', penalty = 'enet', eps = eps, alpha = alpha,
-                         ncores = 1, nfolds = 5, seed = 1234)
+                         ncores = 1, cv.ind = fold)
 cvfit.ssr.edpp <- cv.biglasso(X.bm, y, penalty = 'enet', screen = 'SSR-BEDPP', eps = eps, alpha = alpha,
-                              ncores = 2, nfolds = 5, seed = 1234)
+                              ncores = 2, cv.ind = fold)
 
 test_that("Elastic net: test against ncvreg for entire path:", {
   expect_equal(as.numeric(fit.ncv$beta), as.numeric(fit.ssr$beta), tolerance = tolerance)
