@@ -163,7 +163,7 @@
 #' @export biglasso
 biglasso <- function(X, y, row.idx = 1:nrow(X),
                      penalty = c("lasso", "ridge", "enet"),
-                     family = c("gaussian","binomial","cox"), 
+                     family = c("gaussian", "binomial", "cox"), 
                      alg.logistic = c("Newton", "MM"),
                      screen = c("SSR", "SEDPP", "SSR-BEDPP", "SSR-Slores", "SSR-Slores-Batch",
                                 "SSR-Dome", "None", "NS-NAC", "SSR-NAC", "SEDPP-NAC",
