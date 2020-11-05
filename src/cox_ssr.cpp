@@ -114,7 +114,7 @@ RcppExport SEXP cdfit_cox_ssr(SEXP X_, SEXP y_, SEXP d_, SEXP d_idx_, SEXP row_i
   double *rsk = Calloc(f, double); //Sum of hazard over at risk set
   int *e1 = Calloc(p, int); //ever-active set
   int *e2 = Calloc(p, int); //strong set
-  double xwr, xwx, yhat, u, v, cutoff, l1, l2, shift;
+  double xwr, xwx, u, v, cutoff, l1, l2, shift;
   double max_update, update, thresh; // for convergence check
   int i, j, jj, k, l, violations, lstart;
   for(j = 0; j < p; j++) e1[j] = 0;

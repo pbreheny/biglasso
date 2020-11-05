@@ -21,7 +21,7 @@ void standardize_and_get_residual_cox(NumericVector &center, NumericVector &scal
   double *xCol;
   double sum_xs;
   double zmax = 0.0, zj = 0.0;
-  int i, ii, j, k;
+  int i, j, k;
   double *s = Calloc(n, double);
   double *rsk = Calloc(f, double);
   
@@ -159,7 +159,7 @@ RcppExport SEXP cdfit_cox(SEXP X_, SEXP y_, SEXP d_, SEXP d_idx_, SEXP row_idx_,
   double *haz = Calloc(n, double); //exp(eta)
   double *rsk = Calloc(f, double); //Sum of hazard over at risk set
   int *e1 = Calloc(p, int); //ever-active set
-  double xwr, xwx, yhat, u, v, cutoff, l1, l2, shift;
+  double xwr, xwx, u, v, l1, l2, shift;
   double max_update, update, thresh; // for convergence check
   int i, j, jj, k, l, violations, lstart;
   for(j = 0; j < p; j++) e1[j] = 0;
