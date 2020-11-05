@@ -26,7 +26,7 @@
 #' fitting the model. \code{1:nrow(X)} by default.
 #' @param penalty The penalty to be applied to the model. Either "lasso" (the
 #' default), "ridge", or "enet" (elastic net).
-#' @param family Either "gaussian" or "binomial", depending on the response.
+#' @param family Either "gaussian", "binomial" or "cox", depending on the response.
 #' @param alg.logistic The algorithm used in logistic regression. If "Newton"
 #' then the exact hessian is used (default); if "MM" then a
 #' majorization-minimization algorithm is used to set an upper-bound on the
@@ -207,7 +207,7 @@ biglasso <- function(X, y, row.idx = 1:nrow(X),
 
   if (any(is.na(y))) stop("Missing data (NA's) detected.  Take actions (e.g., removing cases, removing features, imputation) to eliminate missing data before fitting the model.")
 
-  if (!is.numeric(y)) {
+  if (!is.double(y)) {
     tmp <- try(y <- as.numeric(y), silent=TRUE)
     if (class(tmp)[1] == "try-error") stop("y must numeric or able to be coerced to numeric")
   }
