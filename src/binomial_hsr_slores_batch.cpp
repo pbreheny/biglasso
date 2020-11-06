@@ -7,10 +7,10 @@ void update_resid_eta(double *r, double *eta, XPtr<BigMatrix> xpMat, double shif
                       int *row_idx_, double center_, double scale_, int n, int j);
 
 int check_strong_set(int *e1, int *e2, vector<double> &z, XPtr<BigMatrix> xpMat, 
-                      int *row_idx, vector<int> &col_idx,
-                      NumericVector &center, NumericVector &scale, double *a,
-                      double lambda, double sumResid, double alpha, 
-                      double *r, double *m, int n, int p);
+                     int *row_idx, vector<int> &col_idx,
+                     NumericVector &center, NumericVector &scale, double *a,
+                     double lambda, double sumResid, double alpha, 
+                     double *r, double *m, int n, int p);
 
 int check_rest_set(int *e1, int *e2, vector<double> &z, XPtr<BigMatrix> xpMat, 
                    int *row_idx, vector<int> &col_idx,
@@ -18,28 +18,24 @@ int check_rest_set(int *e1, int *e2, vector<double> &z, XPtr<BigMatrix> xpMat,
                    double lambda, double sumResid, double alpha, 
                    double *r, double *m, int n, int p);
 
-void update_zj(vector<double> &z, int *bedpp_reject, int *bedpp_reject_old,
-               XPtr<BigMatrix> xpMat, int *row_idx,vector<int> &col_idx,
-               NumericVector &center, NumericVector &scale, 
-               double sumResid, double *r, double *m, int n, int p);
-
 // check rest set with slores screening
-int check_rest_safe_set(int *ever_active, int *strong_set, int *discard_beta, vector<double> &z,
+int check_rest_safe_set(int *e1, int *e2, int *reject, vector<double> &z, 
                         XPtr<BigMatrix> xpMat, int *row_idx, vector<int> &col_idx,
-                        NumericVector &center, NumericVector &scale, double *a, double lambda,
-                        double sumResid, double alpha, double *r, double *m, int n, int p);
+                        NumericVector &center, NumericVector &scale, double *a,
+                        double lambda, double sumResid, double alpha, double *r, 
+                        double *m, int n, int p);
 
 // dual function
 double dual_bin(vector<double>& theta, double lambda, double lambda_max, int n);/* {
-  double res = 0.0;
-  double lam_ratio = lambda / lambda_max;
-  for (int i = 0; i < n; i++) {
-    res += (lam_ratio * theta[i]) * log(lam_ratio * theta[i]) + 
-      (1 - lam_ratio * theta[i]) * log(1 - lam_ratio * theta[i]);
-  }
-  res = res / n;
-  return res;
-  }*/
+ double res = 0.0;
+ double lam_ratio = lambda / lambda_max;
+ for (int i = 0; i < n; i++) {
+ res += (lam_ratio * theta[i]) * log(lam_ratio * theta[i]) + 
+ (1 - lam_ratio * theta[i]) * log(1 - lam_ratio * theta[i]);
+ }
+ res = res / n;
+ return res;
+                        }*/
 
 // Slores initialization
 void slores_init(vector<double>& theta_lam, 
@@ -51,45 +47,45 @@ void slores_init(vector<double>& theta_lam,
                  int *row_idx, vector<int> &col_idx,
                  NumericVector &center, NumericVector &scale,
                  IntegerVector& ylab, int n_pos, int n, int p);/* {
-  
-  double n_pos_ratio = (double)n_pos / n;
-  vector<double> deriv_theta_lam(n);
-  double prod_deriv_theta_lam = 0.0;
-  for (int i = 0; i < n; i++) {
-    if (ylab[i] == 1) {
-      theta_lam[i] = 1 - n_pos_ratio; 
-    } else {
-      theta_lam[i] = n_pos_ratio;
-    }
-    deriv_theta_lam[i] = log(theta_lam[i] / (1 - theta_lam[i])) / n;
-    
-    prod_deriv_theta_lam += deriv_theta_lam[i] * theta_lam[i];
-  }
-  *prod_deriv_theta_lam_ptr = prod_deriv_theta_lam;
-  *g_theta_lam_ptr = dual_bin(theta_lam, 1.0, 1.0, n);
-  
-  // compute X_theta_lam_xi_pos (X^Ty) and prod_PX_Pxmax_xi_pos (<Px, Pxmax>)
-  double sum_xmaxTy = crossprod_bm(xMat, y, row_idx, center[xmax_idx], scale[xmax_idx], n, xmax_idx);
-  double sign_xmaxTy = sign(sum_xmaxTy);
-  int j;
-  #pragma omp parallel for private(j) schedule(static) 
-  for (j = 0; j < p; j++) {
-    X_theta_lam_xi_pos[j] = -z[j] * n; // = -xTy
-    prod_PX_Pxmax_xi_pos[j] = -sign_xmaxTy * crossprod_bm_Xj_Xk(xMat, row_idx, center, scale, n, col_idx[j], xmax_idx); 
-    cutoff_xi_pos[j] = prod_PX_Pxmax_xi_pos[j] / n;
-  }
-}*/
+ 
+ double n_pos_ratio = (double)n_pos / n;
+ vector<double> deriv_theta_lam(n);
+ double prod_deriv_theta_lam = 0.0;
+ for (int i = 0; i < n; i++) {
+ if (ylab[i] == 1) {
+ theta_lam[i] = 1 - n_pos_ratio; 
+ } else {
+ theta_lam[i] = n_pos_ratio;
+ }
+ deriv_theta_lam[i] = log(theta_lam[i] / (1 - theta_lam[i])) / n;
+ 
+ prod_deriv_theta_lam += deriv_theta_lam[i] * theta_lam[i];
+ }
+ *prod_deriv_theta_lam_ptr = prod_deriv_theta_lam;
+ *g_theta_lam_ptr = dual_bin(theta_lam, 1.0, 1.0, n);
+ 
+ // compute X_theta_lam_xi_pos (X^Ty) and prod_PX_Pxmax_xi_pos (<Px, Pxmax>)
+ double sum_xmaxTy = crossprod_bm(xMat, y, row_idx, center[xmax_idx], scale[xmax_idx], n, xmax_idx);
+ double sign_xmaxTy = sign(sum_xmaxTy);
+ int j;
+#pragma omp parallel for private(j) schedule(static) 
+ for (j = 0; j < p; j++) {
+ X_theta_lam_xi_pos[j] = -z[j] * n; // = -xTy
+ prod_PX_Pxmax_xi_pos[j] = -sign_xmaxTy * crossprod_bm_Xj_Xk(xMat, row_idx, center, scale, n, col_idx[j], xmax_idx); 
+ cutoff_xi_pos[j] = prod_PX_Pxmax_xi_pos[j] / n;
+ }
+                 }*/
 
 
 // Slores recalculation
 void slores_recal(vector<double>& theta_lam, vector<double> &z,
-		  double sumResid, double *r,
-		  double *g_theta_lam_ptr, double *prod_deriv_theta_lam_ptr,
-		  vector<double>& X_theta_lam_xi_pos, double lambda_prev,
-		  XPtr<BigMatrix> xMat, double *eta, int xmax_idx,
-		  int *row_idx, vector<int> &col_idx,
-		  NumericVector &center, NumericVector &scale,
-		  IntegerVector& ylab, int n, int p) {
+                  double sumResid, double *r,
+                  double *g_theta_lam_ptr, double *prod_deriv_theta_lam_ptr,
+                  vector<double>& X_theta_lam_xi_pos, double lambda_prev,
+                  XPtr<BigMatrix> xMat, double *eta, int xmax_idx,
+                  int *row_idx, vector<int> &col_idx,
+                  NumericVector &center, NumericVector &scale,
+                  IntegerVector& ylab, int n, int p) {
   
   vector<double> deriv_theta_lam(n);
   double prod_deriv_theta_lam = 0.0;
@@ -98,17 +94,17 @@ void slores_recal(vector<double>& theta_lam, vector<double> &z,
     theta_lam[i] = 1 / (1 + exp(ylab[i] * eta[i]));
     
     deriv_theta_lam[i] = log(theta_lam[i] / (1 - theta_lam[i])) / n;
-
+    
     prod_deriv_theta_lam += deriv_theta_lam[i] * theta_lam[i];
   }
   *prod_deriv_theta_lam_ptr = prod_deriv_theta_lam;
   *g_theta_lam_ptr = dual_bin(theta_lam, 1.0, 1.0, n);
-
+  
   MatrixAccessor<double> xAcc(*xMat);
   double *xCol;
   int j, jj;
   double sum_xr;
-  #pragma omp parallel for private(j, jj, xCol, sum_xr) schedule(static)
+#pragma omp parallel for private(j, jj, xCol, sum_xr) schedule(static)
   for (j = 0; j < p; j++) {
     jj = col_idx[j];
     xCol = xAcc[jj];
@@ -118,36 +114,50 @@ void slores_recal(vector<double>& theta_lam, vector<double> &z,
     }
     z[j] = (sum_xr - center[jj] * sumResid) / scale[jj] / n;
     X_theta_lam_xi_pos[j] = -z[j] * n; 
-    if(jj == xmax_idx && fabs(sum_xr / n / lambda_prev) < 1 - 0.1){
-      Rcpp::Rcerr << "beta[xmaxidx] may not be active with xmaxTtheta/nlambda=" << fabs(sum_xr / n / lambda_prev) << std::endl;
-    } 
   }
   
+}
+
+// Slores recalculation when changing xmax
+void slores_recal_xmax(vector<double>& prod_PX_Pxmax_xi_pos,
+                       vector<double>& cutoff_xi_pos,
+                       XPtr<BigMatrix> xMat, double *y, int xmax_idx,
+                       int *row_idx,vector<int> &col_idx,
+                       NumericVector &center, NumericVector &scale,
+                       int n, int p) {
+  double sum_xmaxTy = crossprod_bm(xMat, y, row_idx, center[xmax_idx], scale[xmax_idx], n, xmax_idx);
+  double sign_xmaxTy = sign(sum_xmaxTy);
+  int j;
+#pragma omp parallel for private(j) schedule(static) 
+  for (j = 0; j < p; j++) {
+    prod_PX_Pxmax_xi_pos[j] = -sign_xmaxTy * crossprod_bm_Xj_Xk(xMat, row_idx, center, scale, n, col_idx[j], xmax_idx); 
+    cutoff_xi_pos[j] = prod_PX_Pxmax_xi_pos[j] / n;
+  }
 }
 
 
 
 // Slores screening
 void slores_screen(int *slores_reject, vector<double>& theta_lam,
-                       double g_theta_lam, double prod_deriv_theta_lam,
-                       vector<double>& X_theta_lam_xi_pos,
-                       vector<double>& prod_PX_Pxmax_xi_pos,
-                       vector<double>& cutoff_xi_pos,
-                       int *row_idx, vector<int> &col_idx,
-                       NumericVector &center, NumericVector &scale, int xmax_idx,
-                       IntegerVector& ylab, double lambda,
-                       double lambda_max, int n_pos, int n, int p);
+                   double g_theta_lam, double prod_deriv_theta_lam,
+                   vector<double>& X_theta_lam_xi_pos,
+                   vector<double>& prod_PX_Pxmax_xi_pos,
+                   vector<double>& cutoff_xi_pos,
+                   int *row_idx, vector<int> &col_idx,
+                   NumericVector &center, NumericVector &scale, int xmax_idx,
+                   IntegerVector& ylab, double lambda,
+                   double lambda_max, int n_pos, int n, int p);
 
 
 
 // Coordinate descent for logistic models
 RcppExport SEXP cdfit_binomial_hsr_slores_batch(SEXP X_, SEXP y_, SEXP n_pos_, SEXP ylab_, 
-						SEXP row_idx_, SEXP lambda_, SEXP nlambda_,
-						SEXP lam_scale_, SEXP lambda_min_, 
-						SEXP alpha_, SEXP user_, 
-						SEXP eps_, SEXP max_iter_, SEXP multiplier_, 
-						SEXP dfmax_, SEXP ncore_, SEXP warn_,
-						SEXP safe_thresh_, SEXP recal_thresh_, SEXP verbose_) {
+                                                SEXP row_idx_, SEXP lambda_, SEXP nlambda_,
+                                                SEXP lam_scale_, SEXP lambda_min_, 
+                                                SEXP alpha_, SEXP user_, 
+                                                SEXP eps_, SEXP max_iter_, SEXP multiplier_, 
+                                                SEXP dfmax_, SEXP ncore_, SEXP warn_,
+                                                SEXP safe_thresh_, SEXP recal_thresh_, SEXP verbose_) {
   //ProfilerStart("Slores-Batch.out");
   XPtr<BigMatrix> xMat(X_);
   double *y = REAL(y_);
@@ -169,7 +179,7 @@ RcppExport SEXP cdfit_binomial_hsr_slores_batch(SEXP X_, SEXP y_, SEXP n_pos_, S
   double slores_thresh = REAL(safe_thresh_)[0]; // threshold for safe test
   int verbose = INTEGER(verbose_)[0];
   double recal_thresh = REAL(recal_thresh_)[0];
-
+  
   NumericVector lambda(L);
   NumericVector Dev(L);
   IntegerVector iter(L);
@@ -209,7 +219,7 @@ RcppExport SEXP cdfit_binomial_hsr_slores_batch(SEXP X_, SEXP y_, SEXP n_pos_, S
   standardize_and_get_residual(center, scale, p_keep_ptr, col_idx, z, lambda_max_ptr, xmax_ptr, xMat, 
                                y, row_idx, lambda_min, alpha, n, p);
   p = p_keep; // set p = p_keep, only loop over columns whose scale > 1e-6
-
+  
   if (verbose) {
     char buff1[100];
     time_t now1 = time (0);
@@ -217,7 +227,7 @@ RcppExport SEXP cdfit_binomial_hsr_slores_batch(SEXP X_, SEXP y_, SEXP n_pos_, S
     Rprintf("Preprocessing end: %s\n", buff1);
     Rprintf("\n-----------------------------------------------\n");
   }
-
+  
   arma::sp_mat beta = arma::sp_mat(p, L); //beta
   double *a = Calloc(p, double); //Beta from previous iteration
   double a0 = 0.0; //beta0 from previousiteration
@@ -243,7 +253,7 @@ RcppExport SEXP cdfit_binomial_hsr_slores_batch(SEXP X_, SEXP y_, SEXP n_pos_, S
   thresh = eps * nullDev / n;
   double sumS = sum(s, n); // temp result sum of s
   double sumWResid = 0.0; // temp result: sum of w * r
-
+  
   // set up lambda
   if (user == 0) {
     if (lam_scale) { // set up lambda, equally spaced on log scale
@@ -267,7 +277,7 @@ RcppExport SEXP cdfit_binomial_hsr_slores_batch(SEXP X_, SEXP y_, SEXP n_pos_, S
     lstart = 0;
     lambda = Rcpp::as<NumericVector>(lambda_);
   }
-
+  
   // Slores variables
   vector<double> theta_lam;
   double g_theta_lam = 0.0;
@@ -281,7 +291,10 @@ RcppExport SEXP cdfit_binomial_hsr_slores_batch(SEXP X_, SEXP y_, SEXP n_pos_, S
   int *slores_reject_old = Calloc(p, int);
   for (int j = 0; j < p; j++) slores_reject_old[j] = 1;
   int l_prev = lstart;
-  double gain = 0;
+  double gain = 0.0;
+  int xmax_invalid = 0;
+  double beta_max = 0.0;
+  int beta_max_idx = 0;
   
   int slores; // if 0, don't perform Slores rule
   if (slores_thresh < 1) {
@@ -290,7 +303,7 @@ RcppExport SEXP cdfit_binomial_hsr_slores_batch(SEXP X_, SEXP y_, SEXP n_pos_, S
     X_theta_lam_xi_pos.resize(p);
     prod_PX_Pxmax_xi_pos.resize(p);
     cutoff_xi_pos.resize(p);
-
+    
     slores_init(theta_lam, g_theta_lam_ptr, prod_deriv_theta_lam_ptr, cutoff_xi_pos,
                 X_theta_lam_xi_pos, prod_PX_Pxmax_xi_pos, 
                 xMat, y, z, xmax_idx, row_idx, col_idx, 
@@ -300,7 +313,7 @@ RcppExport SEXP cdfit_binomial_hsr_slores_batch(SEXP X_, SEXP y_, SEXP n_pos_, S
   }
   
   if (slores == 1 && user == 0) n_slores_reject[0] = p;
-
+  
   for (l = lstart; l < L; l++) {
     if(verbose) {
       // output time
@@ -323,7 +336,7 @@ RcppExport SEXP cdfit_binomial_hsr_slores_batch(SEXP X_, SEXP y_, SEXP n_pos_, S
         Free(slores_reject);
         Free(slores_reject_old);
         Free_memo_bin_hsr(s, w, a, r, e1, e2, eta);
-	//ProfilerStop();
+        //ProfilerStop();
         return List::create(beta0, beta, center, scale, lambda, Dev, 
                             iter, n_reject, Rcpp::wrap(col_idx));
       }
@@ -331,14 +344,22 @@ RcppExport SEXP cdfit_binomial_hsr_slores_batch(SEXP X_, SEXP y_, SEXP n_pos_, S
     } else {
       cutoff = 2*lambda[l] - lambda_max;
     }
-
+    
     if (slores) {
       // recalculate rule if not discarding enough
-      if(gain - n_slores_reject[l - 1] * (l - l_prev) > recal_thresh * p && l != L - 1) {
+      if(gain - n_slores_reject[l - 1] * (l - l_prev) > recal_thresh * (xmax_invalid + 1) * p && l != L - 1) {
         l_prev = l - 1;
+        // If xmax is not active, choose another x as xmax.
+        if(xmax_invalid) {
+          xmax_idx = beta_max_idx;
+          xmax_invalid = 0;
+          slores_recal_xmax(prod_PX_Pxmax_xi_pos, cutoff_xi_pos, xMat, y, xmax_idx,
+                            row_idx, col_idx, center, scale, n, p);
+        }
         slores_recal(theta_lam, z, sumS, s, g_theta_lam_ptr, prod_deriv_theta_lam_ptr,
                      X_theta_lam_xi_pos, lambda[l_prev], xMat, eta, xmax_idx, 
                      row_idx, col_idx, center, scale, ylabel, n, p);
+        
         slores_screen(slores_reject, theta_lam, g_theta_lam, prod_deriv_theta_lam,
                       X_theta_lam_xi_pos, prod_PX_Pxmax_xi_pos, cutoff_xi_pos,
                       row_idx, col_idx, center, scale, xmax_idx, ylabel, 
@@ -359,7 +380,7 @@ RcppExport SEXP cdfit_binomial_hsr_slores_batch(SEXP X_, SEXP y_, SEXP n_pos_, S
       }
       
       
-      #pragma omp parallel for private(j) schedule(static) 
+#pragma omp parallel for private(j) schedule(static) 
       for (j = 0; j < p; j++) {
         slores_reject_old[j] = slores_reject[j];
         // hsr screening
@@ -373,7 +394,7 @@ RcppExport SEXP cdfit_binomial_hsr_slores_batch(SEXP X_, SEXP y_, SEXP n_pos_, S
     } else {
       n_slores_reject[l] = 0; 
       // hsr screening over all
-      #pragma omp parallel for private(j) schedule(static) 
+#pragma omp parallel for private(j) schedule(static) 
       for (j = 0; j < p; j++) {
         if (fabs(z[j]) > (cutoff * alpha * m[col_idx[j]])) {
           e2[j] = 1;
@@ -432,6 +453,7 @@ RcppExport SEXP cdfit_binomial_hsr_slores_batch(SEXP X_, SEXP y_, SEXP n_pos_, S
           }
           sumWResid = wsum(r, w, n); // update temp result: sum of w * r, used for computing xwr;
           max_update = 0.0;
+          beta_max = 0.0;
           for (j = 0; j < p; j++) {
             if (e1[j]) {
               jj = col_idx[j];
@@ -441,7 +463,17 @@ RcppExport SEXP cdfit_binomial_hsr_slores_batch(SEXP X_, SEXP y_, SEXP n_pos_, S
               l1 = lambda[l] * m[jj] * alpha;
               l2 = lambda[l] * m[jj] * (1-alpha);
               beta(j, l) = lasso(u, l1, l2, v);
-
+              if(fabs(lasso(u, l1, l2, v)) > beta_max) {
+                beta_max = fabs(lasso(u, l1, l2, v));
+                beta_max_idx = jj;
+              }
+              if(jj == xmax_idx) {
+                if(fabs(u) < l1) {
+                  xmax_invalid = 1;
+                } else {
+                  xmax_invalid = 0;
+                }
+              }
               shift = beta(j, l) - a[j];
               if (shift != 0) {
                 // update change of objective function
@@ -470,9 +502,9 @@ RcppExport SEXP cdfit_binomial_hsr_slores_batch(SEXP X_, SEXP y_, SEXP n_pos_, S
       }
       if (violations == 0) break;
       /*
-      if (n_slores_reject[l] <= p * slores_thresh) {
-        slores = 0; // turn off slores screening for next iteration if not efficient
-	}*/
+       if (n_slores_reject[l] <= p * slores_thresh) {
+       slores = 0; // turn off slores screening for next iteration if not efficient
+       }*/
     }
   }
   Free(slores_reject);
