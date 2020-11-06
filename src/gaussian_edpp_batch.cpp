@@ -16,7 +16,7 @@ void edpp_screen_batch(int *discard_beta, int n, int p, double rhs2, double *Xtr
 }
 
 // check edpp set
-int check_edpp_set(int *ever_active, int *discard_beta, vector<double> &z, 
+int check_safe_set(int *ever_active, int *discard_beta, vector<double> &z, 
                    XPtr<BigMatrix> xpMat, int *row_idx, vector<int> &col_idx,
                    NumericVector &center, NumericVector &scale, double *a,
                    double lambda, double sumResid, double alpha, 
@@ -158,7 +158,7 @@ RcppExport SEXP cdfit_gaussian_edpp_batch(SEXP X_, SEXP y_, SEXP row_idx_, SEXP 
   // EDPP
   double c;
   double *lhs2 = Calloc(p, double); //Second term on LHS
-  double rhs2; // second term on RHS
+  double rhs2 = 0.0; // second term on RHS
   double *Xty = Calloc(p, double);
   double *Xtr = Calloc(p, double); // Xtr at previous recalculation of EDPP
   for(j = 0; j < p; j++) {
@@ -334,7 +334,7 @@ RcppExport SEXP cdfit_gaussian_edpp_batch(SEXP X_, SEXP y_, SEXP row_idx_, SEXP 
       }
       
       // Scan for violations in edpp set
-      violations = check_edpp_set(ever_active, discard_beta, z, xMat, row_idx, col_idx, center, scale, a, lambda[l], sumResid, alpha, r, m, n, p); 
+      violations = check_safe_set(ever_active, discard_beta, z, xMat, row_idx, col_idx, center, scale, a, lambda[l], sumResid, alpha, r, m, n, p); 
       if (violations == 0) {
         loss[l] = gLoss(r, n);
         break;

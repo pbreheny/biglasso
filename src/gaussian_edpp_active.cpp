@@ -12,7 +12,7 @@ void edpp_screen(int *discard_beta, XPtr<BigMatrix> xpMat, double *o,
                  NumericVector &scale, int n, int p, double rhs);
 
 // check edpp set
-int check_edpp_set(int *ever_active, int *discard_beta, vector<double> &z, 
+int check_safe_set(int *ever_active, int *discard_beta, vector<double> &z, 
                    XPtr<BigMatrix> xpMat, int *row_idx, vector<int> &col_idx,
                    NumericVector &center, NumericVector &scale, double *a,
                    double lambda, double sumResid, double alpha, 
@@ -234,7 +234,7 @@ RcppExport SEXP cdfit_gaussian_edpp_active(SEXP X_, SEXP y_, SEXP row_idx_, SEXP
       }
     
       // Scan for violations in edpp set
-      violations = check_edpp_set(ever_active, discard_beta, z, xMat, row_idx, col_idx, center, scale, a, lambda[l], sumResid, alpha, r, m, n, p); 
+      violations = check_safe_set(ever_active, discard_beta, z, xMat, row_idx, col_idx, center, scale, a, lambda[l], sumResid, alpha, r, m, n, p); 
       if (violations == 0) {
         loss[l] = gLoss(r, n);
         break;

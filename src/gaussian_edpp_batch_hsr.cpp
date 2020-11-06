@@ -33,40 +33,8 @@ int check_strong_set(int *ever_active, int *strong_set, vector<double> &z, XPtr<
                      NumericVector &center, NumericVector &scale, double *a,
                      double lambda, double sumResid, double alpha, 
                      double *r, double *m, int n, int p);
-  
-// check edpp set
-/*
-int check_edpp_set(int *ever_active, int *discard_beta, vector<double> &z, 
-                   XPtr<BigMatrix> xpMat, int *row_idx, vector<int> &col_idx,
-                   NumericVector &center, NumericVector &scale, double *a,
-                   double lambda, double sumResid, double alpha, 
-                   double *r, double *m, int n, int p); {
-  MatrixAccessor<double> xAcc(*xpMat);
-  double *xCol, sum, l1, l2;
-  int j, jj, violations = 0;
-  
-#pragma omp parallel for private(j, sum, l1, l2) reduction(+:violations) schedule(static) 
-  for (j = 0; j < p; j++) {
-    if (ever_active[j] == 0 && discard_beta[j] == 0) {
-      jj = col_idx[j];
-      xCol = xAcc[jj];
-      sum = 0.0;
-      for (int i=0; i < n; i++) {
-        sum = sum + xCol[row_idx[i]] * r[i];
-      }
-      z[j] = (sum - center[jj] * sumResid) / (scale[jj] * n);
-      l1 = lambda * m[jj] * alpha;
-      l2 = lambda * m[jj] * (1 - alpha);
-      if (fabs(z[j] - a[j] * l2) > l1) {
-        ever_active[j] = 1;
-        violations++;
-      }
-    }
-  }
-  return violations;
-}*/
 
-int check_edpp_rest_set(int *ever_active, int *strong_set, int *discard_beta, vector<double> &z,
+int check_rest_safe_set(int *ever_active, int *strong_set, int *discard_beta, vector<double> &z,
 			XPtr<BigMatrix> xpMat, int *row_idx, vector<int> &col_idx,
 			NumericVector &center, NumericVector &scale, double *a, double lambda,
 			double sumResid, double alpha, double *r, double *m, int n, int p) {
@@ -188,7 +156,7 @@ RcppExport SEXP cdfit_gaussian_edpp_batch_hsr(SEXP X_, SEXP y_, SEXP row_idx_, S
   // EDPP
   double c;
   double *lhs2 = Calloc(p, double); //Second term on LHS
-  double rhs2; // second term on RHS
+  double rhs2 = 0.0; // second term on RHS
   double *Xty = Calloc(p, double);
   double *Xtr = Calloc(p, double); // Xtr at previous recalculation of EDPP
   for(j = 0; j < p; j++) {
@@ -385,7 +353,7 @@ RcppExport SEXP cdfit_gaussian_edpp_batch_hsr(SEXP X_, SEXP y_, SEXP row_idx_, S
         if (violations==0) break;
       }	
 	// Scan for violations in edpp set
-      violations = check_edpp_rest_set(ever_active, strong_set, discard_beta, z, xMat, row_idx, col_idx, center, scale, a, lambda[l], sumResid, alpha, r, m, n, p); 
+      violations = check_rest_safe_set(ever_active, strong_set, discard_beta, z, xMat, row_idx, col_idx, center, scale, a, lambda[l], sumResid, alpha, r, m, n, p); 
       if (violations == 0) {
 	loss[l] = gLoss(r, n);
 	break;

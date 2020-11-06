@@ -19,7 +19,7 @@ void update_zj(vector<double> &z, int *bedpp_reject, int *bedpp_reject_old,
                double sumResid, double *r, double *m, int n, int p);
 
 // dual function
-double dual(vector<double>& theta, double lambda, double lambda_max, int n);
+double dual_bin(vector<double>& theta, double lambda, double lambda_max, int n);
 
 // Slores initialization
 void slores_init(vector<double>& theta_lam, 

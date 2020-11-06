@@ -6,17 +6,17 @@ void Free_memo_bin_hsr(double *s, double *w, double *a, double *r, int *e1, int 
 void update_resid_eta(double *r, double *eta, XPtr<BigMatrix> xpMat, double shift, 
                       int *row_idx_, double center_, double scale_, int n, int j);
 
-int check_strong_set_bin(int *e1, int *e2, vector<double> &z, XPtr<BigMatrix> xpMat, 
+int check_strong_set(int *e1, int *e2, vector<double> &z, XPtr<BigMatrix> xpMat, 
                          int *row_idx, vector<int> &col_idx,
                          NumericVector &center, NumericVector &scale, double *a,
                          double lambda, double sumResid, double alpha, 
                          double *r, double *m, int n, int p);
 
-int check_rest_set_bin(int *e1, int *e2, vector<double> &z, XPtr<BigMatrix> xpMat, 
-                       int *row_idx, vector<int> &col_idx,
-                       NumericVector &center, NumericVector &scale, double *a,
-                       double lambda, double sumResid, double alpha, 
-                       double *r, double *m, int n, int p);
+int check_rest_set(int *e1, int *e2, vector<double> &z, XPtr<BigMatrix> xpMat, 
+                   int *row_idx, vector<int> &col_idx,
+                   NumericVector &center, NumericVector &scale, double *a,
+                   double lambda, double sumResid, double alpha, 
+                   double *r, double *m, int n, int p);
 
 // Coordinate descent for logistic models
 RcppExport SEXP cdfit_binomial_hsr_approx(SEXP X_, SEXP y_, SEXP row_idx_, 
@@ -258,12 +258,12 @@ RcppExport SEXP cdfit_binomial_hsr_approx(SEXP X_, SEXP y_, SEXP row_idx_,
         
         // Scan for violations in strong set
         sumS = sum(s, n);
-        violations = check_strong_set_bin(e1, e2, z, xMat, row_idx, col_idx, center, scale, a, lambda[l], sumS, alpha, s, m, n, p);
+        violations = check_strong_set(e1, e2, z, xMat, row_idx, col_idx, center, scale, a, lambda[l], sumS, alpha, s, m, n, p);
         if (violations==0) break;
       }
       
       // Scan for violations in rest
-      violations = check_rest_set_bin(e1, e2, z, xMat, row_idx, col_idx,center, scale, a, lambda[l], sumS, alpha, s, m, n, p);
+      violations = check_rest_set(e1, e2, z, xMat, row_idx, col_idx,center, scale, a, lambda[l], sumS, alpha, s, m, n, p);
       if (violations==0) break;
     }
   }
