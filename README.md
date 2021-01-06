@@ -48,7 +48,7 @@
 ![Alt text](/vignettes/2020-12-18_vary_n_pkgs.png)
 -->
 
-<img src="https://github.com/YaohuiZeng/biglasso/blob/master/vignettes/2020-12-18_vary_p_pkgs.png?raw=true" width="400" height="300" /><img src="https://github.com/YaohuiZeng/biglasso/blob/master/vignettes/2020-12-18_vary_n_pkgs?raw=true" width="400" height="300" />
+<img src="https://raw.githubusercontent.com/YaohuiZeng/biglasso/master/vignettes/2020-12-18_vary_p_pkgs.png" width="400" height="300" /><img src="https://raw.githubusercontent.com/YaohuiZeng/biglasso/master/vignettes/2020-12-18_vary_n_pkgs.png" width="400" height="300" />
 
 In all the settings, `biglasso` (1 core) is uniformly faster than `picasso`, `glmnet` and `ncvreg`.
 When the data gets bigger, `biglasso` achieves 6-9x speed-up compared to other packages.
