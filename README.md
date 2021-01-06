@@ -59,14 +59,14 @@ parallel-computation of multiple cores.
 
 To prove that `biglasso` is much more memory-efficient, we simulate a `1000 X 100000` large feature matrix. The raw data is 0.75 GB. We used [Syrupy](https://github.com/jeetsukumaran/Syrupy) to measure the memory used in RAM (i.e. the resident set size, RSS) every 1 second during lasso model fitting by each of the packages. 
 
-The maximum RSS (in **GB**) used by a single fit and 10-fold cross validation is reported in the Table below. In the single fit case, `biglasso` consumes 0.84 GB memory in RAM, 50% of that used by `glmnet` and  22% of that used by `picasso`. Note that the memory consumed by `glmnet`, `ncvreg`, and `picasso` are respectively 2.2x, 2.1x, and 5.1x larger than the size of the raw data. More strikingly, `biglasso` does not require additional memory to perform cross-validation, unlike other packages.  For serial 10-fold cross-validation, `biglasso`  requires just 27% of the memory used by `glmnet` and 23% of that used by `ncvreg`, making it 3.6x and 4.3x more memory-efficient compared to these two, respectively.
+The maximum RSS (in **GB**) used by a single fit and 10-fold cross validation is reported in the Table below. In the single fit case, `biglasso` consumes 0.60 GB memory in RAM, 23% of that used by `glmnet` and  24% of that used by `ncvreg`. Note that the memory consumed by `glmnet` and `ncvreg` are respectively 3.4x and 3.3x larger than the size of the raw data. `biglasso` also requires less additional memory to perform cross-validation, compared other packages.  For serial 10-fold cross-validation, `biglasso`  requires just 31% of the memory used by `glmnet` and 11% of that used by `ncvreg`, making it 3.2x and 9.4x more memory-efficient compared to these two, respectively.
 
 <center>
 
 |   Package  |  picasso |  ncvreg  |  glmnet  |  biglasso  |
 |-----------:|:--------:|:--------:|:--------:|:----------:|
-| Single fit |   3.84   |   1.60   |   1.67   |    0.84    | 
-| 10-fold CV |    -     |   3.74   |   3.18   |    0.87    |
+| Single fit |   0.74   |   2.47   |   2.57   |    0.60    | 
+| 10-fold CV |    -     |   9.02   |   3.11   |    0.96    |
 
 </center>
 
