@@ -1,6 +1,6 @@
 #' Extending Lasso Model Fitting to Big Data
 #' 
-#' Extend lasso and elastic-net linear and logistic regression models for
+#' Extend lasso and elastic-net linear, logistic and cox regression models for
 #' ultrahigh-dimensional, multi-gigabyte data sets that cannot be loaded into
 #' available RAM. This package utilizes memory-mapped files to store the
 #' massive data on the disk and only read those into memory whenever necessary
@@ -13,7 +13,7 @@
 #' powerful big data analysis even with only an ordinary laptop.
 #' 
 #' \tabular{ll}{ Package: \tab biglasso\cr Type: \tab Package\cr Version: \tab
-#' 1.3-6\cr Date: \tab 2017-04-12\cr License: \tab GPL-3\cr}
+#' 1.4-0\cr Date: \tab 2017-04-12\cr License: \tab GPL-3\cr}
 #' 
 #' Penalized regression models, in particular the lasso, have been extensively
 #' applied to analyzing high-dimensional data sets. However, due to the memory
@@ -32,8 +32,8 @@
 #' it's able to seamlessly data-larger-than-RAM cases. \item it is built upon
 #' pathwise coordinate descent algorithm with warm start, active set cycling,
 #' and feature screening strategies, which has been proven to be one of fastest
-#' lasso solvers. \item in incorporates our newly developed hybrid hybrid
-#' safe-strong rules that outperform state-of-the-art screening rules such as
+#' lasso solvers. \item in incorporates our newly developed hybrid and adaptive
+#' screening that outperform state-of-the-art screening rules such as
 #' the sequential strong rule (SSR) and the sequential EDPP rule (SEDPP) with
 #' additional 1.5x to 4x speedup. \item the implementation is designed to be as
 #' memory-efficient as possible by eliminating extra copies of the data created
@@ -87,9 +87,9 @@
 #' %Elapsed time (s) \tab 2.50 \tab 11.43 \tab 83.69 \tab 1090.62 \cr %} 
 #' }
 #' 
-#' @author Yaohui Zeng and Patrick Breheny
+#' @author Yaohui Zeng, Chuyi Wang and Patrick Breheny
 #' 
-#' Maintainer: Yaohui Zeng <yaohui.zeng@@gmail.com>
+#' Maintainer: Yaohui Zeng <yaohui.zeng@@gmail.com> and Chuyi Wang <wwaa0208@@gmail.com>
 #' @references \itemize{ \item Zeng, Y., and Breheny, P. (2017). The biglasso
 #' Package: A Memory- and Computation-Efficient Solver for Lasso Model Fitting
 #' with Big Data in R. \url{https://arxiv.org/abs/1701.05936}.  \item
@@ -129,14 +129,14 @@
 #' 
 #' y <- as.matrix(read.table(yfname, header = F))
 #' time.fit <- system.time(
-#'   fit <- biglasso(X, y, family = 'gaussian', screen = 'SSR-BEDPP')
+#'   fit <- biglasso(X, y, family = 'gaussian', screen = 'Hybrid')
 #' )
 #' print(time.fit) # ~ 44 seconds for fitting a lasso model along the entire solution path
 #' 
 #' # cross validation in parallel
 #' seed <- 1234
 #' time.cvfit <- system.time(
-#'   cvfit <- cv.biglasso(X, y, family = 'gaussian', screen = 'SSR-BEDPP', 
+#'   cvfit <- cv.biglasso(X, y, family = 'gaussian', screen = 'Hybrid', 
 #'                        seed = seed, ncores = 4, nfolds = 10)
 #' )
 #' print(time.cvfit) # ~ 3 minutes for 10-fold cross validation

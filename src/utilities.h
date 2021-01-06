@@ -69,6 +69,10 @@ double crossprod_resid(XPtr<BigMatrix> xpMat, double *y_, double sumY_, int *row
 void update_resid(XPtr<BigMatrix> xpMat, double *r, double shift, int *row_idx_, 
                   double center_, double scale_, int n_row, int j);
 
+// update residul vector and eta vector
+void update_resid_eta(double *r, double *eta, XPtr<BigMatrix> xpMat, double shift, 
+                      int *row_idx_, double center_, double scale_, int n, int j);
+
 // Sum of squares of jth column of X
 double sqsum_bm(SEXP xP, int n_row, int j, int useCores);
 
@@ -85,8 +89,6 @@ double wcrossprod_resid(XPtr<BigMatrix> xpMat, double *y, double sumYW_, int *ro
 double wsqsum_bm(XPtr<BigMatrix> xpMat, double *w, int *row_idx_, double center_, 
                  double scale_, int n_row, int j);
 
-void Free_memo_hsr(double *a, double *r, int *e1, int *e2);
-
 // standardize
 void standardize_and_get_residual(NumericVector &center, NumericVector &scale, 
                                   int *p_keep_ptr, vector<int> &col_idx,
@@ -94,5 +96,41 @@ void standardize_and_get_residual(NumericVector &center, NumericVector &scale,
                                   int *xmax_ptr, XPtr<BigMatrix> xMat, double *y, 
                                   int *row_idx, double lambda_min, double alpha, int n, int p);
 
+// check KKT conditions over features in the inactive set
+int check_inactive_set(int *e1, vector<double> &z, XPtr<BigMatrix> xpMat, int *row_idx, 
+                       vector<int> &col_idx, NumericVector &center, NumericVector &scale, double *a,
+                       double lambda, double sumResid, double alpha, double *r, double *m, int n, int p);
+
+// check KKT conditions over features in the safe set
+int check_safe_set(int *ever_active, int *discard_beta, vector<double> &z, 
+                   XPtr<BigMatrix> xpMat, int *row_idx, vector<int> &col_idx,
+                   NumericVector &center, NumericVector &scale, double *a,
+                   double lambda, double sumResid, double alpha, 
+                   double *r, double *m, int n, int p);
+
+// check KKT conditions over features in (the safe set - the strong set)
+int check_rest_safe_set(int *ever_active, int *strong_set, int *discard_beta, vector<double> &z,
+                        XPtr<BigMatrix> xpMat, int *row_idx, vector<int> &col_idx,
+                        NumericVector &center, NumericVector &scale, double *a, double lambda,
+                        double sumResid, double alpha, double *r, double *m, int n, int p);
+
+// check KKT conditions over features in the strong set
+int check_strong_set(int *e1, int *e2, vector<double> &z, XPtr<BigMatrix> xpMat, 
+                     int *row_idx, vector<int> &col_idx,
+                     NumericVector &center, NumericVector &scale, double *a,
+                     double lambda, double sumResid, double alpha, 
+                     double *r, double *m, int n, int p);
+
+// check KKT conditions over features in the rest set
+int check_rest_set(int *e1, int *e2, vector<double> &z, XPtr<BigMatrix> xpMat, int *row_idx, 
+                   vector<int> &col_idx, NumericVector &center, NumericVector &scale, double *a,
+                   double lambda, double sumResid, double alpha, double *r, double *m, int n, int p);
+
+// update z[j] for features which are rejected at previous lambda but not rejected at current one.
+void update_zj(vector<double> &z,
+               int *bedpp_reject, int *bedpp_reject_old,
+               XPtr<BigMatrix> xpMat, int *row_idx,vector<int> &col_idx,
+               NumericVector &center, NumericVector &scale, 
+               double sumResid, double *r, double *m, int n, int p);
 
 #endif

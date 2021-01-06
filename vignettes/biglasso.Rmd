@@ -1,0 +1,186 @@
+---
+title: "biglasso"
+author: "Yaohui Zeng, Chuyi Wang, Patrick Breheny"
+package version: "1.4-0"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{biglasso}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>",
+  fig.width=6, fig.height=4
+)
+```
+
+# 1 User Guide
+
+## 1.1 Small Data
+
+### 1.1.1 Standar Lasso
+
+```{r}
+library(biglasso)
+
+data(colon)
+X <- colon$X
+y <- colon$y
+dim(X)
+```
+
+```{r}
+X[1:5, 1:5]
+```
+
+```{r}
+## convert X to a big.matrix object
+## X.bm is a pointer to the data matrix
+X.bm <- as.big.matrix(X)
+str(X.bm)
+```
+
+
+```{r}
+dim(X.bm)
+```
+
+```{r}
+X.bm[1:5, 1:5]
+## same results as X[1:5, 1:5]
+```
+
+
+
+```{r}
+## fit entire solution path, using our newly proposed "Adaptive" screening rule (default)
+fit <- biglasso(X.bm, y)
+plot(fit)
+```
+
+### 1.1.2 Cross-Validation 
+```{r}
+## 10-fold cross-valiation in parallel
+cvfit <- tryCatch(
+         {
+                cv.biglasso(X.bm, y, seed = 1234, nfolds = 10, ncores = 4)
+         },
+         error = function(cond) {
+                cv.biglasso(X.bm, y, seed = 1234, nfolds = 10, ncores = 2)
+         }
+)
+```
+
+After cross-validation, a few things we can do:
+
+- plot the cross-validation plots:
+
+```{r}
+par(mfrow = c(2, 2), mar = c(3.5, 3.5, 3, 1) ,mgp = c(2.5, 0.5, 0))
+plot(cvfit, type = "all")
+```
+
+- Summarize CV object:
+
+```{r}
+summary(cvfit)
+```
+
+
+- Extract non-zero coefficients at the optimal $\lambda$ value:
+
+```{r}
+coef(cvfit)[which(coef(cvfit) != 0),]
+```
+
+### 1.1.3 Logistic Regression
+
+```{r}
+data(Heart)
+X <- Heart$X
+y <- Heart$y
+X.bm <- as.big.matrix(X)
+fit <- biglasso(X.bm, y, family = "binomial")
+plot(fit)
+```
+
+### 1.1.4 Cox Regression
+
+```{r}
+library(survival)
+X <- heart[,4:7]
+y <- Surv(heart$stop - heart$start, heart$event)
+X.bm <- as.big.matrix(X)
+fit <- biglasso(X.bm, y, family = "cox")
+plot(fit)
+```
+
+## 1.2 Big Data
+
+When the raw data file is very large, it's better to convert the raw data file
+into a file-backed `big.matrix` by using a file cache. We can call function 
+`setupX`, which reads the raw data file and creates a backing file (.bin)
+and a descriptor file (.desc) for the raw data matrix:
+
+```{r}
+## The data has 1000 observations and 100,000 features.
+## 10 of the features has non-zero coefficients
+if(!file.exists('BigX.csv')) {
+  X <- matrix(rnorm(1000 * 100000), 1000, 100000)
+  beta <- c(-5:5)
+  y <- as.numeric(X[,1:11] %*% beta)
+  write.csv(X, "BigX.csv", row.names = F)
+  write.csv(y, "y.csv", row.names = F)
+  ## Pretend the data is stored in the ~1G .csv file and is too large to fit into memory
+  X.bm <- setupX("BigX.csv", header = T)
+}
+
+```
+
+It's important to note that the above operation is just one-time execution. Once
+done, the data can always be retrieved seamlessly by attaching its descriptor
+file (.desc) in any new R session:
+
+```{r, warning=F}
+rm(list = c("X", "X.bm", "y")) # Pretend starting a new session
+X.bm <- attach.big.matrix("BigX.desc")
+y <- read.csv("y.csv")[,1]
+```
+
+This is very appealing for big data analysis in that we don't need to "read" the
+raw data again in a R session, which would be very time-consuming. The code below
+again fits a lasso-penalized linear model, and runs 10-fold cross-validation:
+
+```{r}
+system.time({fit <- biglasso(X.bm, y)})
+```
+
+```{r}
+plot(fit)
+```
+
+```{r}
+# 10-fold cross validation in parallel
+tryCatch(
+	{
+		system.time({cvfit <- cv.biglasso(X.bm, y, seed = 1234, ncores = 4, nfolds = 10)})
+	},
+	error = function(cond) {
+  	  	system.time({cvfit <- cv.biglasso(X.bm, y, seed = 1234, ncores = 2, nfolds = 10)})
+	}
+)
+```
+
+```{r}
+par(mfrow = c(2, 2), mar = c(3.5, 3.5, 3, 1), mgp = c(2.5, 0.5, 0))
+plot(cvfit, type = "all")
+```
+
+# 2 Useful Reference
+
+* biglasso R manual: https://cran.rstudio.com/package=biglasso/biglasso.pdf
+* biglasso on GitHub for benchmarking experiments: https://github.com/YaohuiZeng/biglasso
+* big.matrix manipulation: https://cran.r-project.org/package=bigmemory/index.html

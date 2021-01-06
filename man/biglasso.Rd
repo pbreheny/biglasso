@@ -11,11 +11,9 @@ biglasso(
   penalty = c("lasso", "ridge", "enet"),
   family = c("gaussian", "binomial", "cox"),
   alg.logistic = c("Newton", "MM"),
-  screen = c("SSR", "SEDPP", "SSR-BEDPP", "SSR-Slores", "SSR-Slores-Batch", "SSR-Dome",
-    "None", "NS-NAC", "SSR-NAC", "SEDPP-NAC", "SSR-Dome-NAC", "SSR-BEDPP-NAC",
-    "SSR-Slores-NAC", "SEDPP-Batch", "SEDPP-Batch-SSR", "SEDPP-Batchfix-SSR"),
+  screen = c("Adaptive", "SSR", "Hybrid", "None"),
   safe.thresh = 0,
-  recal.thresh = 1,
+  update.thresh = 1,
   ncores = 1,
   alpha = 1,
   lambda.min = ifelse(nrow(X) > ncol(X), 0.001, 0.05),
@@ -26,7 +24,6 @@ biglasso(
   max.iter = 1000,
   dfmax = ncol(X) + 1,
   penalty.factor = rep(1, ncol(X)),
-  weights = rep(1, length(row.idx))/length(row.idx),
   warn = TRUE,
   output.time = FALSE,
   return.time = TRUE,
@@ -39,15 +36,19 @@ biglasso(
 data and includes an intercept internally by default during the model
 fitting.}
 
-\item{y}{The response vector.}
+\item{y}{The response vector for \code{family="gaussian"} or \code{family="binomial"}.
+For family="cox", y should be a two-column matrix with columns 'time' and
+'status'. The latter is a binary variable, with '1' indicating death, and
+'0' indicating right censored.}
 
 \item{row.idx}{The integer vector of row indices of \code{X} that used for
 fitting the model. \code{1:nrow(X)} by default.}
 
-\item{penalty}{The penalty to be applied to the model. Either "lasso" (the
-default), "ridge", or "enet" (elastic net).}
+\item{penalty}{The penalty to be applied to the model. Either \code{"lasso"}
+(the default), \code{"ridge"}, or \code{"enet"} (elastic net).}
 
-\item{family}{Either "gaussian" or "binomial", depending on the response.}
+\item{family}{Either \code{"gaussian"}, \code{"binomial"} or \code{"cox"},
+depending on the response.}
 
 \item{alg.logistic}{The algorithm used in logistic regression. If "Newton"
 then the exact hessian is used (default); if "MM" then a
@@ -56,36 +57,27 @@ hessian matrix. This can be faster, particularly in data-larger-than-RAM
 case.}
 
 \item{screen}{The feature screening rule used at each \code{lambda} that
-discards features to speed up computation: "SSR" (default) is the sequential
-strong rule; "SEDPP" is the (sequential) EDPP rule. "SSR-BEDPP", "SSR-Dome",
-and "SSR-Slores" are our newly proposed screening rules which combine the
-strong rule with a safe rule (BEDPP, Dome test, or Slores rule).
-"SEDPP-Batch-SSR" and "SSR-Slores-Batch" are newly proposed rules which do 
-screening in batches of lambda values. Among them, "SSR-BEDPP", "SSR-Dome"
-and "SEDPP-Batch-SSR" are for lasso-penalized linear regression, and 
-"SSR-Slores" and "SSR-Slores-Batch" are for lasso-penalized logistic
-regression. "None" is to not apply a screening rule. \strong{Note that:}
-(1) for linear regression with elastic net penalty, both "SSR" and
-"SSR-BEDPP" are applicable since version 1.3-0; (2) only "SSR" is
-applicable to elastic-net-penalized logistic regression; (3) active set
-cycling strategy is incorporated with these screening rules by default.
-All other options with suffix "-NAC" are the corresponding versions
-without active set cycling update. "SEDPP-Batchfix-SSR" is an version
-of "SEDPP-Batch-SSR" with fixed batch sizes. These rules are for research
-purpose only.}
+discards features to speed up computation: \code{"SSR"} (default if
+\code{penalty="ridge"} or \code{penalty="enet"} )is the sequential strong rule;
+\code{"Hybrid"} is our newly proposed hybrid screening rules which combine the
+strong rule with a safe rule. \code{"Adaptive"} (default for \code{penalty="lasso"}
+without \code{penalty.factor}) is our newly proposed adaptive rules which
+reuse screening reference for multiple lambda values. \strong{Note that:}
+(1) for linear regression with elastic net penalty, both \code{"SSR"} and
+\code{"Hybrid"} are applicable since version 1.3-0;  (2) only \code{"SSR"} is
+applicable to elastic-net-penalized logistic regression or cox regression;
+(3) active set cycling strategy is incorporated with these screening rules.}
 
 \item{safe.thresh}{the threshold value between 0 and 1 that controls when to
-stop safe test in the "SSR-Dome" and "SSR-BEDPP" rules. For example, 0.01
-means to stop Dome test at next lambda iteration if the number of features
-rejected by safe test at current lambda iteration is not larger than 1\% of
-the total number of features. So 1 means to always turn off safe test,
-whereas 0 (default) means to turn off safe test if the number of features
-rejected by safe test is 0 at current lambda.}
+stop safe test. For example, 0.01 means to stop safe test at next lambda 
+iteration if the number of features rejected by safe test at current lambda
+iteration is not larger than 1\% of the total number of features. So 1 means
+to always turn off safe test, whereas 0 (default) means to turn off safe test
+if the number of features rejected by safe test is 0 at current lambda.}
 
-\item{recal.thresh}{the non negative threshold value that controls when to
-start a new batch and recalculate safe rules for batched methods
-("SEDPP-Batch-SSR" and "SSR-Slores-Batch"). Smaller value means
-starting new batches more often.}
+\item{update.thresh}{the non negative threshold value that controls how often to
+update the reference of safe rules for "Adaptive" methods. Smaller value means
+updating more often.}
 
 \item{ncores}{The number of OpenMP threads used for parallel computing.}
 
@@ -120,14 +112,13 @@ no upper bound.  However, for large data sets, computational burden may be
 heavy for models with a large number of nonzero coefficients.}
 
 \item{penalty.factor}{A multiplicative factor for the penalty applied to
-each coefficient.  If supplied, \code{penalty.factor} must be a numeric
+each coefficient. If supplied, \code{penalty.factor} must be a numeric
 vector of length equal to the number of columns of \code{X}.  The purpose of
 \code{penalty.factor} is to apply differential penalization if some
 coefficients are thought to be more likely than others to be in the model.
 Current package doesn't allow unpenalized coefficients. That
-is\code{penalty.factor} cannot be 0.}
-
-\item{weights}{Vector of weights. It should be the same length as \code{row.idx}.}
+is\code{penalty.factor} cannot be 0. \code{penalty.factor} is only supported
+for "SSR" screen.}
 
 \item{warn}{Return warning messages for failures to converge and model
 saturation?  Default is TRUE.}
@@ -165,9 +156,7 @@ features that have 'scale' value greater than 1e-6. Features with 'scale'
 less than 1e-6 are removed from model fitting.} \item{rejections}{The number
 of features rejected at each value of \code{lambda}.}
 \item{safe_rejections}{The number of features rejected by safe rules at each
-value of \code{lambda}. Only for "SSR-Dome", "SSR-BEDPP", "SEDPP-Batch-SSR",
-"SSR-Slores" and "SSR-Slores-Batch"
-cases.}
+value of \code{lambda}.}
 }
 \description{
 Extend lasso model fitting to big data that cannot be loaded into memory.
@@ -177,16 +166,18 @@ parameter lambda.
 }
 \details{
 The objective function for linear regression (\code{family = "gaussian"}) is
-\deqn{\frac{1}{2n}\textrm{RSS} + \textrm{penalty},} for logistic regression
+\deqn{\frac{1}{2n}\textrm{RSS} + \lambda*\textrm{penalty},}{(1/(2n))*RSS+
+\lambda*penalty,} for logistic regression
 (\code{family = "binomial"}) it is \deqn{-\frac{1}{n} loglike +
-\textrm{penalty}.}
+\lambda*\textrm{penalty},}{-(1/n)*loglike+\lambda*penalty}, for cox regression,
+ breslow approximation for ties is applied.
 
 Several advanced feature screening rules are implemented. For
 lasso-penalized linear regression, all the options of \code{screen} are
-applicable. Our proposal rule - "SSR-BEDPP" - achieves highest speedup so
-it's the recommended one, especially for ultrahigh-dimensional large-scale
-data sets. For logistic regression and/or the elastic net penalty, only
-"SSR" is applicable for now. More efficient rules are under development.
+applicable. Our proposal adaptive rule - \code{"Adaptive"} - achieves highest speedup
+so it's the recommended one, especially for ultrahigh-dimensional large-scale
+data sets. For cox regression and/or the elastic net penalty, only
+\code{"SSR"} is applicable for now. More efficient rules are under development.
 }
 \examples{
 
@@ -194,7 +185,7 @@ data sets. For logistic regression and/or the elastic net penalty, only
 data(colon)
 X <- colon$X
 y <- colon$y
-X.bm <- as.big.matrix(X, backingfile = "")
+X.bm <- as.big.matrix(X)
 # lasso, default
 par(mfrow=c(1,2))
 fit.lasso <- biglasso(X.bm, y, family = 'gaussian')
@@ -207,7 +198,7 @@ plot(fit.enet, log.l = TRUE, main = 'elastic net, alpha = 0.5')
 data(colon)
 X <- colon$X
 y <- colon$y
-X.bm <- as.big.matrix(X, backingfile = "")
+X.bm <- as.big.matrix(X)
 # lasso, default
 par(mfrow = c(1, 2))
 fit.bin.lasso <- biglasso(X.bm, y, penalty = 'lasso', family = "binomial")
@@ -216,6 +207,20 @@ plot(fit.bin.lasso, log.l = TRUE, main = 'lasso')
 fit.bin.enet <- biglasso(X.bm, y, penalty = 'enet', alpha = 0.5, family = "binomial")
 plot(fit.bin.enet, log.l = TRUE, main = 'elastic net, alpha = 0.5')
 
+## Cox regression
+set.seed(10101)
+N <- 1000; p <- 30; nzc <- p/3
+X <- matrix(rnorm(N * p), N, p)
+beta <- rnorm(nzc)
+fx <- X[, seq(nzc)] \%*\% beta/3
+hx <- exp(fx)
+ty <- rexp(N, hx)
+tcens <- rbinom(n = N, prob = 0.3, size = 1)  # censoring indicator
+y <- cbind(time = ty, status = 1 - tcens)  # y <- Surv(ty, 1 - tcens) with library(survival)
+X.bm <- as.big.matrix(X)
+fit <- biglasso(X.bm, y, family = "cox")
+plot(fit)
+
 }
 \seealso{
 \code{\link{biglasso-package}}, \code{\link{setupX}},
@@ -223,7 +228,7 @@ plot(fit.bin.enet, log.l = TRUE, main = 'elastic net, alpha = 0.5')
 \code{\link[ncvreg]{ncvreg}}
 }
 \author{
-Yaohui Zeng and Patrick Breheny
+Yaohui Zeng, Chuyi Wang and Patrick Breheny
 
-Maintainer: Yaohui Zeng <yaohui.zeng@gmail.com>
+Maintainer: Yaohui Zeng <yaohui.zeng@gmail.com> and Chuyi Wang <wwaa0208@gmail.com>
 }

@@ -15,7 +15,7 @@
 #' @references \itemize{ \item U. Alon et al. (1999): Broad patterns of gene
 #' expression revealed by clustering analysis of tumor and normal colon tissue
 #' probed by oligonucleotide arrays. \emph{Proc. Natl. Acad. Sci. USA}
-#' \strong{96}, 6745-6750. \url{http://www.pnas.org/content/96/12/6745.short}.
+#' \strong{96}, 6745-6750. \url{https://www.pnas.org/content/96/12/6745.short}.
 #' }
 #' @source The raw data can be found on Bioconductor:
 #' \url{https://bioconductor.org/packages/release/data/experiment/html/colonCA.html}.

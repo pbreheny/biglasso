@@ -57,7 +57,7 @@
 #' data(colon)
 #' X <- colon$X
 #' y <- colon$y
-#' X.bm <- as.big.matrix(X, backingfile = "")
+#' X.bm <- as.big.matrix(X)
 #' 
 #' ## logistic regression
 #' cvfit <- cv.biglasso(X.bm, y, family = 'binomial', seed = 1234, ncores = 2)

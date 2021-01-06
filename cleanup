@@ -4,3 +4,7 @@ rm -rf ./src/*.so
 rm -rf ./src/*.o
 rm -rf ./src/*.rds
 rm -rf ./src/*~
+rm -rf ./vignettes/*.csv
+rm -rf ./vignettes/*.bin
+rm -rf ./vignettes/*.desc
+
