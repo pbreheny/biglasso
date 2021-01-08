@@ -4,7 +4,7 @@
 *  removed uncompetitive screening methods and combined naming of screening methods
 *  version 1.4-0 for CRAN submission
 
-# biglasso 1.3-7 (08/31/2019): TODO list
+# biglasso 1.3-7 (08/31/2019)
 * update email to personal email
 * coef(cvfit) returns only nonzero cells, as a labelled vector
 * set HSR rules as default
