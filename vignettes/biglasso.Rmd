@@ -126,15 +126,16 @@ into a file-backed `big.matrix` by using a file cache. We can call function
 and a descriptor file (.desc) for the raw data matrix:
 
 ```{r}
-## The data has 1000 observations and 100,000 features.
+## The example data has 1,000 observations and 5,000 features.
+## Much larger data can be handled in the same way.
 ## 10 of the features has non-zero coefficients
 if(!file.exists('BigX.csv')) {
-  X <- matrix(rnorm(1000 * 100000), 1000, 100000)
+  X <- matrix(rnorm(1000 * 5000), 1000, 5000)
   beta <- c(-5:5)
   y <- as.numeric(X[,1:11] %*% beta)
   write.csv(X, "BigX.csv", row.names = F)
   write.csv(y, "y.csv", row.names = F)
-  ## Pretend the data is stored in the ~1G .csv file and is too large to fit into memory
+  ## Pretend the data is stored in the ~90MB .csv file and is too large to fit into memory
   X.bm <- setupX("BigX.csv", header = T)
 }
 
