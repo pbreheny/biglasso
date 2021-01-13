@@ -19,7 +19,7 @@ powerful big data analysis even with only an ordinary laptop.
 }
 \details{
 \tabular{ll}{ Package: \tab biglasso\cr Type: \tab Package\cr Version: \tab
-1.4-0\cr Date: \tab 2017-04-12\cr License: \tab GPL-3\cr}
+1.4-0\cr Date: \tab 2021-01-13\cr License: \tab GPL-3\cr}
 
 Penalized regression models, in particular the lasso, have been extensively
 applied to analyzing high-dimensional data sets. However, due to the memory
@@ -50,7 +50,7 @@ parallel computing with OpenMP is also supported. }
 \strong{For more information:} \itemize{ \item Benchmarking results:
 \url{https://github.com/YaohuiZeng/biglasso}.
 \item Tutorial:
-\url{https://github.com/YaohuiZeng/biglasso/blob/master/vignettes/biglasso.pdf}
+\url{http://yaohuizeng.github.io/biglasso/articles/biglasso.html}
 \item Technical paper:
 \url{https://arxiv.org/abs/1701.05936} }
 }
