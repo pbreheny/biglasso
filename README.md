@@ -66,7 +66,7 @@ The maximum RSS (in **GB**) used by a single fit and 10-fold cross validation is
 |   Package  |  picasso |  ncvreg  |  glmnet  |  biglasso  |
 |-----------:|:--------:|:--------:|:--------:|:----------:|
 | Single fit |   0.74   |   2.47   |   2.57   |    0.60    | 
-| 10-fold CV |    -     |   9.02   |   3.11   |    0.96    |
+| 10-fold CV |    -     |   4.62   |   3.11   |    0.96    |
 
 </center>
 

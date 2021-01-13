@@ -6,18 +6,6 @@
 
 using namespace Rcpp;
 
-// standardize_bm
-RcppExport SEXP standardize_bm(SEXP xP, SEXP row_idx_);
-RcppExport SEXP _biglasso_standardize_bm(SEXP xPSEXP, SEXP row_idx_SEXP) {
-BEGIN_RCPP
-    Rcpp::RObject rcpp_result_gen;
-    Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< SEXP >::type xP(xPSEXP);
-    Rcpp::traits::input_parameter< SEXP >::type row_idx_(row_idx_SEXP);
-    rcpp_result_gen = Rcpp::wrap(standardize_bm(xP, row_idx_));
-    return rcpp_result_gen;
-END_RCPP
-}
 // get_eta
 RcppExport SEXP get_eta(SEXP xP, SEXP row_idx_, SEXP beta, SEXP idx_p, SEXP idx_l);
 RcppExport SEXP _biglasso_get_eta(SEXP xPSEXP, SEXP row_idx_SEXP, SEXP betaSEXP, SEXP idx_pSEXP, SEXP idx_lSEXP) {
