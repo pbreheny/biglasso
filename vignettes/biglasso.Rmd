@@ -183,5 +183,6 @@ plot(cvfit, type = "all")
 # 2 Useful Reference
 
 * biglasso R manual: https://cran.r-project.org/package=biglasso/biglasso.pdf
-* biglasso on GitHub for benchmarking experiments: https://github.com/YaohuiZeng/biglasso
+* biglasso on GitHub: https://github.com/YaohuiZeng/biglasso
+* biglasso website: https://yaohuizeng.github.io/biglasso/index.html
 * big.matrix manipulation: https://cran.r-project.org/package=bigmemory/index.html

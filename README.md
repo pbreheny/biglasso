@@ -16,7 +16,7 @@
 
 ## Documentation:
 
-* Here are the [R Reference manual](https://CRAN.R-project.org/package=biglasso/biglasso.pdf) and [User guide](https://CRAN.R-project.org/package=biglasso/vignettes/biglasso.pdf)
+* Here are the [R Reference manual](https://CRAN.R-project.org/package=biglasso/biglasso.pdf) and [Package Website](https://yaohuizeng.github.io/biglasso/index.html)
 * Here are the technical papers of the package: i) [The software paper](https://arxiv.org/abs/1701.05936); and ii) [the paper of hybrid safe-strong rules](https://arxiv.org/abs/1704.08742)
 
 
