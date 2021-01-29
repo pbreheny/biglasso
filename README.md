@@ -9,7 +9,7 @@
 `biglasso` extends lasso and elastic-net linear and logistic regression models for ultrahigh-dimensional, multi-gigabyte data sets that cannot be loaded into memory. It utilizes memory-mapped files to store the massive data on the disk and only read those into memory whenever necessary during model fitting. Moreover, some advanced feature screening rules are proposed and implemented to accelerate the model fitting. **As a result, this package is much more memory- and computation-efficient and highly scalable as compared to existing lasso-fitting packages such as [glmnet](https://CRAN.R-project.org/package=glmnet) and [ncvreg](https://CRAN.R-project.org/package=ncvreg)**. Bechmarking experiments using both simulated and real data sets show that `biglasso` is not only 1.5x to 4x times faster than existing packages, but also at least 2x more memory-efficient. More importantly, to the best of our knowledge, `biglasso` is the first R package that enables users to fit lasso models with data sets that are larger than available RAM, thus allowing for powerful big data analysis on an ordinary laptop.
 
 ## News:
-* This package on GitHub has been updated to Version 1.4-0. See details in NEWS.
+* This package on GitHub has been updated to Version 1.4-1. See details in NEWS.
 * This package was ranked top 3 for [2017 ASA Chambers Statistical Software Award](http://stat-computing.org/awards/jmc/).
 * The technical paper of this package was selected as a Winner of [2017 ASA Student Paper Competiton from Section on Statistical Computing](http://stat-computing.org/awards/student/winners.html).
 

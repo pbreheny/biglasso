@@ -1,9 +1,9 @@
 Package: biglasso
-Version: 1.4.0
-Date: 2021-01-13
+Version: 1.4.1
+Date: 2021-01-29
 Title: Extending Lasso Model Fitting to Big Data
 Author: Yaohui Zeng [aut,cre], Chuyi Wang [aut,cre], Patrick Breheny [ctb]
-Maintainer: Yaohui Zeng <yaohui.zeng@gmail.com>
+Maintainer: Chuyi Wang <wwaa0208@gmail.com>
 Description: Extend lasso and elastic-net model fitting for ultrahigh-dimensional, 
     multi-gigabyte data sets that cannot be loaded into memory. It's much more 
     memory- and computation-efficient as compared to existing lasso-fitting packages 

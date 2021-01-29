@@ -1,3 +1,7 @@
+# biglasso 1.4-1
+* changed R package maintainer to Chuyi Wang (wwaa0208@gmail.com)
+* fixed bugs
+
 # biglasso 1.4-0
 * adaptive screening methods were implemented and set as default when applicable
 * added sparse Cox regression
