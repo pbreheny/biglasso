@@ -77,18 +77,18 @@ double dual_cox(double *haz, double *rsk, double lambda, double lambda_0,
     res += ((1 - lam_ratio) + lam_ratio * d[k] * haz[i] / rsk[k]) *
       log((1 - lam_ratio) / d[k] + lam_ratio * haz[i] / rsk[k]);
   }
-  res = res;
   return res;
 }
 
 // Scox initialization
 void scox_init(double *g_theta_lam_ptr, double *prod_deriv_theta_lam_ptr,
-               vector<double>& prod_PX_Pxmax, vector<double>& scale_PX,
+               vector<double>& prodP_X_xmax, vector<double>& scaleP_X,
                vector<double>& X_theta_lam, XPtr<BigMatrix> xMat,
                double *haz, double *rsk, vector<double>& z, int xmax_col_idx,
                int *row_idx, vector<int> &col_idx,
                NumericVector &center, NumericVector &scale,
                int n, int p, int f, double *y, double *d, int *d_idx) {
+  
   *g_theta_lam_ptr = dual_cox(haz, rsk, 1.0, 1.0, n, f, y, d, d_idx);
   double prod_deriv_theta_lam = 0.0;
   int i, k;
@@ -105,49 +105,61 @@ void scox_init(double *g_theta_lam_ptr, double *prod_deriv_theta_lam_ptr,
   MatrixAccessor<double> xAcc(*xMat);
   double *xCol;
   int j, jj;
-  double sum_x, sum_xsq, sum_delta, sum_xTxmax, sum_xmax;
+  double max_x, min_x;
   double *xmax = xAcc[col_idx[xmax_col_idx]];
   double scale_max = scale[col_idx[xmax_col_idx]];
-#pragma omp parallel for private(j, sum_x, sum_xsq, sum_delta, sum_xTxmax, sum_xmax) schedule(static) 
+  double *diff_xmax = Calloc(f, double);
+  
+  // Initialize ||xmax||_{diff,k}
+  i = n-1;
+  max_x = min_x = xmax[row_idx[n-1]];
+  for(k = f-1; k >= 0; k--) {
+    for(; i >=0 && d_idx[i] >= k; i--) {
+      if(xmax[row_idx[i]] > max_x) max_x = xmax[row_idx[i]];
+      if(xmax[row_idx[i]] < min_x) min_x = xmax[row_idx[i]];
+    }
+    diff_xmax[k] = max_x - min_x;
+  }
+  
+  // Initialize ||x_j||_P and <x_j,xmax>_P
+#pragma omp parallel for private(j, jj, i, k, max_x, min_x) schedule(static) 
   for (j = 0; j < p; j++) {
     jj = col_idx[j];
     xCol = xAcc[jj];
     X_theta_lam[j] = -z[j];
-    scale_PX[j] = 0; 
-    prod_PX_Pxmax[j] = 0;
-    for(int k = 0; k < f; k++) {
-      sum_x = sum_xsq = sum_delta = sum_xTxmax = sum_xmax = 0;
-      for(int i = n-1; i >=0 && d_idx[i] >= k; i--) {
-        sum_x += xCol[row_idx[i]];
-        sum_xsq += pow(xCol[row_idx[i]], 2);
-        sum_xTxmax += xCol[row_idx[i]] * xmax[i];
-        sum_xmax += xmax[i];
-        sum_delta++;
+    scaleP_X[j] = 0; 
+    prodP_X_xmax[j] = 0;
+    i = n-1;
+    max_x = min_x = xCol[row_idx[n-1]];
+    for(k = f-1; k >= 0; k--) {
+      for(; i >=0 && d_idx[i] >= k; i--) {
+        if(xCol[row_idx[i]] > max_x) max_x = xCol[row_idx[i]];
+        if(xCol[row_idx[i]] < min_x) min_x = xCol[row_idx[i]];
       }
-      scale_PX[j] += d[k] * (sum_xsq - pow(sum_x, 2) / sum_delta);
-      prod_PX_Pxmax[j] += d[k] * (sum_xTxmax - sum_x * sum_xmax / sum_delta);
+      scaleP_X[j] += d[k] * pow(max_x - min_x, 2);
+      prodP_X_xmax[j] += d[k] * (max_x - min_x) * diff_xmax[k];
     }
-    scale_PX[j] = sqrt(scale_PX[j]) / scale[jj];
-    Rprintf("ScalePX[%i]=%f, Scale[%i]=%f", j,scale_PX[j],j,scale[jj]);
-    prod_PX_Pxmax[j] = prod_PX_Pxmax[j] / scale[jj] / scale_max;
+    scaleP_X[j] = sqrt(scaleP_X[j]) / scale[jj] / 2;
+    prodP_X_xmax[j] = prodP_X_xmax[j] / scale[jj] / scale_max / 4;
   }
+  Free(diff_xmax);
 }
 
 // Scox screening
 void scox_screen(int* scox_reject, double lambda, double lambda_0,
                  double *haz, double *rsk, double g_theta_lam,
-                 double prod_deriv_theta_lam, vector<double>& prod_PX_Pxmax,
-                 vector<double>& scale_PX, vector<double>& X_theta_lam,
+                 double prod_deriv_theta_lam, vector<double>& prodP_X_xmax,
+                 vector<double>& scaleP_X, vector<double>& X_theta_lam,
                  int xmax_col_idx, int *row_idx, vector<int> &col_idx,
                  NumericVector &center, NumericVector &scale,
                  int n, int p, int f, double *y, double *d, int *d_idx) {
+  
   double TOLERANCE = 1e-8;
-  double scale_Pxmax = scale_PX[xmax_col_idx];
+  double scaleP_Xmax = scaleP_X[xmax_col_idx];
   double r = sqrt(2 * (dual_cox(haz, rsk, lambda, lambda_0, n, f, y, d, d_idx) - 
                   g_theta_lam + (1 - lambda/lambda_0) * prod_deriv_theta_lam));
-  double D = n * (lambda_0 - lambda) / r / scale_Pxmax;
-  Rprintf("r=%f, d=%f\n", r, D);
-  double a2 = (1 - pow(D, 2)) * pow(scale_Pxmax, 4);
+  double D = n * (lambda_0 - lambda) / r / scaleP_Xmax;
+  double a2 = (1 - pow(D, 2)) * pow(scaleP_Xmax, 4);
   double a1, a0, Delta, u2, rho, T;
   int j;
   
@@ -155,36 +167,36 @@ void scox_screen(int* scox_reject, double lambda, double lambda_0,
   for (j = 0; j < p; j++) {
     // xi=1
     scox_reject[j] = 1;
-    rho = -prod_PX_Pxmax[j] / scale_Pxmax / scale_PX[j];
-    a1 = -2 * (1 - pow(D, 2)) * prod_PX_Pxmax[j] * pow(scale_Pxmax, 2);
-    a0 = pow(prod_PX_Pxmax[j], 2) - pow(D * scale_Pxmax * scale_PX[j], 2);
+    rho = prodP_X_xmax[j] / scaleP_Xmax / scaleP_X[j];
+    a1 = 2 * (1 - pow(D, 2)) * prodP_X_xmax[j] * pow(scaleP_Xmax, 2);
+    a0 = pow(prodP_X_xmax[j], 2) - pow(D * scaleP_Xmax * scaleP_X[j], 2);
     Delta = pow(a1, 2) - 4 * a0 * a2;
     if (Delta < 0.0) Delta = 0.0; // in case of -0.0 (at xmax)
     u2 = (-a1 + sqrt(Delta)) / 2 / a2;
     if(j==p-1) Rprintf("rho=%f, Delta=%f, u2=%f\n", rho, Delta, u2);
     if(rho >= D) {
-      T = X_theta_lam[j] + r * scale_PX[j] / n;
-      if(j==p-1) Rprintf("T+[%i]/lam=%f+%f/%f\n", j, X_theta_lam[j], r * scale_PX[j] / n, lambda);
+      T = X_theta_lam[j] + r * scaleP_X[j] / n;
+      if(j==p-1) Rprintf("T+[%i]/lam=%f+%f*%f/%f\n", j, X_theta_lam[j], r/sqrt(n), scaleP_X[j]/sqrt(n), lambda);
       
     } else {
-      T = X_theta_lam[j] + u2 * (lambda_0 - lambda) +
-        r * sqrt(pow(scale_PX[j],2) - 2 * u2 * prod_PX_Pxmax[j] + pow(u2 * scale_Pxmax, 2)) / n;
-      if(j==p-1) Rprintf("T+[%i]/lam=%f+%f+%f/%f\n", j, X_theta_lam[j], u2 * (lambda_0 - lambda), r * sqrt(pow(scale_PX[j],2) - 2 * u2 * prod_PX_Pxmax[j] + pow(u2 * scale_Pxmax, 2)) / n, lambda);
+      T = X_theta_lam[j] - u2 * (lambda_0 - lambda) +
+        r * sqrt(pow(scaleP_X[j],2) + 2 * u2 * prodP_X_xmax[j] + pow(u2 * scaleP_Xmax, 2)) / n;
+      if(j==p-1) Rprintf("T+[%i]/lam=%f+%f+%f*%f/%f\n", j, X_theta_lam[j], -u2 * (lambda_0 - lambda), r/sqrt(n), sqrt(pow(scaleP_X[j],2) + 2 * u2 * prodP_X_xmax[j] + pow(u2 * scaleP_Xmax, 2))/sqrt(n), lambda);
     }
     if(T + TOLERANCE > lambda) {
       scox_reject[j] = 0;
     }
     // xi=-1
-    rho = -rho;
-    a1 = -a1;
-    u2 = (-a1 + sqrt(Delta)) / 2 / a2;
+    //rho = -rho;
+    //a1 = -a1;
+    //u2 = (-a1 + sqrt(Delta)) / 2 / a2;
     if(rho >= D) {
-      T = -X_theta_lam[j] + r * scale_PX[j] / n;
-      if(j==p-1) Rprintf("T-[%i]/lam=%f+%f/%f\n", j, -X_theta_lam[j], r * scale_PX[j] / n, lambda);
+      T = -X_theta_lam[j] + r * scaleP_X[j] / n;
+      if(j==p-1) Rprintf("T-[%i]/lam=%f+%f*%f/%f\n", j, -X_theta_lam[j], r/sqrt(n), scaleP_X[j]/sqrt(n), lambda);
     } else {
-      T = -X_theta_lam[j] + u2 * (lambda_0 - lambda) +
-        r * sqrt(pow(scale_PX[j],2) + 2 * u2 * prod_PX_Pxmax[j] + pow(u2 * scale_Pxmax, 2)) / n;
-      if(j==p-1) Rprintf("T-[%i]/lam=%f+%f+%f/%f\n", j, -X_theta_lam[j], u2 * (lambda_0 - lambda), r * sqrt(pow(scale_PX[j],2) + 2 * u2 * prod_PX_Pxmax[j] + pow(u2 * scale_Pxmax, 2)) / n, lambda);
+      T = -X_theta_lam[j] - u2 * (lambda_0 - lambda) +
+        r * sqrt(pow(scaleP_X[j],2) + 2 * u2 * prodP_X_xmax[j] + pow(u2 * scaleP_Xmax, 2)) / n;
+      if(j==p-1) Rprintf("T-[%i]/lam=%f+%f+%f*%f/%f\n", j, -X_theta_lam[j], -u2 * (lambda_0 - lambda), r/sqrt(n), sqrt(pow(scaleP_X[j],2) + 2 * u2 * prodP_X_xmax[j] + pow(u2 * scaleP_Xmax, 2))/sqrt(n), lambda);
     }
     if(T + TOLERANCE > lambda) {
       scox_reject[j] = 0;
@@ -342,7 +354,7 @@ RcppExport SEXP cdfit_cox(SEXP X_, SEXP y_, SEXP d_, SEXP d_idx_, SEXP row_idx_,
       }
       if (nv > dfmax) {
         for (int ll=l; ll<L; ll++) iter[ll] = NA_INTEGER;
-        Free(s); Free(w); Free(a); Free(r); Free(e1); Free(eta);
+        Free(s); Free(w); Free(a); Free(r); Free(e1); Free(eta); Free(haz); Free(rsk);
         return List::create(beta, center, scale, lambda, Dev, 
                             iter, n_reject, Rcpp::wrap(col_idx));
       }
@@ -355,15 +367,14 @@ RcppExport SEXP cdfit_cox(SEXP X_, SEXP y_, SEXP d_, SEXP d_idx_, SEXP row_idx_,
         
         // Calculate haz, rsk, Dev
         for(i = 0; i < n; i++) haz[i] = exp(eta[i]);
-        rsk[0] = sum(haz, n);
-        k = 0;
-        for(i = 0; i < n; i++) {
-          if(d_idx[i] >= k) {
-            k++;
-            if(k >= f) break;
-            rsk[k] = rsk[k-1];
+        rsk[f-1] = haz[n-1];
+        k = f-1;
+        for(i = n-2; i >= 0; i--) {
+          if(d_idx[i] < k) {
+            k--;
+            rsk[k] = rsk[k+1];
           }
-          rsk[k] -= haz[i];
+          rsk[k] += haz[i];
         }
         for(i = 0; i < n; i++) {
           Dev[l] -= 2 * y[i] * (eta[i] - log(rsk[d_idx[i]])); 
@@ -372,9 +383,9 @@ RcppExport SEXP cdfit_cox(SEXP X_, SEXP y_, SEXP d_, SEXP d_idx_, SEXP row_idx_,
         
         // Check for saturation
         if (Dev[l] / nullDev < .01) {
-          if (warn) warning("Model saturated; exiting...");
+          if (warn) warning("Model saturated with deviance %f; exiting...", Dev[l]);
           for (int ll=l; ll<L; ll++) iter[ll] = NA_INTEGER;
-          Free(s); Free(w); Free(a); Free(r); Free(e1); Free(eta);
+          Free(s); Free(w); Free(a); Free(r); Free(e1); Free(eta); Free(haz); Free(rsk);
           return List::create(beta, center, scale, lambda, Dev,
                               iter, n_reject, Rcpp::wrap(col_idx));
         }
@@ -426,7 +437,7 @@ RcppExport SEXP cdfit_cox(SEXP X_, SEXP y_, SEXP d_, SEXP d_idx_, SEXP row_idx_,
       if (violations==0) break;
     }
   }
-  Free(s); Free(w); Free(a); Free(r); Free(e1); Free(eta);
+  Free(s); Free(w); Free(a); Free(r); Free(e1); Free(eta); Free(haz); Free(rsk);
   return List::create(beta, center, scale, lambda, Dev, iter, n_reject, Rcpp::wrap(col_idx));
   
 }
@@ -583,7 +594,7 @@ RcppExport SEXP cdfit_cox_ssr(SEXP X_, SEXP y_, SEXP d_, SEXP d_idx_, SEXP row_i
       }
       if (nv > dfmax) {
         for (int ll=l; ll<L; ll++) iter[ll] = NA_INTEGER;
-        Free(s); Free(w); Free(a); Free(r); Free(e1); Free(e2); Free(eta);
+        Free(s); Free(w); Free(a); Free(r); Free(e1); Free(e2); Free(eta); Free(haz); Free(rsk);
         return List::create(beta, center, scale, lambda, Dev, 
                             iter, n_reject, Rcpp::wrap(col_idx));
       }
@@ -619,15 +630,14 @@ RcppExport SEXP cdfit_cox_ssr(SEXP X_, SEXP y_, SEXP d_, SEXP d_idx_, SEXP row_i
           
           // Calculate haz, rsk, Dev
           for(i = 0; i < n; i++) haz[i] = exp(eta[i]);
-          rsk[0] = sum(haz, n);
-          k = 0;
-          for(i = 0; i < n; i++) {
-            if(d_idx[i] >= k) {
-              k++;
-              if(k >= f) break;
-              rsk[k] = rsk[k-1];
+          rsk[f-1] = haz[n-1];
+          k = f-1;
+          for(i = n-2; i >= 0; i--) {
+            if(d_idx[i] < k) {
+              k--;
+              rsk[k] = rsk[k+1];
             }
-            rsk[k] -= haz[i];
+            rsk[k] += haz[i];
           }
           for(i = 0; i < n; i++) {
             Dev[l] -= 2 * y[i] * (eta[i] - log(rsk[d_idx[i]])); 
@@ -636,9 +646,9 @@ RcppExport SEXP cdfit_cox_ssr(SEXP X_, SEXP y_, SEXP d_, SEXP d_idx_, SEXP row_i
           
           // Check for saturation
           if (Dev[l] / nullDev < .01) {
-            if (warn) warning("Model saturated; exiting...");
+            if (warn) warning("Model saturated with deviance %f; exiting...", Dev[l]);
             for (int ll=l; ll<L; ll++) iter[ll] = NA_INTEGER;
-            Free(s); Free(w); Free(a); Free(r); Free(e1); Free(e2); Free(eta);
+            Free(s); Free(w); Free(a); Free(r); Free(e1); Free(e2); Free(eta); Free(haz); Free(rsk);
             return List::create(beta, center, scale, lambda, Dev,
                                 iter, n_reject, Rcpp::wrap(col_idx));
           }
@@ -670,7 +680,7 @@ RcppExport SEXP cdfit_cox_ssr(SEXP X_, SEXP y_, SEXP d_, SEXP d_idx_, SEXP row_i
               l1 = lambda[l] * m[jj] * alpha;
               l2 = lambda[l] * m[jj] * (1-alpha);
               beta(j, l) = lasso(u, l1, l2, v);
-              
+
               shift = beta(j, l) - a[j];
               if (shift !=0) {
                 
@@ -694,7 +704,7 @@ RcppExport SEXP cdfit_cox_ssr(SEXP X_, SEXP y_, SEXP d_, SEXP d_idx_, SEXP row_i
       if (violations==0) break;
     }
   }
-  Free(s); Free(w); Free(a); Free(r); Free(e1); Free(e2); Free(eta);
+  Free(s); Free(w); Free(a); Free(r); Free(e1); Free(e2); Free(eta); Free(haz); Free(rsk);
   return List::create(beta, center, scale, lambda, Dev, iter, n_reject, Rcpp::wrap(col_idx));
   
 }
@@ -841,19 +851,19 @@ RcppExport SEXP cdfit_cox_scox(SEXP X_, SEXP y_, SEXP d_, SEXP d_idx_, SEXP row_
   double *g_theta_lam_ptr = &g_theta_lam;
   double *prod_deriv_theta_lam_ptr = &prod_deriv_theta_lam;
   vector<double> X_theta_lam; 
-  vector<double> prod_PX_Pxmax;
-  vector<double> scale_PX;
+  vector<double> prodP_X_xmax;
+  vector<double> scaleP_X;
   int *safe_reject = Calloc(p, int);
   
   int scox; // if 0, don't perform Scox rule
   if (safe_thresh < 1) {
     scox = 1; // turn on scox
     X_theta_lam.resize(p);
-    prod_PX_Pxmax.resize(p);
-    scale_PX.resize(p);
+    prodP_X_xmax.resize(p);
+    scaleP_X.resize(p);
     
-    scox_init(g_theta_lam_ptr, prod_deriv_theta_lam_ptr, prod_PX_Pxmax,
-              scale_PX, X_theta_lam, xMat, haz, rsk, z, xmax_col_idx,
+    scox_init(g_theta_lam_ptr, prod_deriv_theta_lam_ptr, prodP_X_xmax,
+              scaleP_X, X_theta_lam, xMat, haz, rsk, z, xmax_col_idx,
               row_idx, col_idx, center, scale, n, p, f, y, d, d_idx);
   } else {
     scox = 0;
@@ -880,7 +890,7 @@ RcppExport SEXP cdfit_cox_scox(SEXP X_, SEXP y_, SEXP d_, SEXP d_idx_, SEXP row_
       }
       if (nv > dfmax) {
         for (int ll=l; ll<L; ll++) iter[ll] = NA_INTEGER;
-        Free(s); Free(w); Free(a); Free(r); Free(e1); Free(safe_reject); Free(eta);
+        Free(s); Free(w); Free(a); Free(r); Free(e1); Free(safe_reject); Free(eta); Free(haz); Free(rsk);
         return List::create(beta, center, scale, lambda, Dev, 
                             iter, n_reject, Rcpp::wrap(col_idx));
       }
@@ -888,7 +898,7 @@ RcppExport SEXP cdfit_cox_scox(SEXP X_, SEXP y_, SEXP d_, SEXP d_idx_, SEXP row_
     
     if(scox) {
       scox_screen(safe_reject, lambda[l], lambda_max, haz, rsk, g_theta_lam,
-                  prod_deriv_theta_lam, prod_PX_Pxmax, scale_PX, X_theta_lam,
+                  prod_deriv_theta_lam, prodP_X_xmax, scaleP_X, X_theta_lam,
                   xmax_col_idx, row_idx, col_idx, center, scale, n, p, f, y, d, d_idx);
     }
     n_reject[l] = sum(safe_reject, p);
@@ -899,15 +909,14 @@ RcppExport SEXP cdfit_cox_scox(SEXP X_, SEXP y_, SEXP d_, SEXP d_idx_, SEXP row_
         
         // Calculate haz, rsk, Dev
         for(i = 0; i < n; i++) haz[i] = exp(eta[i]);
-        rsk[0] = sum(haz, n);
-        k = 0;
-        for(i = 0; i < n; i++) {
-          if(d_idx[i] >= k) {
-            k++;
-            if(k >= f) break;
-            rsk[k] = rsk[k-1];
+        rsk[f-1] = haz[n-1];
+        k = f-1;
+        for(i = n-2; i >= 0; i--) {
+          if(d_idx[i] < k) {
+            k--;
+            rsk[k] = rsk[k+1];
           }
-          rsk[k] -= haz[i];
+          rsk[k] += haz[i];
         }
         for(i = 0; i < n; i++) {
           Dev[l] -= 2 * y[i] * (eta[i] - log(rsk[d_idx[i]])); 
@@ -916,9 +925,9 @@ RcppExport SEXP cdfit_cox_scox(SEXP X_, SEXP y_, SEXP d_, SEXP d_idx_, SEXP row_
         
         // Check for saturation
         if (Dev[l] / nullDev < .01) {
-          if (warn) warning("Model saturated; exiting...");
+          if (warn) warning("Model saturated with deviance %f; exiting...", Dev[l]);
           for (int ll=l; ll<L; ll++) iter[ll] = NA_INTEGER;
-          Free(s); Free(w); Free(a); Free(r); Free(e1); Free(safe_reject); Free(eta);
+          Free(s); Free(w); Free(a); Free(r); Free(e1); Free(safe_reject); Free(eta); Free(haz); Free(rsk);
           return List::create(beta, center, scale, lambda, Dev,
                               iter, n_reject, Rcpp::wrap(col_idx));
         }
@@ -970,6 +979,6 @@ RcppExport SEXP cdfit_cox_scox(SEXP X_, SEXP y_, SEXP d_, SEXP d_idx_, SEXP row_
       if (violations==0) break;
     }
   }
-  Free(s); Free(w); Free(a); Free(r); Free(e1); Free(safe_reject); Free(eta);
+  Free(s); Free(w); Free(a); Free(r); Free(e1); Free(safe_reject); Free(eta); Free(haz); Free(rsk);
   return List::create(beta, center, scale, lambda, Dev, iter, n_reject, Rcpp::wrap(col_idx));
 }

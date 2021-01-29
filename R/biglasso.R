@@ -213,7 +213,7 @@ biglasso <- function(X, y, row.idx = 1:nrow(X),
   alg.logistic <- match.arg(alg.logistic)
   if (!identical(penalty, "lasso") || any(penalty.factor != 1) ||
       family == "cox" || alg.logistic =="MM"){
-    if(length(screen) == 1) screen <- match.arg(screen, choices = c("SSR", "Hybrid", "None"))
+    if(length(screen) == 1) screen <- match.arg(screen, choices = c("SSR", "Adaptive", "Hybrid", "None"))
     else screen <- "SSR"
   } else {
     screen = match.arg(screen)
@@ -458,7 +458,8 @@ biglasso <- function(X, y, row.idx = 1:nrow(X),
     loss <- res[[5]]
     iter <- res[[6]]
     rejections <- res[[7]]
-
+    
+    if (screen == "Adaptive") safe_rejections <- rejections # To be updated
     if (screen %in% c("Not implemented")) {
       safe_rejections <- res[[8]]
       col.idx <- res[[9]]
