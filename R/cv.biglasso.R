@@ -23,7 +23,8 @@
 #' @param ncores The number of cores to use for parallel execution across a
 #' cluster created by the \code{parallel} package. (This is different from
 #' \code{ncores} in \code{\link{biglasso}}, which is the number of OpenMP
-#' threads.)
+#' threads.). If \code{ncores > nfolds}, available processing units are
+#' allocated to the sub-tasks accordingly.
 #' @param ... Additional arguments to \code{biglasso}.
 #' @param nfolds The number of cross-validation folds.  Default is 5.
 #' @param seed The seed of the random number generator in order to obtain
@@ -106,22 +107,28 @@ cv.biglasso <- function(X, y, row.idx = 1:nrow(X), eval.metric = c("default", "M
       cv.ind <- ceiling(sample(1:n)/n*nfolds)
     }
   }
-  
+
   cv.args <- list(...)
   cv.args$lambda <- fit$lambda
 
-  parallel <- FALSE
+  parallel <- 0L
   if (ncores > 1) {
     cluster <- parallel::makeCluster(ncores)
     if (!("cluster" %in% class(cluster))) stop("cluster is not of class 'cluster'; see ?makeCluster")
-    parallel <- TRUE
+
+    if (ncores > nfolds) {
+      parallel <- lengths(parallel::splitIndices(ncores, nfolds))
+    } else {
+      parallel <- 1L
+    }
+
     ## pass the descriptor info to each cluster ##
     xdesc <- bigmemory::describe(X)
-    parallel::clusterExport(cluster, c("cv.ind", "xdesc", "y", "cv.args", 
-                                       "parallel", "eval.metric"), 
+    parallel::clusterExport(cluster, c("cv.ind", "xdesc", "y", "cv.args",
+                                       "parallel", "eval.metric"),
                             envir=environment())
     parallel::clusterCall(cluster, function() {
-     
+
       require(biglasso)
       # require(bigmemory)
       # require(Matrix)
@@ -130,15 +137,15 @@ cv.biglasso <- function(X, y, row.idx = 1:nrow(X), eval.metric = c("default", "M
       # source("~/GitHub/biglasso/R/predict.R")
       # source("~/GitHub/biglasso/R/loss.R")
     })
-    fold.results <- parallel::parLapply(cl = cluster, X = 1:nfolds, fun = cvf, XX = xdesc, 
-                                        y = y, eval.metric = eval.metric, 
-                                        cv.ind = cv.ind, cv.args = cv.args, 
+    fold.results <- parallel::parLapply(cl = cluster, X = 1:nfolds, fun = cvf, XX = xdesc,
+                                        y = y, eval.metric = eval.metric,
+                                        cv.ind = cv.ind, cv.args = cv.args,
                                         parallel = parallel)
     parallel::stopCluster(cluster)
   }
 
   for (i in 1:nfolds) {
-    if (parallel) {
+    if (ncores > 1) {
       res <- fold.results[[i]]
     } else {
       if (trace) cat("Starting CV fold #", i, sep="", "\n")
@@ -173,7 +180,12 @@ cv.biglasso <- function(X, y, row.idx = 1:nrow(X), eval.metric = c("default", "M
   structure(val, class=c("cv.biglasso", "cv.ncvreg"))
 }
 
-cvf <- function(i, XX, y, eval.metric, cv.ind, cv.args, parallel= FALSE) {
+cvf <- function(i, XX, y, eval.metric, cv.ind, cv.args, parallel = FALSE) {
+
+  if (length(parallel) > 1L) {
+    parallel <- parallel[i]
+  }
+
   # reference to the big.matrix by descriptor info
   if (parallel) {
     XX <- attach.big.matrix(XX)
@@ -182,7 +194,7 @@ cvf <- function(i, XX, y, eval.metric, cv.ind, cv.args, parallel= FALSE) {
   cv.args$y <- y
   cv.args$row.idx <- which(cv.ind != i)
   cv.args$warn <- FALSE
-  cv.args$ncores <- 1
+  cv.args$ncores <- max(parallel, 1L)
 
   idx.test <- which(cv.ind == i)
   fit.i <- do.call("biglasso", cv.args)
