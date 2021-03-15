@@ -151,8 +151,8 @@ cv.biglasso <- function(X, y, row.idx = 1:nrow(X), eval.metric = c("default", "M
 
   ## Eliminate saturated lambda values, if any
   ind <- which(apply(is.finite(E), 2, all))
-  E <- E[, ind, drop = FALSE]
-  Y <- Y[, ind, drop = FALSE]
+  E <- E[,ind]
+  Y <- Y[,ind]
   lambda <- fit$lambda[ind]
   
   ## Return
