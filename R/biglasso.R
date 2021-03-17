@@ -211,12 +211,13 @@ biglasso <- function(X, y, row.idx = 1:nrow(X),
   family <- match.arg(family)
   penalty <- match.arg(penalty)
   alg.logistic <- match.arg(alg.logistic)
-  if (!identical(penalty, "lasso") || any(penalty.factor != 1) ||
-      family == "cox" || alg.logistic =="MM"){
+  if (!identical(penalty, "lasso") || any(penalty.factor != 1) || alg.logistic =="MM"){
     if(length(screen) == 1) screen <- match.arg(screen, choices = c("SSR", "Adaptive", "Hybrid", "None"))
     else screen <- "SSR"
+  } else if (family == "cox") {
+    screen <- match.arg(screen, choices = c("SSR", "Adaptive", "Hybrid", "None", "scox", "sscox", "safe"))
   } else {
-    screen = match.arg(screen)
+    screen <- match.arg(screen)
   }
   lambda.min <- max(lambda.min, 1.0e-6)
   
@@ -430,9 +431,24 @@ biglasso <- function(X, y, row.idx = 1:nrow(X),
                      eps, as.integer(max.iter), penalty.factor, as.integer(dfmax),
                      as.integer(ncores), as.integer(warn), as.integer(verbose),
                      PACKAGE = 'biglasso')
-        
-      } else if (screen == 'Adaptive') {
+      } else if (screen == 'sscox') {
+        res <- .Call("cdfit_cox_sscox", X@address, yy, d, as.integer(d_idx-1),
+                     as.integer(row.idx[tOrder[row.idx.cox]]-1), lambda,
+                     as.integer(nlambda), as.integer(lambda.log.scale),lambda.min,
+                     alpha, as.integer(user.lambda | any(penalty.factor==0)),
+                     eps, as.integer(max.iter), penalty.factor, as.integer(dfmax),
+                     as.integer(ncores), as.integer(warn), safe.thresh, 
+                     as.integer(verbose), PACKAGE = 'biglasso')
+      } else if (screen == 'scox') {
         res <- .Call("cdfit_cox_scox", X@address, yy, d, as.integer(d_idx-1),
+                     as.integer(row.idx[tOrder[row.idx.cox]]-1), lambda,
+                     as.integer(nlambda), as.integer(lambda.log.scale),lambda.min,
+                     alpha, as.integer(user.lambda | any(penalty.factor==0)),
+                     eps, as.integer(max.iter), penalty.factor, as.integer(dfmax),
+                     as.integer(ncores), as.integer(warn), safe.thresh, 
+                     as.integer(verbose), PACKAGE = 'biglasso')
+      } else if (screen == 'safe') {
+        res <- .Call("cdfit_cox_safe", X@address, yy, d, as.integer(d_idx-1),
                      as.integer(row.idx[tOrder[row.idx.cox]]-1), lambda,
                      as.integer(nlambda), as.integer(lambda.log.scale),lambda.min,
                      alpha, as.integer(user.lambda | any(penalty.factor==0)),
@@ -459,7 +475,7 @@ biglasso <- function(X, y, row.idx = 1:nrow(X),
     iter <- res[[6]]
     rejections <- res[[7]]
     
-    if (screen == "Adaptive") safe_rejections <- rejections # To be updated
+    if (screen %in% c("Adaptive", "scox", "sscox", "safe")) safe_rejections <- rejections # To be updated
     if (screen %in% c("Not implemented")) {
       safe_rejections <- res[[8]]
       col.idx <- res[[9]]
