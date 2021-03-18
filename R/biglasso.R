@@ -20,9 +20,9 @@
 #' \code{"SSR"} is applicable for now. More efficient rules are under development.
 #' 
 #' @param X The design matrix, without an intercept. It must be a
-#' \code{\link[bigmemory]{big.matrix}} object. The function standardizes the
-#' data and includes an intercept internally by default during the model
-#' fitting.
+#' double type \code{\link[bigmemory]{big.matrix}} object. The function
+#' standardizes the data and includes an intercept internally by default during
+#' the model fitting.
 #' @param y The response vector for \code{family="gaussian"} or \code{family="binomial"}.
 #' For family="cox", y should be a two-column matrix with columns 'time' and
 #' 'status'. The latter is a binary variable, with '1' indicating death, and
@@ -240,6 +240,7 @@ biglasso <- function(X, y, row.idx = 1:nrow(X),
     } 
   }
 
+  if (!("big.matrix" %in% class(X)) || typeof(X) != "double") stop("X must be a double type big.matrix.")
   if (nlambda < 2) stop("nlambda must be at least 2")
   # subset of the response vector
   if (is.matrix(y)) y <- y[row.idx,]
