@@ -145,9 +145,8 @@ double dual_cox(double *haz, double *rsk, double lambda, double lambda_0,
 
 // Scox initialization
 void scox_init(double *g_theta_lam_ptr, double *prod_deriv_theta_lam_ptr,
-               vector<double>& prodP_X_xmax, vector<double>& scaleP_X,
-               vector<double>& X_theta_lam, XPtr<BigMatrix> xMat,
-               double *haz, double *rsk, vector<double>& z, int xmax_col_idx,
+               vector<double>& scaleP_X, vector<double>& X_theta_lam, 
+               XPtr<BigMatrix> xMat, double *haz, double *rsk, vector<double>& z, 
                int *row_idx, vector<int> &col_idx,
                NumericVector &center, NumericVector &scale,
                int n, int p, int f, double *y, double *d, int *d_idx) {
@@ -165,35 +164,20 @@ void scox_init(double *g_theta_lam_ptr, double *prod_deriv_theta_lam_ptr,
   }
   *prod_deriv_theta_lam_ptr = prod_deriv_theta_lam;
   */
-  double sign_xmaxTs = sign(z[col_idx[xmax_col_idx]]);
-  
+
   MatrixAccessor<double> xAcc(*xMat);
   double *xCol;
   int j, jj;
   double max_x, min_x;
-  double *xmax = xAcc[col_idx[xmax_col_idx]];
-  double scale_max = scale[col_idx[xmax_col_idx]];
-  double *diff_xmax = Calloc(f, double);
+
   
-  // Initialize ||xmax||_{diff,k}
-  i = n-1;
-  max_x = min_x = xmax[row_idx[n-1]];
-  for(k = f-1; k >= 0; k--) {
-    for(; i >=0 && d_idx[i] >= k; i--) {
-      if(xmax[row_idx[i]] > max_x) max_x = xmax[row_idx[i]];
-      if(xmax[row_idx[i]] < min_x) min_x = xmax[row_idx[i]];
-    }
-    diff_xmax[k] = max_x - min_x;
-  }
-  
-  // Initialize ||x_j||_P and <x_j,xmax>_P
+  // Initialize ||x_j||_P 
 #pragma omp parallel for private(j, jj, i, k, max_x, min_x) schedule(static) 
   for (j = 0; j < p; j++) {
     jj = col_idx[j];
     xCol = xAcc[jj];
     X_theta_lam[j] = -z[j];
     scaleP_X[j] = 0; 
-    prodP_X_xmax[j] = 0;
     i = n-1;
     max_x = min_x = xCol[row_idx[n-1]];
     for(k = f-1; k >= 0; k--) {
@@ -202,38 +186,109 @@ void scox_init(double *g_theta_lam_ptr, double *prod_deriv_theta_lam_ptr,
         if(xCol[row_idx[i]] < min_x) min_x = xCol[row_idx[i]];
       }
       scaleP_X[j] += d[k] * pow(max_x - min_x, 2);
-      prodP_X_xmax[j] += d[k] * (max_x - min_x) * diff_xmax[k];
     }
     scaleP_X[j] = sqrt(scaleP_X[j]) / scale[jj] / 2;
-    prodP_X_xmax[j] = prodP_X_xmax[j] / scale[jj] / scale_max / 4;
     //if(j == p-1) Rprintf("scalePhat_Xj=%f\n", scaleP_X[j]/sqrt(n));
   }
-  Free(diff_xmax);
 }
 
 // Scox update
 void scox_update(double *g_theta_lam_ptr, double *prod_deriv_theta_lam_ptr,
                vector<double>& X_theta_lam, vector<double>& z, double *eta,
-               double *haz, double* rsk, double lambda, XPtr<BigMatrix> xMat, 
-               int *row_idx, vector<int> &col_idx,
-               NumericVector &center, NumericVector &scale,
-               int n, int p, int f, double *y, double *d, int *d_idx) {
+               double *haz0, double *rsk0, double lambda, double l, XPtr<BigMatrix> xMat, 
+               int *row_idx, vector<int> &col_idx, NumericVector &center,
+               NumericVector &scale, int n, int p, int f, double *y, double *d,
+               int *d_idx, int max_iter, double thresh, int *e1, 
+               double *m, double alpha, double *a, arma::sp_mat& beta) {
   
   int i, j, jj, k;
   
-  // Calculate haz, rsk
-  for(i = 0; i < n; i++) haz[i] = exp(eta[i]);
-  rsk[f-1] = haz[n-1];
+  // Update haz0, rsk0
+  for(i = 0; i < n; i++) haz0[i] = exp(eta[i]);
+  rsk0[f-1] = haz0[n-1];
   k = f-1;
   for(i = n-2; i >= 0; i--) {
     if(d_idx[i] < k) {
       k--;
-      rsk[k] = rsk[k+1];
+      rsk0[k] = rsk0[k+1];
     }
-    rsk[k] += haz[i];
+    rsk0[k] += haz0[i];
+  }
+  
+  double *haz = Calloc(n, double);
+  double *rsk = Calloc(f, double);
+  double *w = Calloc(n, double);
+  double *s = Calloc(n, double);
+  double *r = Calloc(n, double);
+  int iter = 0;
+  double sumWResid, xwr, xwx, u, v, l1, l2, shift, update, max_update;
+  
+  // Solve the reduced problem
+  while (iter * 2 < max_iter) {
+    iter++;
+    
+    // Calculate haz, rsk, Dev
+    for(i = 0; i < n; i++) haz[i] = exp(eta[i]);
+    rsk[f-1] = haz[n-1];
+    k = f-1;
+    for(i = n-2; i >= 0; i--) {
+      if(d_idx[i] < k) {
+        k--;
+        rsk[k] = rsk[k+1];
+      }
+      rsk[k] += haz[i];
+    }
+    
+    // Calculate w, s, r
+    k = 0;
+    for(i = 0; i < n; i++) {
+      if(i == 0) w[i] = 0.0;
+      else w[i] = w[i-1];
+      for(; k <= d_idx[i]; k++) {
+        w[i] += d[k] / rsk[k];
+      }
+    }
+    for(i = 0; i < n; i++) {
+      w[i] *= haz[i];
+      s[i] = y[i] - w[i];
+      if(w[i] == 0) r[i] = 0.0;
+      else r[i] = s[i] / w[i];
+    }
+    sumWResid = wsum(r, w, n);
+    
+    // Update beta
+    max_update = 0.0;
+    for (j = 0; j < p; j++) {
+      if (e1[j]) {
+        jj = col_idx[j];
+        xwr = wcrossprod_resid(xMat, r, sumWResid, row_idx, center[jj], scale[jj], w, n, jj);
+        xwx = wsqsum_bm(xMat, w, row_idx, center[jj], scale[jj], n, jj);
+        u = xwr / n + xwx * a[j] / n;
+        v = xwx / n;
+        l1 = lambda * m[jj] * alpha;
+        l2 = lambda * m[jj] * (1-alpha);
+        beta(j, l) = lasso(u, l1, l2, v);
+        
+        shift = beta(j, l) - a[j];
+        if (shift !=0) {
+          
+          update = pow(beta(j, l) - a[j], 2) * v;
+          if (update > max_update) max_update = update;
+          if(fabs(beta(j, l)) == 10) max_update = 10;
+          update_resid_eta(r, eta, xMat, shift, row_idx, center[jj], scale[jj], n, jj); // update r
+          sumWResid = wsum(r, w, n); // update temp result w * r, used for computing xwr;
+          a[j] = beta(j, l); // update a
+        }
+      }
+    }
+    // Check for convergence
+    if (max_update < thresh)  break;
   }
   
   *g_theta_lam_ptr = dual_cox(haz, rsk, 1.0, 1.0, n, f, y, d, d_idx);
+  //Rprintf("Old g = %f\n", dual_cox(haz0, rsk0, 1.0, 1.0, n, f, y, d, d_idx));
+  //Rprintf("New g = %f\n", dual_cox(haz, rsk, 1.0, 1.0, n, f, y, d, d_idx));
+  
   /*
   double prod_deriv_theta_lam = 0.0;
   for (i = 0; i < n; i++) {
@@ -246,20 +301,26 @@ void scox_update(double *g_theta_lam_ptr, double *prod_deriv_theta_lam_ptr,
   *prod_deriv_theta_lam_ptr = prod_deriv_theta_lam;
   */
   
-  double *s = Calloc(n, double);
-  double *ss = Calloc(f, double);
+  Free(haz); Free(rsk); Free(r);
+  
+  // Calculate w, s,
+  k = 0;
+  for(i = 0; i < n; i++) {
+    if(i == 0) w[i] = 0.0;
+    else w[i] = w[i-1];
+    for(; k <= d_idx[i]; k++) {
+      w[i] += d[k] / rsk0[k];
+    }
+  }
+  for(i = 0; i < n; i++) {
+    w[i] *= haz0[i];
+    s[i] = y[i] - w[i];
+  }
+
   double sum_xs;
   double *xCol;
   MatrixAccessor<double> xAcc(*xMat);
-  
-  ss[0] = d[k] / rsk[k];
-  for(k = 1; k < f; k++)  {
-    ss[k] = ss[k-1] + d[k] / rsk[k];
-  }
-  for(i = 0; i < n; i++) {
-    s[i] = y[i] - haz[i] * ss[d_idx[i]];
-  }
-  
+
 #pragma omp parallel for private(j, jj, i, k, sum_xs) schedule(static) 
   for (j = 0; j < p; j++) {
     jj = col_idx[j];
@@ -273,7 +334,7 @@ void scox_update(double *g_theta_lam_ptr, double *prod_deriv_theta_lam_ptr,
     z[j] = sum_xs / (scale[jj] * n);
     X_theta_lam[j] = -z[j];
   }  
-  Free(s); Free(ss);
+  Free(s); Free(w);
 
 }
 
@@ -326,72 +387,34 @@ double primal(double *beta, double lambda, double lambda0,
 // Scox screening
 void scox_screen(int* scox_reject, double lambda, double lambda_0,
                  double *haz, double *rsk, double g_theta_lam,
-                 double prod_deriv_theta_lam, vector<double>& prodP_X_xmax,
-                 vector<double>& scaleP_X, vector<double>& X_theta_lam,
-                 int xmax_col_idx, int *row_idx, vector<int> &col_idx,
+                 double prod_deriv_theta_lam, vector<double>& scaleP_X,
+                 vector<double>& X_theta_lam, int *row_idx, vector<int> &col_idx,
                  NumericVector &center, NumericVector &scale,
-                 int n, int p, int f, double *y, double *d, int *d_idx) {
+                 int n, int p, int f, double *y, double *d, int *d_idx, int *e1) {
   
   double TOLERANCE = 1e-8;
-  double scaleP_Xmax = scaleP_X[xmax_col_idx];
-//  double r = sqrt(2 * (dual_cox(haz, rsk, lambda, lambda_0, n, f, y, d, d_idx) - 
-//                  g_theta_lam + (1 - lambda/lambda_0) * prod_deriv_theta_lam));
   double r = sqrt(2 * (dual_cox(haz, rsk, lambda, lambda_0, n, f, y, d, d_idx)-g_theta_lam));
   double lam_ratio = lambda / lambda_0;
-  double D = n * (lambda_0 - lambda) / r / scaleP_Xmax;
-  double a2 = (1 - pow(D, 2)) * pow(scaleP_Xmax, 4);
-  double a1, a0, Delta, u2, rho, T;
   int j;
+  double T;
   
-#pragma omp parallel for private(j, a1, a0, Delta, u2, rho, T) schedule(static)
+#pragma omp parallel for private(j, T) schedule(static)
   for (j = 0; j < p; j++) {
     // xi=1
     scox_reject[j] = 1;
-    rho = prodP_X_xmax[j] / scaleP_Xmax / scaleP_X[j];
-    a1 = 2 * (1 - pow(D, 2)) * prodP_X_xmax[j] * pow(scaleP_Xmax, 2);
-    a0 = pow(prodP_X_xmax[j], 2) - pow(D * scaleP_Xmax * scaleP_X[j], 2);
-    Delta = pow(a1, 2) - 4 * a0 * a2;
-    if (Delta < 0.0) Delta = 0.0; // in case of -0.0 (at xmax)
-    u2 = (-a1 + sqrt(Delta)) / 2 / a2;
-    //if(j==p-1) Rprintf("rho=%f, Delta=%f, u2=%f\n", rho, Delta, u2);
-    if(rho >= D) {
-      T = lam_ratio * X_theta_lam[j] + r * scaleP_X[j] / n;
-      //if(j==p-1) Rprintf("T+[%i]/lam=%f+%f*%f/%f\n", j, X_theta_lam[j]*lam_ratio, r/sqrt(n), scaleP_X[j]/sqrt(n), lambda);
+    T = lam_ratio * X_theta_lam[j] + r * scaleP_X[j] / n;
+    //if(j==p-1) Rprintf("T+[%i]/lam=%f+%f*%f/%f\n", j, X_theta_lam[j]*lam_ratio, r/sqrt(n), scaleP_X[j]/sqrt(n), lambda);
       
-    } else {
-      T = lam_ratio * X_theta_lam[j] - u2 * (lambda_0 - lambda) +
-        r * sqrt(pow(scaleP_X[j],2) + 2 * u2 * prodP_X_xmax[j] + pow(u2 * scaleP_Xmax, 2)) / n;
-      //if(j==p-1) Rprintf("T+[%i]/lam=%f+%f+%f*%f/%f\n", j, X_theta_lam[j]*lam_ratio, -u2 * (lambda_0 - lambda), r/sqrt(n), sqrt(pow(scaleP_X[j],2) + 2 * u2 * prodP_X_xmax[j] + pow(u2 * scaleP_Xmax, 2))/sqrt(n), lambda);
-    }
     if(T + TOLERANCE > lambda) {
       scox_reject[j] = 0;
     }
     // xi=-1
-    //rho = -rho;
-    //a1 = -a1;
-    //u2 = (-a1 + sqrt(Delta)) / 2 / a2;
-    if(rho >= D) {
-      T = -lam_ratio * X_theta_lam[j] + r * scaleP_X[j] / n;
-      //if(j==p-1) Rprintf("T-[%i]/lam=%f+%f*%f/%f\n", j, -lam_ratio*X_theta_lam[j], r/sqrt(n), scaleP_X[j]/sqrt(n), lambda);
-    } else {
-      T = -lam_ratio * X_theta_lam[j] - u2 * (lambda_0 - lambda) +
-        r * sqrt(pow(scaleP_X[j],2) + 2 * u2 * prodP_X_xmax[j] + pow(u2 * scaleP_Xmax, 2)) / n;
-      //if(j==p-1) Rprintf("T-[%i]/lam=%f+%f+%f*%f/%f\n", j, -lam_ratio*X_theta_lam[j], -u2 * (lambda_0 - lambda), r/sqrt(n), sqrt(pow(scaleP_X[j],2) + 2 * u2 * prodP_X_xmax[j] + pow(u2 * scaleP_Xmax, 2))/sqrt(n), lambda);
-    }
+    T = -lam_ratio * X_theta_lam[j] + r * scaleP_X[j] / n;
+    //if(j==p-1) Rprintf("T-[%i]/lam=%f+%f*%f/%f\n", j, -lam_ratio*X_theta_lam[j], r/sqrt(n), scaleP_X[j]/sqrt(n), lambda);
+    
     if(T + TOLERANCE > lambda) {
       scox_reject[j] = 0;
     }
-    /*
-    if(j==p-1){
-      a1 = 2 * (1 - pow(D, 2)) * prodP_X_xmax[j] / 2 * pow(scaleP_Xmax, 2);
-      a0 = pow(prodP_X_xmax[j]/2, 2) - pow(D * scaleP_Xmax * scaleP_X[j], 2);
-      Delta = pow(a1, 2) - 4 * a0 * a2;
-      if (Delta < 0.0) Delta = 0.0; // in case of -0.0 (at xmax)
-      u2 = (-a1 + sqrt(Delta)) / 2 / a2;
-      Rprintf("T1=%f,T2=%f\n", r * scaleP_X[j] / n,
-              - u2 * (lambda_0 - lambda) + r * sqrt(pow(scaleP_X[j],2) +
-                2 * u2 * prodP_X_xmax[j]/2 + pow(u2 * scaleP_Xmax, 2)) / n);
-    } */
       
   }
 }
@@ -587,7 +610,6 @@ RcppExport SEXP cdfit_cox(SEXP X_, SEXP y_, SEXP d_, SEXP d_idx_, SEXP row_idx_,
         for(i = 0; i < n; i++) {
           if(i == 0) w[i] = 0.0;
           else w[i] = w[i-1];
-          s[i] = y[i];
           for(; k <= d_idx[i]; k++) {
             w[i] += d[k] / rsk[k];
           }
@@ -854,7 +876,6 @@ RcppExport SEXP cdfit_cox_ssr(SEXP X_, SEXP y_, SEXP d_, SEXP d_idx_, SEXP row_i
           for(i = 0; i < n; i++) {
             if(i == 0) w[i] = 0.0;
             else w[i] = w[i-1];
-            s[i] = y[i];
             for(; k <= d_idx[i]; k++) {
               w[i] += d[k] / rsk[k];
             }
@@ -1051,24 +1072,22 @@ RcppExport SEXP cdfit_cox_scox(SEXP X_, SEXP y_, SEXP d_, SEXP d_idx_, SEXP row_
   double *g_theta_lam_ptr = &g_theta_lam;
   double *prod_deriv_theta_lam_ptr = &prod_deriv_theta_lam;
   vector<double> X_theta_lam; 
-  vector<double> prodP_X_xmax;
   vector<double> scaleP_X;
   int *safe_reject = Calloc(p, int);
   double *haz0 = Calloc(n, double);
-  double *rsk0 = Calloc(k, double);
+  double *rsk0 = Calloc(f, double);
   
   int scox; // if 0, don't perform Scox rule
   if (safe_thresh < 1) {
     scox = 1; // turn on scox
     X_theta_lam.resize(p);
-    prodP_X_xmax.resize(p);
     scaleP_X.resize(p);
     
-    scox_init(g_theta_lam_ptr, prod_deriv_theta_lam_ptr, prodP_X_xmax,
-              scaleP_X, X_theta_lam, xMat, haz, rsk, z, xmax_col_idx,
+    scox_init(g_theta_lam_ptr, prod_deriv_theta_lam_ptr,
+              scaleP_X, X_theta_lam, xMat, haz, rsk, z,
               row_idx, col_idx, center, scale, n, p, f, y, d, d_idx);
     for(i = 0; i < n; i++) haz0[i] = haz[i];
-    for(k = 0; k < n; k++) rsk0[k] = rsk[k];
+    for(k = 0; k < f; k++) rsk0[k] = rsk[k];
   } else {
     scox = 0;
   }
@@ -1102,8 +1121,8 @@ RcppExport SEXP cdfit_cox_scox(SEXP X_, SEXP y_, SEXP d_, SEXP d_idx_, SEXP row_
     
     if(scox) {
       scox_screen(safe_reject, lambda[l], lambda_max, haz0, rsk0, g_theta_lam,
-                  prod_deriv_theta_lam, prodP_X_xmax, scaleP_X, X_theta_lam,
-                  xmax_col_idx, row_idx, col_idx, center, scale, n, p, f, y, d, d_idx);
+                  prod_deriv_theta_lam, scaleP_X, X_theta_lam,
+                  row_idx, col_idx, center, scale, n, p, f, y, d, d_idx, e1);
     }
     n_reject[l] = sum(safe_reject, p);
     while (iter[l] < max_iter) {
@@ -1137,18 +1156,21 @@ RcppExport SEXP cdfit_cox_scox(SEXP X_, SEXP y_, SEXP d_, SEXP d_idx_, SEXP row_
         }
         
         // Calculate w, s, r
+        k = 0;
         for(i = 0; i < n; i++) {
-          w[i] = 0.0;
-          s[i] = y[i];
-          for(k = 0; k <= d_idx[i]; k++) {
-            w[i] += d[k] * (rsk[k] - haz[i]) / rsk[k] / rsk[k];
-            s[i] -= d[k] * haz[i] / rsk[k];
+          if(i == 0) w[i] = 0.0;
+          else w[i] = w[i-1];
+          for(; k <= d_idx[i]; k++) {
+            w[i] += d[k] / rsk[k];
           }
+        }
+        for(i = 0; i < n; i++) {
           w[i] *= haz[i];
+          s[i] = y[i] - w[i];
           if(w[i] == 0) r[i] = 0.0;
           else r[i] = s[i] / w[i];
         }
-        
+        sumWResid = wsum(r, w, n);
         
         
         // Update beta
@@ -1179,7 +1201,7 @@ RcppExport SEXP cdfit_cox_scox(SEXP X_, SEXP y_, SEXP d_, SEXP d_idx_, SEXP row_
         if (max_update < thresh)  break;
       }
       // Scan for violations in safe set
-      violations = check_safe_set(e1, safe_reject, z, xMat, row_idx, col_idx, center, scale, a, lambda[l], 0.0, alpha, s, m, n, p);
+      violations = check_safe_set(e1, safe_reject, z, xMat, row_idx, col_idx, center, scale, a, lambda[l], sumWResid, alpha, s, m, n, p);
       if (violations==0) break;
     }
   }
@@ -1329,26 +1351,20 @@ RcppExport SEXP cdfit_cox_sscox(SEXP X_, SEXP y_, SEXP d_, SEXP d_idx_, SEXP row
   double *g_theta_lam_ptr = &g_theta_lam;
   double *prod_deriv_theta_lam_ptr = &prod_deriv_theta_lam;
   vector<double> X_theta_lam; 
-  vector<double> prodP_X_xmax;
   vector<double> scaleP_X;
   double *haz0 = Calloc(n, double);
   double *rsk0 = Calloc(f, double);
   int *safe_reject = Calloc(p, int);
   
-  // Scox experiment
-  double g0, g1, g1hat, prod, prodhat;
-  double *haz00 = Calloc(n, double);
-  double *rsk00 = Calloc(f, double);
 
   int scox; // if 0, don't perform Scox rule
   if (safe_thresh < 1) {
     scox = 1; // turn on scox
     X_theta_lam.resize(p);
-    prodP_X_xmax.resize(p);
     scaleP_X.resize(p);
 
-    scox_init(g_theta_lam_ptr, prod_deriv_theta_lam_ptr, prodP_X_xmax,
-              scaleP_X, X_theta_lam, xMat, haz, rsk, z, xmax_col_idx,
+    scox_init(g_theta_lam_ptr, prod_deriv_theta_lam_ptr,
+              scaleP_X, X_theta_lam, xMat, haz, rsk, z,
               row_idx, col_idx, center, scale, n, p, f, y, d, d_idx);
     for(i = 0; i < n; i++) haz0[i] = haz[i];
     for(k = 0; k < f; k++) rsk0[k] = rsk[k];
@@ -1385,31 +1401,17 @@ RcppExport SEXP cdfit_cox_sscox(SEXP X_, SEXP y_, SEXP d_, SEXP d_idx_, SEXP row
     
     if(scox) {
       if(l > 1){
-        // experiment
-        g0 = g_theta_lam;
-        g1hat = dual_cox(haz0, rsk0, lambda[l-1], lambda[l-2], n, f, y, d, d_idx);
-        prodhat = prod_deriv_theta_lam;
-        for(i = 0; i < n; i++) haz00[i] = haz0[i];
-        for(k = 0; k < f; k++) rsk00[k] = rsk0[k];
-
-        scox_update(g_theta_lam_ptr, prod_deriv_theta_lam_ptr,
-                    X_theta_lam, z, eta, haz0, rsk0, lambda[l-1], xMat, row_idx, col_idx,
-                    center, scale, n, p, f, y, d, d_idx);
-
-        g1 = g_theta_lam;
-        prod = prodhat - prod_deriv_theta(haz00, rsk00, haz0, rsk0, n, p, f, y, d, d_idx);
-        prodhat *= (1-lambda[l-1]/lambda[l-2]);
-        //Rprintf("r=%f\n", sqrt((g1hat-g0+prodhat)/2));
-        //Rprintf(">=%f\n", sqrt((g1-g0+prod)/2));
-        //Rprintf("Diff dual=%f, Diff dual hat=%f\n", g1-g0, g1hat-g0);
-        //Rprintf("Diff prime hat=%f\n", primal(a, lambda[l-1], lambda[l-2], n, p, f, y, d, d_idx));
+        scox_update(g_theta_lam_ptr, prod_deriv_theta_lam_ptr, X_theta_lam, z,
+                    eta, haz0, rsk0, lambda[l], l, xMat, row_idx, col_idx, 
+                    center, scale, n, p, f, y, d, d_idx, max_iter, thresh, e1,
+                    m, alpha, a, beta);
         } 
-      //Rprintf("Scale_PX_j=%f\n", scaleP_Xj(haz0, rsk0, xMat, p-1, row_idx, col_idx, center, scale, n, p, f, y, d, d_idx));
       scox_screen(safe_reject, lambda[l], lambda[l-1], haz0, rsk0, g_theta_lam,
-                  prod_deriv_theta_lam, prodP_X_xmax, scaleP_X, X_theta_lam,
-                  xmax_col_idx, row_idx, col_idx, center, scale, n, p, f, y, d, d_idx);
+                  prod_deriv_theta_lam, scaleP_X, X_theta_lam,
+                  row_idx, col_idx, center, scale, n, p, f, y, d, d_idx, e1);
     }
     n_reject[l] = sum(safe_reject, p);
+    if(n_reject[l] == 0) scox = 0;
     while (iter[l] < max_iter) {
       while (iter[l] < max_iter) {
         iter[l]++;

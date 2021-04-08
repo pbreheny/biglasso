@@ -215,7 +215,8 @@ biglasso <- function(X, y, row.idx = 1:nrow(X),
     if(length(screen) == 1) screen <- match.arg(screen, choices = c("SSR", "Adaptive", "Hybrid", "None"))
     else screen <- "SSR"
   } else if (family == "cox") {
-    screen <- match.arg(screen, choices = c("SSR", "Adaptive", "Hybrid", "None", "scox", "sscox", "safe"))
+    if(length(screen) == 1) screen <- match.arg(screen, choices = c("SSR", "Adaptive", "Hybrid", "None", "scox", "sscox", "safe"))
+    else screen <- "SSR"
   } else {
     screen <- match.arg(screen)
   }
@@ -249,7 +250,8 @@ biglasso <- function(X, y, row.idx = 1:nrow(X),
   if (any(is.na(y))) stop("Missing data (NA's) detected.  Take actions (e.g., removing cases, removing features, imputation) to eliminate missing data before fitting the model.")
 
   if (!is.double(y)) {
-    tmp <- try(y <- as.numeric(y), silent=TRUE)
+    if (is.matrix(y)) tmp <- try(storage.mode(y) <- "numeric", silent=TRUE)
+    else tmp <- try(y <- as.numeric(y), silent=TRUE)
     if (class(tmp)[1] == "try-error") stop("y must numeric or able to be coerced to numeric")
   }
 
