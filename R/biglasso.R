@@ -172,7 +172,7 @@
 #' @export biglasso
 biglasso <- function(X, y, row.idx = 1:nrow(X),
                      penalty = c("lasso", "ridge", "enet"),
-                     family = c("gaussian", "binomial", "cox"), 
+                     family = c("gaussian", "binomial", "cox", "mgaussian"), 
                      alg.logistic = c("Newton", "MM"),
                      screen = c("Adaptive", "SSR", "Hybrid", "None"),
                      safe.thresh = 0, update.thresh = 1, ncores = 1, alpha = 1,
@@ -211,7 +211,7 @@ biglasso <- function(X, y, row.idx = 1:nrow(X),
   family <- match.arg(family)
   penalty <- match.arg(penalty)
   alg.logistic <- match.arg(alg.logistic)
-  if (!identical(penalty, "lasso") || any(penalty.factor != 1) || alg.logistic =="MM"){
+  if (!identical(penalty, "lasso") || any(penalty.factor != 1) || alg.logistic =="MM" || family == "mgaussian"){
     if(length(screen) == 1) screen <- match.arg(screen, choices = c("SSR", "Adaptive", "Hybrid", "None"))
     else screen <- "SSR"
   } else if (family == "cox") {
@@ -279,12 +279,14 @@ biglasso <- function(X, y, row.idx = 1:nrow(X),
     for(i in 1:length(row.idx.cox)) d_idx[i] <- max(which(dtime <= y[tOrder[row.idx.cox[i]],1])) 
   }
 
-  if (family=="gaussian") {
+  if (family == "gaussian") {
     yy <- y - mean(y)
-  } else if (family=="binomial"){
+  } else if (family == "binomial") {
     yy <- y
-  } else if (family == "cox"){
+  } else if (family == "cox") {
     yy <- y[tOrder[row.idx.cox],2]
+  } else if (family == "mgaussian") {
+    yy <- t(scale(y, scale = F))
   }
 
   p <- ncol(X)
@@ -493,6 +495,39 @@ biglasso <- function(X, y, row.idx = 1:nrow(X),
     } else {
       col.idx <- res[[8]]
     }
+  } else if (family == 'mgaussian') {
+    time <- system.time(
+      {
+        switch(screen,
+               "SSR" = {
+                 res <- .Call("cdfit_mgaussian_ssr", X@address, yy, as.integer(row.idx-1),
+                              lambda, as.integer(nlambda), as.integer(lambda.log.scale),
+                              lambda.min, alpha,
+                              as.integer(user.lambda | any(penalty.factor==0)),
+                              eps, as.integer(max.iter), penalty.factor,
+                              as.integer(dfmax), as.integer(ncores), as.integer(verbose),
+                              PACKAGE = 'biglasso')
+               },
+               stop("Invalid screening method!")
+        )
+      }
+    )
+    
+    b <- res[[1]]
+    center <- res[[2]]
+    scale <- res[[3]]
+    lambda <- res[[4]]
+    loss <- res[[5]]
+    iter <- res[[6]]
+    rejections <- res[[7]]
+    
+    if (screen %in% c("Hybrid", "Adaptive")) {
+      safe_rejections <- res[[8]]
+      col.idx <- res[[9]]
+    } else {
+      col.idx <- res[[8]]
+    }
+    
   } else {
     stop("Current version only supports Gaussian, Binominal or Cox response!")
   }
@@ -504,8 +539,8 @@ biglasso <- function(X, y, row.idx = 1:nrow(X),
 
   ## Eliminate saturated lambda values, if any
   ind <- !is.na(iter)
-  if (family != "cox") a <- a[ind]
-  b <- b[, ind, drop=FALSE]
+  if (family %in% c("gaussian","binomial")) a <- a[ind]
+  if(!is.list(b)) b <- b[, ind, drop=FALSE]
   iter <- iter[ind]
   lambda <- lambda[ind]
   loss <- loss[ind]
@@ -517,6 +552,29 @@ biglasso <- function(X, y, row.idx = 1:nrow(X),
     beta <- Matrix(0, nrow = p, ncol = length(lambda), sparse = T)
     bb <- b / scale[col.idx]
     beta[col.idx, ] <- bb
+  } else if(family == "mgaussian") {
+    varnames <- if (is.null(colnames(X))) paste("V", 1:p, sep="") else colnames(X)
+    varnames <- c("(Intercept)", varnames)
+    a <- colMeans(y)
+    nclass <- ncol(y)
+    beta <- list()
+    lam.idx = which(ind)
+    for(class in 1:nclass) {
+      beta_class <- Matrix(0, nrow = p+1, ncol = length(lambda), sparse = T)
+      beta_class[1,] <- a[class] - crossprod(center[col.idx], (b[[class]])[,ind] / scale[col.idx])
+      beta_class[col.idx+1,] <- (b[[class]])[,ind] / scale[col.idx]
+      #for(l in 1:length(lam.idx)) {
+      #  for(j in 1:length(col.idx)) {
+      #    if(b[(j-1) * nclass + class, lam.idx[l]] != 0) {
+      #      beta_class[col.idx[j]+1,l] <- b[(j-1) * nclass + class, lam.idx[l]] / scale[col.idx[j]]
+      #      beta_class[1,l] <- beta_class[1,l] - center[col.idx[j]] * b[(j-1) * nclass + class, lam.idx[l]] / scale[col.idx[j]]
+      #    }
+      #  }
+      #}
+      dimnames(beta_class) <- list(varnames, round(lambda, digits = 4))
+      beta <- append(beta, beta_class)
+    }
+    yy <- t(yy)
   } else {
     beta <- Matrix(0, nrow = (p+1), ncol = length(lambda), sparse = T)
     bb <- b / scale[col.idx]
@@ -528,7 +586,11 @@ biglasso <- function(X, y, row.idx = 1:nrow(X),
   ## Names
   varnames <- if (is.null(colnames(X))) paste("V", 1:p, sep="") else colnames(X)
   if(family != 'cox') varnames <- c("(Intercept)", varnames)
-  dimnames(beta) <- list(varnames, round(lambda, digits = 4))
+  if(family == "mgaussian") {
+    nclass <- ncol(y)
+    classnames <- if (is.null(colnames(y))) paste("class", 1:nclass, sep="") else colnames(y)
+    names(beta) <- classnames
+  } else dimnames(beta) <- list(varnames, round(lambda, digits = 4))
 
   ## Output
   return.val <- list(
@@ -553,7 +615,7 @@ biglasso <- function(X, y, row.idx = 1:nrow(X),
     return.val$safe_rejections <- safe_rejections
   } 
   if (return.time) return.val$time <- as.numeric(time['elapsed'])
-  
-  val <- structure(return.val, class = c("biglasso", 'ncvreg'))
+  if(family == "mgaussian") val <- structure(return.val, class = c("mbiglasso"))
+  else val <- structure(return.val, class = c("biglasso", 'ncvreg'))
   val
 }

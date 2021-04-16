@@ -94,6 +94,7 @@ predict.biglasso <- function(object, X, row.idx = 1:nrow(X),
   }
 }
 
+
 #' @method coef biglasso
 #' @rdname predict.biglasso
 #' @export
@@ -109,4 +110,33 @@ coef.biglasso <- function(object, lambda, which = 1:length(object$lambda), drop 
   }
   else beta <- object$beta[,which,drop=FALSE]
   if (drop) return(drop(beta)) else return(beta)
+}
+
+#' @method coef mbiglasso
+#' @rdname predict.mbiglasso
+#' @export
+#'
+coef.mbiglasso <- function(object, lambda, which = 1:length(object$lambda), intercept = TRUE, ...) {
+  nclass = length(object$beta)
+  beta = list()
+  if(intercept) col.idx = 1:nrow(object$beta[[1]])
+  else col.idx = 2:nrow(object$beta[[1]])
+  if (!missing(lambda)) {
+    ind <- approx(object$lambda,seq(object$lambda),lambda)$y
+    l <- floor(ind)
+    r <- ceiling(ind)
+    w <- ind %% 1
+    for(class in 1:nclass) {
+      beta_class = (1-w)*(object$beta[[class]])[col.idx,l,drop=FALSE] + w*(object$beta[[class]])[col.idx,r,drop=FALSE]
+      colnames(beta_class) <- round(lambda,4)
+      beta = append(beta, beta_class)
+    }
+  }
+  else{
+    for(class in 1:nclass) {
+      beta_class = (object$beta[[class]])[col.idx,which,drop=FALSE]
+      beta = append(beta, beta_class)
+    }
+  } 
+  return(beta)
 }

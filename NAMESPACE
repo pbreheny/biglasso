@@ -2,8 +2,10 @@
 
 S3method(coef,biglasso)
 S3method(coef,cv.biglasso)
+S3method(coef,mbiglasso)
 S3method(plot,biglasso)
 S3method(plot,cv.biglasso)
+S3method(plot,mbiglasso)
 S3method(predict,biglasso)
 S3method(predict,cv.biglasso)
 S3method(print,summary.cv.biglasso)

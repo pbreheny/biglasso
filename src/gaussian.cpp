@@ -240,6 +240,7 @@ RcppExport SEXP cdfit_gaussian_ssr(SEXP X_, SEXP y_, SEXP row_idx_,
     n_reject[l] = p - sum(e2, p);
     
     // Experiment: Check dual gap
+    MatrixAccessor<double> xAcc(*xMat);
     double c = (lambda[l-1] - lambda[l]) / lambda[l-1] / lambda[l];
     double y_norm2 = 0;
     double yhat_norm2 = 0;
@@ -250,12 +251,25 @@ RcppExport SEXP cdfit_gaussian_ssr(SEXP X_, SEXP y_, SEXP row_idx_,
       yhat[i] = y[i] - r[i];
       yhat_norm2 += yhat[i] * yhat[i];
       ytyhat += y[i] * yhat[i];
+      yhat[i] = 0;
     }
     double rhs2 = sqrt(n * (y_norm2 - ytyhat * ytyhat / yhat_norm2));
     double sumbeta1 = 0;
     for(j = 0; j < p; j++) sumbeta1 += fabs(a[j]);
+    double r2 = 0;
+    double *xCol;
+    for (j = 0; j < p; j++) {
+      if (e1[j] == 1) {
+        jj = col_idx[j];
+        xCol = xAcc[jj];
+        for (i=0; i < n; i++) {
+          yhat[i] += (xCol[row_idx[i]]-center[jj]) * a[j] / scale[jj];
+        }
+      }
+    }
+    for(i = 0; i < n; i++) r2 += pow(y[i]-yhat[i], 2);
     Rprintf("%f,%f,%f\n",pow(sqrt(n)*lambda[l-1] - 0.5*c*lambda[l-1]*rhs2/sqrt(n),2),
-            2*yhat_norm2 - 2*ytyhat + 2*n*lambda[l-1]*sumbeta1, n*pow(lambda[l],2));
+            r2 - y_norm2 + yhat_norm2 + 2*n*lambda[l-1]*sumbeta1, n*pow(lambda[l],2));
     Free(yhat);
     
     while(iter[l] < max_iter) {
