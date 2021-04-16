@@ -239,6 +239,25 @@ RcppExport SEXP cdfit_gaussian_ssr(SEXP X_, SEXP y_, SEXP row_idx_,
     }
     n_reject[l] = p - sum(e2, p);
     
+    // Experiment: Check dual gap
+    double c = (lambda[l-1] - lambda[l]) / lambda[l-1] / lambda[l];
+    double y_norm2 = 0;
+    double yhat_norm2 = 0;
+    double ytyhat = 0;
+    double *yhat = Calloc(n, double);
+    for(i = 0; i < n; i ++){
+      y_norm2 += y[i]*y[i];
+      yhat[i] = y[i] - r[i];
+      yhat_norm2 += yhat[i] * yhat[i];
+      ytyhat += y[i] * yhat[i];
+    }
+    double rhs2 = sqrt(n * (y_norm2 - ytyhat * ytyhat / yhat_norm2));
+    double sumbeta1 = 0;
+    for(j = 0; j < p; j++) sumbeta1 += fabs(a[j]);
+    Rprintf("%f,%f,%f\n",pow(sqrt(n)*lambda[l-1] - 0.5*c*lambda[l-1]*rhs2/sqrt(n),2),
+            2*yhat_norm2 - 2*ytyhat + 2*n*lambda[l-1]*sumbeta1, n*pow(lambda[l],2));
+    Free(yhat);
+    
     while(iter[l] < max_iter) {
       while(iter[l] < max_iter){
         while(iter[l] < max_iter) {
@@ -374,7 +393,7 @@ RcppExport SEXP cdfit_gaussian_ada_edpp_ssr(SEXP X_, SEXP y_, SEXP row_idx_, SEX
   int *ever_active = Calloc(p, int); // ever-active set
   int *strong_set = Calloc(p, int); // strong set
   int *discard_beta = Calloc(p, int); // index set of discarded features;
-  int *discard_old = Calloc(p, int);
+  //int *discard_old = Calloc(p, int);
   double *r = Calloc(n, double);
   for (i = 0; i < n; i++) r[i] = y[i];
   double sumResid = sum(r, n);
@@ -448,7 +467,7 @@ RcppExport SEXP cdfit_gaussian_ada_edpp_ssr(SEXP X_, SEXP y_, SEXP row_idx_, SEX
       }
       if (nv > dfmax) {
         for (int ll=l; ll<L; ll++) iter[ll] = NA_INTEGER;
-        Free(ever_active); Free(r); Free(a); Free(discard_beta); Free(lhs2); Free(Xty); Free(Xtr); Free(yhat); Free(discard_old); Free(strong_set);
+        Free(ever_active); Free(r); Free(a); Free(discard_beta); Free(lhs2); Free(Xty); Free(Xtr); Free(yhat); Free(strong_set); //Free(discard_old); 
         return List::create(beta, center, scale, lambda, loss, iter,  n_reject, n_safe_reject, Rcpp::wrap(col_idx));
       }
       if(gain - n_safe_reject[l - 1] * (l - l_prev) > update_thresh * p && l != L - 1) { // Update EDPP if not discarding enough
@@ -472,6 +491,13 @@ RcppExport SEXP cdfit_gaussian_ada_edpp_ssr(SEXP X_, SEXP y_, SEXP row_idx_, SEX
         edpp_update(xMat, r, sumResid, lhs2, Xty, Xtr, yhat, ytyhat, yhat_norm2, row_idx, col_idx,
                     center, scale, n, p);
         rhs2 = sqrt(n * (y_norm2 - ytyhat * ytyhat / yhat_norm2));
+        
+        // Experiment: Check dual gap
+        double sumbeta1 = 0;
+        for(j = 0; j < p; j++) sumbeta1 += fabs(a[j]);
+        Rprintf("%f,%f,%f\n",pow(sqrt(n)*lambda[l_prev] - 0.5*c*lambda[l_prev]*rhs2/sqrt(n),2),
+                2*yhat_norm2 - 2*ytyhat + 2*n*lambda[l_prev]*sumbeta1, n*pow(lambda[l],2));
+
         for(j = 0; j < p; j++) z[j] = Xtr[j] / n;
         if(verbose) {
           // output time
@@ -540,7 +566,7 @@ RcppExport SEXP cdfit_gaussian_ada_edpp_ssr(SEXP X_, SEXP y_, SEXP row_idx_, SEX
       }
     }
     n_reject[l] = p - sum(strong_set, p);
-    for(j = 0; j < p; j++) discard_old[j] = discard_beta[j];
+    //for(j = 0; j < p; j++) discard_old[j] = discard_beta[j];
     
     while(iter[l] < max_iter) {
       while (iter[l] < max_iter) {
@@ -590,7 +616,7 @@ RcppExport SEXP cdfit_gaussian_ada_edpp_ssr(SEXP X_, SEXP y_, SEXP row_idx_, SEX
     }
   }
   
-  Free(ever_active); Free(r); Free(a); Free(discard_beta); Free(lhs2); Free(Xty); Free(Xtr); Free(yhat); Free(discard_old); Free(strong_set);
+  Free(ever_active); Free(r); Free(a); Free(discard_beta); Free(lhs2); Free(Xty); Free(Xtr); Free(yhat); Free(strong_set); //Free(discard_old);
   //ProfilerStop();
   return List::create(beta, center, scale, lambda, loss, iter, n_reject, n_safe_reject, Rcpp::wrap(col_idx));
 }

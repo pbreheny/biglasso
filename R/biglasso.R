@@ -281,9 +281,9 @@ biglasso <- function(X, y, row.idx = 1:nrow(X),
 
   if (family=="gaussian") {
     yy <- y - mean(y)
-  } else if (family=='binomial'){
+  } else if (family=="binomial"){
     yy <- y
-  } else {
+  } else if (family == "cox"){
     yy <- y[tOrder[row.idx.cox],2]
   }
 
@@ -458,6 +458,14 @@ biglasso <- function(X, y, row.idx = 1:nrow(X),
                      eps, as.integer(max.iter), penalty.factor, as.integer(dfmax),
                      as.integer(ncores), as.integer(warn), safe.thresh, 
                      as.integer(verbose), PACKAGE = 'biglasso')
+      } else if (screen == 'Adaptive') {
+        res <- .Call("cdfit_cox_ada_scox", X@address, yy, d, as.integer(d_idx-1),
+                     as.integer(row.idx[tOrder[row.idx.cox]]-1), lambda,
+                     as.integer(nlambda), as.integer(lambda.log.scale),lambda.min,
+                     alpha, as.integer(user.lambda | any(penalty.factor==0)),
+                     eps, as.integer(max.iter), penalty.factor, as.integer(dfmax),
+                     as.integer(ncores), as.integer(warn), safe.thresh, update.thresh,
+                     as.integer(verbose), PACKAGE = 'biglasso')
       } else {
         res <- .Call("cdfit_cox", X@address, yy, d, as.integer(d_idx-1),
                      as.integer(row.idx[tOrder[row.idx.cox]]-1), lambda,
@@ -478,8 +486,8 @@ biglasso <- function(X, y, row.idx = 1:nrow(X),
     iter <- res[[6]]
     rejections <- res[[7]]
     
-    if (screen %in% c("Adaptive", "scox", "sscox", "safe")) safe_rejections <- rejections # To be updated
-    if (screen %in% c("Not implemented")) {
+    if (screen %in% c("scox", "sscox", "safe")) safe_rejections <- rejections # To be updated
+    if (screen %in% c("Adaptive")) {
       safe_rejections <- res[[8]]
       col.idx <- res[[9]]
     } else {
