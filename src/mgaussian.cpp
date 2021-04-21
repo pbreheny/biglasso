@@ -59,8 +59,8 @@ void standardize_and_get_residual(NumericVector &center, NumericVector &scale,
 }
 
 // Crossproduct xjTR
-void crossprod_resid(double *xTR, XPtr<BigMatrix> xMat, arma::mat &R,
-                     arma::vec &sumResid, int *row_idx,
+void crossprod_resid(double *xTR, XPtr<BigMatrix> xMat, double *R,
+                     double *sumResid, int *row_idx,
                      double center, double scale, int n, int m, int j) {
   MatrixAccessor<double> xAcc(*xMat);
   double *xCol = xAcc[j];
@@ -70,7 +70,7 @@ void crossprod_resid(double *xTR, XPtr<BigMatrix> xMat, arma::mat &R,
   for (i = 0; i < n; i++) {
     xi = xCol[row_idx[i]];
     for(k = 0; k < m; k++) {
-      xTR[k] += xi * R.at(k, i);
+      xTR[k] += xi * R[i*m+k];
     }
   }
   for(k = 0; k < m; k++){
@@ -92,7 +92,7 @@ void lasso(arma::field<arma::sp_mat> &beta, double *xTR, double z, double l1, do
 }
 
 // update residul matrix
-void update_resid(XPtr<BigMatrix> xpMat, arma::mat &R, double *shift,
+void update_resid(XPtr<BigMatrix> xpMat, double *R, double *shift,
                   int *row_idx, double center, double scale, int n, int m, int j) {
   MatrixAccessor<double> xAcc(*xpMat);
   double *xCol = xAcc[j];
@@ -100,7 +100,7 @@ void update_resid(XPtr<BigMatrix> xpMat, arma::mat &R, double *shift,
   for (int i =0; i < n; i++) {
     xi = (xCol[row_idx[i]] - center) / scale;
     for(int k = 0; k < m; k++) {
-      R.at(k, i) -= shift[k] * xi;
+      R[i*m+k] -= shift[k] * xi;
     }
   }
 }
@@ -109,8 +109,8 @@ void update_resid(XPtr<BigMatrix> xpMat, arma::mat &R, double *shift,
 int check_strong_set(int *e1, int *e2, vector<double> &z, XPtr<BigMatrix> xpMat, 
                      int *row_idx, vector<int> &col_idx, 
                      NumericVector &center, NumericVector &scale, double *a,
-                     double lambda, arma::vec &sumResid, double alpha, 
-                     arma::mat &R, double *mp, int n, int p, int m) {
+                     double lambda, double *sumResid, double alpha, 
+                     double *R, double *mp, int n, int p, int m) {
   MatrixAccessor<double> xAcc(*xpMat);
   double *xCol, *xTR, l1, l2, sum;
   int j, jj, violations = 0;
@@ -126,7 +126,7 @@ int check_strong_set(int *e1, int *e2, vector<double> &z, XPtr<BigMatrix> xpMat,
       for(int k=0; k < m; k++) xTR[k] = 0;
       for (int i=0; i < n; i++) {
         for (int k=0; k < m; k++) {
-          xTR[k] += xCol[row_idx[i]] * R.at(k, i);
+          xTR[k] += xCol[row_idx[i]] * R[i*m+k];
         }
       }
       l1 = lambda * mp[jj] * alpha;
@@ -150,8 +150,8 @@ int check_strong_set(int *e1, int *e2, vector<double> &z, XPtr<BigMatrix> xpMat,
 // check KKT conditions over features in the rest set
 int check_rest_set(int *e1, int *e2, vector<double> &z, XPtr<BigMatrix> xpMat, 
                    int *row_idx, vector<int> &col_idx, NumericVector &center,
-                   NumericVector &scale, double *a, double lambda, arma::vec &sumResid,
-                   double alpha, arma::mat &R, double *mp, int n, int p, int m) {
+                   NumericVector &scale, double *a, double lambda, double *sumResid,
+                   double alpha, double *R, double *mp, int n, int p, int m) {
   
   MatrixAccessor<double> xAcc(*xpMat);
   double *xCol, *xTR, l1, l2, sum;
@@ -167,7 +167,7 @@ int check_rest_set(int *e1, int *e2, vector<double> &z, XPtr<BigMatrix> xpMat,
       for(int k=0; k < m; k++) xTR[k] = 0;
       for (int i=0; i < n; i++) {
         for (int k=0; k < m; k++) {
-          xTR[k] += xCol[row_idx[i]] * R.at(k, i);
+          xTR[k] += xCol[row_idx[i]] * R[i*m+k];
         }
       }
       l1 = lambda * mp[jj] * alpha;
@@ -274,12 +274,18 @@ RcppExport SEXP cdfit_mgaussian_ssr(SEXP X_, SEXP y_, SEXP row_idx_,
   
   int *e1 = Calloc(p, int); // ever active set
   int *e2 = Calloc(p, int); // strong set
-  NumericMatrix RR(clone(Y));
-  arma::mat R(RR.begin(), RR.nrow(), RR.ncol(), false);
-  arma::vec sumResid = sum(R, 1);
+  double *R = Calloc(m*n, double); // residual matrix
+  double *sumResid = Calloc(m, double);
+  loss[0] = 0;
+  for(k = 0; k < m; k++) sumResid[k] = 0;
+  for(i = 0; i < n; i++) {
+    for(k = 0; k < m; k++){
+      R[i*m+k] = Y.at(k, i);
+      sumResid[k] += Y.at(k, i);
+      loss[0] += pow(Y.at(k, i), 2);
+    } 
+  }
   double *xTR = Calloc(m, double);
-  
-  loss[0] = arma::accu(R % R);
   thresh = eps * loss[0] / n;
   
   // set up lambda
@@ -322,7 +328,7 @@ RcppExport SEXP cdfit_mgaussian_ssr(SEXP X_, SEXP y_, SEXP row_idx_,
       }
       if (nv > dfmax) {
         for (int ll=l; ll<L; ll++) iter[ll] = NA_INTEGER;
-        Free(a); Free(e1); Free(e2); Free(xTR); Free(shift);
+        Free(a); Free(e1); Free(e2); Free(xTR); Free(shift); Free(R); Free(sumResid);
         return List::create(beta, center, scale, lambda, loss, iter, n_reject, Rcpp::wrap(col_idx));
       }
       // strong set
@@ -381,7 +387,11 @@ RcppExport SEXP cdfit_mgaussian_ssr(SEXP X_, SEXP y_, SEXP row_idx_,
                   max_update = update;
                 }
                 update_resid(xMat, R, shift, row_idx, center[jj], scale[jj], n, m, jj); // update R
-                sumResid = sum(R, 1); //update sum of residual
+                //update sum of residual
+                for(k = 0; k < m; k++) sumResid[k] = 0;
+                for(i = 0; i < n; i++) {
+                  for(k = 0; k < m; k++) sumResid[k] += R[i*m+k];  
+                }
                 for(k = 0; k < m; k++) a[j * m + k] = beta.at(k).at(j, l);
               }
             }
@@ -398,12 +408,15 @@ RcppExport SEXP cdfit_mgaussian_ssr(SEXP X_, SEXP y_, SEXP row_idx_,
       // Scan for violations in rest set
       violations = check_rest_set(e1, e2, z, xMat, row_idx, col_idx, center, scale, a, lambda[l], sumResid, alpha, R, mp, n, p, m);
       if (violations == 0) {
-        loss[l] = arma::accu(R % R);
+        loss[l] = 0;
+        for(i = 0; i < n; i++) {
+          for(k = 0; k < m; k++) loss[l] += pow(R[i*m+k], 2);  
+        }
         break;
       }
     }
   }
   
-  Free(a); Free(e1); Free(e2); Free(xTR); Free(shift);
+  Free(a); Free(e1); Free(e2); Free(xTR); Free(shift); Free(R); Free(sumResid);
   return List::create(beta, center, scale, lambda, loss, iter, n_reject, Rcpp::wrap(col_idx));
 }
