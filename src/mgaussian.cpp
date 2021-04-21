@@ -32,7 +32,7 @@ void standardize_and_get_residual(NumericVector &center, NumericVector &scale,
       center[j] += xCol[row_idx[i]];
       scale[j] += pow(xCol[row_idx[i]], 2);
       for(k  = 0; k < m; k++) {
-        sum_xy[k] += + xCol[row_idx[i]] * Y(k, i);
+        sum_xy[k] += xCol[row_idx[i]] * Y.at(k, i);
       }
     }
     
@@ -64,11 +64,13 @@ void crossprod_resid(double *xTR, XPtr<BigMatrix> xMat, arma::mat &R,
                      double center, double scale, int n, int m, int j) {
   MatrixAccessor<double> xAcc(*xMat);
   double *xCol = xAcc[j];
+  double xi;
   int i, k;
   for(k = 0; k < m; k++) xTR[k] = 0.0;
   for (i = 0; i < n; i++) {
+    xi = xCol[row_idx[i]];
     for(k = 0; k < m; k++) {
-      xTR[k] += xCol[row_idx[i]] * R(k, i);
+      xTR[k] += xi * R.at(k, i);
     }
   }
   for(k = 0; k < m; k++){
@@ -80,11 +82,11 @@ void crossprod_resid(double *xTR, XPtr<BigMatrix> xMat, arma::mat &R,
 void lasso(arma::field<arma::sp_mat> &beta, double *xTR, double z, double l1, double l2, int j, int l, int m) {
   if(z <= l1) {
     for(int k = 0; k < m; k++) {
-      beta(k)(j, l) = 0;
+      beta.at(k).at(j, l) = 0;
     }
   } else {
     for(int k = 0; k < m; k++) {
-      beta(k)(j, l) = sqrt(m) * xTR[k] * (1 - l1 / z) / (1 + l2);
+      beta.at(k).at(j, l) = sqrt(m) * xTR[k] * (1 - l1 / z) / (1 + l2);
     }
   }
 }
@@ -94,9 +96,11 @@ void update_resid(XPtr<BigMatrix> xpMat, arma::mat &R, double *shift,
                   int *row_idx, double center, double scale, int n, int m, int j) {
   MatrixAccessor<double> xAcc(*xpMat);
   double *xCol = xAcc[j];
+  double xi;
   for (int i =0; i < n; i++) {
+    xi = (xCol[row_idx[i]] - center) / scale;
     for(int k = 0; k < m; k++) {
-      R(k, i) -= shift[k] * (xCol[row_idx[i]] - center) / scale;
+      R.at(k, i) -= shift[k] * xi;
     }
   }
 }
@@ -122,7 +126,7 @@ int check_strong_set(int *e1, int *e2, vector<double> &z, XPtr<BigMatrix> xpMat,
       for(int k=0; k < m; k++) xTR[k] = 0;
       for (int i=0; i < n; i++) {
         for (int k=0; k < m; k++) {
-          xTR[k] += xCol[row_idx[i]] * R(k, i);
+          xTR[k] += xCol[row_idx[i]] * R.at(k, i);
         }
       }
       l1 = lambda * mp[jj] * alpha;
@@ -163,7 +167,7 @@ int check_rest_set(int *e1, int *e2, vector<double> &z, XPtr<BigMatrix> xpMat,
       for(int k=0; k < m; k++) xTR[k] = 0;
       for (int i=0; i < n; i++) {
         for (int k=0; k < m; k++) {
-          xTR[k] += xCol[row_idx[i]] * R(k, i);
+          xTR[k] += xCol[row_idx[i]] * R.at(k, i);
         }
       }
       l1 = lambda * mp[jj] * alpha;
@@ -366,7 +370,7 @@ RcppExport SEXP cdfit_mgaussian_ssr(SEXP X_, SEXP y_, SEXP row_idx_,
               
               update = 0;
               for(k = 0; k < m; k++){
-                shift[k] = beta(k)(j, l) - a[j * m + k];
+                shift[k] = beta.at(k).at(j, l) - a[j * m + k];
                 update += pow(shift[k], 2);
               } 
               
@@ -378,7 +382,7 @@ RcppExport SEXP cdfit_mgaussian_ssr(SEXP X_, SEXP y_, SEXP row_idx_,
                 }
                 update_resid(xMat, R, shift, row_idx, center[jj], scale[jj], n, m, jj); // update R
                 sumResid = sum(R, 1); //update sum of residual
-                for(k = 0; k < m; k++) a[j * m + k] = beta(k)(j, l);
+                for(k = 0; k < m; k++) a[j * m + k] = beta.at(k).at(j, l);
               }
             }
           }
