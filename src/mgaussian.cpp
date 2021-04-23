@@ -1,5 +1,5 @@
 #include "utilities.h"
-
+//#include "gperftools/profiler.h"
 
 // standardize for multiresponse
 void standardize_and_get_residual(NumericVector &center, NumericVector &scale, 
@@ -92,15 +92,19 @@ void lasso(arma::field<arma::sp_mat> &beta, double *xTR, double z, double l1, do
 }
 
 // update residul matrix
-void update_resid(XPtr<BigMatrix> xpMat, double *R, double *shift,
+void update_resid(XPtr<BigMatrix> xpMat, double *R, double *sumResid, double *shift,
                   int *row_idx, double center, double scale, int n, int m, int j) {
   MatrixAccessor<double> xAcc(*xpMat);
   double *xCol = xAcc[j];
   double xi;
+  int ik;
+  for(int k = 0; k < m; k++) sumResid[k] = 0;
   for (int i =0; i < n; i++) {
     xi = (xCol[row_idx[i]] - center) / scale;
     for(int k = 0; k < m; k++) {
-      R[i*m+k] -= shift[k] * xi;
+      ik = i * m + k;
+      R[ik] -= shift[k] * xi;
+      sumResid[k] += R[ik];
     }
   }
 }
@@ -195,6 +199,7 @@ RcppExport SEXP cdfit_mgaussian_ssr(SEXP X_, SEXP y_, SEXP row_idx_,
                                     SEXP alpha_, SEXP user_, SEXP eps_, 
                                     SEXP max_iter_, SEXP multiplier_, SEXP dfmax_, 
                                     SEXP ncore_, SEXP verbose_) {
+  //ProfilerStart("mg.out");
   XPtr<BigMatrix> xMat(X_);
   NumericMatrix Y(y_); // m responses * n samples matrix
   int m = Y.nrow(); // 
@@ -386,12 +391,7 @@ RcppExport SEXP cdfit_mgaussian_ssr(SEXP X_, SEXP y_, SEXP row_idx_,
                 if (update > max_update) {
                   max_update = update;
                 }
-                update_resid(xMat, R, shift, row_idx, center[jj], scale[jj], n, m, jj); // update R
-                //update sum of residual
-                for(k = 0; k < m; k++) sumResid[k] = 0;
-                for(i = 0; i < n; i++) {
-                  for(k = 0; k < m; k++) sumResid[k] += R[i*m+k];  
-                }
+                update_resid(xMat, R, sumResid, shift, row_idx, center[jj], scale[jj], n, m, jj); // update R and sumResid
                 for(k = 0; k < m; k++) a[j * m + k] = beta.at(k).at(j, l);
               }
             }
@@ -418,5 +418,6 @@ RcppExport SEXP cdfit_mgaussian_ssr(SEXP X_, SEXP y_, SEXP row_idx_,
   }
   
   Free(a); Free(e1); Free(e2); Free(xTR); Free(shift); Free(R); Free(sumResid);
+  //ProfilerStop();
   return List::create(beta, center, scale, lambda, loss, iter, n_reject, Rcpp::wrap(col_idx));
 }
