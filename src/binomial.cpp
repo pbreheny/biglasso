@@ -246,8 +246,8 @@ RcppExport SEXP cdfit_binomial_ssr(SEXP X_, SEXP y_, SEXP row_idx_,
   }
   
   // standardize: get center, scale; get p_keep_ptr, col_idx; get z, lambda_max, xmax_idx;
-  standardize_and_get_residual(center, scale, p_keep_ptr, col_idx, z, lambda_max_ptr, xmax_ptr, xMat, 
-                               y, row_idx, lambda_min, alpha, n, p);
+  standardize_and_get_residual(center, scale, p_keep_ptr, col_idx, z, lambda_max_ptr,
+                               xmax_ptr, xMat, y, row_idx, alpha, n, p);
   p = p_keep; // set p = p_keep, only loop over columns whose scale > 1e-6
   
   if (verbose) {
@@ -504,8 +504,8 @@ RcppExport SEXP cdfit_binomial_ssr_approx(SEXP X_, SEXP y_, SEXP row_idx_,
   }
   
   // standardize: get center, scale; get p_keep_ptr, col_idx; get z, lambda_max, xmax_idx;
-  standardize_and_get_residual(center, scale, p_keep_ptr, col_idx, z, lambda_max_ptr, xmax_ptr, xMat, 
-                               y, row_idx, lambda_min, alpha, n, p);
+  standardize_and_get_residual(center, scale, p_keep_ptr, col_idx, z, lambda_max_ptr,
+                               xmax_ptr, xMat, y, row_idx, alpha, n, p);
   // set p = p_keep, only loop over columns whose scale > 1e-6
   p = p_keep;
   
@@ -765,8 +765,8 @@ RcppExport SEXP cdfit_binomial_slores_ssr(SEXP X_, SEXP y_, SEXP n_pos_, SEXP yl
   }
   
   // standardize: get center, scale; get p_keep_ptr, col_idx; get z, lambda_max, xmax_idx;
-  standardize_and_get_residual(center, scale, p_keep_ptr, col_idx, z, lambda_max_ptr, xmax_ptr, xMat, 
-                               y, row_idx, lambda_min, alpha, n, p);
+  standardize_and_get_residual(center, scale, p_keep_ptr, col_idx, z, lambda_max_ptr,
+                               xmax_ptr, xMat, y, row_idx, alpha, n, p);
   p = p_keep; // set p = p_keep, only loop over columns whose scale > 1e-6
   
   if (verbose) {
@@ -1084,8 +1084,8 @@ RcppExport SEXP cdfit_binomial_ada_slores_ssr(SEXP X_, SEXP y_, SEXP n_pos_, SEX
   }
   
   // standardize: get center, scale; get p_keep_ptr, col_idx; get z, lambda_max, xmax_idx;
-  standardize_and_get_residual(center, scale, p_keep_ptr, col_idx, z, lambda_max_ptr, xmax_ptr, xMat, 
-                               y, row_idx, lambda_min, alpha, n, p);
+  standardize_and_get_residual(center, scale, p_keep_ptr, col_idx, z, lambda_max_ptr,
+                               xmax_ptr, xMat, y, row_idx, alpha, n, p);
   p = p_keep; // set p = p_keep, only loop over columns whose scale > 1e-6
   
   if (verbose) {

@@ -143,8 +143,8 @@ RcppExport SEXP cdfit_gaussian_ssr(SEXP X_, SEXP y_, SEXP row_idx_,
   }
   
   // standardize: get center, scale; get p_keep_ptr, col_idx; get z, lambda_max, xmax_idx;
-  standardize_and_get_residual(center, scale, p_keep_ptr, col_idx, z, lambda_max_ptr, xmax_ptr, xMat, 
-                               y, row_idx, lambda_min, alpha, n, p);
+  standardize_and_get_residual(center, scale, p_keep_ptr, col_idx, z, lambda_max_ptr,
+                               xmax_ptr, xMat, y, row_idx, alpha, n, p);
   
   p = p_keep;   // set p = p_keep, only loop over columns whose scale > 1e-6
   
@@ -348,7 +348,7 @@ RcppExport SEXP cdfit_gaussian_ada_edpp_ssr(SEXP X_, SEXP y_, SEXP row_idx_, SEX
   
   standardize_and_get_residual(center, scale, p_keep_ptr, col_idx, z, 
                                lambda_max_ptr, xmax_ptr, xMat, 
-                               y, row_idx, lambda_min, alpha, n, p);
+                               y, row_idx, alpha, n, p);
   p = p_keep; // set p = p_keep, only loop over columns whose scale > 1e-6
   
   if (verbose) {
@@ -425,7 +425,7 @@ RcppExport SEXP cdfit_gaussian_ada_edpp_ssr(SEXP X_, SEXP y_, SEXP row_idx_, SEX
     lambda = Rcpp::as<NumericVector>(lambda_);
   } 
   
-  int l_prev = lstart; // lambda index at previous update of EDPP
+  int l_prev = 0; // lambda index at previous update of EDPP
   // compute v1 for lambda_max
   double xty = sign(crossprod_bm(xMat, y, row_idx, center[xmax_idx], scale[xmax_idx], n, xmax_idx));
   
@@ -493,8 +493,9 @@ RcppExport SEXP cdfit_gaussian_ada_edpp_ssr(SEXP X_, SEXP y_, SEXP row_idx_, SEX
           edpp_screen(discard_beta, n, p, rhs2, Xtr, lhs2, c,
                       1 / lambda[l_prev], m, alpha, col_idx);
         } else { // Apply BEDPP check
+          c = (lambda_max - lambda[l]) / lambda_max / lambda[l];
           edpp_screen(discard_beta, n, p, rhs2, Xtr, lhs2, c,
-                      (1 / lambda[l_prev] + 1 / lambda[l]) / 2, m, alpha, col_idx);
+                      (1 / lambda_max + 1 / lambda[l]) / 2, m, alpha, col_idx);
         }
         n_safe_reject[l] = sum(discard_beta, p);
         gain += n_safe_reject[l];
@@ -512,9 +513,9 @@ RcppExport SEXP cdfit_gaussian_ada_edpp_ssr(SEXP X_, SEXP y_, SEXP row_idx_, SEX
       for(j = 0; j < p; j ++) {
         jj = col_idx[j];
         xjtx = crossprod_bm_Xj_Xk(xMat, row_idx, center, scale, n, jj, xmax_idx);
-        lhs2[j] = -xty * lambda[l] * xjtx;
+        lhs2[j] = -xty * lambda_max * xjtx;
       }
-      rhs2 = sqrt(n * y_norm2 - pow(n * lambda[l], 2));
+      rhs2 = sqrt(n * y_norm2 - pow(n * lambda_max, 2));
       if(verbose) {
         // output time
         char buff[100];
@@ -522,8 +523,9 @@ RcppExport SEXP cdfit_gaussian_ada_edpp_ssr(SEXP X_, SEXP y_, SEXP row_idx_, SEX
         strftime (buff, 100, "%Y-%m-%d %H:%M:%S.000", localtime (&now));
         Rprintf("Done calculating BEDPP rule. Now time: %s\n", buff);
       }
+      c = (lambda_max - lambda[l]) / lambda_max / lambda[l];
       edpp_screen(discard_beta, n, p, rhs2, Xtr, lhs2, c,
-                  1 / lambda[l_prev], m, alpha, col_idx);
+                  1 / lambda_max, m, alpha, col_idx);
       n_safe_reject[l] = sum(discard_beta, p);
       gain = n_safe_reject[l];
     }
@@ -655,8 +657,8 @@ RcppExport SEXP cdfit_gaussian_bedpp_ssr(SEXP X_, SEXP y_, SEXP row_idx_,
   }
   
   // standardize: get center, scale; get p_keep_ptr, col_idx; get z, lambda_max, xmax_idx;
-  standardize_and_get_residual(center, scale, p_keep_ptr, col_idx, z, lambda_max_ptr, xmax_ptr, xMat, 
-                               y, row_idx, lambda_min, alpha, n, p);
+  standardize_and_get_residual(center, scale, p_keep_ptr, col_idx, z, lambda_max_ptr,
+                               xmax_ptr, xMat, y, row_idx, alpha, n, p);
   
   p = p_keep; // set p = p_keep, only loop over columns whose scale > 1e-6
   

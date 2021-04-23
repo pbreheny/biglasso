@@ -508,6 +508,16 @@ biglasso <- function(X, y, row.idx = 1:nrow(X),
                               as.integer(dfmax), as.integer(ncores), as.integer(verbose),
                               PACKAGE = 'biglasso')
                },
+               "Adaptive" = {
+                 res <- .Call("cdfit_mgaussian_ada", X@address, yy, as.integer(row.idx-1),
+                              lambda, as.integer(nlambda), as.integer(lambda.log.scale),
+                              lambda.min, alpha,
+                              as.integer(user.lambda | any(penalty.factor==0)),
+                              eps, as.integer(max.iter), penalty.factor,
+                              as.integer(dfmax), as.integer(ncores), 
+                              safe.thresh, update.thresh, as.integer(verbose),
+                              PACKAGE = 'biglasso')
+               },
                stop("Invalid screening method!")
         )
       }
