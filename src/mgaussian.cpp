@@ -64,7 +64,7 @@ void standardize_and_get_residual(NumericVector &center, NumericVector &scale,
                                   vector<double> &z, vector<double> &XtY,
                                   double *lambda_max_ptr, int *xmax_ptr, 
                                   XPtr<BigMatrix> xMat, NumericMatrix &Y, 
-                                  int *row_idx, double lambda_min, double alpha,
+                                  int *row_idx, double alpha,
                                   int n, int p, int m) {
   MatrixAccessor<double> xAcc(*xMat);
   double *xCol;
