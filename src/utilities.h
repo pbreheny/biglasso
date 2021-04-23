@@ -94,7 +94,7 @@ void standardize_and_get_residual(NumericVector &center, NumericVector &scale,
                                   int *p_keep_ptr, vector<int> &col_idx,
                                   vector<double> &z, double *lambda_max_ptr,
                                   int *xmax_ptr, XPtr<BigMatrix> xMat, double *y, 
-                                  int *row_idx, double lambda_min, double alpha, int n, int p);
+                                  int *row_idx, double alpha, int n, int p);
 
 // check KKT conditions over features in the inactive set
 int check_inactive_set(int *e1, vector<double> &z, XPtr<BigMatrix> xpMat, int *row_idx, 
