@@ -24,6 +24,8 @@
 #' @param lambda Values of the regularization parameter \code{lambda} at which
 #' predictions are requested.  Linear interpolation is used for values of
 #' \code{lambda} not in the sequence of lambda values in the fitted models.
+#' @param k Index of the response to predict in multiple responses regression (
+#' \code{family="mgaussian}).
 #' @param which Indices of the penalty parameter \code{lambda} at which
 #' predictions are required.  By default, all indices are returned.  If
 #' \code{lambda} is specified, this will override \code{which}.
@@ -60,7 +62,7 @@ predict.biglasso <- function(object, X, row.idx = 1:nrow(X),
   type <- match.arg(type)
   beta <- coef.biglasso(object, lambda=lambda, which=which, drop=FALSE)
   if (type=="coefficients") return(beta)
-  if (class(object)[1]=="biglasso") {
+  if (class(object)[1]=="biglasso" && object$family != "cox") {
     alpha <- beta[1,]
     beta <- beta[-1,,drop=FALSE]
   }
@@ -74,10 +76,10 @@ predict.biglasso <- function(object, X, row.idx = 1:nrow(X),
  
   beta.T <- as(beta, "dgTMatrix") 
   temp <- get_eta(X@address, as.integer(row.idx-1), beta, beta.T@i, beta.T@j)
-  eta <- sweep(temp, 2, alpha, "+")
+  if(object$family != "cox") eta <- sweep(temp, 2, alpha, "+")
   # dimnames(eta) <- list(c(1:nrow(eta)), round(object$lambda, digits = 4))
   
-  if (object$family == 'gaussian') {
+  if (object$family != 'binomial') {
     if (type == 'class') {
       stop("type='class' can only be used with family='binomial'")
     } else { ## then 'type' must be either 'link' or 'response'
@@ -94,6 +96,36 @@ predict.biglasso <- function(object, X, row.idx = 1:nrow(X),
   }
 }
 
+#' @method predict mbiglasso
+#' @rdname predict.mbiglasso
+#' @export
+#'
+predict.mbiglasso <- function(object, X, row.idx = 1:nrow(X), 
+                             type = c("link", "response", 
+                                      "coefficients", "vars", "nvars"),
+                             lambda, which = 1:length(object$lambda), k = 1, ...) {
+  type <- match.arg(type)
+  beta <- coef.biglasso(object, lambda=lambda, which=which, drop=FALSE)[[k]]
+  if (type=="coefficients") return(beta)
+  if (class(object)[1]=="biglasso") {
+    alpha <- beta[1,]
+    beta <- beta[-1,,drop=FALSE]
+  }
+  
+  if (type=="nvars") return(apply(beta!=0,2,sum, na.rm = T))
+  if (type=="vars") return(drop(apply(beta!=0, 2, FUN=which)))
+  
+  if (!inherits(X, 'big.matrix')) {
+    stop("X must be a big.matrix object.")
+  }
+  
+  beta.T <- as(beta, "dgTMatrix") 
+  temp <- get_eta(X@address, as.integer(row.idx-1), beta, beta.T@i, beta.T@j)
+  eta <- sweep(temp, 2, alpha, "+")
+  # dimnames(eta) <- list(c(1:nrow(eta)), round(object$lambda, digits = 4))
+  
+  return(eta)
+}
 
 #' @method coef biglasso
 #' @rdname predict.biglasso

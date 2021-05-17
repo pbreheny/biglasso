@@ -200,6 +200,7 @@ void edpp_screen(int *discard_beta, int n, int p, int m, double lambda_prev,
                  double d, double *mp, double alpha, vector<int> &col_idx, bool EDPP) {
   int j;
   double rhs = n*lambda_prev*sqrt(m)*alpha*mp[col_idx[j]] - c*rhs2;
+  if(rhs < 0) rhs = 0;
   for(j = 0; j < p; j ++) {
     if(EDPP) {
       if(pow(c*(1-d),2)*lhs1[j] + pow(1+c*d,2)*lhs2[j] + 2*c*(1+c*d)*(1-d)*lhs3[j] < pow(rhs,2)) discard_beta[j] = 1;
@@ -225,7 +226,7 @@ void edpp_update(XPtr<BigMatrix> xpMat, double *R, double *sumResid,
   for(j = 0; j < p; j++){
     jj = col_idx[j];
     xCol = xAcc[jj];
-    xTR = Calloc(k, double);
+    xTR = Calloc(m, double);
     for(k = 0; k < m; k++) xTR[k] = 0;
     sum2 = 0.0;
     sum3 = 0.0;
@@ -455,7 +456,7 @@ RcppExport SEXP cdfit_mgaussian_ada(SEXP X_, SEXP y_, SEXP row_idx_,
   IntegerVector iter(L);
   IntegerVector n_reject(L);
   
-  double l1, l2, cutoff;
+  double l1, l2, cutoff, cutoff0;
   double* shift = Calloc(m, double);
   double max_update, update, thresh; // for convergence check
   int i, j, k, jj, l, violations, lstart;
@@ -544,11 +545,14 @@ RcppExport SEXP cdfit_mgaussian_ada(SEXP X_, SEXP y_, SEXP row_idx_,
       }
       // strong set
       cutoff = 2 * lambda[l] - lambda[l_prev];
+      cutoff0 = 2 * lambda[l] - lambda[l-1];
       for (j = 0; j < p; j++) {
-        if (z[j] > (cutoff * alpha * mp[col_idx[j]])) {
-          e2[j] = 1;
+        if (discard_beta[j] == 1) {
+          if(z[j] > (cutoff * alpha * mp[col_idx[j]])) e2[j] = 1;
+          else e2[j] = 0;
         } else {
-          e2[j] = 0;
+          if(z[j] > (cutoff0 * alpha * mp[col_idx[j]])) e2[j] = 1;
+          else e2[j] = 0;
         }
       }
       if(gain - n_safe_reject[l - 1] * (l - l_prev) > update_thresh * p && l != L - 1 && safe) { // Update EDPP if not discarding enough

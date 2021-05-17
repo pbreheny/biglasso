@@ -1,13 +1,16 @@
 #' Fit lasso penalized regression path for big data
 #' 
 #' Extend lasso model fitting to big data that cannot be loaded into memory.
-#' Fit solution paths for linear or logistic regression models penalized by
+#' Fit solution paths for linear, logistic or Cox regression models penalized by
 #' lasso, ridge, or elastic-net over a grid of values for the regularization
 #' parameter lambda.
 #' 
-#' The objective function for linear regression (\code{family = "gaussian"}) is
+#' The objective function for linear regression or multiple responses linear regression 
+#' (\code{family = "gaussian"} or \code{family = "mgaussian"}) is
 #' \deqn{\frac{1}{2n}\textrm{RSS} + \lambda*\textrm{penalty},}{(1/(2n))*RSS+
-#' \lambda*penalty,} for logistic regression
+#' \lambda*penalty,}
+#' where for \code{family = "mgaussian"}), a group-lasso type penalty is applied.
+#' For logistic regression
 #' (\code{family = "binomial"}) it is \deqn{-\frac{1}{n} loglike +
 #' \lambda*\textrm{penalty},}{-(1/n)*loglike+\lambda*penalty}, for cox regression,
 #'  breslow approximation for ties is applied.
@@ -24,15 +27,17 @@
 #' standardizes the data and includes an intercept internally by default during
 #' the model fitting.
 #' @param y The response vector for \code{family="gaussian"} or \code{family="binomial"}.
-#' For family="cox", y should be a two-column matrix with columns 'time' and
-#' 'status'. The latter is a binary variable, with '1' indicating death, and
-#' '0' indicating right censored.
+#' For \code{family="cox"}, \code{y} should be a two-column matrix with columns
+#' 'time' and 'status'. The latter is a binary variable, with '1' indicating death,
+#'  and '0' indicating right censored. For \code{family="mgaussin"}, \code{y}
+#'  should be a n*m matrix where n is the sample size and m is the number of
+#'  responses.
 #' @param row.idx The integer vector of row indices of \code{X} that used for
 #' fitting the model. \code{1:nrow(X)} by default.
 #' @param penalty The penalty to be applied to the model. Either \code{"lasso"}
 #' (the default), \code{"ridge"}, or \code{"enet"} (elastic net).
-#' @param family Either \code{"gaussian"}, \code{"binomial"} or \code{"cox"},
-#' depending on the response.
+#' @param family Either \code{"gaussian"}, \code{"binomial"}, \code{"cox"} or
+#' \code{"mgaussian"} depending on the response.
 #' @param alg.logistic The algorithm used in logistic regression. If "Newton"
 #' then the exact hessian is used (default); if "MM" then a
 #' majorization-minimization algorithm is used to set an upper-bound on the
@@ -97,25 +102,32 @@
 #' fitting. Default is TRUE.
 #' @param verbose Whether to output the timing of each lambda iteration.
 #' Default is FALSE.
-#' @return An object with S3 class \code{"biglasso"} with following variables.
+#' @return An object with S3 class \code{"biglasso"} for
+#' \code{"gaussian", "binomial", "cox"} families, or an object with S3 class
+#' \code{"mbiglasso"} for \code{"mgaussian"} family,  with following variables.
 #' \item{beta}{The fitted matrix of coefficients, store in sparse matrix
 #' representation. The number of rows is equal to the number of coefficients,
-#' whereas the number of columns is equal to \code{nlambda}.} \item{iter}{A
-#' vector of length \code{nlambda} containing the number of iterations until
-#' convergence at each value of \code{lambda}.} \item{lambda}{The sequence of
-#' regularization parameter values in the path.} \item{penalty}{Same as above.}
-#' \item{family}{Same as above.} \item{alpha}{Same as above.} \item{loss}{A
-#' vector containing either the residual sum of squares (\code{for "gaussian"})
-#' or negative log-likelihood (for \code{"binomial"}) of the fitted model at
-#' each value of \code{lambda}.} \item{penalty.factor}{Same as above.}
+#' whereas the number of columns is equal to \code{nlambda}. For \code{"mgaussian}}
+#' family with m responses, it is a list of m such matrices. 
+#' \item{iter}{A vector of length \code{nlambda} containing the number of 
+#' iterations until convergence at each value of \code{lambda}.} 
+#' \item{lambda}{The sequence of regularization parameter values in the path.}
+#' \item{penalty}{Same as above.}
+#' \item{family}{Same as above.}
+#' \item{alpha}{Same as above.} 
+#' \item{loss}{A vector containing either the residual sum of squares 
+#' (for \code{"gaussian", "mgaussian"}) or negative log-likelihood
+#' (for \code{"binomial", "cox"}) of the fitted model at each value of \code{lambda}.}
+#' \item{penalty.factor}{Same as above.}
 #' \item{n}{The number of observations used in the model fitting. It's equal to
-#' \code{length(row.idx)}.} \item{center}{The sample mean vector of the
-#' variables, i.e., column mean of the sub-matrix of \code{X} used for model
-#' fitting.} \item{scale}{The sample standard deviation of the variables, i.e.,
-#' column standard deviation of the sub-matrix of \code{X} used for model
-#' fitting.} \item{y}{The response vector used in the model fitting. Depending
-#' on \code{row.idx}, it could be a subset of the raw input of the response
-#' vector y.} \item{screen}{Same as above.} \item{col.idx}{The indices of
+#' \code{length(row.idx)}.} 
+#' \item{center}{The sample mean vector of the variables, i.e., column mean of
+#' the sub-matrix of \code{X} used for model fitting.} 
+#' \item{scale}{The sample standard deviation of the variables, i.e., column
+#' standard deviation of the sub-matrix of \code{X} used for model fitting.} 
+#' \item{y}{The response vector used in the model fitting. Depending on
+#' \code{row.idx}, it could be a subset of the raw input of the response vector y.}
+#' \item{screen}{Same as above.} \item{col.idx}{The indices of
 #' features that have 'scale' value greater than 1e-6. Features with 'scale'
 #' less than 1e-6 are removed from model fitting.} \item{rejections}{The number
 #' of features rejected at each value of \code{lambda}.}
@@ -211,7 +223,7 @@ biglasso <- function(X, y, row.idx = 1:nrow(X),
   family <- match.arg(family)
   penalty <- match.arg(penalty)
   alg.logistic <- match.arg(alg.logistic)
-  if (!identical(penalty, "lasso") || any(penalty.factor != 1) || alg.logistic =="MM" || family == "mgaussian"){
+  if (!identical(penalty, "lasso") || any(penalty.factor != 1) || alg.logistic =="MM"){
     if(length(screen) == 1) screen <- match.arg(screen, choices = c("SSR", "Adaptive", "Hybrid", "None"))
     else screen <- "SSR"
   } else if (family == "cox") {
