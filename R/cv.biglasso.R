@@ -72,7 +72,7 @@
 #' @export cv.biglasso
 #' 
 cv.biglasso <- function(X, y, row.idx = 1:nrow(X), 
-                        family = family = c("gaussian", "binomial", "cox", "mgaussian"),
+                        family = c("gaussian", "binomial", "cox", "mgaussian"),
                         eval.metric = c("default", "MAPE"),
                         ncores = parallel::detectCores(), ...,
                         nfolds = 5, seed, cv.ind, trace = FALSE) {
