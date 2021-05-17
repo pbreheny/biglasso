@@ -4,6 +4,23 @@
 #include <R_ext/Rdynload.h>
 #include <R_ext/Visibility.h>  // optional
 
+
+// Coordinate descent for mgaussian model
+extern SEXP cdfit_mgaussian_ssr(SEXP X_, SEXP y_, SEXP row_idx_, 
+                               SEXP lambda_, SEXP nlambda_, 
+                               SEXP lam_scale_, SEXP lambda_min_, 
+                               SEXP alpha_, SEXP user_, SEXP eps_, 
+                               SEXP max_iter_, SEXP multiplier_, SEXP dfmax_, 
+                               SEXP ncore_, SEXP safe_thresh_, 
+                               SEXP update_thresh_, SEXP verbose_);
+
+extern SEXP cdfit_mgaussian_ada(SEXP X_, SEXP y_, SEXP row_idx_, 
+                                SEXP lambda_, SEXP nlambda_, 
+                                SEXP lam_scale_, SEXP lambda_min_, 
+                                SEXP alpha_, SEXP user_, SEXP eps_, 
+                                SEXP max_iter_, SEXP multiplier_, SEXP dfmax_, 
+                                SEXP ncore_, SEXP verbose_);
+
 // Coordinate descent for cox model
 extern SEXP cdfit_cox(SEXP X_, SEXP y_, SEXP d_, SEXP d_idx_, SEXP row_idx_, 
                       SEXP lambda_, SEXP nlambda_, SEXP lam_scale_,
@@ -23,11 +40,17 @@ extern SEXP cdfit_cox_scox(SEXP X_, SEXP y_, SEXP d_, SEXP d_idx_, SEXP row_idx_
                                SEXP max_iter_, SEXP multiplier_, SEXP dfmax_, 
                                SEXP ncore_, SEXP warn_, SEXP safe_thresh_, SEXP verbose_);
 
+extern SEXP cdfit_cox_ada_scox(SEXP X_, SEXP y_, SEXP d_, SEXP d_idx_, SEXP row_idx_, 
+                               SEXP lambda_, SEXP nlambda_, SEXP lam_scale_,
+                               SEXP lambda_min_, SEXP alpha_, SEXP user_, SEXP eps_, 
+                               SEXP max_iter_, SEXP multiplier_, SEXP dfmax_, SEXP ncore_,
+                               SEXP warn_, SEXP safe_thresh_, SEXP update_thresh_, SEXP verbose_);
+
 extern SEXP cdfit_cox_sscox(SEXP X_, SEXP y_, SEXP d_, SEXP d_idx_, SEXP row_idx_, 
-                           SEXP lambda_, SEXP nlambda_, SEXP lam_scale_,
-                           SEXP lambda_min_, SEXP alpha_, SEXP user_, SEXP eps_, 
-                           SEXP max_iter_, SEXP multiplier_, SEXP dfmax_, 
-                           SEXP ncore_, SEXP warn_, SEXP safe_thresh_, SEXP verbose_);
+                            SEXP lambda_, SEXP nlambda_, SEXP lam_scale_,
+                            SEXP lambda_min_, SEXP alpha_, SEXP user_, SEXP eps_, 
+                            SEXP max_iter_, SEXP multiplier_, SEXP dfmax_, 
+                            SEXP ncore_, SEXP warn_, SEXP safe_thresh_, SEXP verbose_);
 
 extern SEXP cdfit_cox_safe(SEXP X_, SEXP y_, SEXP d_, SEXP d_idx_, SEXP row_idx_, 
                                SEXP lambda_, SEXP nlambda_, SEXP lam_scale_,
@@ -93,10 +116,13 @@ extern SEXP cdfit_gaussian_bedpp_ssr(SEXP X_, SEXP y_, SEXP row_idx_,
 extern SEXP _biglasso_get_eta(SEXP xPSEXP, SEXP row_idx_SEXP, SEXP betaSEXP, SEXP idx_pSEXP, SEXP idx_lSEXP);
 
 static R_CallMethodDef callMethods[] = {
+  {"cdfit_mgaussian_ssr", (DL_FUNC) &cdfit_mgaussian_ssr, 15},
+  {"cdfit_mgaussian_ada", (DL_FUNC) &cdfit_mgaussian_ada, 17},
   {"cdfit_cox", (DL_FUNC) &cdfit_cox, 18},
   {"cdfit_cox_ssr", (DL_FUNC) &cdfit_cox_ssr, 18},
   {"cdfit_cox_scox", (DL_FUNC) &cdfit_cox_scox, 19},
   {"cdfit_cox_sscox", (DL_FUNC) &cdfit_cox_sscox, 19},
+  {"cdfit_cox_ada_scox", (DL_FUNC) &cdfit_cox_ada_scox, 20},
   {"cdfit_cox_safe", (DL_FUNC) &cdfit_cox_safe, 19},
   {"cdfit_binomial_ssr", (DL_FUNC) &cdfit_binomial_ssr, 16},
   {"cdfit_binomial_ssr_approx", (DL_FUNC) &cdfit_binomial_ssr_approx, 15},

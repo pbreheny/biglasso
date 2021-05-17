@@ -9,7 +9,7 @@ biglasso(
   y,
   row.idx = 1:nrow(X),
   penalty = c("lasso", "ridge", "enet"),
-  family = c("gaussian", "binomial", "cox"),
+  family = c("gaussian", "binomial", "cox", "mgaussian"),
   alg.logistic = c("Newton", "MM"),
   screen = c("Adaptive", "SSR", "Hybrid", "None"),
   safe.thresh = 0,
@@ -32,9 +32,9 @@ biglasso(
 }
 \arguments{
 \item{X}{The design matrix, without an intercept. It must be a
-\code{\link[bigmemory]{big.matrix}} object. The function standardizes the
-data and includes an intercept internally by default during the model
-fitting.}
+double type \code{\link[bigmemory]{big.matrix}} object. The function
+standardizes the data and includes an intercept internally by default during
+the model fitting.}
 
 \item{y}{The response vector for \code{family="gaussian"} or \code{family="binomial"}.
 For family="cox", y should be a two-column matrix with columns 'time' and

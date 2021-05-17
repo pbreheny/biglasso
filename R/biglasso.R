@@ -1,13 +1,16 @@
 #' Fit lasso penalized regression path for big data
 #' 
 #' Extend lasso model fitting to big data that cannot be loaded into memory.
-#' Fit solution paths for linear or logistic regression models penalized by
+#' Fit solution paths for linear, logistic or Cox regression models penalized by
 #' lasso, ridge, or elastic-net over a grid of values for the regularization
 #' parameter lambda.
 #' 
-#' The objective function for linear regression (\code{family = "gaussian"}) is
+#' The objective function for linear regression or multiple responses linear regression 
+#' (\code{family = "gaussian"} or \code{family = "mgaussian"}) is
 #' \deqn{\frac{1}{2n}\textrm{RSS} + \lambda*\textrm{penalty},}{(1/(2n))*RSS+
-#' \lambda*penalty,} for logistic regression
+#' \lambda*penalty,}
+#' where for \code{family = "mgaussian"}), a group-lasso type penalty is applied.
+#' For logistic regression
 #' (\code{family = "binomial"}) it is \deqn{-\frac{1}{n} loglike +
 #' \lambda*\textrm{penalty},}{-(1/n)*loglike+\lambda*penalty}, for cox regression,
 #'  breslow approximation for ties is applied.
@@ -24,15 +27,17 @@
 #' standardizes the data and includes an intercept internally by default during
 #' the model fitting.
 #' @param y The response vector for \code{family="gaussian"} or \code{family="binomial"}.
-#' For family="cox", y should be a two-column matrix with columns 'time' and
-#' 'status'. The latter is a binary variable, with '1' indicating death, and
-#' '0' indicating right censored.
+#' For \code{family="cox"}, \code{y} should be a two-column matrix with columns
+#' 'time' and 'status'. The latter is a binary variable, with '1' indicating death,
+#'  and '0' indicating right censored. For \code{family="mgaussin"}, \code{y}
+#'  should be a n*m matrix where n is the sample size and m is the number of
+#'  responses.
 #' @param row.idx The integer vector of row indices of \code{X} that used for
 #' fitting the model. \code{1:nrow(X)} by default.
 #' @param penalty The penalty to be applied to the model. Either \code{"lasso"}
 #' (the default), \code{"ridge"}, or \code{"enet"} (elastic net).
-#' @param family Either \code{"gaussian"}, \code{"binomial"} or \code{"cox"},
-#' depending on the response.
+#' @param family Either \code{"gaussian"}, \code{"binomial"}, \code{"cox"} or
+#' \code{"mgaussian"} depending on the response.
 #' @param alg.logistic The algorithm used in logistic regression. If "Newton"
 #' then the exact hessian is used (default); if "MM" then a
 #' majorization-minimization algorithm is used to set an upper-bound on the
@@ -97,25 +102,32 @@
 #' fitting. Default is TRUE.
 #' @param verbose Whether to output the timing of each lambda iteration.
 #' Default is FALSE.
-#' @return An object with S3 class \code{"biglasso"} with following variables.
+#' @return An object with S3 class \code{"biglasso"} for
+#' \code{"gaussian", "binomial", "cox"} families, or an object with S3 class
+#' \code{"mbiglasso"} for \code{"mgaussian"} family,  with following variables.
 #' \item{beta}{The fitted matrix of coefficients, store in sparse matrix
 #' representation. The number of rows is equal to the number of coefficients,
-#' whereas the number of columns is equal to \code{nlambda}.} \item{iter}{A
-#' vector of length \code{nlambda} containing the number of iterations until
-#' convergence at each value of \code{lambda}.} \item{lambda}{The sequence of
-#' regularization parameter values in the path.} \item{penalty}{Same as above.}
-#' \item{family}{Same as above.} \item{alpha}{Same as above.} \item{loss}{A
-#' vector containing either the residual sum of squares (\code{for "gaussian"})
-#' or negative log-likelihood (for \code{"binomial"}) of the fitted model at
-#' each value of \code{lambda}.} \item{penalty.factor}{Same as above.}
+#' whereas the number of columns is equal to \code{nlambda}. For \code{"mgaussian}}
+#' family with m responses, it is a list of m such matrices. 
+#' \item{iter}{A vector of length \code{nlambda} containing the number of 
+#' iterations until convergence at each value of \code{lambda}.} 
+#' \item{lambda}{The sequence of regularization parameter values in the path.}
+#' \item{penalty}{Same as above.}
+#' \item{family}{Same as above.}
+#' \item{alpha}{Same as above.} 
+#' \item{loss}{A vector containing either the residual sum of squares 
+#' (for \code{"gaussian", "mgaussian"}) or negative log-likelihood
+#' (for \code{"binomial", "cox"}) of the fitted model at each value of \code{lambda}.}
+#' \item{penalty.factor}{Same as above.}
 #' \item{n}{The number of observations used in the model fitting. It's equal to
-#' \code{length(row.idx)}.} \item{center}{The sample mean vector of the
-#' variables, i.e., column mean of the sub-matrix of \code{X} used for model
-#' fitting.} \item{scale}{The sample standard deviation of the variables, i.e.,
-#' column standard deviation of the sub-matrix of \code{X} used for model
-#' fitting.} \item{y}{The response vector used in the model fitting. Depending
-#' on \code{row.idx}, it could be a subset of the raw input of the response
-#' vector y.} \item{screen}{Same as above.} \item{col.idx}{The indices of
+#' \code{length(row.idx)}.} 
+#' \item{center}{The sample mean vector of the variables, i.e., column mean of
+#' the sub-matrix of \code{X} used for model fitting.} 
+#' \item{scale}{The sample standard deviation of the variables, i.e., column
+#' standard deviation of the sub-matrix of \code{X} used for model fitting.} 
+#' \item{y}{The response vector used in the model fitting. Depending on
+#' \code{row.idx}, it could be a subset of the raw input of the response vector y.}
+#' \item{screen}{Same as above.} \item{col.idx}{The indices of
 #' features that have 'scale' value greater than 1e-6. Features with 'scale'
 #' less than 1e-6 are removed from model fitting.} \item{rejections}{The number
 #' of features rejected at each value of \code{lambda}.}
@@ -172,7 +184,7 @@
 #' @export biglasso
 biglasso <- function(X, y, row.idx = 1:nrow(X),
                      penalty = c("lasso", "ridge", "enet"),
-                     family = c("gaussian", "binomial", "cox"), 
+                     family = c("gaussian", "binomial", "cox", "mgaussian"), 
                      alg.logistic = c("Newton", "MM"),
                      screen = c("Adaptive", "SSR", "Hybrid", "None"),
                      safe.thresh = 0, update.thresh = 1, ncores = 1, alpha = 1,
@@ -279,12 +291,14 @@ biglasso <- function(X, y, row.idx = 1:nrow(X),
     for(i in 1:length(row.idx.cox)) d_idx[i] <- max(which(dtime <= y[tOrder[row.idx.cox[i]],1])) 
   }
 
-  if (family=="gaussian") {
+  if (family == "gaussian") {
     yy <- y - mean(y)
-  } else if (family=='binomial'){
+  } else if (family == "binomial") {
     yy <- y
-  } else {
+  } else if (family == "cox") {
     yy <- y[tOrder[row.idx.cox],2]
+  } else if (family == "mgaussian") {
+    yy <- t(scale(y, scale = F))
   }
 
   p <- ncol(X)
@@ -458,6 +472,14 @@ biglasso <- function(X, y, row.idx = 1:nrow(X),
                      eps, as.integer(max.iter), penalty.factor, as.integer(dfmax),
                      as.integer(ncores), as.integer(warn), safe.thresh, 
                      as.integer(verbose), PACKAGE = 'biglasso')
+      } else if (screen == 'Adaptive') {
+        res <- .Call("cdfit_cox_ada_scox", X@address, yy, d, as.integer(d_idx-1),
+                     as.integer(row.idx[tOrder[row.idx.cox]]-1), lambda,
+                     as.integer(nlambda), as.integer(lambda.log.scale),lambda.min,
+                     alpha, as.integer(user.lambda | any(penalty.factor==0)),
+                     eps, as.integer(max.iter), penalty.factor, as.integer(dfmax),
+                     as.integer(ncores), as.integer(warn), safe.thresh, update.thresh,
+                     as.integer(verbose), PACKAGE = 'biglasso')
       } else {
         res <- .Call("cdfit_cox", X@address, yy, d, as.integer(d_idx-1),
                      as.integer(row.idx[tOrder[row.idx.cox]]-1), lambda,
@@ -478,13 +500,56 @@ biglasso <- function(X, y, row.idx = 1:nrow(X),
     iter <- res[[6]]
     rejections <- res[[7]]
     
-    if (screen %in% c("Adaptive", "scox", "sscox", "safe")) safe_rejections <- rejections # To be updated
-    if (screen %in% c("Not implemented")) {
+    if (screen %in% c("scox", "sscox", "safe")) safe_rejections <- rejections # To be updated
+    if (screen %in% c("Adaptive")) {
       safe_rejections <- res[[8]]
       col.idx <- res[[9]]
     } else {
       col.idx <- res[[8]]
     }
+  } else if (family == 'mgaussian') {
+    time <- system.time(
+      {
+        switch(screen,
+               "SSR" = {
+                 res <- .Call("cdfit_mgaussian_ssr", X@address, yy, as.integer(row.idx-1),
+                              lambda, as.integer(nlambda), as.integer(lambda.log.scale),
+                              lambda.min, alpha,
+                              as.integer(user.lambda | any(penalty.factor==0)),
+                              eps, as.integer(max.iter), penalty.factor,
+                              as.integer(dfmax), as.integer(ncores), as.integer(verbose),
+                              PACKAGE = 'biglasso')
+               },
+               "Adaptive" = {
+                 res <- .Call("cdfit_mgaussian_ada", X@address, yy, as.integer(row.idx-1),
+                              lambda, as.integer(nlambda), as.integer(lambda.log.scale),
+                              lambda.min, alpha,
+                              as.integer(user.lambda | any(penalty.factor==0)),
+                              eps, as.integer(max.iter), penalty.factor,
+                              as.integer(dfmax), as.integer(ncores), 
+                              safe.thresh, update.thresh, as.integer(verbose),
+                              PACKAGE = 'biglasso')
+               },
+               stop("Invalid screening method!")
+        )
+      }
+    )
+    
+    b <- res[[1]]
+    center <- res[[2]]
+    scale <- res[[3]]
+    lambda <- res[[4]]
+    loss <- res[[5]]
+    iter <- res[[6]]
+    rejections <- res[[7]]
+    
+    if (screen %in% c("Hybrid", "Adaptive")) {
+      safe_rejections <- res[[8]]
+      col.idx <- res[[9]]
+    } else {
+      col.idx <- res[[8]]
+    }
+    
   } else {
     stop("Current version only supports Gaussian, Binominal or Cox response!")
   }
@@ -496,8 +561,8 @@ biglasso <- function(X, y, row.idx = 1:nrow(X),
 
   ## Eliminate saturated lambda values, if any
   ind <- !is.na(iter)
-  if (family != "cox") a <- a[ind]
-  b <- b[, ind, drop=FALSE]
+  if (family %in% c("gaussian","binomial")) a <- a[ind]
+  if(!is.list(b)) b <- b[, ind, drop=FALSE]
   iter <- iter[ind]
   lambda <- lambda[ind]
   loss <- loss[ind]
@@ -509,6 +574,29 @@ biglasso <- function(X, y, row.idx = 1:nrow(X),
     beta <- Matrix(0, nrow = p, ncol = length(lambda), sparse = T)
     bb <- b / scale[col.idx]
     beta[col.idx, ] <- bb
+  } else if(family == "mgaussian") {
+    varnames <- if (is.null(colnames(X))) paste("V", 1:p, sep="") else colnames(X)
+    varnames <- c("(Intercept)", varnames)
+    a <- colMeans(y)
+    nclass <- ncol(y)
+    beta <- list()
+    lam.idx = which(ind)
+    for(class in 1:nclass) {
+      beta_class <- Matrix(0, nrow = p+1, ncol = length(lambda), sparse = T)
+      beta_class[1,] <- a[class] - crossprod(center[col.idx], (b[[class]])[,ind] / scale[col.idx])
+      beta_class[col.idx+1,] <- (b[[class]])[,ind] / scale[col.idx]
+      #for(l in 1:length(lam.idx)) {
+      #  for(j in 1:length(col.idx)) {
+      #    if(b[(j-1) * nclass + class, lam.idx[l]] != 0) {
+      #      beta_class[col.idx[j]+1,l] <- b[(j-1) * nclass + class, lam.idx[l]] / scale[col.idx[j]]
+      #      beta_class[1,l] <- beta_class[1,l] - center[col.idx[j]] * b[(j-1) * nclass + class, lam.idx[l]] / scale[col.idx[j]]
+      #    }
+      #  }
+      #}
+      dimnames(beta_class) <- list(varnames, round(lambda, digits = 4))
+      beta <- append(beta, beta_class)
+    }
+    yy <- t(yy)
   } else {
     beta <- Matrix(0, nrow = (p+1), ncol = length(lambda), sparse = T)
     bb <- b / scale[col.idx]
@@ -520,7 +608,11 @@ biglasso <- function(X, y, row.idx = 1:nrow(X),
   ## Names
   varnames <- if (is.null(colnames(X))) paste("V", 1:p, sep="") else colnames(X)
   if(family != 'cox') varnames <- c("(Intercept)", varnames)
-  dimnames(beta) <- list(varnames, round(lambda, digits = 4))
+  if(family == "mgaussian") {
+    nclass <- ncol(y)
+    classnames <- if (is.null(colnames(y))) paste("class", 1:nclass, sep="") else colnames(y)
+    names(beta) <- classnames
+  } else dimnames(beta) <- list(varnames, round(lambda, digits = 4))
 
   ## Output
   return.val <- list(
@@ -545,7 +637,7 @@ biglasso <- function(X, y, row.idx = 1:nrow(X),
     return.val$safe_rejections <- safe_rejections
   } 
   if (return.time) return.val$time <- as.numeric(time['elapsed'])
-  
-  val <- structure(return.val, class = c("biglasso", 'ncvreg'))
+  if(family == "mgaussian") val <- structure(return.val, class = c("mbiglasso"))
+  else val <- structure(return.val, class = c("biglasso", 'ncvreg'))
   val
 }

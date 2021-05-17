@@ -16,6 +16,9 @@
 #' @param y The response vector, as in \code{biglasso}.
 #' @param row.idx The integer vector of row indices of \code{X} that used for
 #' fitting the model. as in \code{biglasso}.
+#' @param family Either \code{"gaussian"}, \code{"binomial"}, \code{"cox"} or
+#' \code{"mgaussian"} depending on the response. \code{"cox"} and \code{"mgaussian"}
+#' are not supported yet.
 #' @param eval.metric The evaluation metric for the cross-validated error and
 #' for choosing optimal \code{lambda}. "default" for linear regression is MSE
 #' (mean squared error), for logistic regression is misclassification error.
@@ -68,9 +71,15 @@
 #' 
 #' @export cv.biglasso
 #' 
-cv.biglasso <- function(X, y, row.idx = 1:nrow(X), eval.metric = c("default", "MAPE"),
+cv.biglasso <- function(X, y, row.idx = 1:nrow(X), 
+                        family = c("gaussian", "binomial", "cox", "mgaussian"),
+                        eval.metric = c("default", "MAPE"),
                         ncores = parallel::detectCores(), ...,
                         nfolds = 5, seed, cv.ind, trace = FALSE) {
+  
+  family <- match.arg(family)
+  if(!family %in% c("gaussian", "binomial")) stop("CV method for this family not supported yet.")
+  
   #TODO: 
   #   system-specific parallel: Windows parLapply; others: mclapply
   eval.metric <- match.arg(eval.metric)
@@ -81,7 +90,7 @@ cv.biglasso <- function(X, y, row.idx = 1:nrow(X), eval.metric = c("default", "M
     ncores = max.cores
   }
   
-  fit <- biglasso(X = X, y = y, row.idx = row.idx, ncores = ncores, ...)
+  fit <- biglasso(X = X, y = y, row.idx = row.idx, family = family, ncores = ncores, ...)
   n <- fit$n
   E <- Y <- matrix(NA, nrow=n, ncol=length(fit$lambda))
   # y <- fit$y # this would cause error if eval.metric == "MAPE"
