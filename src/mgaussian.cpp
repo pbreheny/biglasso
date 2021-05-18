@@ -199,7 +199,7 @@ void edpp_screen(int *discard_beta, int n, int p, int m, double lambda_prev,
                  double rhs2, double *lhs1, double *lhs2, double*lhs3, double c,
                  double d, double *mp, double alpha, vector<int> &col_idx, bool EDPP) {
   int j;
-  double rhs = n*lambda_prev*sqrt(m)*alpha*mp[col_idx[j]] - c*rhs2;
+  double rhs = n*lambda_prev*sqrt(m)*alpha - c*rhs2;
   if(rhs < 0) rhs = 0;
   for(j = 0; j < p; j ++) {
     if(EDPP) {
