@@ -20,8 +20,8 @@ Default is TRUE. If False, the vertical axis is the coefficients.}
 \item{\dots}{Other graphical parameters to \code{plot}}
 }
 \description{
-Produce a plot of the coefficient paths for a fitted multiresponse
-\code{\link{mbiglasso}} object.
+Produce a plot of the coefficient paths for a fitted multiple responses
+\code{mbiglasso} object.
 }
 \examples{
 

@@ -8,6 +8,7 @@ cv.biglasso(
   X,
   y,
   row.idx = 1:nrow(X),
+  family = c("gaussian", "binomial", "cox", "mgaussian"),
   eval.metric = c("default", "MAPE"),
   ncores = parallel::detectCores(),
   ...,
@@ -25,6 +26,10 @@ cv.biglasso(
 
 \item{row.idx}{The integer vector of row indices of \code{X} that used for
 fitting the model. as in \code{biglasso}.}
+
+\item{family}{Either \code{"gaussian"}, \code{"binomial"}, \code{"cox"} or
+\code{"mgaussian"} depending on the response. \code{"cox"} and \code{"mgaussian"}
+are not supported yet.}
 
 \item{eval.metric}{The evaluation metric for the cross-validated error and
 for choosing optimal \code{lambda}. "default" for linear regression is MSE
