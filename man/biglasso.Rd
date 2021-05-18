@@ -37,9 +37,11 @@ standardizes the data and includes an intercept internally by default during
 the model fitting.}
 
 \item{y}{The response vector for \code{family="gaussian"} or \code{family="binomial"}.
-For family="cox", y should be a two-column matrix with columns 'time' and
-'status'. The latter is a binary variable, with '1' indicating death, and
-'0' indicating right censored.}
+For \code{family="cox"}, \code{y} should be a two-column matrix with columns
+'time' and 'status'. The latter is a binary variable, with '1' indicating death,
+ and '0' indicating right censored. For \code{family="mgaussin"}, \code{y}
+ should be a n*m matrix where n is the sample size and m is the number of
+ responses.}
 
 \item{row.idx}{The integer vector of row indices of \code{X} that used for
 fitting the model. \code{1:nrow(X)} by default.}
@@ -47,8 +49,8 @@ fitting the model. \code{1:nrow(X)} by default.}
 \item{penalty}{The penalty to be applied to the model. Either \code{"lasso"}
 (the default), \code{"ridge"}, or \code{"enet"} (elastic net).}
 
-\item{family}{Either \code{"gaussian"}, \code{"binomial"} or \code{"cox"},
-depending on the response.}
+\item{family}{Either \code{"gaussian"}, \code{"binomial"}, \code{"cox"} or
+\code{"mgaussian"} depending on the response.}
 
 \item{alg.logistic}{The algorithm used in logistic regression. If "Newton"
 then the exact hessian is used (default); if "MM" then a
@@ -133,41 +135,51 @@ fitting. Default is TRUE.}
 Default is FALSE.}
 }
 \value{
-An object with S3 class \code{"biglasso"} with following variables.
+An object with S3 class \code{"biglasso"} for
+\code{"gaussian", "binomial", "cox"} families, or an object with S3 class
+\code{"mbiglasso"} for \code{"mgaussian"} family,  with following variables.
 \item{beta}{The fitted matrix of coefficients, store in sparse matrix
 representation. The number of rows is equal to the number of coefficients,
-whereas the number of columns is equal to \code{nlambda}.} \item{iter}{A
-vector of length \code{nlambda} containing the number of iterations until
-convergence at each value of \code{lambda}.} \item{lambda}{The sequence of
-regularization parameter values in the path.} \item{penalty}{Same as above.}
-\item{family}{Same as above.} \item{alpha}{Same as above.} \item{loss}{A
-vector containing either the residual sum of squares (\code{for "gaussian"})
-or negative log-likelihood (for \code{"binomial"}) of the fitted model at
-each value of \code{lambda}.} \item{penalty.factor}{Same as above.}
+whereas the number of columns is equal to \code{nlambda}. For \code{"mgaussian"}
+family with m responses, it is a list of m such matrices.} 
+\item{iter}{A vector of length \code{nlambda} containing the number of 
+iterations until convergence at each value of \code{lambda}.} 
+\item{lambda}{The sequence of regularization parameter values in the path.}
+\item{penalty}{Same as above.}
+\item{family}{Same as above.}
+\item{alpha}{Same as above.} 
+\item{loss}{A vector containing either the residual sum of squares 
+(for \code{"gaussian", "mgaussian"}) or negative log-likelihood
+(for \code{"binomial", "cox"}) of the fitted model at each value of \code{lambda}.}
+\item{penalty.factor}{Same as above.}
 \item{n}{The number of observations used in the model fitting. It's equal to
-\code{length(row.idx)}.} \item{center}{The sample mean vector of the
-variables, i.e., column mean of the sub-matrix of \code{X} used for model
-fitting.} \item{scale}{The sample standard deviation of the variables, i.e.,
-column standard deviation of the sub-matrix of \code{X} used for model
-fitting.} \item{y}{The response vector used in the model fitting. Depending
-on \code{row.idx}, it could be a subset of the raw input of the response
-vector y.} \item{screen}{Same as above.} \item{col.idx}{The indices of
-features that have 'scale' value greater than 1e-6. Features with 'scale'
-less than 1e-6 are removed from model fitting.} \item{rejections}{The number
-of features rejected at each value of \code{lambda}.}
+\code{length(row.idx)}.} 
+\item{center}{The sample mean vector of the variables, i.e., column mean of
+the sub-matrix of \code{X} used for model fitting.} 
+\item{scale}{The sample standard deviation of the variables, i.e., column
+standard deviation of the sub-matrix of \code{X} used for model fitting.} 
+\item{y}{The response vector used in the model fitting. Depending on
+\code{row.idx}, it could be a subset of the raw input of the response vector y.}
+\item{screen}{Same as above.} 
+\item{col.idx}{The indices of features that have 'scale' value greater than
+1e-6. Features with 'scale' less than 1e-6 are removed from model fitting.} 
+\item{rejections}{The number of features rejected at each value of \code{lambda}.}
 \item{safe_rejections}{The number of features rejected by safe rules at each
 value of \code{lambda}.}
 }
 \description{
 Extend lasso model fitting to big data that cannot be loaded into memory.
-Fit solution paths for linear or logistic regression models penalized by
+Fit solution paths for linear, logistic or Cox regression models penalized by
 lasso, ridge, or elastic-net over a grid of values for the regularization
 parameter lambda.
 }
 \details{
-The objective function for linear regression (\code{family = "gaussian"}) is
+The objective function for linear regression or multiple responses linear regression 
+(\code{family = "gaussian"} or \code{family = "mgaussian"}) is
 \deqn{\frac{1}{2n}\textrm{RSS} + \lambda*\textrm{penalty},}{(1/(2n))*RSS+
-\lambda*penalty,} for logistic regression
+\lambda*penalty,}
+where for \code{family = "mgaussian"}), a group-lasso type penalty is applied.
+For logistic regression
 (\code{family = "binomial"}) it is \deqn{-\frac{1}{n} loglike +
 \lambda*\textrm{penalty},}{-(1/n)*loglike+\lambda*penalty}, for cox regression,
  breslow approximation for ties is applied.
@@ -219,7 +231,17 @@ tcens <- rbinom(n = N, prob = 0.3, size = 1)  # censoring indicator
 y <- cbind(time = ty, status = 1 - tcens)  # y <- Surv(ty, 1 - tcens) with library(survival)
 X.bm <- as.big.matrix(X)
 fit <- biglasso(X.bm, y, family = "cox")
-plot(fit)
+plot(fit, main = "cox")
+
+## Multiple responses linear regression
+set.seed(10101)
+n=300; p=300; m=5; s=10; b=1
+x = matrix(rnorm(n * p), n, p)
+beta = matrix(seq(from=-b,to=b,length.out=s*m),s,m)
+y = x[,1:s] \%*\% beta + matrix(rnorm(n*m,0,1),n,m)
+x.bm = as.big.matrix(x)
+fit = biglasso(x.bm, y, family = "mgaussian")
+plot(fit, main = "mgaussian")
 
 }
 \seealso{

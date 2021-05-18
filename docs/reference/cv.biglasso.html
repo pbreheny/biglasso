@@ -129,6 +129,7 @@ of values for the regularization parameter lambda.</p>
   <span class='va'>X</span>,
   <span class='va'>y</span>,
   row.idx <span class='op'>=</span> <span class='fl'>1</span><span class='op'>:</span><span class='fu'><a href='https://rdrr.io/r/base/nrow.html'>nrow</a></span><span class='op'>(</span><span class='va'>X</span><span class='op'>)</span>,
+  family <span class='op'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/c.html'>c</a></span><span class='op'>(</span><span class='st'>"gaussian"</span>, <span class='st'>"binomial"</span>, <span class='st'>"cox"</span>, <span class='st'>"mgaussian"</span><span class='op'>)</span>,
   eval.metric <span class='op'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/c.html'>c</a></span><span class='op'>(</span><span class='st'>"default"</span>, <span class='st'>"MAPE"</span><span class='op'>)</span>,
   ncores <span class='op'>=</span> <span class='fu'>parallel</span><span class='fu'>::</span><span class='fu'><a href='https://rdrr.io/r/parallel/detectCores.html'>detectCores</a></span><span class='op'>(</span><span class='op'>)</span>,
   <span class='va'>...</span>,
@@ -154,6 +155,12 @@ of values for the regularization parameter lambda.</p>
       <th>row.idx</th>
       <td><p>The integer vector of row indices of <code>X</code> that used for
 fitting the model. as in <code>biglasso</code>.</p></td>
+    </tr>
+    <tr>
+      <th>family</th>
+      <td><p>Either <code>"gaussian"</code>, <code>"binomial"</code>, <code>"cox"</code> or
+<code>"mgaussian"</code> depending on the response. <code>"cox"</code> and <code>"mgaussian"</code>
+are not supported yet.</p></td>
     </tr>
     <tr>
       <th>eval.metric</th>

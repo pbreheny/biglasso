@@ -25,10 +25,12 @@
 #' predictions are requested.  Linear interpolation is used for values of
 #' \code{lambda} not in the sequence of lambda values in the fitted models.
 #' @param k Index of the response to predict in multiple responses regression (
-#' \code{family="mgaussian}).
+#' \code{family="mgaussian"}).
 #' @param which Indices of the penalty parameter \code{lambda} at which
 #' predictions are required.  By default, all indices are returned.  If
 #' \code{lambda} is specified, this will override \code{which}.
+#' @param intercept Whether the intercept should be included in the returned
+#' coefficients. For \code{family="mgaussian"} only.
 #' @param drop If coefficients for a single value of \code{lambda} are to be
 #' returned, reduce dimensions to a vector?  Setting \code{drop=FALSE} returns
 #' a 1-column matrix.
@@ -97,7 +99,7 @@ predict.biglasso <- function(object, X, row.idx = 1:nrow(X),
 }
 
 #' @method predict mbiglasso
-#' @rdname predict.mbiglasso
+#' @rdname predict.biglasso
 #' @export
 #'
 predict.mbiglasso <- function(object, X, row.idx = 1:nrow(X), 
@@ -145,7 +147,7 @@ coef.biglasso <- function(object, lambda, which = 1:length(object$lambda), drop 
 }
 
 #' @method coef mbiglasso
-#' @rdname predict.mbiglasso
+#' @rdname predict.biglasso
 #' @export
 #'
 coef.mbiglasso <- function(object, lambda, which = 1:length(object$lambda), intercept = TRUE, ...) {

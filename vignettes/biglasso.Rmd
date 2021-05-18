@@ -118,6 +118,19 @@ fit <- biglasso(X.bm, y, family = "cox")
 plot(fit)
 ```
 
+### 1.1.5 Multiple responses Linear Regression
+
+```{r}
+set.seed(10101)
+n=300; p=300; m=5; s=10; b=1
+x = matrix(rnorm(n * p), n, p)
+beta = matrix(seq(from=-b,to=b,length.out=s*m),s,m)
+y = x[,1:s] %*% beta + matrix(rnorm(n*m,0,1),n,m)
+x.bm = as.big.matrix(x)
+fit = biglasso(x.bm, y, family = "mgaussian")
+plot(fit)
+```
+
 ## 1.2 Big Data
 
 When the raw data file is very large, it's better to convert the raw data file

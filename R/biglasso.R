@@ -107,8 +107,8 @@
 #' \code{"mbiglasso"} for \code{"mgaussian"} family,  with following variables.
 #' \item{beta}{The fitted matrix of coefficients, store in sparse matrix
 #' representation. The number of rows is equal to the number of coefficients,
-#' whereas the number of columns is equal to \code{nlambda}. For \code{"mgaussian}}
-#' family with m responses, it is a list of m such matrices. 
+#' whereas the number of columns is equal to \code{nlambda}. For \code{"mgaussian"}
+#' family with m responses, it is a list of m such matrices.} 
 #' \item{iter}{A vector of length \code{nlambda} containing the number of 
 #' iterations until convergence at each value of \code{lambda}.} 
 #' \item{lambda}{The sequence of regularization parameter values in the path.}
@@ -127,10 +127,10 @@
 #' standard deviation of the sub-matrix of \code{X} used for model fitting.} 
 #' \item{y}{The response vector used in the model fitting. Depending on
 #' \code{row.idx}, it could be a subset of the raw input of the response vector y.}
-#' \item{screen}{Same as above.} \item{col.idx}{The indices of
-#' features that have 'scale' value greater than 1e-6. Features with 'scale'
-#' less than 1e-6 are removed from model fitting.} \item{rejections}{The number
-#' of features rejected at each value of \code{lambda}.}
+#' \item{screen}{Same as above.} 
+#' \item{col.idx}{The indices of features that have 'scale' value greater than
+#' 1e-6. Features with 'scale' less than 1e-6 are removed from model fitting.} 
+#' \item{rejections}{The number of features rejected at each value of \code{lambda}.}
 #' \item{safe_rejections}{The number of features rejected by safe rules at each
 #' value of \code{lambda}.}
 #' @author Yaohui Zeng, Chuyi Wang and Patrick Breheny
@@ -179,7 +179,17 @@
 #' y <- cbind(time = ty, status = 1 - tcens)  # y <- Surv(ty, 1 - tcens) with library(survival)
 #' X.bm <- as.big.matrix(X)
 #' fit <- biglasso(X.bm, y, family = "cox")
-#' plot(fit)
+#' plot(fit, main = "cox")
+#' 
+#' ## Multiple responses linear regression
+#' set.seed(10101)
+#' n=300; p=300; m=5; s=10; b=1
+#' x = matrix(rnorm(n * p), n, p)
+#' beta = matrix(seq(from=-b,to=b,length.out=s*m),s,m)
+#' y = x[,1:s] %*% beta + matrix(rnorm(n*m,0,1),n,m)
+#' x.bm = as.big.matrix(x)
+#' fit = biglasso(x.bm, y, family = "mgaussian")
+#' plot(fit, main = "mgaussian")
 #' 
 #' @export biglasso
 biglasso <- function(X, y, row.idx = 1:nrow(X),

@@ -2,7 +2,9 @@
 % Please edit documentation in R/predict.R
 \name{predict.biglasso}
 \alias{predict.biglasso}
+\alias{predict.mbiglasso}
 \alias{coef.biglasso}
+\alias{coef.mbiglasso}
 \title{Model predictions based on a fitted \code{biglasso} object}
 \usage{
 \method{predict}{biglasso}(
@@ -15,7 +17,20 @@
   ...
 )
 
+\method{predict}{mbiglasso}(
+  object,
+  X,
+  row.idx = 1:nrow(X),
+  type = c("link", "response", "coefficients", "vars", "nvars"),
+  lambda,
+  which = 1:length(object$lambda),
+  k = 1,
+  ...
+)
+
 \method{coef}{biglasso}(object, lambda, which = 1:length(object$lambda), drop = TRUE, ...)
+
+\method{coef}{mbiglasso}(object, lambda, which = 1:length(object$lambda), intercept = TRUE, ...)
 }
 \arguments{
 \item{object}{A fitted \code{"biglasso"} model object.}
@@ -46,9 +61,15 @@ predictions are required.  By default, all indices are returned.  If
 
 \item{\dots}{Not used.}
 
+\item{k}{Index of the response to predict in multiple responses regression (
+\code{family="mgaussian"}).}
+
 \item{drop}{If coefficients for a single value of \code{lambda} are to be
 returned, reduce dimensions to a vector?  Setting \code{drop=FALSE} returns
 a 1-column matrix.}
+
+\item{intercept}{Whether the intercept should be included in the returned
+coefficients. For \code{family="mgaussian"} only.}
 }
 \value{
 The object returned depends on \code{type}.

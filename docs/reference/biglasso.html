@@ -41,7 +41,7 @@
 
 <meta property="og:title" content="Fit lasso penalized regression path for big data — biglasso" />
 <meta property="og:description" content="Extend lasso model fitting to big data that cannot be loaded into memory.
-Fit solution paths for linear or logistic regression models penalized by
+Fit solution paths for linear, logistic or Cox regression models penalized by
 lasso, ridge, or elastic-net over a grid of values for the regularization
 parameter lambda." />
 
@@ -124,7 +124,7 @@ parameter lambda." />
 
     <div class="ref-description">
     <p>Extend lasso model fitting to big data that cannot be loaded into memory.
-Fit solution paths for linear or logistic regression models penalized by
+Fit solution paths for linear, logistic or Cox regression models penalized by
 lasso, ridge, or elastic-net over a grid of values for the regularization
 parameter lambda.</p>
     </div>
@@ -134,7 +134,7 @@ parameter lambda.</p>
   <span class='va'>y</span>,
   row.idx <span class='op'>=</span> <span class='fl'>1</span><span class='op'>:</span><span class='fu'><a href='https://rdrr.io/r/base/nrow.html'>nrow</a></span><span class='op'>(</span><span class='va'>X</span><span class='op'>)</span>,
   penalty <span class='op'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/c.html'>c</a></span><span class='op'>(</span><span class='st'>"lasso"</span>, <span class='st'>"ridge"</span>, <span class='st'>"enet"</span><span class='op'>)</span>,
-  family <span class='op'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/c.html'>c</a></span><span class='op'>(</span><span class='st'>"gaussian"</span>, <span class='st'>"binomial"</span>, <span class='st'>"cox"</span><span class='op'>)</span>,
+  family <span class='op'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/c.html'>c</a></span><span class='op'>(</span><span class='st'>"gaussian"</span>, <span class='st'>"binomial"</span>, <span class='st'>"cox"</span>, <span class='st'>"mgaussian"</span><span class='op'>)</span>,
   alg.logistic <span class='op'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/c.html'>c</a></span><span class='op'>(</span><span class='st'>"Newton"</span>, <span class='st'>"MM"</span><span class='op'>)</span>,
   screen <span class='op'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/c.html'>c</a></span><span class='op'>(</span><span class='st'>"Adaptive"</span>, <span class='st'>"SSR"</span>, <span class='st'>"Hybrid"</span>, <span class='st'>"None"</span><span class='op'>)</span>,
   safe.thresh <span class='op'>=</span> <span class='fl'>0</span>,
@@ -161,16 +161,18 @@ parameter lambda.</p>
     <tr>
       <th>X</th>
       <td><p>The design matrix, without an intercept. It must be a
-<code><a href='https://rdrr.io/pkg/bigmemory/man/big.matrix.html'>big.matrix</a></code> object. The function standardizes the
-data and includes an intercept internally by default during the model
-fitting.</p></td>
+double type <code><a href='https://rdrr.io/pkg/bigmemory/man/big.matrix.html'>big.matrix</a></code> object. The function
+standardizes the data and includes an intercept internally by default during
+the model fitting.</p></td>
     </tr>
     <tr>
       <th>y</th>
       <td><p>The response vector for <code>family="gaussian"</code> or <code>family="binomial"</code>.
-For family="cox", y should be a two-column matrix with columns 'time' and
-'status'. The latter is a binary variable, with '1' indicating death, and
-'0' indicating right censored.</p></td>
+For <code>family="cox"</code>, <code>y</code> should be a two-column matrix with columns
+'time' and 'status'. The latter is a binary variable, with '1' indicating death,
+ and '0' indicating right censored. For <code>family="mgaussin"</code>, <code>y</code>
+ should be a n*m matrix where n is the sample size and m is the number of
+ responses.</p></td>
     </tr>
     <tr>
       <th>row.idx</th>
@@ -184,8 +186,8 @@ fitting the model. <code>1:nrow(X)</code> by default.</p></td>
     </tr>
     <tr>
       <th>family</th>
-      <td><p>Either <code>"gaussian"</code>, <code>"binomial"</code> or <code>"cox"</code>,
-depending on the response.</p></td>
+      <td><p>Either <code>"gaussian"</code>, <code>"binomial"</code>, <code>"cox"</code> or
+<code>"mgaussian"</code> depending on the response.</p></td>
     </tr>
     <tr>
       <th>alg.logistic</th>
@@ -309,35 +311,45 @@ Default is FALSE.</p></td>
 
     <h2 class="hasAnchor" id="value"><a class="anchor" href="#value"></a>Value</h2>
 
-    <p>An object with S3 class <code>"biglasso"</code> with following variables.</p>
+    <p>An object with S3 class <code>"biglasso"</code> for
+<code>"gaussian", "binomial", "cox"</code> families, or an object with S3 class
+<code>"mbiglasso"</code> for <code>"mgaussian"</code> family,  with following variables.</p>
 <dt>beta</dt><dd><p>The fitted matrix of coefficients, store in sparse matrix
 representation. The number of rows is equal to the number of coefficients,
-whereas the number of columns is equal to <code>nlambda</code>.</p></dd> <dt>iter</dt><dd><p>A
-vector of length <code>nlambda</code> containing the number of iterations until
-convergence at each value of <code>lambda</code>.</p></dd> <dt>lambda</dt><dd><p>The sequence of
-regularization parameter values in the path.</p></dd> <dt>penalty</dt><dd><p>Same as above.</p></dd>
-<dt>family</dt><dd><p>Same as above.</p></dd> <dt>alpha</dt><dd><p>Same as above.</p></dd> <dt>loss</dt><dd><p>A
-vector containing either the residual sum of squares (<code>for "gaussian"</code>)
-or negative log-likelihood (for <code>"binomial"</code>) of the fitted model at
-each value of <code>lambda</code>.</p></dd> <dt>penalty.factor</dt><dd><p>Same as above.</p></dd>
+whereas the number of columns is equal to <code>nlambda</code>. For <code>"mgaussian"</code>
+family with m responses, it is a list of m such matrices.</p></dd> 
+<dt>iter</dt><dd><p>A vector of length <code>nlambda</code> containing the number of 
+iterations until convergence at each value of <code>lambda</code>.</p></dd> 
+<dt>lambda</dt><dd><p>The sequence of regularization parameter values in the path.</p></dd>
+<dt>penalty</dt><dd><p>Same as above.</p></dd>
+<dt>family</dt><dd><p>Same as above.</p></dd>
+<dt>alpha</dt><dd><p>Same as above.</p></dd> 
+<dt>loss</dt><dd><p>A vector containing either the residual sum of squares 
+(for <code>"gaussian", "mgaussian"</code>) or negative log-likelihood
+(for <code>"binomial", "cox"</code>) of the fitted model at each value of <code>lambda</code>.</p></dd>
+<dt>penalty.factor</dt><dd><p>Same as above.</p></dd>
 <dt>n</dt><dd><p>The number of observations used in the model fitting. It's equal to
-<code><a href='https://rdrr.io/r/base/length.html'>length(row.idx)</a></code>.</p></dd> <dt>center</dt><dd><p>The sample mean vector of the
-variables, i.e., column mean of the sub-matrix of <code>X</code> used for model
-fitting.</p></dd> <dt>scale</dt><dd><p>The sample standard deviation of the variables, i.e.,
-column standard deviation of the sub-matrix of <code>X</code> used for model
-fitting.</p></dd> <dt>y</dt><dd><p>The response vector used in the model fitting. Depending
-on <code>row.idx</code>, it could be a subset of the raw input of the response
-vector y.</p></dd> <dt>screen</dt><dd><p>Same as above.</p></dd> <dt>col.idx</dt><dd><p>The indices of
-features that have 'scale' value greater than 1e-6. Features with 'scale'
-less than 1e-6 are removed from model fitting.</p></dd> <dt>rejections</dt><dd><p>The number
-of features rejected at each value of <code>lambda</code>.</p></dd>
+<code><a href='https://rdrr.io/r/base/length.html'>length(row.idx)</a></code>.</p></dd> 
+<dt>center</dt><dd><p>The sample mean vector of the variables, i.e., column mean of
+the sub-matrix of <code>X</code> used for model fitting.</p></dd> 
+<dt>scale</dt><dd><p>The sample standard deviation of the variables, i.e., column
+standard deviation of the sub-matrix of <code>X</code> used for model fitting.</p></dd> 
+<dt>y</dt><dd><p>The response vector used in the model fitting. Depending on
+<code>row.idx</code>, it could be a subset of the raw input of the response vector y.</p></dd>
+<dt>screen</dt><dd><p>Same as above.</p></dd> 
+<dt>col.idx</dt><dd><p>The indices of features that have 'scale' value greater than
+1e-6. Features with 'scale' less than 1e-6 are removed from model fitting.</p></dd> 
+<dt>rejections</dt><dd><p>The number of features rejected at each value of <code>lambda</code>.</p></dd>
 <dt>safe_rejections</dt><dd><p>The number of features rejected by safe rules at each
 value of <code>lambda</code>.</p></dd>
 
     <h2 class="hasAnchor" id="details"><a class="anchor" href="#details"></a>Details</h2>
 
-    <p>The objective function for linear regression (<code>family = "gaussian"</code>) is
-$$\frac{1}{2n}\textrm{RSS} + \lambda*\textrm{penalty},$$ for logistic regression
+    <p>The objective function for linear regression or multiple responses linear regression 
+(<code>family = "gaussian"</code> or <code>family = "mgaussian"</code>) is
+$$\frac{1}{2n}\textrm{RSS} + \lambda*\textrm{penalty},$$
+where for <code>family = "mgaussian"</code>), a group-lasso type penalty is applied.
+For logistic regression
 (<code>family = "binomial"</code>) it is $$-\frac{1}{n} loglike +
 \lambda*\textrm{penalty},$$, for cox regression,
  breslow approximation for ties is applied.</p>
@@ -397,9 +409,19 @@ data sets. For cox regression and/or the elastic net penalty, only
 <span class='va'>y</span> <span class='op'>&lt;-</span> <span class='fu'><a href='https://rdrr.io/r/base/cbind.html'>cbind</a></span><span class='op'>(</span>time <span class='op'>=</span> <span class='va'>ty</span>, status <span class='op'>=</span> <span class='fl'>1</span> <span class='op'>-</span> <span class='va'>tcens</span><span class='op'>)</span>  <span class='co'># y &lt;- Surv(ty, 1 - tcens) with library(survival)</span>
 <span class='va'>X.bm</span> <span class='op'>&lt;-</span> <span class='fu'>as.big.matrix</span><span class='op'>(</span><span class='va'>X</span><span class='op'>)</span>
 <span class='va'>fit</span> <span class='op'>&lt;-</span> <span class='fu'>biglasso</span><span class='op'>(</span><span class='va'>X.bm</span>, <span class='va'>y</span>, family <span class='op'>=</span> <span class='st'>"cox"</span><span class='op'>)</span>
-<span class='fu'><a href='https://rdrr.io/r/graphics/plot.default.html'>plot</a></span><span class='op'>(</span><span class='va'>fit</span><span class='op'>)</span>
+<span class='fu'><a href='https://rdrr.io/r/graphics/plot.default.html'>plot</a></span><span class='op'>(</span><span class='va'>fit</span>, main <span class='op'>=</span> <span class='st'>"cox"</span><span class='op'>)</span>
 
-</div><div class='img'><img src='biglasso-3.png' alt='' width='700' height='433' /></div></pre>
+<span class='co'>## Multiple responses linear regression</span>
+<span class='fu'><a href='https://rdrr.io/r/base/Random.html'>set.seed</a></span><span class='op'>(</span><span class='fl'>10101</span><span class='op'>)</span>
+<span class='va'>n</span><span class='op'>=</span><span class='fl'>300</span>; <span class='va'>p</span><span class='op'>=</span><span class='fl'>300</span>; <span class='va'>m</span><span class='op'>=</span><span class='fl'>5</span>; <span class='va'>s</span><span class='op'>=</span><span class='fl'>10</span>; <span class='va'>b</span><span class='op'>=</span><span class='fl'>1</span>
+<span class='va'>x</span> <span class='op'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/matrix.html'>matrix</a></span><span class='op'>(</span><span class='fu'><a href='https://rdrr.io/r/stats/Normal.html'>rnorm</a></span><span class='op'>(</span><span class='va'>n</span> <span class='op'>*</span> <span class='va'>p</span><span class='op'>)</span>, <span class='va'>n</span>, <span class='va'>p</span><span class='op'>)</span>
+<span class='va'>beta</span> <span class='op'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/matrix.html'>matrix</a></span><span class='op'>(</span><span class='fu'><a href='https://rdrr.io/r/base/seq.html'>seq</a></span><span class='op'>(</span>from<span class='op'>=</span><span class='op'>-</span><span class='va'>b</span>,to<span class='op'>=</span><span class='va'>b</span>,length.out<span class='op'>=</span><span class='va'>s</span><span class='op'>*</span><span class='va'>m</span><span class='op'>)</span>,<span class='va'>s</span>,<span class='va'>m</span><span class='op'>)</span>
+<span class='va'>y</span> <span class='op'>=</span> <span class='va'>x</span><span class='op'>[</span>,<span class='fl'>1</span><span class='op'>:</span><span class='va'>s</span><span class='op'>]</span> <span class='op'>%*%</span> <span class='va'>beta</span> <span class='op'>+</span> <span class='fu'><a href='https://rdrr.io/r/base/matrix.html'>matrix</a></span><span class='op'>(</span><span class='fu'><a href='https://rdrr.io/r/stats/Normal.html'>rnorm</a></span><span class='op'>(</span><span class='va'>n</span><span class='op'>*</span><span class='va'>m</span>,<span class='fl'>0</span>,<span class='fl'>1</span><span class='op'>)</span>,<span class='va'>n</span>,<span class='va'>m</span><span class='op'>)</span>
+<span class='va'>x.bm</span> <span class='op'>=</span> <span class='fu'>as.big.matrix</span><span class='op'>(</span><span class='va'>x</span><span class='op'>)</span>
+<span class='va'>fit</span> <span class='op'>=</span> <span class='fu'>biglasso</span><span class='op'>(</span><span class='va'>x.bm</span>, <span class='va'>y</span>, family <span class='op'>=</span> <span class='st'>"mgaussian"</span><span class='op'>)</span>
+<span class='fu'><a href='https://rdrr.io/r/graphics/plot.default.html'>plot</a></span><span class='op'>(</span><span class='va'>fit</span>, main <span class='op'>=</span> <span class='st'>"mgaussian"</span><span class='op'>)</span>
+</div><div class='img'><img src='biglasso-3.png' alt='' width='700' height='433' /></div><div class='input'>
+</div></pre>
   </div>
   <div class="col-md-3 hidden-xs hidden-sm" id="pkgdown-sidebar">
     <nav id="toc" data-toggle="toc" class="sticky-top">

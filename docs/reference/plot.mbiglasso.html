@@ -6,7 +6,7 @@
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-<title>Function reference • biglasso</title>
+<title>Plot coefficients from a "mbiglasso" object — plot.mbiglasso • biglasso</title>
 
 
 <!-- jquery -->
@@ -39,7 +39,9 @@
 
 
 
-<meta property="og:title" content="Function reference" />
+<meta property="og:title" content="Plot coefficients from a "mbiglasso" object — plot.mbiglasso" />
+<meta property="og:description" content="Produce a plot of the coefficient paths for a fitted multiple responses
+mbiglasso object." />
 
 
 
@@ -58,7 +60,7 @@
   </head>
 
   <body data-spy="scroll" data-target="#toc">
-    <div class="container template-reference-index">
+    <div class="container template-reference-topic">
       <header>
       <div class="navbar navbar-default navbar-fixed-top" role="navigation">
   <div class="container">
@@ -111,102 +113,62 @@
       </header>
 
 <div class="row">
-  <div class="contents col-md-9">
+  <div class="col-md-9 contents">
     <div class="page-header">
-      <h1>Reference</h1>
+    <h1>Plot coefficients from a "mbiglasso" object</h1>
+    <small class="dont-index">Source: <a href='https://github.com/YaohuiZeng/biglasso/blob/master/R/plot.mbiglasso.R'><code>R/plot.mbiglasso.R</code></a></small>
+    <div class="hidden name"><code>plot.mbiglasso.Rd</code></div>
     </div>
 
-    <table class="ref-index">
+    <div class="ref-description">
+    <p>Produce a plot of the coefficient paths for a fitted multiple responses
+<code>mbiglasso</code> object.</p>
+    </div>
 
-    <colgroup>
-      
-      <col class="alias" />
-      <col class="title" />
-    </colgroup>
+    <pre class="usage"><span class='co'># S3 method for mbiglasso</span>
+<span class='fu'><a href='https://rdrr.io/r/graphics/plot.default.html'>plot</a></span><span class='op'>(</span><span class='va'>x</span>, alpha <span class='op'>=</span> <span class='fl'>1</span>, log.l <span class='op'>=</span> <span class='cn'>TRUE</span>, norm.beta <span class='op'>=</span> <span class='cn'>TRUE</span>, <span class='va'>...</span><span class='op'>)</span></pre>
 
-    <tbody>
-      <tr>
-        <th colspan="2">
-          <h2 id="section-all-functions" class="hasAnchor"><a href="#section-all-functions" class="anchor"></a>All functions</h2>
-          <p class="section-desc"></p>
-        </th>
-      </tr>
-      
-      
-    </tbody><tbody>
-      
-      
-      <tr>
-        
-        <td>
-          <p><code><a href="biglasso-package.html">biglasso-package</a></code> </p>
-        </td>
-        <td><p>Extending Lasso Model Fitting to Big Data</p></td>
-      </tr><tr>
-        
-        <td>
-          <p><code><a href="biglasso.html">biglasso()</a></code> </p>
-        </td>
-        <td><p>Fit lasso penalized regression path for big data</p></td>
-      </tr><tr>
-        
-        <td>
-          <p><code><a href="colon.html">colon</a></code> </p>
-        </td>
-        <td><p>Gene expression data from colon-cancer patients</p></td>
-      </tr><tr>
-        
-        <td>
-          <p><code><a href="cv.biglasso.html">cv.biglasso()</a></code> </p>
-        </td>
-        <td><p>Cross-validation for biglasso</p></td>
-      </tr><tr>
-        
-        <td>
-          <p><code><a href="plot.biglasso.html">plot(<i>&lt;biglasso&gt;</i>)</a></code> </p>
-        </td>
-        <td><p>Plot coefficients from a "biglasso" object</p></td>
-      </tr><tr>
-        
-        <td>
-          <p><code><a href="plot.cv.biglasso.html">plot(<i>&lt;cv.biglasso&gt;</i>)</a></code> </p>
-        </td>
-        <td><p>Plots the cross-validation curve from a "cv.biglasso" object</p></td>
-      </tr><tr>
-        
-        <td>
-          <p><code><a href="plot.mbiglasso.html">plot(<i>&lt;mbiglasso&gt;</i>)</a></code> </p>
-        </td>
-        <td><p>Plot coefficients from a "mbiglasso" object</p></td>
-      </tr><tr>
-        
-        <td>
-          <p><code><a href="predict.biglasso.html">predict(<i>&lt;biglasso&gt;</i>)</a></code> <code><a href="predict.biglasso.html">predict(<i>&lt;mbiglasso&gt;</i>)</a></code> <code><a href="predict.biglasso.html">coef(<i>&lt;biglasso&gt;</i>)</a></code> <code><a href="predict.biglasso.html">coef(<i>&lt;mbiglasso&gt;</i>)</a></code> </p>
-        </td>
-        <td><p>Model predictions based on a fitted <code>biglasso</code> object</p></td>
-      </tr><tr>
-        
-        <td>
-          <p><code><a href="predict.cv.biglasso.html">predict(<i>&lt;cv.biglasso&gt;</i>)</a></code> <code><a href="predict.cv.biglasso.html">coef(<i>&lt;cv.biglasso&gt;</i>)</a></code> </p>
-        </td>
-        <td><p>Model predictions based on a fitted <code>cv.biglasso</code> object</p></td>
-      </tr><tr>
-        
-        <td>
-          <p><code><a href="setupX.html">setupX()</a></code> </p>
-        </td>
-        <td><p>Set up design matrix X by reading data from big data file</p></td>
-      </tr><tr>
-        
-        <td>
-          <p><code><a href="summary.cv.biglasso.html">summary(<i>&lt;cv.biglasso&gt;</i>)</a></code> <code><a href="summary.cv.biglasso.html">print(<i>&lt;summary.cv.biglasso&gt;</i>)</a></code> </p>
-        </td>
-        <td><p>Summarizing inferences based on cross-validation</p></td>
-      </tr>
-    </tbody>
+    <h2 class="hasAnchor" id="arguments"><a class="anchor" href="#arguments"></a>Arguments</h2>
+    <table class="ref-arguments">
+    <colgroup><col class="name" /><col class="desc" /></colgroup>
+    <tr>
+      <th>x</th>
+      <td><p>Fitted <code>"mbiglasso"</code> model.</p></td>
+    </tr>
+    <tr>
+      <th>alpha</th>
+      <td><p>Controls alpha-blending, helpful when the number of covariates
+is large.  Default is alpha=1.</p></td>
+    </tr>
+    <tr>
+      <th>log.l</th>
+      <td><p>Should horizontal axis be on the log scale?  Default is TRUE.</p></td>
+    </tr>
+    <tr>
+      <th>norm.beta</th>
+      <td><p>Should the vertical axis be the l2 norm of coefficients for each variable?
+Default is TRUE. If False, the vertical axis is the coefficients.</p></td>
+    </tr>
+    <tr>
+      <th>...</th>
+      <td><p>Other graphical parameters to <code>plot</code></p></td>
+    </tr>
     </table>
-  </div>
 
+    <h2 class="hasAnchor" id="see-also"><a class="anchor" href="#see-also"></a>See also</h2>
+
+    <div class='dont-index'><p><code><a href='biglasso.html'>biglasso</a></code>,</p></div>
+    <h2 class="hasAnchor" id="author"><a class="anchor" href="#author"></a>Author</h2>
+
+    <p>Chuyi Wang</p>
+<p>Maintainer: Chuyi Wang &lt;wwaa0208@gmail.com&gt;</p>
+
+    <h2 class="hasAnchor" id="examples"><a class="anchor" href="#examples"></a>Examples</h2>
+    <pre class="examples"><div class='input'>
+<span class='co'>## See examples in "biglasso"</span>
+
+</div></pre>
+  </div>
   <div class="col-md-3 hidden-xs hidden-sm" id="pkgdown-sidebar">
     <nav id="toc" data-toggle="toc" class="sticky-top">
       <h2 data-toc-skip>Contents</h2>

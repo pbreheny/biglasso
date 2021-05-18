@@ -1,7 +1,7 @@
 #' Plot coefficients from a "mbiglasso" object
 #' 
-#' Produce a plot of the coefficient paths for a fitted multiresponse
-#' \code{\link{mbiglasso}} object.
+#' Produce a plot of the coefficient paths for a fitted multiple responses
+#' \code{mbiglasso} object.
 #' 
 #' 
 #' @param x Fitted \code{"mbiglasso"} model.
