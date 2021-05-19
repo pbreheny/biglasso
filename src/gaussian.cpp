@@ -13,9 +13,107 @@ void edpp_screen(int *discard_beta, int n, int p, double rhs2, double *Xtr, doub
   }
 }
 
+// apply DDPP 
+void ddpp_screen(int *discard_beta, int n, int p, double *Xty, double *Xtr,
+                 double *Xtyhat, int *colinear, double yhat_norm2, 
+                 double ytyhat, double y_norm2, double c, double lambda_prev,
+                 double *m, double alpha, vector<int> &col_idx, bool basic) {
+  int j;
+  double tp, tn, Tp, Tn;
+  if (basic) {
+    for (j = 0; j < p; j ++) {
+      // Check +xtr and -xtr
+      if (colinear[j] == 1){
+        tp = -1;
+        Tp = (1/lambda_prev + c/2) * Xtr[j] - c*n*lambda_prev/2;
+        tn = 0;
+      } else if (colinear[j] == -1) {
+        tp = 0;
+        tn = -1;
+        Tn = -(1/lambda_prev + c/2) * Xtr[j] - c*n*lambda_prev/2;
+      } else {
+        tp = c*(lambda_prev+sqrt((y_norm2/n-pow(lambda_prev,2))/(pow(n*lambda_prev,2)-pow(Xtyhat[j],2)))*Xtyhat[j]);
+        tn = c*(lambda_prev-sqrt((y_norm2/n-pow(lambda_prev,2))/(pow(n*lambda_prev,2)-pow(Xtyhat[j],2)))*Xtyhat[j]);
+        if (tp < 0) tp = 0;
+        else if (tn < 0) tn = 0;
+      }
+      if (tp >= 0) {
+        Tp = (1/lambda_prev+c/2)*Xtr[j] - tp*Xtyhat[j]/2/lambda_prev +
+          sqrt(n*(pow(tp,2)*n+pow(c,2)*y_norm2-2*tp*c*lambda_prev*n))/2;
+      }
+      if (Tp >= n) discard_beta[j] = 0;
+      else {
+        if (tn >=0 ) {
+          Tn = -(1/lambda_prev+c/2)*Xtr[j] + tn*Xtyhat[j]/2/lambda_prev +
+            sqrt(n*(pow(tn,2)*n+pow(c,2)*y_norm2-2*tn*c*lambda_prev*n))/2;
+        }
+        if (Tn >= n) discard_beta[j] = 0;
+        else discard_beta[j] = 1;
+      }
+    }
+  } else {
+    for (j = 0; j < p; j ++) {
+      // Check +xtr and -xtr
+      if (colinear[j] == 1){
+        tp = -1;
+        Tp = Xtr[j]/lambda_prev + c*Xty[j]/2 - c*ytyhat*sqrt(n/yhat_norm2)/2;
+        tn = 0;
+      } else if (colinear[j] == -1) {
+        tp = 0;
+        tn = -1;
+        Tn = -Xtr[j]/lambda_prev - c*Xty[j]/2 - c*ytyhat*sqrt(n/yhat_norm2)/2;
+      } else {
+        tp = 1 + c*lambda_prev*ytyhat/yhat_norm2 + 
+          c*lambda_prev*sqrt((y_norm2*yhat_norm2-pow(ytyhat,2))/(n*yhat_norm2-pow(Xtyhat[j],2)))*Xtyhat[j]/yhat_norm2;
+        tn = 1 + c*lambda_prev*ytyhat/yhat_norm2 - 
+          c*lambda_prev*sqrt((y_norm2*yhat_norm2-pow(ytyhat,2))/(n*yhat_norm2-pow(Xtyhat[j],2)))*Xtyhat[j]/yhat_norm2;
+        if (tp < 0) tp = 0;
+        else if (tn < 0) tn = 0;
+      }
+      if (tp >= 0) {
+        Tp = Xtr[j]/lambda_prev + c*Xty[j]/2 + (1-tp)*Xtyhat[j]/2/lambda_prev +
+          sqrt(n*(pow((1-tp),2)*yhat_norm2+pow(c*lambda_prev,2)*y_norm2+2*(1-tp)*c*lambda_prev*ytyhat))/2/lambda_prev;
+      }
+      if (Tp >= n) discard_beta[j] = 0;
+      else {
+        if (tn >=0 ) {
+          Tn = -Xtr[j]/lambda_prev - c*Xty[j]/2 - (1-tn)*Xtyhat[j]/2/lambda_prev +
+            sqrt(n*(pow((1-tn),2)*yhat_norm2+pow(c*lambda_prev,2)*y_norm2+2*(1-tn)*c*lambda_prev*ytyhat))/2/lambda_prev;
+        }
+        if (Tn >= n) discard_beta[j] = 0;
+        else discard_beta[j] = 1;
+      }
+    }
+  }
+}
+
+// Initialize EDPP rule
+void edpp_init(XPtr<BigMatrix> xpMat, double *lhs2, double xty, int xmax_idx,
+               double lambda_max, int *row_idx, vector<int>& col_idx,
+               NumericVector& center, NumericVector& scale, int n, int p){
+  MatrixAccessor<double> xAcc(*xpMat);
+  double *xCol, *xCol_max;
+  double sum;
+  xCol_max = xAcc[xmax_idx];
+  int j, jj, i;
+  
+#pragma omp parallel for private(i, j, sum) schedule(static) 
+  for (j = 0; j < p; j++) { 
+    jj = col_idx[j]; 
+    xCol = xAcc[jj];
+    sum = 0.0;
+    for (i = 0; i < n; i++) {
+      sum += xCol[row_idx[i]] * xCol_max[row_idx[i]];
+    }
+    sum = (sum - n * center[j] * center[xmax_idx]) / (scale[j] * scale[xmax_idx]);
+    lhs2[j] = -xty * lambda_max * sum;
+  }
+}
+
+
 // Update EDPP rule
-void edpp_update(XPtr<BigMatrix> xpMat, double *r, double sumResid, double *lhs2, double *Xty,
-                 double *Xtr, double *yhat, double ytyhat, double yhat_norm2,
+void edpp_update(XPtr<BigMatrix> xpMat, double *r, double sumResid, double *lhs2, 
+                 double *Xty, double *Xtr, double ytyhat, double yhat_norm2,
                  int *row_idx, vector<int>& col_idx, NumericVector& center, 
                  NumericVector& scale, int n, int p) {
   MatrixAccessor<double> xAcc(*xpMat);
@@ -33,6 +131,59 @@ void edpp_update(XPtr<BigMatrix> xpMat, double *r, double sumResid, double *lhs2
     sum = (sum - center[jj] * sumResid) / scale[jj];
     Xtr[j] = sum;
     lhs2[j] = Xty[j] - ytyhat / yhat_norm2 * (Xty[j] - sum);
+  }
+}
+
+// Initialize DDPP rule
+void ddpp_init(XPtr<BigMatrix> xpMat, double *Xtyhat, int *colinear, double sxty, 
+               int xmax_idx, double lambda_max, int *row_idx, vector<int>& col_idx,
+               NumericVector& center, NumericVector& scale, int n, int p) {
+  MatrixAccessor<double> xAcc(*xpMat);
+  double *xCol, *xCol_max;
+  double sum;
+  xCol_max = xAcc[xmax_idx];
+  int j, jj, i;
+  
+#pragma omp parallel for private(i, j, sum) schedule(static) 
+  for (j = 0; j < p; j++) { 
+    jj = col_idx[j]; 
+    xCol = xAcc[jj];
+    sum = 0.0;
+    for (i = 0; i < n; i++) {
+      sum += xCol[row_idx[i]] * xCol_max[row_idx[i]];
+    }
+    sum = (sum - n * center[j] * center[xmax_idx]) / (scale[j] * scale[xmax_idx]);
+    Xtyhat[j] = sxty * sum * lambda_max;
+    if(Xtyhat[j] >= n * lambda_max) colinear[j] = 1;
+    else if(-Xtyhat[j] >= n * lambda_max) colinear[j] = -1;
+    else colinear[j] = 0;
+  }
+}
+
+
+// Update DDPP rule 
+void ddpp_update(XPtr<BigMatrix> xpMat, double *r, double sumResid, 
+                 double yhat_norm2, double *Xtyhat, double *Xty, double *Xtr,
+                 int *colinear, int *row_idx, vector<int>& col_idx,
+                 NumericVector& center, NumericVector& scale, int n, int p) {
+  MatrixAccessor<double> xAcc(*xpMat);
+  double *xCol;
+  int j, jj;
+  double sum;
+#pragma omp parallel for schedule(static) private(j, jj, xCol, sum)
+  for(j = 0; j < p; j++){
+    jj = col_idx[j];
+    xCol = xAcc[jj];
+    sum = 0.0;
+    for(int i = 0; i < n; i++) {
+      sum = sum + xCol[row_idx[i]] * r[i];
+    }
+    sum = (sum - center[jj] * sumResid) / scale[jj];
+    Xtr[j] = sum;
+    Xtyhat[j] = Xty[j] - sum;
+    if(Xtyhat[j] >= sqrt(n*yhat_norm2)) colinear[j] = 1;
+    else if(-Xtyhat[j] >= sqrt(n*yhat_norm2)) colinear[j] = -1;
+    else colinear[j] = 0;
   }
 }
 
@@ -397,7 +548,8 @@ RcppExport SEXP cdfit_gaussian_ada_edpp_ssr(SEXP X_, SEXP y_, SEXP row_idx_, SEX
   double y_norm2 = 0; // ||y||^2
   for(i = 0; i < n; i++) y_norm2 += y[i] * y[i];
   bool EDPP = false; // Whether using EDPP or BEDPP
-  double cutoff = 0; // cutoff for strong rule
+  double cutoff = 0; // cutoff for adaptive strong rule
+  double cutoff0 = 0; // cutoff for sequential strong rule
   int gain = 0; // gain from updating EDPP
   
   // lambda, equally spaced on log scale
@@ -440,7 +592,6 @@ RcppExport SEXP cdfit_gaussian_ada_edpp_ssr(SEXP X_, SEXP y_, SEXP row_idx_, SEX
       strftime (buff, 100, "%Y-%m-%d %H:%M:%S.000", localtime (&now));
       Rprintf("Lambda %d. Now time: %s\n", l, buff);
     }
-    c = (lambda[l_prev] - lambda[l]) / lambda[l_prev] / lambda[l];
     if(l != lstart) {
       int nv = 0;
       for (int j=0; j<p; j++) {
@@ -451,6 +602,32 @@ RcppExport SEXP cdfit_gaussian_ada_edpp_ssr(SEXP X_, SEXP y_, SEXP row_idx_, SEX
         Free(ever_active); Free(r); Free(a); Free(discard_beta); Free(lhs2); Free(Xty); Free(Xtr); Free(yhat); Free(strong_set); //Free(discard_old); 
         return List::create(beta, center, scale, lambda, loss, iter,  n_reject, n_safe_reject, Rcpp::wrap(col_idx));
       }
+      
+      // strong set
+      //update_zj(z, discard_beta, discard_old, xMat, row_idx, col_idx, center, scale, 
+      //sumResid, r, m, n, p);
+      if(l != lstart){
+        cutoff= 2 * lambda[l] - lambda[l_prev];
+        cutoff0 = 2 * lambda[l] - lambda[l-1];
+      } 
+      for(j = 0; j < p; j++) {
+        if(discard_beta[j]) {
+          if(fabs(z[j]) > cutoff * alpha * m[col_idx[j]]) {
+            strong_set[j] = 1;
+          } else {
+            strong_set[j] = 0;
+          }
+        } else {
+          if(fabs(z[j]) > cutoff0 * alpha * m[col_idx[j]]) {
+            strong_set[j] = 1;
+          } else {
+            strong_set[j] = 0;
+          }
+        }
+        
+      }
+      n_reject[l] = p - sum(strong_set, p);
+      
       if(gain - n_safe_reject[l - 1] * (l - l_prev) > update_thresh * p && l != L - 1) { // Update EDPP if not discarding enough
         if(verbose) {
           // output time
@@ -469,10 +646,10 @@ RcppExport SEXP cdfit_gaussian_ada_edpp_ssr(SEXP X_, SEXP y_, SEXP row_idx_, SEX
           yhat_norm2 += yhat[i] * yhat[i];
           ytyhat += y[i] * yhat[i];
         }
-        edpp_update(xMat, r, sumResid, lhs2, Xty, Xtr, yhat, ytyhat, yhat_norm2, row_idx, col_idx,
+        edpp_update(xMat, r, sumResid, lhs2, Xty, Xtr, ytyhat, yhat_norm2, row_idx, col_idx,
                     center, scale, n, p);
         rhs2 = sqrt(n * (y_norm2 - ytyhat * ytyhat / yhat_norm2));
-
+        
         for(j = 0; j < p; j++) z[j] = Xtr[j] / n;
         if(verbose) {
           // output time
@@ -490,6 +667,7 @@ RcppExport SEXP cdfit_gaussian_ada_edpp_ssr(SEXP X_, SEXP y_, SEXP row_idx_, SEX
       } else {
         // Apply EDPP to discard features
         if(EDPP) { // Apply EDPP check
+          c = (lambda[l_prev] - lambda[l]) / lambda[l_prev] / lambda[l];
           edpp_screen(discard_beta, n, p, rhs2, Xtr, lhs2, c,
                       1 / lambda[l_prev], m, alpha, col_idx);
         } else { // Apply BEDPP check
@@ -509,12 +687,8 @@ RcppExport SEXP cdfit_gaussian_ada_edpp_ssr(SEXP X_, SEXP y_, SEXP row_idx_, SEX
         strftime (buff, 100, "%Y-%m-%d %H:%M:%S.000", localtime (&now));
         Rprintf("Start calculating BEDPP rule. Now time: %s\n", buff);
       }
-      double xjtx;
-      for(j = 0; j < p; j ++) {
-        jj = col_idx[j];
-        xjtx = crossprod_bm_Xj_Xk(xMat, row_idx, center, scale, n, jj, xmax_idx);
-        lhs2[j] = -xty * lambda_max * xjtx;
-      }
+      edpp_init(xMat, lhs2, xty, xmax_idx, lambda_max,
+                row_idx, col_idx, center, scale, n, p);
       rhs2 = sqrt(n * y_norm2 - pow(n * lambda_max, 2));
       if(verbose) {
         // output time
@@ -529,20 +703,6 @@ RcppExport SEXP cdfit_gaussian_ada_edpp_ssr(SEXP X_, SEXP y_, SEXP row_idx_, SEX
       n_safe_reject[l] = sum(discard_beta, p);
       gain = n_safe_reject[l];
     }
-    
-    // strong set
-    //update_zj(z, discard_beta, discard_old, xMat, row_idx, col_idx, center, scale, 
-    //sumResid, r, m, n, p);
-    if(l != lstart) cutoff = 2 * lambda[l] - lambda[l-1];
-    for(j = 0; j < p; j++) {
-      if(discard_beta[j]) continue;
-      if(fabs(z[j]) > cutoff * alpha * m[col_idx[j]]) {
-        strong_set[j] = 1;
-      } else {
-        strong_set[j] = 0;
-      }
-    }
-    n_reject[l] = p - sum(strong_set, p);
     //for(j = 0; j < p; j++) discard_old[j] = discard_beta[j];
     
     while(iter[l] < max_iter) {
@@ -852,4 +1012,316 @@ RcppExport SEXP cdfit_gaussian_bedpp_ssr(SEXP X_, SEXP y_, SEXP row_idx_,
   Free(a); Free(r); Free(e1); Free(e2); Free(bedpp_reject); Free(bedpp_reject_old);
   //ProfilerStop();
   return List::create(beta, center, scale, lambda, loss, iter, n_reject, n_bedpp_reject, Rcpp::wrap(col_idx));
+}
+
+// Coordinate descent for gaussian models with ada-ddpp-ssr
+RcppExport SEXP cdfit_gaussian_ada_ddpp_ssr(SEXP X_, SEXP y_, SEXP row_idx_, SEXP lambda_, SEXP nlambda_,
+                                            SEXP lam_scale_, SEXP lambda_min_, SEXP alpha_, SEXP user_,
+                                            SEXP eps_, SEXP max_iter_, SEXP multiplier_, SEXP dfmax_,
+                                            SEXP ncore_, SEXP update_thresh_, SEXP verbose_) {
+  //ProfilerStart("Ada_DDPP_SSR.out");
+  XPtr<BigMatrix> xMat(X_);
+  double *y = REAL(y_);
+  int *row_idx = INTEGER(row_idx_);
+  double lambda_min = REAL(lambda_min_)[0];
+  double alpha = REAL(alpha_)[0];
+  int n = Rf_length(row_idx_); // number of observations used for fitting model
+  int p = xMat->ncol();
+  int lam_scale = INTEGER(lam_scale_)[0];
+  int L = INTEGER(nlambda_)[0];
+  int user = INTEGER(user_)[0];
+  int verbose = INTEGER(verbose_)[0];
+  double eps = REAL(eps_)[0];
+  int max_iter = INTEGER(max_iter_)[0];
+  double *m = REAL(multiplier_);
+  int dfmax = INTEGER(dfmax_)[0];
+  double update_thresh = REAL(update_thresh_)[0];
+  
+  NumericVector lambda(L);
+  NumericVector center(p);
+  NumericVector scale(p);
+  int p_keep = 0;
+  int *p_keep_ptr = &p_keep;
+  
+  vector<int> col_idx;
+  vector<double> z;
+  double lambda_max = 0.0;
+  double *lambda_max_ptr = &lambda_max;
+  int xmax_idx = 0;
+  int *xmax_ptr = &xmax_idx;
+  
+  // set up omp
+  int useCores = INTEGER(ncore_)[0];
+#ifdef BIGLASSO_OMP_H_
+  int haveCores = omp_get_num_procs();
+  if(useCores < 1) {
+    useCores = haveCores;
+  }
+  omp_set_dynamic(0);
+  omp_set_num_threads(useCores);
+#endif
+  
+  if (verbose) {
+    char buff1[100];
+    time_t now1 = time (0);
+    strftime (buff1, 100, "%Y-%m-%d %H:%M:%S.000", localtime (&now1));
+    Rprintf("\nPreprocessing start: %s\n", buff1);
+  }
+  
+  standardize_and_get_residual(center, scale, p_keep_ptr, col_idx, z, 
+                               lambda_max_ptr, xmax_ptr, xMat, 
+                               y, row_idx, alpha, n, p);
+  p = p_keep; // set p = p_keep, only loop over columns whose scale > 1e-6
+  
+  if (verbose) {
+    char buff1[100];
+    time_t now1 = time (0);
+    strftime (buff1, 100, "%Y-%m-%d %H:%M:%S.000", localtime (&now1));
+    Rprintf("Preprocessing end: %s\n", buff1);
+    Rprintf("\n-----------------------------------------------\n");
+  }
+  
+  
+  // Objects to be returned to R
+  arma::sp_mat beta = arma::sp_mat(p, L); //Beta
+  double *a = Calloc(p, double); //Beta from previous iteration
+  NumericVector loss(L);
+  IntegerVector iter(L);
+  IntegerVector n_reject(L);
+  IntegerVector n_safe_reject(L);
+  
+  double l1, l2, shift;
+  double max_update, update, thresh; // for convergence check
+  int i, j, jj, l, violations, lstart; //temp index
+  int *ever_active = Calloc(p, int); // ever-active set
+  int *strong_set = Calloc(p, int); // strong set
+  int *discard_beta = Calloc(p, int); // index set of discarded features;
+  //int *discard_old = Calloc(p, int);
+  double *r = Calloc(n, double);
+  for (i = 0; i < n; i++) r[i] = y[i];
+  double sumResid = sum(r, n);
+  loss[0] = gLoss(r, n);
+  thresh = eps * loss[0] / n;
+  
+  // DDPP
+  double c;
+  double *Xty = Calloc(p, double);
+  double *Xtr = Calloc(p, double); // Xtr at previous update of EDPP
+  double *Xtyhat = Calloc(p, double); // Xty - Xtr
+  int *colinear = Calloc(p, int); // colinearity between x_j and yhat 
+  for(j = 0; j < p; j++) {
+    Xty[j] = z[j] * n;
+    Xtr[j] = Xty[j];
+  }
+  double *yhat = Calloc(n, double); // yhat at previous rupdate of EDPP
+  double yhat_norm2;
+  double ytyhat;
+  double y_norm2 = 0; // ||y||^2
+  for(i = 0; i < n; i++) y_norm2 += y[i] * y[i];
+  bool basic = true; // Whether the reference is lambda_max (BEDPP) or not (EDPP)
+  double cutoff = 0; // cutoff for adaptive strong rule
+  double cutoff0 = 0; // cutoff for sequential strong rule
+  int gain = 0; // gain from updating EDPP
+  
+  // lambda, equally spaced on log scale
+  if (user == 0) {
+    if (lam_scale) {
+      // set up lambda, equally spaced on log scale
+      double log_lambda_max = log(lambda_max);
+      double log_lambda_min = log(lambda_min*lambda_max);
+      
+      double delta = (log_lambda_max - log_lambda_min) / (L-1);
+      for (l = 0; l < L; l++) {
+        lambda[l] = exp(log_lambda_max - l * delta);
+      }
+    } else { // equally spaced on linear scale
+      double delta = (lambda_max - lambda_min*lambda_max) / (L-1);
+      for (l = 0; l < L; l++) {
+        lambda[l] = lambda_max - l * delta;
+      }
+    }
+    lstart = 1;
+    n_safe_reject[0] = p;
+    n_reject[0] = p;
+  } else {
+    lstart = 0;
+    lambda = Rcpp::as<NumericVector>(lambda_);
+  } 
+  
+  int l_prev = 0; // lambda index at previous update of EDPP
+  // compute v1 for lambda_max
+  double sxty = sign(crossprod_bm(xMat, y, row_idx, center[xmax_idx], scale[xmax_idx], n, xmax_idx));
+  
+  
+  
+  // Path
+  for (l = lstart; l < L; l++) {
+    if(verbose) {
+      // output time
+      char buff[100];
+      time_t now = time (0);
+      strftime (buff, 100, "%Y-%m-%d %H:%M:%S.000", localtime (&now));
+      Rprintf("Lambda %d. Now time: %s\n", l, buff);
+    }
+    if(l != lstart) {
+      int nv = 0;
+      for (int j=0; j<p; j++) {
+        if (a[j] != 0) nv++;
+      }
+      if (nv > dfmax) {
+        for (int ll=l; ll<L; ll++) iter[ll] = NA_INTEGER;
+        Free(ever_active); Free(r); Free(a); Free(discard_beta); Free(Xtyhat); Free(Xty); Free(Xtr); Free(yhat); Free(strong_set); //Free(discard_old); 
+        return List::create(beta, center, scale, lambda, loss, iter,  n_reject, n_safe_reject, Rcpp::wrap(col_idx));
+      }
+      // strong set
+      //update_zj(z, discard_beta, discard_old, xMat, row_idx, col_idx, center, scale, 
+      //sumResid, r, m, n, p);
+      if(l != lstart){
+        cutoff= 2 * lambda[l] - lambda[l_prev];
+        cutoff0 = 2 * lambda[l] - lambda[l-1];
+      } 
+      for(j = 0; j < p; j++) {
+        if(discard_beta[j]) {
+          if(fabs(z[j]) > cutoff * alpha * m[col_idx[j]]) {
+            strong_set[j] = 1;
+          } else {
+            strong_set[j] = 0;
+          }
+        } else {
+          if(fabs(z[j]) > cutoff0 * alpha * m[col_idx[j]]) {
+            strong_set[j] = 1;
+          } else {
+            strong_set[j] = 0;
+          }
+        }
+        
+      }
+      n_reject[l] = p - sum(strong_set, p);
+      if(gain - n_safe_reject[l - 1] * (l - l_prev) > update_thresh * p && l != L - 1) { // Update EDPP if not discarding enough
+        if(verbose) {
+          // output time
+          char buff[100];
+          time_t now = time (0);
+          strftime (buff, 100, "%Y-%m-%d %H:%M:%S.000", localtime (&now));
+          Rprintf("Start updating EDPP rule at lambda %d. Now time: %s\n", l, buff);
+        }
+        basic = false;
+        l_prev = l-1;
+        yhat_norm2 = 0;
+        ytyhat = 0;
+        for(i = 0; i < n; i ++){
+          yhat[i] = y[i] - r[i];
+          yhat_norm2 += yhat[i] * yhat[i];
+          ytyhat += y[i] * yhat[i];
+        }
+        ddpp_update(xMat, r, sumResid, yhat_norm2, Xtyhat, Xty, Xtr, colinear,
+                    row_idx, col_idx, center, scale, n, p);
+        for(j = 0; j < p; j++) z[j] = Xtr[j] / n;
+        if(verbose) {
+          // output time
+          char buff[100];
+          time_t now = time (0);
+          strftime (buff, 100, "%Y-%m-%d %H:%M:%S.000", localtime (&now));
+          Rprintf("Done updating EDPP rule at lambda %d. Now time: %s\n", l, buff);
+        }
+        // Reapply EDPP
+        c = (lambda[l_prev] - lambda[l]) / lambda[l_prev] / lambda[l];
+        ddpp_screen(discard_beta, n, p, Xty, Xtr, Xtyhat, colinear, yhat_norm2,
+                    ytyhat, y_norm2, c, lambda[l_prev], m, alpha, col_idx, false);
+        n_safe_reject[l] = sum(discard_beta, p);
+        gain = n_safe_reject[l];
+      } else {
+        // Apply EDPP to discard features
+        if(basic) { // Apply BEDPP check
+          c = (lambda_max - lambda[l]) / lambda_max / lambda[l];
+          ddpp_screen(discard_beta, n, p, Xty, Xtr, Xtyhat, colinear, yhat_norm2,
+                      ytyhat, y_norm2, c, lambda_max, m, alpha, col_idx, true);
+        } else { // Apply EDPP check
+          c = (lambda[l_prev] - lambda[l]) / lambda[l_prev] / lambda[l];
+          ddpp_screen(discard_beta, n, p, Xty, Xtr, Xtyhat, colinear, yhat_norm2,
+                      ytyhat, y_norm2, c, lambda[l_prev], m, alpha, col_idx, false);
+        }
+        n_safe_reject[l] = sum(discard_beta, p);
+        gain += n_safe_reject[l];
+      }
+      
+    } else { //First check with lambda max
+      if(verbose) {
+        // output time
+        char buff[100];
+        time_t now = time (0);
+        strftime (buff, 100, "%Y-%m-%d %H:%M:%S.000", localtime (&now));
+        Rprintf("Start calculating BEDPP rule. Now time: %s\n", buff);
+      }
+      // For BEDPP pretend yhat=lambda_max*sign(xmaxty)*xmax
+      ddpp_init(xMat, Xtyhat, colinear, sxty, xmax_idx, lambda_max,
+                row_idx, col_idx, center, scale, n, p);
+      yhat_norm2 = n * pow(lambda_max, 2);
+      ytyhat = yhat_norm2;
+      if(verbose) {
+        // output time
+        char buff[100];
+        time_t now = time (0);
+        strftime (buff, 100, "%Y-%m-%d %H:%M:%S.000", localtime (&now));
+        Rprintf("Done calculating BEDPP rule. Now time: %s\n", buff);
+      }
+      c = (lambda_max - lambda[l]) / lambda_max / lambda[l];
+      ddpp_screen(discard_beta, n, p, Xty, Xtr, Xtyhat, colinear, yhat_norm2,
+                  ytyhat, y_norm2, c, lambda_max, m, alpha, col_idx, true);
+      n_safe_reject[l] = sum(discard_beta, p);
+      gain = n_safe_reject[l];
+    }
+    //for(j = 0; j < p; j++) discard_old[j] = discard_beta[j];
+    
+    while(iter[l] < max_iter) {
+      while (iter[l] < max_iter) {
+        while (iter[l] < max_iter) {
+          iter[l]++;
+          
+          max_update = 0.0;
+          for (j = 0; j < p; j++) {
+            if (ever_active[j]) {
+              jj = col_idx[j];
+              z[j] = crossprod_resid(xMat, r, sumResid, row_idx, center[jj], scale[jj], n, jj) / n + a[j];
+              l1 = lambda[l] * m[jj] * alpha;
+              l2 = lambda[l] * m[jj] * (1-alpha);
+              beta(j, l) = lasso(z[j], l1, l2, 1);
+              
+              shift = beta(j, l) - a[j];
+              if (shift != 0) {
+                // compute objective update for checking convergence
+                //update =  z[j] * shift - 0.5 * (1 + l2) * (pow(beta(j, l+1), 2) - pow(a[j], 2)) - l1 * (fabs(beta(j, l+1)) -  fabs(a[j]));
+                update = pow(beta(j, l) - a[j], 2);
+                if (update > max_update) {
+                  max_update = update;
+                }
+                update_resid(xMat, r, shift, row_idx, center[jj], scale[jj], n, jj);
+                sumResid = sum(r, n); //update sum of residual
+                a[j] = beta(j, l); //update a
+              }
+              // update ever active sets
+              if (beta(j, l) != 0) {
+                ever_active[j] = 1;
+              } 
+            }
+          }
+          // Check for convergence
+          if (max_update < thresh) break;
+        }
+        violations = check_strong_set(ever_active, strong_set, z, xMat, row_idx, col_idx, center, scale, a, lambda[l], sumResid, alpha, r, m, n, p); 
+        if (violations==0) break;
+      }	
+      // Scan for violations in edpp set
+      violations = check_rest_safe_set(ever_active, strong_set, discard_beta, z, xMat, row_idx, col_idx, center, scale, a, lambda[l], sumResid, alpha, r, m, n, p); 
+      if (violations == 0) {
+        loss[l] = gLoss(r, n);
+        break;
+      }
+      
+    }
+  }
+  
+  Free(ever_active); Free(r); Free(a); Free(discard_beta); Free(Xtyhat); Free(Xty); Free(Xtr); Free(yhat); Free(strong_set); //Free(discard_old);
+  //ProfilerStop();
+  return List::create(beta, center, scale, lambda, loss, iter, n_reject, n_safe_reject, Rcpp::wrap(col_idx));
 }

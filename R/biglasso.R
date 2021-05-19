@@ -365,6 +365,15 @@ biglasso <- function(X, y, row.idx = 1:nrow(X),
                               as.integer(verbose),
                               PACKAGE = 'biglasso')
                },
+               "None" = {
+                 res <- .Call("cdfit_gaussian_ada_ddpp_ssr", X@address, yy, as.integer(row.idx-1),
+                              lambda, as.integer(nlambda), as.integer(lambda.log.scale),
+                              lambda.min, alpha,
+                              as.integer(user.lambda | any(penalty.factor==0)),
+                              eps, as.integer(max.iter), penalty.factor,
+                              as.integer(dfmax), as.integer(ncores), update.thresh, as.integer(verbose),
+                              PACKAGE = 'biglasso')
+               },
                stop("Invalid screening method!")
                )
       }
@@ -381,6 +390,10 @@ biglasso <- function(X, y, row.idx = 1:nrow(X),
     
     if (screen %in% c("Hybrid", "Adaptive")) {
       safe_rejections <- res[[8]]
+      col.idx <- res[[9]]
+    } else if (screen == "None") {
+      # To be removed
+      rejections <- res[[8]]
       col.idx <- res[[9]]
     } else {
       col.idx <- res[[8]]

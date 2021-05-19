@@ -96,6 +96,13 @@ extern SEXP cdfit_gaussian_ada_edpp_ssr(SEXP X_, SEXP y_, SEXP row_idx_, SEXP la
                                         SEXP multiplier_, SEXP dfmax_, SEXP ncore_,
                                         SEXP update_thresh_, SEXP verbose_);
 
+extern SEXP cdfit_gaussian_ada_ddpp_ssr(SEXP X_, SEXP y_, SEXP row_idx_, SEXP lambda_, 
+                                        SEXP nlambda_, SEXP lam_scale_,
+                                        SEXP lambda_min_, SEXP alpha_, 
+                                        SEXP user_, SEXP eps_, SEXP max_iter_, 
+                                        SEXP multiplier_, SEXP dfmax_, SEXP ncore_,
+                                        SEXP update_thresh_, SEXP verbose_);
+
 extern SEXP cdfit_gaussian_ssr(SEXP X_, SEXP y_, SEXP row_idx_, 
                                SEXP lambda_, SEXP nlambda_, 
                                SEXP lam_scale_, SEXP lambda_min_, 
@@ -129,6 +136,7 @@ static R_CallMethodDef callMethods[] = {
   {"cdfit_binomial_slores_ssr", (DL_FUNC) &cdfit_binomial_slores_ssr, 19},
   {"cdfit_binomial_ada_slores_ssr", (DL_FUNC) &cdfit_binomial_ada_slores_ssr, 20},
   {"cdfit_gaussian_ada_edpp_ssr", (DL_FUNC) &cdfit_gaussian_ada_edpp_ssr, 16},
+  {"cdfit_gaussian_ada_ddpp_ssr", (DL_FUNC) &cdfit_gaussian_ada_ddpp_ssr, 16},
   {"cdfit_gaussian_ssr", (DL_FUNC) &cdfit_gaussian_ssr, 15},
   {"cdfit_gaussian_bedpp_ssr", (DL_FUNC) &cdfit_gaussian_bedpp_ssr, 16},
   {"_biglasso_get_eta", (DL_FUNC) &_biglasso_get_eta, 5},
