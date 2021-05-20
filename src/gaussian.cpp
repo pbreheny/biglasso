@@ -201,7 +201,7 @@ void ddpp_init(XPtr<BigMatrix> xpMat, double *Xtyhat, int *colinear, double sxty
     for (i = 0; i < n; i++) {
       sum += xCol[row_idx[i]] * xCol_max[row_idx[i]];
     }
-    sum = (sum - n * center[j] * center[xmax_idx]) / (scale[j] * scale[xmax_idx]);
+    sum = (sum - n * center[jj] * center[xmax_idx]) / (scale[jj] * scale[xmax_idx]);
     Xtyhat[j] = sxty * sum * lambda_max;
     if(Xtyhat[j] >= n * lambda_max) colinear[j] = 1;
     else if(-Xtyhat[j] >= n * lambda_max) colinear[j] = -1;
