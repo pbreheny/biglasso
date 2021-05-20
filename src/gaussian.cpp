@@ -154,7 +154,7 @@ void edpp_init(XPtr<BigMatrix> xpMat, double *lhs2, double xty, int xmax_idx,
     for (i = 0; i < n; i++) {
       sum += xCol[row_idx[i]] * xCol_max[row_idx[i]];
     }
-    sum = (sum - n * center[j] * center[xmax_idx]) / (scale[j] * scale[xmax_idx]);
+    sum = (sum - n * center[jj] * center[xmax_idx]) / (scale[jj] * scale[xmax_idx]);
     lhs2[j] = -xty * lambda_max * sum;
   }
 }
