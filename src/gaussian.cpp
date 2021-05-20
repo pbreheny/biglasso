@@ -1,4 +1,5 @@
 #include "utilities.h"
+//#include "gperftools/profiler.h"
 
 // apply EDPP 
 void edpp_screen(int *discard_beta, int n, int p, double rhs2, double *Xtr, double *lhs2,
@@ -19,68 +20,116 @@ void ddpp_screen(int *discard_beta, int n, int p, double *Xty, double *Xtr,
                  double ytyhat, double y_norm2, double c, double lambda_prev,
                  double *m, double alpha, vector<int> &col_idx, bool basic) {
   int j;
-  double tp, tn, Tp, Tn;
+  double tp, tn, Tp=0, Tn=0, Rp=0, Rn=0;
+  double clambda, lambda2, c2, var, t1, t2, t3, T1, T2, R0, R1; // Reuse intermediate quantities
+  clambda = c*lambda_prev;
+  lambda2 = 2*lambda_prev;
+  c2 = c/2;
   if (basic) {
+    var = lambda_prev*lambda_prev*n*n;
+    t1 = (1/lambda_prev + c2);
+    t2 = sqrt(y_norm2/n-pow(lambda_prev,2));
+    T1 = pow(c,2)*y_norm2/n;
+    T2 = 2*clambda;
+    R1 = n*n/4;
+    R0 = R1*(T1-clambda*clambda);
     for (j = 0; j < p; j ++) {
       // Check +xtr and -xtr
       if (colinear[j] == 1){
         tp = -1;
-        Tp = (1/lambda_prev + c/2) * Xtr[j] - c*n*lambda_prev/2;
+        Tp = t1 * Xtr[j] - clambda*n/2 - n;
+	Rp = 0;
         tn = 0;
       } else if (colinear[j] == -1) {
         tp = 0;
         tn = -1;
-        Tn = -(1/lambda_prev + c/2) * Xtr[j] - c*n*lambda_prev/2;
+        Tn = -t1 * Xtr[j] - clambda*n/2 - n;
+	Rn = 0;
       } else {
-        tp = c*(lambda_prev+sqrt((y_norm2/n-pow(lambda_prev,2))/(pow(n*lambda_prev,2)-pow(Xtyhat[j],2)))*Xtyhat[j]);
-        tn = c*(lambda_prev-sqrt((y_norm2/n-pow(lambda_prev,2))/(pow(n*lambda_prev,2)-pow(Xtyhat[j],2)))*Xtyhat[j]);
-        if (tp < 0) tp = 0;
-        else if (tn < 0) tn = 0;
+	if (Xtyhat[j]*Xtyhat[j] < 0.01*var) {
+	  tp = clambda;
+	  tn = clambda;
+	} else{
+	  t3 = t2/sqrt(var-Xtyhat[j]*Xtyhat[j])*Xtyhat[j];
+	  tp = c*(lambda_prev+t3);
+	  tn = c*(lambda_prev-t3);
+	  if (tp < 0) tp = 0;
+	  else if (tn < 0) tn = 0;
+	}
       }
-      if (tp >= 0) {
-        Tp = (1/lambda_prev+c/2)*Xtr[j] - tp*Xtyhat[j]/2/lambda_prev +
-          sqrt(n*(pow(tp,2)*n+pow(c,2)*y_norm2-2*tp*c*lambda_prev*n))/2;
+      if (tp == clambda) {
+	Tp = t1*Xtr[j] - tp*Xtyhat[j]/lambda2 - n;
+	Rp = R0;
+      } else if (tp >= 0) {
+        Tp = t1*Xtr[j] - tp*Xtyhat[j]/lambda2 - n;
+        Rp = R1*(tp*(tp-T2)+T1);
       }
-      if (Tp >= n) discard_beta[j] = 0;
+      if (Tp >= 0 || Tp*Tp <= Rp) discard_beta[j] = 0;
       else {
-        if (tn >=0 ) {
-          Tn = -(1/lambda_prev+c/2)*Xtr[j] + tn*Xtyhat[j]/2/lambda_prev +
-            sqrt(n*(pow(tn,2)*n+pow(c,2)*y_norm2-2*tn*c*lambda_prev*n))/2;
+	if (tn == clambda) {
+	  Tn = -t1*Xtr[j] + tn*Xtyhat[j]/lambda2 - n;
+	  Rn = R0;
+	} else if (tn >=0 ) {
+          Tn = -t1*Xtr[j] + tn*Xtyhat[j]/lambda2 - n;
+          Rn = R1*(tn*(tn-T2)+T1);
         }
-        if (Tn >= n) discard_beta[j] = 0;
+        if (Tn >= 0 || Tn*Tn <= Rn) discard_beta[j] = 0;
         else discard_beta[j] = 1;
       }
     }
   } else {
+    var = n*yhat_norm2;
+    t1 = 1 + clambda*ytyhat/yhat_norm2;
+    t2 = clambda*sqrt(y_norm2*yhat_norm2-pow(ytyhat,2))/yhat_norm2;
+    T1 = pow(clambda,2)*y_norm2;
+    T2 = 2*clambda*ytyhat;
+    R1 = n/lambda2/lambda2;
+    R0 = R1*((1-t1)*((1-t1)*yhat_norm2+T2)+T1);
+    double cr = 1/lambda_prev + c2;
+    double cy = c2 + (1-t1)/lambda2;
     for (j = 0; j < p; j ++) {
       // Check +xtr and -xtr
       if (colinear[j] == 1){
         tp = -1;
-        Tp = Xtr[j]/lambda_prev + c*Xty[j]/2 - c*ytyhat*sqrt(n/yhat_norm2)/2;
+        Tp = Xtr[j]/lambda_prev + c2*Xty[j] - c2*ytyhat*sqrt(n/yhat_norm2) - n;
+	Rp = 0;
         tn = 0;
       } else if (colinear[j] == -1) {
         tp = 0;
         tn = -1;
-        Tn = -Xtr[j]/lambda_prev - c*Xty[j]/2 - c*ytyhat*sqrt(n/yhat_norm2)/2;
+        Tn = -Xtr[j]/lambda_prev - c2*Xty[j] - c2*ytyhat*sqrt(n/yhat_norm2) - n;
+	Rn = 0;
       } else {
-        tp = 1 + c*lambda_prev*ytyhat/yhat_norm2 + 
-          c*lambda_prev*sqrt((y_norm2*yhat_norm2-pow(ytyhat,2))/(n*yhat_norm2-pow(Xtyhat[j],2)))*Xtyhat[j]/yhat_norm2;
-        tn = 1 + c*lambda_prev*ytyhat/yhat_norm2 - 
-          c*lambda_prev*sqrt((y_norm2*yhat_norm2-pow(ytyhat,2))/(n*yhat_norm2-pow(Xtyhat[j],2)))*Xtyhat[j]/yhat_norm2;
-        if (tp < 0) tp = 0;
-        else if (tn < 0) tn = 0;
+	if (Xtyhat[j]*Xtyhat[j] < 0.01*var) {
+	  tp = t1;
+	  tn = t1;
+	} else {
+	  t3 = t2/sqrt(var-Xtyhat[j]*Xtyhat[j])*Xtyhat[j];
+	  tp = t1 + t3;
+	  tn = t1 - t3;
+	  if (tp < 0) tp = 0;
+	  else if (tn < 0) tn = 0;
+	}
       }
-      if (tp >= 0) {
-        Tp = Xtr[j]/lambda_prev + c*Xty[j]/2 + (1-tp)*Xtyhat[j]/2/lambda_prev +
-          sqrt(n*(pow((1-tp),2)*yhat_norm2+pow(c*lambda_prev,2)*y_norm2+2*(1-tp)*c*lambda_prev*ytyhat))/2/lambda_prev;
+      if (tp == t1) {
+	Tp = cr*Xtr[j] + cy*Xtyhat[j] - n;
+	Rp = R0;
+      } else if (tp >= 0) {
+	tp = 1-tp;
+        Tp = cr*Xtr[j] + (c2+tp/lambda2)*Xtyhat[j] - n;
+        Rp = R1*(tp*(tp*yhat_norm2+T2)+T1);
       }
-      if (Tp >= n) discard_beta[j] = 0;
+      if (Tp >= 0 || Tp*Tp <= Rp) discard_beta[j] = 0;
       else {
-        if (tn >=0 ) {
-          Tn = -Xtr[j]/lambda_prev - c*Xty[j]/2 - (1-tn)*Xtyhat[j]/2/lambda_prev +
-            sqrt(n*(pow((1-tn),2)*yhat_norm2+pow(c*lambda_prev,2)*y_norm2+2*(1-tn)*c*lambda_prev*ytyhat))/2/lambda_prev;
+	if (tn == t1) {
+	  Tn = -cr*Xtr[j] - cy*Xtyhat[j] - n;
+	  Rn = R0;
+	} else if (tn >=0 ) {
+	  tn = 1-tn;
+          Tn = -cr*Xtr[j] - (c2+tn/lambda2)*Xtyhat[j] - n;
+          Rn = R1*(tn*(tn*yhat_norm2+T2)+T1);
         }
-        if (Tn >= n) discard_beta[j] = 0;
+        if (Tn >= 0 || Tn*Tn <= Rn) discard_beta[j] = 0;
         else discard_beta[j] = 1;
       }
     }
@@ -181,9 +230,10 @@ void ddpp_update(XPtr<BigMatrix> xpMat, double *r, double sumResid,
     sum = (sum - center[jj] * sumResid) / scale[jj];
     Xtr[j] = sum;
     Xtyhat[j] = Xty[j] - sum;
-    if(Xtyhat[j] >= sqrt(n*yhat_norm2)) colinear[j] = 1;
-    else if(-Xtyhat[j] >= sqrt(n*yhat_norm2)) colinear[j] = -1;
-    else colinear[j] = 0;
+    if(Xtyhat[j]*Xtyhat[j] >= n*yhat_norm2) {
+      if(Xtyhat[j] > 0) colinear[j] = 1;
+      else colinear[j] = -1;
+    } else colinear[j] = 0;
   }
 }
 
@@ -448,7 +498,7 @@ RcppExport SEXP cdfit_gaussian_ada_edpp_ssr(SEXP X_, SEXP y_, SEXP row_idx_, SEX
                                             SEXP lam_scale_, SEXP lambda_min_, SEXP alpha_, SEXP user_,
                                             SEXP eps_, SEXP max_iter_, SEXP multiplier_, SEXP dfmax_,
                                             SEXP ncore_, SEXP update_thresh_, SEXP verbose_) {
-  //ProfilerStart("Ada_EDPP_SSR.out");
+  //ProfilerStart("Ada_EDPP.out");
   XPtr<BigMatrix> xMat(X_);
   double *y = REAL(y_);
   int *row_idx = INTEGER(row_idx_);
@@ -1019,7 +1069,7 @@ RcppExport SEXP cdfit_gaussian_ada_ddpp_ssr(SEXP X_, SEXP y_, SEXP row_idx_, SEX
                                             SEXP lam_scale_, SEXP lambda_min_, SEXP alpha_, SEXP user_,
                                             SEXP eps_, SEXP max_iter_, SEXP multiplier_, SEXP dfmax_,
                                             SEXP ncore_, SEXP update_thresh_, SEXP verbose_) {
-  //ProfilerStart("Ada_DDPP_SSR.out");
+  //ProfilerStart("Ada_DDPP.out");
   XPtr<BigMatrix> xMat(X_);
   double *y = REAL(y_);
   int *row_idx = INTEGER(row_idx_);
@@ -1114,8 +1164,8 @@ RcppExport SEXP cdfit_gaussian_ada_ddpp_ssr(SEXP X_, SEXP y_, SEXP row_idx_, SEX
     Xtr[j] = Xty[j];
   }
   double *yhat = Calloc(n, double); // yhat at previous rupdate of EDPP
-  double yhat_norm2;
-  double ytyhat;
+  double yhat_norm2 = 0;
+  double ytyhat = 0;
   double y_norm2 = 0; // ||y||^2
   for(i = 0; i < n; i++) y_norm2 += y[i] * y[i];
   bool basic = true; // Whether the reference is lambda_max (BEDPP) or not (EDPP)
