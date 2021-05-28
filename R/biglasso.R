@@ -249,18 +249,10 @@ biglasso <- function(X, y, row.idx = 1:nrow(X),
     alpha <- 1
   } else if (identical(penalty, 'ridge')) {
     alpha <- 1.0e-6 ## equivalent to ridge regression
-    if (screen == "Adaptive") {
-      warning("For now \"ridge\" does not support \"Adaptive\" screen. Automatically switching to \"SSR\"." )
-      screen <- "SSR"
-    }
   } else if (identical(penalty, 'enet')) {
     if (alpha >= 1 || alpha <= 0) {
       stop("alpha must be between 0 and 1 for elastic net penalty.")
     }
-    if (screen == "Adaptive") {
-      warning("For now \"enet\" does not support \"Adaptive\" screen. Automatically switching to \"SSR\"." )
-      screen <- "SSR"
-    } 
   }
 
   if (!("big.matrix" %in% class(X)) || typeof(X) != "double") stop("X must be a double type big.matrix.")
@@ -363,15 +355,6 @@ biglasso <- function(X, y, row.idx = 1:nrow(X),
                               eps, as.integer(max.iter), penalty.factor,
                               as.integer(dfmax), as.integer(ncores), safe.thresh, 
                               as.integer(verbose),
-                              PACKAGE = 'biglasso')
-               },
-               "None" = {
-                 res <- .Call("cdfit_gaussian_ada_ddpp_ssr", X@address, yy, as.integer(row.idx-1),
-                              lambda, as.integer(nlambda), as.integer(lambda.log.scale),
-                              lambda.min, alpha,
-                              as.integer(user.lambda | any(penalty.factor==0)),
-                              eps, as.integer(max.iter), penalty.factor,
-                              as.integer(dfmax), as.integer(ncores), update.thresh, as.integer(verbose),
                               PACKAGE = 'biglasso')
                },
                stop("Invalid screening method!")
