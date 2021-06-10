@@ -1214,7 +1214,7 @@ RcppExport SEXP cdfit_binomial_ada_slores_ssr(SEXP X_, SEXP y_, SEXP n_pos_, SEX
     
     if (slores) {
       // update rule if not discarding enough
-      if(gain - n_slores_reject[l - 1] * (l - l_prev) > update_thresh * (xmax_invalid + 1) * p && l != L - 1) {
+      if(gain - n_slores_reject[l - 1] * (l - l_prev - 1) > update_thresh * (xmax_invalid + 1) * p && l != L - 1) {
         l_prev = l - 1;
         // If xmax is not active, choose another x as xmax.
         if(xmax_invalid) {

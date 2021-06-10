@@ -516,7 +516,7 @@ RcppExport SEXP cdfit_gaussian_ada_edpp_ssr(SEXP X_, SEXP y_, SEXP row_idx_, SEX
       }
       n_reject[l] = p - sum(strong_set, p);
       
-      if(gain - n_safe_reject[l - 1] * (l - l_prev) > update_thresh * p && l != L - 1) { // Update EDPP if not discarding enough
+      if(gain - n_safe_reject[l - 1] * (l - l_prev - 1) > update_thresh * p && l != L - 1) { // Update EDPP if not discarding enough
         if(verbose) {
           // output time
           char buff[100];

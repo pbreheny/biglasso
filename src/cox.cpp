@@ -1700,7 +1700,7 @@ RcppExport SEXP cdfit_cox_ada_scox(SEXP X_, SEXP y_, SEXP d_, SEXP d_idx_, SEXP 
     } 
     
     if(scox) {
-      if(gain - n_safe_reject[l - 1] * (l - l_prev) > update_thresh * p && l != L - 1){
+      if(gain - n_safe_reject[l - 1] * (l - l_prev - 1) > update_thresh * p && l != L - 1){
         l_prev = l-1;
         scox_update(X_theta_lam, z, eta, haz0, rsk0, xMat, row_idx, col_idx,
                     center, scale, n, p, f, y, d, d_idx);

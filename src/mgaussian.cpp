@@ -555,7 +555,7 @@ RcppExport SEXP cdfit_mgaussian_ada(SEXP X_, SEXP y_, SEXP row_idx_,
           else e2[j] = 0;
         }
       }
-      if(gain - n_safe_reject[l - 1] * (l - l_prev) > update_thresh * p && l != L - 1 && safe) { // Update EDPP if not discarding enough
+      if(gain - n_safe_reject[l - 1] * (l - l_prev - 1) > update_thresh * p && l != L - 1 && safe) { // Update EDPP if not discarding enough
         if(verbose) {
           // output time
           char buff[100];
