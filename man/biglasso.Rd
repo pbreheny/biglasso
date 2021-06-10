@@ -60,15 +60,15 @@ case.}
 
 \item{screen}{The feature screening rule used at each \code{lambda} that
 discards features to speed up computation: \code{"SSR"} (default if
-\code{penalty="ridge"} or \code{penalty="enet"} )is the sequential strong rule;
-\code{"Hybrid"} is our newly proposed hybrid screening rules which combine the
-strong rule with a safe rule. \code{"Adaptive"} (default for \code{penalty="lasso"}
+\code{penalty="ridge"} or \code{penalty="enet"} unless \code{family="gaussian"})
+is the sequential strong rule; \code{"Hybrid"} is our newly proposed hybrid 
+screening rules which combine the strong rule with a safe rule. 
+\code{"Adaptive"} (default for \code{penalty="lasso"} or \code{family="gaussian"}
 without \code{penalty.factor}) is our newly proposed adaptive rules which
 reuse screening reference for multiple lambda values. \strong{Note that:}
-(1) for linear regression with elastic net penalty, both \code{"SSR"} and
-\code{"Hybrid"} are applicable since version 1.3-0;  (2) only \code{"SSR"} is
-applicable to elastic-net-penalized logistic regression or cox regression;
-(3) active set cycling strategy is incorporated with these screening rules.}
+(1) only \code{"SSR"} is applicable to elastic-net-penalized logistic
+regression or cox regression; (2) active set cycling strategy is incorporated
+with these screening rules.}
 
 \item{safe.thresh}{the threshold value between 0 and 1 that controls when to
 stop safe test. For example, 0.01 means to stop safe test at next lambda 
