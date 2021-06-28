@@ -15,15 +15,16 @@ void edpp_screen(int *discard_beta, int n, int p, double *Xtr, double *Xty,
     cr = t *alpha / 2;
     cy = (1 / lambda0 + c / 2);
   } else {
-    double gamma_norm2 = n*(1-alpha)*lambda1*beta_norm*beta_norm;
-    double delta = yhat_norm2+lambda0/lambda1/lambda1*(2*lambda1-lambda0)*gamma_norm2;
+    double d = (sqrt(lambda0/lambda1) + sqrt(lambda1/lambda0)) / 2;
+    double gamma_norm2 = n*(1-alpha)*lambda0*beta_norm*beta_norm;
+    double delta = yhat_norm2+gamma_norm2;
     if(delta <= 0) t = 0;
-    else t = 1 + c*lambda0*ytyhat/(yhat_norm2+gamma_norm2)-
-      c*c*lambda0*lambda0/(yhat_norm2+gamma_norm2)*
-      sqrt(gamma_norm2*(y_norm2*(yhat_norm2+gamma_norm2)-ytyhat)/delta);
+    else t = 1 + c*lambda0*ytyhat/(yhat_norm2+d*d*gamma_norm2)-
+      c*lambda0/(yhat_norm2+d*d*gamma_norm2)*
+      sqrt((d*d-1)*gamma_norm2*(y_norm2*(yhat_norm2+d*d*gamma_norm2)-ytyhat)/delta);
     if(t < 0) t = 0;
-    RHS = n * alpha - (t+1+fabs(1-t)) / 2 * c * sqrt(n*gamma_norm2) -
-      sqrt(n*((1-t)*((1-t)*(yhat_norm2+gamma_norm2)+2*c*lambda0*ytyhat)+c*c*lambda0*lambda0*y_norm2))/2/lambda0;
+    RHS = n * alpha - (t+1+fabs(1-t)) / 2 / lambda0 * sqrt(n*(d*d-1)*gamma_norm2) -
+      sqrt(n*((1-t)*((1-t)*(yhat_norm2+d*d*gamma_norm2)+2*c*lambda0*ytyhat)+c*c*lambda0*lambda0*y_norm2))/2/lambda0;
     cr = (t + 1) / 2 / lambda0;
     cy = ((1-t) / 2 / lambda0 + c / 2);
   }
