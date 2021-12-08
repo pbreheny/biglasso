@@ -1,6 +1,9 @@
 # biglasso 1.4-1
 * changed R package maintainer to Chuyi Wang (wwaa0208@gmail.com)
 * fixed bugs
+* Add 'auc', 'class' options to cv.biglasso eval.metric
+* predict.cv now predicts standard error over CV folds by default; set 'grouped' argument to FALSE for old behaviour.
+* predict.cv.biglasso accepts 'lambda.min', 'lambda.1se' argument, similar to predict.cv.glmnet()
 
 # biglasso 1.4-0
 * adaptive screening methods were implemented and set as default when applicable
