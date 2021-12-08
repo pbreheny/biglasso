@@ -54,10 +54,12 @@
 #' \item{fit}{The fitted \code{biglasso} object for the whole data.}
 #' \item{min}{The index of \code{lambda} corresponding to \code{lambda.min}.}
 #' \item{lambda.min}{The value of \code{lambda} with the minimum
-#' cross-validation error.} \item{null.dev}{The deviance for the intercept-only
-#' model.} \item{pe}{If \code{family="binomial"}, the cross-validation
-#' prediction error for each value of \code{lambda}.} \item{cv.ind}{Same as
-#' above.}
+#' cross-validation error.} \item{lambda.1se}{The largest value of \code{lambda}
+#' for which the cross-validation error is at most one standard error larger
+#' than the minimum cross-validation error.} \item{null.dev}{The deviance for
+#' the intercept-only model.} \item{pe}{If \code{family="binomial"}, the
+#' cross-validation prediction error for each value of \code{lambda}.}
+#' \item{cv.ind}{Same as above.}
 #' @author Yaohui Zeng and Patrick Breheny
 #'
 #' Maintainer: Yaohui Zeng <yaohui.zeng@@gmail.com>
@@ -188,9 +190,13 @@ cv.biglasso <- function(X, y, row.idx = 1:nrow(X),
     cve <- apply(E, 2, mean)
     cvse <- apply(E, 2, sd) / sqrt(n)
   }
-  min <- which.min(cve)
+  # get the index for which cvm is minimal (or maximal, for AUC).
+  cve.minimize <- if (eval.metric == "auc") -cve else cve
+  # break ties with the smaller index, since we prefer larger values of lambda, all else being equal.
+  min <- which.min(cve.minimize)
+  lambda.1se <- max(lambda[cve.minimize <= cve.minimize[[min]] + cvse[[min]]], na.rm = TRUE)
 
-  val <- list(cve=cve, cvse=cvse, lambda=lambda, fit=fit, min=min, lambda.min=lambda[min],
+  val <- list(cve=cve, cvse=cvse, lambda=lambda, fit=fit, min=min, lambda.min=lambda[min], lambda.1se = lambda.1se,
               null.dev=mean(loss.biglasso(y, rep(mean(y), n),
                                           fit$family, eval.metric = eval.metric)),
               cv.ind = cv.ind,

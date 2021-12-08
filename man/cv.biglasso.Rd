@@ -76,10 +76,12 @@ values along which the cross-validation error was calculated.}
 \item{fit}{The fitted \code{biglasso} object for the whole data.}
 \item{min}{The index of \code{lambda} corresponding to \code{lambda.min}.}
 \item{lambda.min}{The value of \code{lambda} with the minimum
-cross-validation error.} \item{null.dev}{The deviance for the intercept-only
-model.} \item{pe}{If \code{family="binomial"}, the cross-validation
-prediction error for each value of \code{lambda}.} \item{cv.ind}{Same as
-above.}
+cross-validation error.} \item{lambda.1se}{The largest value of \code{lambda}
+for which the cross-validation error is at most one standard error larger
+than the minimum cross-validation error.} \item{null.dev}{The deviance for
+the intercept-only model.} \item{pe}{If \code{family="binomial"}, the
+cross-validation prediction error for each value of \code{lambda}.}
+\item{cv.ind}{Same as above.}
 }
 \description{
 Perform k-fold cross validation for penalized regression models over a grid
