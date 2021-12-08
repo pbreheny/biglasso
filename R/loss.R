@@ -74,7 +74,7 @@ loss.biglasso <- function(y, yhat, family, eval.metric, grouped = TRUE) {
       if (t0.len == 0 || t1.len == 0) {
         # This happens when we have a bad CV split.
         # In this case the AUC is not defined. We return NA to ignore this fold.
-        val <- rep(NA_reals_, ncol(yhat))
+        val <- rep(NA_real_, ncol(yhat))
       } else {
         val <- apply(yhat, 2, function(yhcol) {
           (mean(rank(yhcol, ties.method = "average")[t1]) - (t1.len + 1) / 2) /
