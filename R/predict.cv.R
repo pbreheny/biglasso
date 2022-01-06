@@ -1,11 +1,11 @@
 #' Model predictions based on a fitted \code{\link{cv.biglasso}} object
-#' 
+#'
 #' Extract predictions from a fitted \code{\link{cv.biglasso}} object.
-#' 
+#'
 #' @name predict.cv.biglasso
 #' @rdname predict.cv.biglasso
 #' @method predict cv.biglasso
-#' 
+#'
 #' @param object A fitted \code{"cv.biglasso"} model object.
 #' @param X Matrix of values at which predictions are to be made. It must be a
 #' \code{\link[bigmemory]{big.matrix}} object. Not used for
@@ -22,7 +22,10 @@
 #' \code{lambda}.
 #' @param lambda Values of the regularization parameter \code{lambda} at which
 #' predictions are requested.  The default value is the one corresponding to
-#' the minimum cross-validation error.
+#' the minimum cross-validation error. Accepted values are also the strings
+#' "lambda.min" (\code{lambda} of minimum cross-validation error) and
+#' "lambda.1se" (Largest value of \code{lambda} for which the cross-validation
+#' error was at most one standard error larger than the minimum.).
 #' @param which Indices of the penalty parameter \code{lambda} at which
 #' predictions are requested. The default value is the index of lambda
 #' corresponding to lambda.min.  Note: this is overridden if \code{lambda} is
@@ -30,7 +33,7 @@
 #' @param \dots Not used.
 #' @return The object returned depends on \code{type}.
 #' @author Yaohui Zeng and Patrick Breheny
-#' 
+#'
 #' Maintainer: Yaohui Zeng <yaohui.zeng@@gmail.com>
 #' @seealso \code{\link{biglasso}}, \code{\link{cv.biglasso}}
 #' @keywords models regression
@@ -48,23 +51,28 @@
 #' predict(cvfit, X.bm, type = "response")
 #' predict(cvfit, X.bm, type = "link")
 #' predict(cvfit, X.bm, type = "class")
+#' predict(cvfit, X.bm, lambda = "lambda.1se")
 #' }
 #' @export
-#' 
+#'
 predict.cv.biglasso <- function(object, X, row.idx = 1:nrow(X),
                                 type = c("link","response","class",
-                                         "coefficients","vars","nvars"), 
+                                         "coefficients","vars","nvars"),
                                 lambda = object$lambda.min,
                                 which = object$min, ...) {
+  if (is.character(lambda)) {
+    lambda <- match.arg(lambda, c("lambda.min", "lambda.1se"))
+    lambda <- object[[lambda]]
+  }
   type <- match.arg(type)
-  predict.biglasso(object$fit, X = X, row.idx = row.idx, type = type, 
+  predict.biglasso(object$fit, X = X, row.idx = row.idx, type = type,
                    lambda = lambda, which = which, ...)
 }
 
 #' @method coef cv.biglasso
 #' @rdname predict.cv.biglasso
 #' @export
-#' 
+#'
 coef.cv.biglasso <- function(object, lambda = object$lambda.min, which = object$min, ...) {
   coef.biglasso(object$fit, lambda = lambda, which = which, ...)
 }

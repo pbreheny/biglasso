@@ -38,7 +38,10 @@ names of the nonzero variables at each value of \code{lambda};
 
 \item{lambda}{Values of the regularization parameter \code{lambda} at which
 predictions are requested.  The default value is the one corresponding to
-the minimum cross-validation error.}
+the minimum cross-validation error. Accepted values are also the strings
+"lambda.min" (\code{lambda} of minimum cross-validation error) and
+"lambda.1se" (Largest value of \code{lambda} for which the cross-validation
+error was at most one standard error larger than the minimum.).}
 
 \item{which}{Indices of the penalty parameter \code{lambda} at which
 predictions are requested. The default value is the index of lambda
@@ -67,6 +70,7 @@ coef[which(coef != 0)]
 predict(cvfit, X.bm, type = "response")
 predict(cvfit, X.bm, type = "link")
 predict(cvfit, X.bm, type = "class")
+predict(cvfit, X.bm, lambda = "lambda.1se")
 }
 }
 \seealso{

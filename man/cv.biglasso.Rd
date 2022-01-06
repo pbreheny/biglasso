@@ -9,13 +9,14 @@ cv.biglasso(
   y,
   row.idx = 1:nrow(X),
   family = c("gaussian", "binomial", "cox", "mgaussian"),
-  eval.metric = c("default", "MAPE"),
+  eval.metric = c("default", "MAPE", "auc", "class"),
   ncores = parallel::detectCores(),
   ...,
   nfolds = 5,
   seed,
   cv.ind,
-  trace = FALSE
+  trace = FALSE,
+  grouped = TRUE
 )
 }
 \arguments{
@@ -33,13 +34,19 @@ are not supported yet.}
 
 \item{eval.metric}{The evaluation metric for the cross-validated error and
 for choosing optimal \code{lambda}. "default" for linear regression is MSE
-(mean squared error), for logistic regression is misclassification error.
-"MAPE", for linear regression only, is the Mean Absolute Percentage Error.}
+(mean squared error), for logistic regression is binomial deviance.
+"MAPE", for linear regression only, is the Mean Absolute Percentage Error.
+"auc", for binary classification, is the area under the receiver operating
+characteristic curve (ROC).
+"class", for binary classification, gives the misclassification error.}
 
-\item{ncores}{The number of cores to use for parallel execution across a
-cluster created by the \code{parallel} package. (This is different from
-\code{ncores} in \code{\link{biglasso}}, which is the number of OpenMP
-threads.)}
+\item{ncores}{The number of cores to use for parallel execution of the
+cross-validation folds, run on a cluster created by the \code{parallel}
+package. (This is also supplied to the \code{ncores} argument in
+\code{\link{biglasso}}, which is the number of OpenMP threads, but only for
+the first call of \code{\link{biglasso}} that is  run on the entire data. The
+individual calls of \code{\link{biglasso}} for the CV folds are run without
+the \code{ncores} argument.)}
 
 \item{...}{Additional arguments to \code{biglasso}.}
 
@@ -53,6 +60,10 @@ observations are randomly assigned by \code{cv.biglasso}.}
 
 \item{trace}{If set to TRUE, cv.biglasso will inform the user of its
 progress by announcing the beginning of each CV fold.  Default is FALSE.}
+
+\item{grouped}{Whether to calculate CV standard error (\code{cvse}) over
+CV folds (\code{TRUE}), or over all cross-validated predictions. Ignored
+when \code{eval.metric} is 'auc'.}
 }
 \value{
 An object with S3 class \code{"cv.biglasso"} which inherits from
@@ -65,10 +76,12 @@ values along which the cross-validation error was calculated.}
 \item{fit}{The fitted \code{biglasso} object for the whole data.}
 \item{min}{The index of \code{lambda} corresponding to \code{lambda.min}.}
 \item{lambda.min}{The value of \code{lambda} with the minimum
-cross-validation error.} \item{null.dev}{The deviance for the intercept-only
-model.} \item{pe}{If \code{family="binomial"}, the cross-validation
-prediction error for each value of \code{lambda}.} \item{cv.ind}{Same as
-above.}
+cross-validation error.} \item{lambda.1se}{The largest value of \code{lambda}
+for which the cross-validation error is at most one standard error larger
+than the minimum cross-validation error.} \item{null.dev}{The deviance for
+the intercept-only model.} \item{pe}{If \code{family="binomial"}, the
+cross-validation prediction error for each value of \code{lambda}.}
+\item{cv.ind}{Same as above.}
 }
 \description{
 Perform k-fold cross validation for penalized regression models over a grid
