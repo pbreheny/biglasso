@@ -22,8 +22,7 @@ non-integer printed values.}
 }
 \value{
 \code{summary.cv.biglasso} produces an object with S3 class
-\code{"summary.cv.biglasso"} which inherits class
-\code{"summary.cv.ncvreg"}.  The class has its own print method and contains
+\code{"summary.cv.biglasso"}.  The class has its own print method and contains
 the following list elements: \item{penalty}{The penalty used by
 \code{biglasso}.} \item{model}{Either \code{"linear"} or \code{"logistic"},
 depending on the \code{family} option in \code{biglasso}.} \item{n}{Number

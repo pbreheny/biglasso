@@ -11,3 +11,4 @@ test.*
 ^_pkgdown\.yml$
 ^docs$
 ^pkgdown$
+^\.version\.json$
