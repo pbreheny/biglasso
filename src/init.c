@@ -6,7 +6,7 @@
 
 
 // Coordinate descent for mgaussian model
-extern SEXP cdfit_mgaussian_ssr(SEXP X_, SEXP y_, SEXP row_idx_, 
+extern SEXP cdfit_mgaussian_ada(SEXP X_, SEXP y_, SEXP row_idx_, 
                                SEXP lambda_, SEXP nlambda_, 
                                SEXP lam_scale_, SEXP lambda_min_, 
                                SEXP alpha_, SEXP user_, SEXP eps_, 
@@ -14,7 +14,7 @@ extern SEXP cdfit_mgaussian_ssr(SEXP X_, SEXP y_, SEXP row_idx_,
                                SEXP ncore_, SEXP safe_thresh_, 
                                SEXP update_thresh_, SEXP verbose_);
 
-extern SEXP cdfit_mgaussian_ada(SEXP X_, SEXP y_, SEXP row_idx_, 
+extern SEXP cdfit_mgaussian_ssr(SEXP X_, SEXP y_, SEXP row_idx_, 
                                 SEXP lambda_, SEXP nlambda_, 
                                 SEXP lam_scale_, SEXP lambda_min_, 
                                 SEXP alpha_, SEXP user_, SEXP eps_, 
