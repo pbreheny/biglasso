@@ -1,7 +1,6 @@
 ---
 title: "biglasso"
 author: "Yaohui Zeng, Chuyi Wang, Patrick Breheny"
-package version: "1.4-1"
 output: rmarkdown::html_vignette
 vignette: >
   %\VignetteIndexEntry{biglasso}

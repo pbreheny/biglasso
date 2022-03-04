@@ -35,7 +35,7 @@ dim(X.bm)
 \itemize{ \item U. Alon et al. (1999): Broad patterns of gene
 expression revealed by clustering analysis of tumor and normal colon tissue
 probed by oligonucleotide arrays. \emph{Proc. Natl. Acad. Sci. USA}
-\strong{96}, 6745-6750. \url{https://www.pnas.org/content/96/12/6745.short}.
+\strong{96}, 6745-6750. \url{https://www.pnas.org/doi/abs/10.1073/pnas.96.12.6745}.
 }
 }
 \keyword{datasets}
