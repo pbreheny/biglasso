@@ -1,9 +1,9 @@
 Package: biglasso
 Version: 1.5.1
-Date: 2022-03-01
+Date: 2022-03-04
 Title: Extending Lasso Model Fitting to Big Data
-Author: Yaohui Zeng [aut,cre], Chuyi Wang [aut,cre], Patrick Breheny [ctb]
-Maintainer: Chuyi Wang <wwaa0208@gmail.com>
+Author: Yaohui Zeng [aut], Chuyi Wang [aut], Patrick Breheny [aut]
+Maintainer: Patrick Breheny <patrick-breheny@uiowa.edu>
 Description: Extend lasso and elastic-net model fitting for ultrahigh-dimensional, 
     multi-gigabyte data sets that cannot be loaded into memory. It's much more 
     memory- and computation-efficient as compared to existing lasso-fitting packages 
@@ -19,7 +19,6 @@ VignetteBuilder: knitr
 Suggests: 
     parallel,
     testthat,
-    R.rsp,
     glmnet,
     survival,
     knitr,

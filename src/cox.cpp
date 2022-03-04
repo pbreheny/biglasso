@@ -74,8 +74,8 @@ void safe_init(vector<double>& scale_SAFE_X, XPtr<BigMatrix> xMat,
   MatrixAccessor<double> xAcc(*xMat);
   double *xCol;
   int i, k, j, jj;
-  double max_x, min_x, sum_max, sum_min, xTy;
-  
+  double max_x, min_x, sum_max, sum_min;
+  double xTy = 0;
   
   // Initialize maximum and minimum bound for SAFE
 #pragma omp parallel for private(j, jj, i, k, max_x, min_x, sum_min, sum_max, xTy) schedule(static) 
@@ -1024,7 +1024,7 @@ RcppExport SEXP cdfit_cox_scox(SEXP X_, SEXP y_, SEXP d_, SEXP d_idx_, SEXP row_
   double *haz = R_Calloc(n, double); //exp(eta)
   double *rsk = R_Calloc(f, double); //Sum of hazard over at risk set
   int *e1 = R_Calloc(p, int); //ever-active set
-  double xwr, xwx, u, v, cutoff, l1, l2, shift;
+  double xwr, xwx, u, v, l1, l2, shift;
   double max_update, update, thresh; // for convergence check
   int i, j, jj, k, l, violations, lstart;
   for(j = 0; j < p; j++) e1[j] = 0;
@@ -1300,7 +1300,7 @@ RcppExport SEXP cdfit_cox_sscox(SEXP X_, SEXP y_, SEXP d_, SEXP d_idx_, SEXP row
   double *haz = R_Calloc(n, double); //exp(eta)
   double *rsk = R_Calloc(f, double); //Sum of hazard over at risk set
   int *e1 = R_Calloc(p, int); //ever-active set
-  double xwr, xwx, u, v, cutoff, l1, l2, shift;
+  double xwr, xwx, u, v, l1, l2, shift;
   double max_update, update, thresh; // for convergence check
   int i, j, jj, k, l, violations, lstart;
   for(j = 0; j < p; j++) e1[j] = 0;
@@ -1909,7 +1909,7 @@ RcppExport SEXP cdfit_cox_safe(SEXP X_, SEXP y_, SEXP d_, SEXP d_idx_, SEXP row_
   double *haz = R_Calloc(n, double); //exp(eta)
   double *rsk = R_Calloc(f, double); //Sum of hazard over at risk set
   int *e1 = R_Calloc(p, int); //ever-active set
-  double xwr, xwx, u, v, cutoff, l1, l2, shift;
+  double xwr, xwx, u, v, l1, l2, shift;
   double max_update, update, thresh; // for convergence check
   int i, j, jj, k, l, violations, lstart;
   for(j = 0; j < p; j++) e1[j] = 0;
