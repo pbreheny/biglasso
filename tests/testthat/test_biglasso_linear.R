@@ -82,20 +82,21 @@ test_that("Test parallel computing: ",{
   expect_identical(fit.adaptive, fit.adaptive2)
 })
 
-test_that("Test cross validation: ",{
-  expect_equal(as.numeric(cvfit.ncv$cve), as.numeric(cvfit.ssr$cve), tolerance = tolerance)
-  expect_equal(as.numeric(cvfit.ncv$cve), as.numeric(cvfit.hybrid$cve), tolerance = tolerance)
-  expect_equal(as.numeric(cvfit.ncv$cve), as.numeric(cvfit.adaptive$cve), tolerance = tolerance)
+# Note: biglasso has diverged from ncvreg in its approach to CV (#45)
+## test_that("Test cross validation: ",{
+##   expect_equal(as.numeric(cvfit.ncv$cve), as.numeric(cvfit.ssr$cve), tolerance = tolerance)
+##   expect_equal(as.numeric(cvfit.ncv$cve), as.numeric(cvfit.hybrid$cve), tolerance = tolerance)
+##   expect_equal(as.numeric(cvfit.ncv$cve), as.numeric(cvfit.adaptive$cve), tolerance = tolerance)
   
-  expect_equal(as.numeric(cvfit.ncv$cvse), as.numeric(cvfit.ssr$cvse), tolerance = tolerance)
-  expect_equal(as.numeric(cvfit.ncv$cvse), as.numeric(cvfit.hybrid$cvse), tolerance = tolerance)
-  expect_equal(as.numeric(cvfit.ncv$cvse), as.numeric(cvfit.adaptive$cvse), tolerance = tolerance)
+##   expect_equal(as.numeric(cvfit.ncv$cvse), as.numeric(cvfit.ssr$cvse), tolerance = tolerance)
+##   expect_equal(as.numeric(cvfit.ncv$cvse), as.numeric(cvfit.hybrid$cvse), tolerance = tolerance)
+##   expect_equal(as.numeric(cvfit.ncv$cvse), as.numeric(cvfit.adaptive$cvse), tolerance = tolerance)
   
-  expect_equal(as.numeric(cvfit.ncv$lambda.min), as.numeric(cvfit.ssr$lambda.min), tolerance = tolerance)
-  expect_equal(as.numeric(cvfit.ncv$lambda.min), as.numeric(cvfit.hybrid$lambda.min), tolerance = tolerance)
-  expect_equal(as.numeric(cvfit.ncv$lambda.min), as.numeric(cvfit.adaptive$lambda.min), tolerance = tolerance)
+##   expect_equal(as.numeric(cvfit.ncv$lambda.min), as.numeric(cvfit.ssr$lambda.min), tolerance = tolerance)
+##   expect_equal(as.numeric(cvfit.ncv$lambda.min), as.numeric(cvfit.hybrid$lambda.min), tolerance = tolerance)
+##   expect_equal(as.numeric(cvfit.ncv$lambda.min), as.numeric(cvfit.adaptive$lambda.min), tolerance = tolerance)
   
-})
+## })
 
 # ------------------------------------------------------------------------------
 # test elastic net
@@ -130,15 +131,15 @@ test_that("Elastic net: test against ncvreg for entire path:", {
   expect_equal(as.numeric(fit.ncv$beta), as.numeric(fit.ssr.edpp$beta), tolerance = tolerance)
 })
 
-test_that("Elastic net: test cross validation: ",{
-  expect_equal(as.numeric(cvfit.ncv$cve), as.numeric(cvfit.ssr$cve), tolerance = tolerance)
-  expect_equal(as.numeric(cvfit.ncv$cve), as.numeric(cvfit.ssr.edpp$cve), tolerance = tolerance)
+## test_that("Elastic net: test cross validation: ",{
+##   expect_equal(as.numeric(cvfit.ncv$cve), as.numeric(cvfit.ssr$cve), tolerance = tolerance)
+##   expect_equal(as.numeric(cvfit.ncv$cve), as.numeric(cvfit.ssr.edpp$cve), tolerance = tolerance)
   
-  expect_equal(as.numeric(cvfit.ncv$cvse), as.numeric(cvfit.ssr$cvse), tolerance = tolerance)
-  expect_equal(as.numeric(cvfit.ncv$cvse), as.numeric(cvfit.ssr.edpp$cvse), tolerance = tolerance)
+##   expect_equal(as.numeric(cvfit.ncv$cvse), as.numeric(cvfit.ssr$cvse), tolerance = tolerance)
+##   expect_equal(as.numeric(cvfit.ncv$cvse), as.numeric(cvfit.ssr.edpp$cvse), tolerance = tolerance)
   
-  expect_equal(as.numeric(cvfit.ncv$lambda.min), as.numeric(cvfit.ssr$lambda.min), tolerance = tolerance)
-  expect_equal(as.numeric(cvfit.ncv$lambda.min), as.numeric(cvfit.ssr.edpp$lambda.min), tolerance = tolerance)
+##   expect_equal(as.numeric(cvfit.ncv$lambda.min), as.numeric(cvfit.ssr$lambda.min), tolerance = tolerance)
+##   expect_equal(as.numeric(cvfit.ncv$lambda.min), as.numeric(cvfit.ssr.edpp$lambda.min), tolerance = tolerance)
   
-})
+## })
 
