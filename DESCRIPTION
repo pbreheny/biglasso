@@ -2,7 +2,11 @@ Package: biglasso
 Version: 1.5.1
 Date: 2022-03-04
 Title: Extending Lasso Model Fitting to Big Data
-Author: Yaohui Zeng [aut], Chuyi Wang [aut], Patrick Breheny [aut]
+Authors@R: c(
+    person("Yaohui", "Zeng", role = c("aut")),
+    person("Chuyi", "Wang", role = c("aut")),
+    person("Patrick", "Breheny", role=c("aut","cre"),
+      email="patrick-breheny@uiowa.edu", comment=c(ORCID="0000-0002-0650-1119")))
 Maintainer: Patrick Breheny <patrick-breheny@uiowa.edu>
 Description: Extend lasso and elastic-net model fitting for ultrahigh-dimensional, 
     multi-gigabyte data sets that cannot be loaded into memory. It's much more 
