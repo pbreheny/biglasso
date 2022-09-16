@@ -1,5 +1,6 @@
 # biglasso 1.5.2
   * Update coercion for compatibility with Matrix 1.5
+  * Now using GitHub Actions instead of Travis for CI
 
 # biglasso 1.5.1
   * Internal Cpp changes: initialize Xty, remove unused cutoff variable (#48)

@@ -118,23 +118,27 @@ Since other three packages cannot handle this data-larger-than-RAM case, we comp
 </center>
 
 ## Installation:
-* The stable version: 
-```R
+
+To install the latest stable release version from CRAN:
+
+```r
 install.packages("biglasso")
 ```
 
-* The latest version: 
-```R
-devtools::install_github("YaohuiZeng/biglasso")
+To install the latest development version from GitHub:
+
+```r
+remotes::install_github("YaohuiZeng/biglasso")
 ```
 
 ## Reference:
-* Zeng, Y., and Breheny, P. (2017). The biglasso Package: A Memory- and Computation-Efficient Solver for Lasso Model Fitting with Big Data in R. arXiv preprint arXiv:1701.05936. URL [https://arxiv.org/abs/1701.05936](https://arxiv.org/abs/1701.05936).
+* Zeng Y and Breheny P (2021). The biglasso Package: A Memory- and Computation-Efficient Solver for Lasso Model Fitting with Big Data in R. R Journal, 12: 6-19. URL [https://doi.org/10.32614/RJ-2021-001](https://doi.org/10.32614/RJ-2021-001).
+* Zeng Y, Yang T, and Breheny P (2021). Hybrid safe-strong rules for efficient optimization in lasso-type problems. Computational Statistics and Data Analysis, 153: 107063. URL [http://www.sciencedirect.com/science/article/pii/S0167947320301547](http://www.sciencedirect.com/science/article/pii/S0167947320301547)
+* Wang C and Breheny P (2022). Adaptive hybrid screening for efficient lasso optimization. Journal of Statistical Computation and Simulation, 92: 2233–2256. URL [https://doi.org/10.1080/00949655.2021.2025376](https://doi.org/10.1080/00949655.2021.2025376)
 * Tibshirani, R., Bien, J., Friedman, J., Hastie, T., Simon, N., Taylor, J., and Tibshirani, R. J. (2012). Strong rules for discarding predictors in lasso-type problems. Journal of the Royal Statistical Society: Series B (Statistical Methodology), 74 (2), 245-266.
 * Wang, J., Zhou, J., Wonka, P., and Ye, J. (2013). Lasso screening rules via dual polytope projection. In Advances in Neural Information Processing Systems, pp. 1070-1078.
 * Xiang, Z. J., and Ramadge, P. J. (2012, March). Fast lasso screening tests based on correlations. In Acoustics, Speech and Signal Processing (ICASSP), 2012 IEEE International Conference on (pp. 2137-2140). IEEE.
 * Wang, J., Zhou, J., Liu, J., Wonka, P., and Ye, J. (2014). A safe screening rule for sparse logistic regression. In Advances in Neural Information Processing Systems, pp. 1053-1061.
 
 ## Report bugs：
-* open an [issue](https://github.com/YaohuiZeng/biglasso/issues) or send an email to Yaohui Zeng at <yaohui.zeng@gmail.com>
-
+* open an [issue](https://github.com/YaohuiZeng/biglasso/issues) or send an email to Patrick Breheny at <patrick-breheny@uiowa.edu>
