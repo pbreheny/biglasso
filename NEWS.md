@@ -1,3 +1,6 @@
+# biglasso 1.5.2
+  * Update coercion for compatibility with Matrix 1.5
+
 # biglasso 1.5.1
   * Internal Cpp changes: initialize Xty, remove unused cutoff variable (#48)
   * Eliminate CV test against ncvreg (the two packages no longer use the same approach (#47)

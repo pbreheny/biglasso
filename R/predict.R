@@ -50,9 +50,9 @@
 #' fit <- biglasso(X.bm, y, penalty = 'lasso', family = "binomial")
 #' coef <- coef(fit, lambda=0.05, drop = TRUE)
 #' coef[which(coef != 0)]
-#' predict(fit, X.bm, type="link", lambda=0.05)
-#' predict(fit, X.bm, type="response", lambda=0.05)
-#' predict(fit, X.bm, type="class", lambda=0.1)
+#' predict(fit, X.bm, type="link", lambda=0.05)[1:10]
+#' predict(fit, X.bm, type="response", lambda=0.05)[1:10]
+#' predict(fit, X.bm, type="class", lambda=0.1)[1:10]
 #' predict(fit, type="vars", lambda=c(0.05, 0.1))
 #' predict(fit, type="nvars", lambda=c(0.05, 0.1))
 #' @export
@@ -76,7 +76,7 @@ predict.biglasso <- function(object, X, row.idx = 1:nrow(X),
     stop("X must be a big.matrix object.")
   }
  
-  beta.T <- as(beta, "dgTMatrix") 
+  beta.T <- as(beta, "TsparseMatrix") 
   temp <- get_eta(X@address, as.integer(row.idx-1), beta, beta.T@i, beta.T@j)
   if(object$family != "cox") eta <- sweep(temp, 2, alpha, "+")
   # dimnames(eta) <- list(c(1:nrow(eta)), round(object$lambda, digits = 4))
@@ -121,7 +121,7 @@ predict.mbiglasso <- function(object, X, row.idx = 1:nrow(X),
     stop("X must be a big.matrix object.")
   }
   
-  beta.T <- as(beta, "dgTMatrix") 
+  beta.T <- as(beta, "TsparseMatrix") 
   temp <- get_eta(X@address, as.integer(row.idx-1), beta, beta.T@i, beta.T@j)
   eta <- sweep(temp, 2, alpha, "+")
   # dimnames(eta) <- list(c(1:nrow(eta)), round(object$lambda, digits = 4))
