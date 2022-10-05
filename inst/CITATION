@@ -1,13 +1,16 @@
 citHeader("To cite biglasso in publications use:")
 
 citEntry(
-  entry="Article",
-  author = personList(as.person("Yaohui Zeng"), as.person("Patrick Breheny")),
-  title = "The biglasso Package: A Memory- and Computation-Efficient Solver for Lasso Model Fitting with Big Data in R",
-  journal = "ArXiv e-prints",
-  eprint = "1701.05936",
-  year = "2017",
-  url = "https://arxiv.org/abs/1701.05936",
+  entry   ="Article",
+  author  = personList(as.person("Yaohui Zeng"), as.person("Patrick Breheny")),
+  title   = "The biglasso Package: A Memory- and Computation-Efficient Solver for Lasso Model Fitting with Big Data in R",
+  journal = "R Journal",
+  eprint  = "1701.05936",
+  year = "2021",
+  number  = "2",
+  pages   = "6--19",
+  volume  = "12",  
+  url = "https://doi.org/10.32614/RJ-2021-001",
 
-  textVersion = "Zeng, Y., and Breheny, P. (2017). The biglasso Package: A Memory- and Computation-Efficient Solver for Lasso Model Fitting with Big Data in R. arXiv preprint arXiv:1701.05936. URL https://arxiv.org/abs/1701.05936."
-  )
+  textVersion = "Zeng Y and Breheny P (2017). The biglasso Package: A Memory- and Computation-Efficient Solver for Lasso Model Fitting with Big Data in R. R Journal 12: 6-19."
+)

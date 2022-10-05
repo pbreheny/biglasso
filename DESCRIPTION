@@ -1,6 +1,6 @@
 Package: biglasso
 Version: 1.5.2
-Date: 2022-09-16
+Date: 2022-10-05
 Title: Extending Lasso Model Fitting to Big Data
 Authors@R: c(
     person("Yaohui", "Zeng", role = c("aut")),
@@ -8,11 +8,11 @@ Authors@R: c(
     person("Patrick", "Breheny", role=c("aut","cre"),
       email="patrick-breheny@uiowa.edu", comment=c(ORCID="0000-0002-0650-1119")))
 Maintainer: Patrick Breheny <patrick-breheny@uiowa.edu>
-Description: Extend lasso and elastic-net model fitting for ultrahigh-dimensional, 
-    multi-gigabyte data sets that cannot be loaded into memory. It's much more 
-    memory- and computation-efficient as compared to existing lasso-fitting packages 
-    like 'glmnet' and 'ncvreg', thus allowing for very powerful big data analysis 
-    even with an ordinary laptop.
+Description: Extend lasso and elastic-net model fitting for ultra
+    high-dimensional, multi-gigabyte data sets that cannot be loaded into
+    memory. Designed to be more memory- and computation-efficient than existing
+    lasso-fitting packages like 'glmnet' and 'ncvreg', thus allowing
+    the user to analyze big data analysis even on an ordinary laptop.
 License: GPL-3
 URL: https://yaohuizeng.github.io/biglasso/index.html, https://github.com/YaohuiZeng/biglasso, https://arxiv.org/abs/1701.05936
 BugReports: https://github.com/YaohuiZeng/biglasso/issues
