@@ -111,7 +111,11 @@ cv.biglasso <- function(X, y, row.idx = 1:nrow(X),
     PE <- matrix(NA, nrow=fit$n, ncol=length(fit$lambda))
   }
 
-  if (!missing(seed)) set.seed(seed)
+  if (!missing(seed)) {
+    original_seed <- .GlobalEnv$.Random.seed
+    on.exit(.GlobalEnv$.Random.seed <- original_seed)
+    set.seed(seed)
+  }
 
   n <- fit$n
   if (missing(cv.ind)) {
