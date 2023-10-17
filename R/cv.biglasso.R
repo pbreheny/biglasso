@@ -44,6 +44,9 @@
 #' @param grouped Whether to calculate CV standard error (\code{cvse}) over
 #' CV folds (\code{TRUE}), or over all cross-validated predictions. Ignored
 #' when \code{eval.metric} is 'auc'.
+#' @param biglasso_fit Logical: For model fitting, should `biglasso_fit()` be called, 
+#' instead of `biglasso()`? Defaults to FALSE.
+#' 
 #' @return An object with S3 class \code{"cv.biglasso"} which inherits from
 #' class \code{"cv.ncvreg"}.  The following variables are contained in the
 #' class (adopted from \code{\link[ncvreg]{cv.ncvreg}}).  \item{cve}{The error
@@ -86,7 +89,8 @@ cv.biglasso <- function(X, y, row.idx = 1:nrow(X),
                         family = c("gaussian", "binomial", "cox", "mgaussian"),
                         eval.metric = c("default", "MAPE", "auc", "class"),
                         ncores = parallel::detectCores(), ...,
-                        nfolds = 5, seed, cv.ind, trace = FALSE, grouped = TRUE) {
+                        nfolds = 5, seed, cv.ind, trace = FALSE, grouped = TRUE,
+                        biglasso_fit = FALSE) {
 
   family <- match.arg(family)
   if(!family %in% c("gaussian", "binomial")) stop("CV method for this family not supported yet.")
@@ -100,8 +104,14 @@ cv.biglasso <- function(X, y, row.idx = 1:nrow(X),
     cat("The number of cores specified (", ncores, ") is larger than the number of avaiable cores (", max.cores, "). Use ", max.cores, " cores instead! \n", sep = "")
     ncores = max.cores
   }
+  
+  if(biglasso_fit){
+    fit <- biglasso_fit(X = X, y = y, row.idx = row.idx, ncores = ncores, ...)
+  } else {
+    fit <- biglasso(X = X, y = y, row.idx = row.idx, family = family, ncores = ncores, ...)
+  }
 
-  fit <- biglasso(X = X, y = y, row.idx = row.idx, family = family, ncores = ncores, ...)
+  
   if (eval.metric == "auc") grouped <- TRUE
 
   E <- matrix(Inf, nrow=if (grouped) nfolds else fit$n, ncol=length(fit$lambda))
@@ -160,9 +170,16 @@ cv.biglasso <- function(X, y, row.idx = 1:nrow(X),
       # source("~/GitHub/biglasso/R/predict.R")
       # source("~/GitHub/biglasso/R/loss.R")
     })
-    fold.results <- parallel::parLapply(cl = cluster, X = seq_len(nfolds), fun = cvf, XX = xdesc,
-                                        y = y, eval.metric = eval.metric,
-                                        cv.ind = cv.ind, cv.args = cv.args, grouped = grouped,
+    fold.results <- parallel::parLapply(cl = cluster,
+                                        X = seq_len(nfolds),
+                                        fun = cvf,
+                                        XX = xdesc,
+                                        y = y,
+                                        eval.metric = eval.metric,
+                                        biglasso_fit = biglasso_fit,
+                                        cv.ind = cv.ind, 
+                                        cv.args = cv.args,
+                                        grouped = grouped,
                                         parallel = parallel)
     parallel::stopCluster(cluster)
   }
@@ -173,7 +190,8 @@ cv.biglasso <- function(X, y, row.idx = 1:nrow(X),
       res <- fold.results[[i]]
     } else {
       if (trace) cat("Starting CV fold #", i, sep="", "\n")
-      res <- cvf(i, X, y, eval.metric, cv.ind, cv.args, grouped = grouped)
+      res <- cvf(i, X, y, eval.metric, cv.ind, cv.args, grouped = grouped,
+                 biglasso_fit = biglasso_fit)
     }
     E[result.ind == i, match(res$ls, fit$lambda)] <- res$loss
     if (fit$family == "binomial") PE[cv.ind == i, match(res$ls, fit$lambda)] <- res$pe
@@ -212,7 +230,8 @@ cv.biglasso <- function(X, y, row.idx = 1:nrow(X),
   structure(val, class=c("cv.biglasso", "cv.ncvreg"))
 }
 
-cvf <- function(i, XX, y, eval.metric, cv.ind, cv.args, grouped, parallel= FALSE) {
+cvf <- function(i, XX, y, eval.metric, cv.ind, cv.args, grouped,
+                parallel= FALSE, biglasso_fit) {
   # reference to the big.matrix by descriptor info
   if (parallel) {
     XX <- attach.big.matrix(XX)
@@ -224,7 +243,12 @@ cvf <- function(i, XX, y, eval.metric, cv.ind, cv.args, grouped, parallel= FALSE
   cv.args$ncores <- 1
 
   idx.test <- which(cv.ind == i)
-  fit.i <- do.call("biglasso", cv.args)
+  if(biglasso_fit){
+    fit.i <- do.call("biglasso_fit", cv.args)
+  } else {
+    fit.i <- do.call("biglasso", cv.args)
+  }
+
 
   y2 <- y[cv.ind==i]
   yhat <- matrix(predict(fit.i, XX, row.idx = idx.test, type="response"), length(y2))
