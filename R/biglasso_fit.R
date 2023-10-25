@@ -19,48 +19,18 @@
 #' (\code{family = "gaussian"} is
 #' \deqn{\frac{1}{2n}\textrm{RSS} + \lambda*\textrm{penalty},}{(1/(2n))*RSS+
 #' \lambda*penalty,}
-#' where for \code{family = "mgaussian"}), a group-lasso type penalty is applied.
 #' @param X The design matrix, without an intercept. It must be a
 #' double type \code{\link[bigmemory]{big.matrix}} object. 
 #' @param y The response vector 
 #' @param row.idx The integer vector of row indices of \code{X} that used for
 #' fitting the model. \code{1:nrow(X)} by default.
-#' @param penalty The penalty to be applied to the model. Either \code{"lasso"}
-#' (the default), \code{"ridge"}, or \code{"enet"} (elastic net).
-#' @param screen The feature screening rule used at each \code{lambda} that
-#' discards features to speed up computation: \code{"SSR"} (default if
-#' \code{penalty="ridge"} or \code{penalty="enet"} )is the sequential strong rule;
-#' \code{"Adaptive"} (default for \code{penalty="lasso"}
-#' without \code{penalty.factor}) is our newly proposed adaptive rules which
-#' reuse screening reference for multiple lambda values. \strong{Note that:}
-#' (1) for linear regression with elastic net penalty, both \code{"SSR"} and
-#' \code{"Hybrid"} are applicable since version 1.3-0;  (2) only \code{"SSR"} is
-#' applicable to elastic-net-penalized logistic regression or cox regression;
-#' (3) active set cycling strategy is incorporated with these screening rules.
-#' @param safe.thresh the threshold value between 0 and 1 that controls when to
-#' stop safe test. For example, 0.01 means to stop safe test at next lambda 
-#' iteration if the number of features rejected by safe test at current lambda
-#' iteration is not larger than 1\% of the total number of features. So 1 means
-#' to always turn off safe test, whereas 0 (default) means to turn off safe test
-#' if the number of features rejected by safe test is 0 at current lambda.
-#' @param update.thresh the non negative threshold value that controls how often to
-#' update the reference of safe rules for "Adaptive" methods. Smaller value means
-#' updating more often.
 #' @param ncores The number of OpenMP threads used for parallel computing.
 #' @param alpha The elastic-net mixing parameter that controls the relative
 #' contribution from the lasso (l1) and the ridge (l2) penalty. The penalty is
 #' defined as \deqn{ \alpha||\beta||_1 + (1-\alpha)/2||\beta||_2^2.}
 #' \code{alpha=1} is the lasso penalty, \code{alpha=0} the ridge penalty,
 #' \code{alpha} in between 0 and 1 is the elastic-net ("enet") penalty.
-#' @param lambda.min The smallest value for lambda, as a fraction of
-#' lambda.max.  Default is .001 if the number of observations is larger than
-#' the number of covariates and .05 otherwise.
-#' @param nlambda The number of lambda values.  Default is 100.
-#' @param lambda.log.scale Whether compute the grid values of lambda on log
-#' scale (default) or linear scale.
-#' @param lambda A user-specified sequence of lambda values.  By default, a
-#' sequence of values of length \code{nlambda} is computed, equally spaced on
-#' the log scale.
+#' @param lambda A single value for lasso penalty parameter lambda. 
 #' @param eps Convergence threshold for inner coordinate descent.  The
 #' algorithm iterates until the maximum change in the objective after any
 #' coefficient update is less than \code{eps} times the null deviance. Default
@@ -96,9 +66,7 @@
 #' \item{penalty}{Same as above.}
 #' \item{family}{Same as above.}
 #' \item{alpha}{Same as above.} 
-#' \item{loss}{A vector containing either the residual sum of squares 
-#' (for \code{"gaussian", "mgaussian"}) or negative log-likelihood
-#' (for \code{"binomial", "cox"}) of the fitted model at each value of \code{lambda}.}
+#' \item{loss}{A vector containing either the residual sum of squares of the fitted model at each value of \code{lambda}.}
 #' \item{penalty.factor}{Same as above.}
 #' \item{n}{The number of observations used in the model fitting. It's equal to
 #' \code{length(row.idx)}.} 
@@ -122,50 +90,31 @@
 #' X <- colon$X
 #' y <- colon$y
 #' X.bm <- as.big.matrix(X)
-#' fit_flex <- biglasso_fit(X.bm, y)
+#' fit_flex <- biglasso_fit(X.bm, y, lambda = 0.1)
 #' plot(fit_flex, log.l = TRUE, main = 'lasso')
 #'
 #' # with CV 
-#' 
+#' cv_fit <- cv.biglasso(X.bm, y, fit_flag = TRUE, ncores = 1)
+#' # NB: the beta coefficients have not be un-transformed in the case above! 
+#' @export biglasso_fit
 biglasso_fit <- function(X, y, row.idx = 1:nrow(X),
-                     penalty = c("lasso", "ridge", "enet"),
-                     family = 'gaussian',
-                     screen = "Adaptive",
-                     safe.thresh = 0, update.thresh = 1, ncores = 1, alpha = 1,
-                     lambda.min = ifelse(nrow(X) > ncol(X),.001,.05), 
-                     nlambda = 100, lambda.log.scale = TRUE,
-                     lambda, eps = 1e-7, max.iter = 1000, 
-                     dfmax = ncol(X)+1,
-                     penalty.factor = rep(1, ncol(X)),
-                     warn = TRUE, output.time = FALSE,
-                     return.time = TRUE,
-                     verbose = FALSE) {
+                         ncores = 1,
+                         lambda,
+                         alpha = 1, 
+                         max.iter = 1000, 
+                         eps=1e-5,
+                         dfmax = ncol(X)+1,
+                         penalty.factor = rep(1, ncol(X)),
+                         warn = TRUE, output.time = FALSE,
+                         return.time = TRUE,
+                         verbose = FALSE) {
   
+  # set defaults
+  penalty <- "lasso"
+  alpha <- 1
   
-  penalty <- match.arg(penalty)
-  lambda.min <- max(lambda.min, 1.0e-6)
-  
-  
-  if (identical(penalty, "lasso")) {
-    alpha <- 1
-  } else if (identical(penalty, 'ridge')) {
-    alpha <- 1.0e-6 ## equivalent to ridge regression
-    if (screen == "Adaptive") {
-      warning("For now \"ridge\" does not support \"Adaptive\" screen. Switching screen to SSR")
-      screen <- 'SSR'
-    }
-  } else if (identical(penalty, 'enet')) {
-    if (alpha >= 1 || alpha <= 0) {
-      stop("alpha must be between 0 and 1 for elastic net penalty.")
-    }
-    if (screen == "Adaptive") {
-      warning("For now \"enet\" does not support \"Adaptive\" screen. Switching screen to SSR")
-      screen <- 'SSR'
-    } 
-  }
-  
+  # check types
   if (!("big.matrix" %in% class(X)) || typeof(X) != "double") stop("X must be a double type big.matrix.")
-  if (nlambda < 2) stop("nlambda must be at least 2")
   # subset of the response vector
   if (is.matrix(y)) y <- y[row.idx,]
   else y <- y[row.idx]
@@ -178,73 +127,48 @@ biglasso_fit <- function(X, y, row.idx = 1:nrow(X),
     if (class(tmp)[1] == "try-error") stop("y must numeric or able to be coerced to numeric")
   }
   
+  # set more defaults/initial values
   yy <- y - mean(y)
   
   p <- ncol(X)
   if (length(penalty.factor) != p) stop("penalty.factor does not match up with X")
-  ## for now penalty.factor is only applicable for "SSR"
-  if(any(penalty.factor != 1) & screen != "SSR") {
-    warning("For now penalty.factor is only applicable for \"SSR\". Automatically switching to \"SSR\".")
-    screen <- "SSR"
-  }
+  
   storage.mode(penalty.factor) <- "double"
   
   n <- length(row.idx) ## subset of X. idx: indices of rows.
   if (missing(lambda)) {
-    user.lambda <- FALSE
-    lambda <- rep(0.0, nlambda);
-  } else {
-    nlambda <- length(lambda)
-    user.lambda <- TRUE
+    stop("For biglasso_fit, lambda value must be user-supplied")
   }
   
   ## fit model
   if (output.time) {
     cat("\nStart biglasso: ", format(Sys.time()), '\n')
   }
-  if (family == 'gaussian') {
-    time <- system.time(
-      {
-        switch(screen,
-               "Adaptive" = {
-                 res <- .Call("cdfit_gaussian_ada_edpp_ssr", X@address, yy, as.integer(row.idx-1),
-                              lambda, as.integer(nlambda), as.integer(lambda.log.scale),
-                              lambda.min, alpha,
-                              as.integer(user.lambda | any(penalty.factor==0)),
-                              eps, as.integer(max.iter), penalty.factor,
-                              as.integer(dfmax), as.integer(ncores), update.thresh, as.integer(verbose),
-                              PACKAGE = 'biglasso')
-               },
-               "SSR" = {
-                 res <- .Call("cdfit_gaussian_ssr", X@address, yy, as.integer(row.idx-1),
-                              lambda, as.integer(nlambda), as.integer(lambda.log.scale),
-                              lambda.min, alpha,
-                              as.integer(user.lambda | any(penalty.factor==0)),
-                              eps, as.integer(max.iter), penalty.factor,
-                              as.integer(dfmax), as.integer(ncores), as.integer(verbose),
-                              PACKAGE = 'biglasso')
-               },
-               stop("Invalid screening method!")
-        )
-      }
-    )
+  
+  time <- system.time(
+    res <- .Call("cdfit_gaussian_simple",
+                 X@address,
+                 yy,
+                 as.integer(row.idx-1),
+                 lambda,
+                 alpha,
+                 eps,
+                 as.integer(max.iter),
+                 penalty.factor,
+                 as.integer(ncores),
+                 verbose,
+                 PACKAGE = 'biglasso')
     
-    b <- Matrix(res[[1]], sparse = T)
-    center <- res[[2]]
-    scale <- res[[3]]
-    lambda <- res[[4]]
-    loss <- res[[5]]
-    iter <- res[[6]]
-    rejections <- res[[7]]
-    
-    if (screen == "Adaptive") {
-      safe_rejections <- res[[8]]
-      col.idx <- res[[9]]
-    } else {
-      col.idx <- res[[8]]
-    }
-    
-  } 
+  )
+  
+  
+  b <- Matrix(res[[1]], sparse = T)
+  loss <- res[[2]]
+  iter <- res[[3]]
+  rejections <- res[[4]]
+  safe_rejections <- res[[5]]
+  col.idx <- res[[6]]
+  
   
   if (output.time) {
     cat("\nEnd biglasso: ", format(Sys.time()), '\n')
@@ -280,14 +204,13 @@ biglasso_fit <- function(X, y, row.idx = 1:nrow(X),
     y = yy,
     screen = screen,
     col.idx = col.idx,
+    # safe_rejections = safe_rejections,
     rejections = rejections
+    
   )
   
-  if (screen == "Adaptive") {
-    return.val$safe_rejections <- safe_rejections
-  } 
   if (return.time) return.val$time <- as.numeric(time['elapsed'])
   
   val <- structure(return.val, class = c("biglasso", 'ncvreg'))
-  val
 }
+

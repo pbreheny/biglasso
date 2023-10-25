@@ -290,8 +290,6 @@ RcppExport SEXP cdfit_gaussian_ssr(SEXP X_, SEXP y_, SEXP row_idx_,
   return List::create(beta, center, scale, lambda, loss, iter, n_reject, Rcpp::wrap(col_idx));
 }
 
-
-
 // Coordinate descent for gaussian models with ada-edpp-ssr
 RcppExport SEXP cdfit_gaussian_ada_edpp_ssr(SEXP X_, SEXP y_, SEXP row_idx_, SEXP lambda_, SEXP nlambda_,
                                             SEXP lam_scale_, SEXP lambda_min_, SEXP alpha_, SEXP user_,

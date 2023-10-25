@@ -12,3 +12,9 @@
 .DS_Store
 .Rproj.user
 inst/doc
+
+# compiling files
+.o
+.so
+src/*.o
+src/*.so

@@ -107,6 +107,24 @@ double crossprod_bm(XPtr<BigMatrix> xpMat, double *y_, int *row_idx_, double cen
   return sum;
 }
 
+// crossprod - given specific rows of a *standardized* X
+double crossprod_bm_no_std(XPtr<BigMatrix> xpMat, double *y_, int *row_idx_, 
+                    int n_row, int j) {
+  MatrixAccessor<double> xAcc(*xpMat);
+  double *xCol = xAcc[j];
+  double sum = 0.0;
+  double sum_xy = 0.0;
+  double sum_y = 0.0;
+  for (int i=0; i < n_row; i++) {
+    sum_xy = sum_xy + xCol[row_idx_[i]] * y_[i];
+    sum_y = sum_y + y_[i];
+  }
+  sum = (sum_xy * sum_y);
+  
+  return sum;
+}
+
+
 // crossprod of columns X_j and X_k
 double crossprod_bm_Xj_Xk(XPtr<BigMatrix> xMat, int *row_idx,
                           NumericVector &center, NumericVector &scale,
@@ -139,7 +157,21 @@ double crossprod_resid(XPtr<BigMatrix> xpMat, double *y_, double sumY_, int *row
   return sum;
 }
 
-// update residul vector
+//crossprod_resid - given specific rows of *standardized* X: separate computation
+double crossprod_resid_no_std(XPtr<BigMatrix> xpMat, double *y_, double sumY_, int *row_idx_, 
+                        int n_row, int j) {
+  MatrixAccessor<double> xAcc(*xpMat);
+  double *xCol = xAcc[j];
+  
+  double sum = 0.0;
+  for (int i=0; i < n_row; i++) {
+    sum = sum + xCol[row_idx_[i]] * y_[i];
+  }
+  sum = (sum * sumY_);
+  return sum;
+}
+
+// update residual vector
 void update_resid(XPtr<BigMatrix> xpMat, double *r, double shift, int *row_idx_, 
                   double center_, double scale_, int n_row, int j) {
   MatrixAccessor<double> xAcc(*xpMat);
@@ -148,6 +180,17 @@ void update_resid(XPtr<BigMatrix> xpMat, double *r, double shift, int *row_idx_,
     r[i] -= shift * (xCol[row_idx_[i]] - center_) / scale_;
   }
 }
+
+// update residual vector -- no standardization
+void update_resid_no_std(XPtr<BigMatrix> xpMat, double *r, double shift, int *row_idx_, 
+                  int n_row, int j) {
+  MatrixAccessor<double> xAcc(*xpMat);
+  double *xCol = xAcc[j];
+  for (int i=0; i < n_row; i++) {
+    r[i] -= shift * (xCol[row_idx_[i]]);
+  }
+}
+
 
 // update residul vector and eta vector
 void update_resid_eta(double *r, double *eta, XPtr<BigMatrix> xpMat, double shift, 
@@ -222,7 +265,7 @@ double wsqsum_bm(XPtr<BigMatrix> xpMat, double *w, int *row_idx_, double center_
   return val;
 }
 
-// standardize
+// standardize & get residual 
 void standardize_and_get_residual(NumericVector &center, NumericVector &scale, 
                                   int *p_keep_ptr, vector<int> &col_idx, //columns to keep, removing columns whose scale < 1e-6
                                   vector<double> &z, double *lambda_max_ptr,
@@ -262,6 +305,41 @@ void standardize_and_get_residual(NumericVector &center, NumericVector &scale,
   }
   *p_keep_ptr = col_idx.size();
   *lambda_max_ptr = zmax / alpha;
+}
+
+// get residual only -- need this in gaussian_simple 
+void get_residual(int *p_keep_ptr, vector<int> &col_idx, //columns to keep, removing columns whose scale < 1e-6
+                                  vector<double> &z, double lambda,
+                                  int *xmax_ptr, XPtr<BigMatrix> xMat, double *y, 
+                                  int *row_idx, double alpha, int n, int p) {
+  MatrixAccessor<double> xAcc(*xMat);
+  double *xCol;
+  double sum_xy, sum_y;
+  double zmax = 0.0, zj = 0.0;
+  int i, j;
+  
+  for (j = 0; j < p; j++) {
+    xCol = xAcc[j];
+    sum_xy = 0.0;
+    sum_y = 0.0;
+    
+    for (i = 0; i < n; i++) {
+      // NB: this assumes X matrix has *already* been standardized 
+      sum_xy = sum_xy + xCol[row_idx[i]] * y[i];
+      sum_y = sum_y + y[i];
+    }
+    
+    col_idx.push_back(j);
+    zj = (sum_xy * sum_y) / (n); //residual
+    if (fabs(zj) > zmax) {
+      zmax = fabs(zj);
+      *xmax_ptr = j; // xmax_ptr is the index in the raw xMat, not index in col_idx!
+    }
+    z.push_back(zj);
+  }
+  
+  *p_keep_ptr = col_idx.size();
+   lambda = zmax / alpha;
 }
 
 // check KKT conditions over features in the inactive set
@@ -356,6 +434,37 @@ int check_rest_safe_set(int *ever_active, int *strong_set, int *discard_beta, ve
   return violations;
 }
 
+// check KKT conditions over features in (the safe set - the strong set)
+int check_rest_safe_set_no_std(int *ever_active, int *strong_set, int *discard_beta, vector<double> &z,
+                        XPtr<BigMatrix> xpMat, int *row_idx, vector<int> &col_idx,
+                        double *a, double lambda,
+                        double sumResid, double alpha, double *r, double *m, int n, int p) {
+  
+  MatrixAccessor<double> xAcc(*xpMat);
+  double *xCol, sum, l1, l2;
+  int j, jj, violations = 0;
+#pragma omp parallel for private(j, sum, l1, l2) reduction(+:violations) schedule(static) 
+  for (j = 0; j < p; j++) {
+    if (strong_set[j] == 0 && discard_beta[j] == 0) {
+      jj = col_idx[j];
+      xCol = xAcc[jj];
+      sum = 0.0;
+      for (int i=0; i < n; i++) {
+        sum = sum + xCol[row_idx[i]] * r[i];
+      }
+      z[j] = (sum  * sumResid) / (n);
+      
+      l1 = lambda * m[jj] * alpha;
+      l2 = lambda * m[jj] * (1 - alpha);
+      if (fabs(z[j] - a[j] * l2) > l1) {
+        ever_active[j] = strong_set[j] = 1;
+        violations++;
+      }
+    }
+  }
+  return violations;
+}
+
 // check KKT conditions over features in the strong set
 int check_strong_set(int *e1, int *e2, vector<double> &z, XPtr<BigMatrix> xpMat, 
                      int *row_idx, vector<int> &col_idx,
@@ -387,6 +496,39 @@ int check_strong_set(int *e1, int *e2, vector<double> &z, XPtr<BigMatrix> xpMat,
   }
   return violations;
 }
+
+// check KKT conditions over features in the strong set on *standardized* X 
+int check_strong_set_no_std(int *e1, int *e2, vector<double> &z, XPtr<BigMatrix> xpMat, 
+                     int *row_idx, vector<int> &col_idx, double *a,
+                     double lambda, double sumResid, double alpha, 
+                     double *r, double *m, int n, int p) {
+  MatrixAccessor<double> xAcc(*xpMat);
+  double *xCol, sum, l1, l2;
+  int j, jj, violations = 0;
+  
+#pragma omp parallel for private(j, sum, l1, l2) reduction(+:violations) schedule(static) 
+  for (j = 0; j < p; j++) {
+    if (e1[j] == 0 && e2[j] == 1) {
+      jj = col_idx[j];
+      xCol = xAcc[jj];
+      sum = 0.0;
+      for (int i=0; i < n; i++) {
+        sum = sum + xCol[row_idx[i]] * r[i];
+      }
+      z[j] = (sum * sumResid) / (n);
+      
+      l1 = lambda * m[jj] * alpha;
+      l2 = lambda * m[jj] * (1 - alpha);
+      if(fabs(z[j] - a[j] * l2) > l1) {
+        e1[j] = 1;
+        violations++;
+      }
+    }
+  }
+  return violations;
+}
+
+
 
 // check KKT conditions over features in the rest set
 int check_rest_set(int *e1, int *e2, vector<double> &z, XPtr<BigMatrix> xpMat, int *row_idx, 

@@ -179,6 +179,7 @@ fit_flex <- biglasso_fit(X.bm, y)
 plot(fit_flex, log.l = TRUE, main = 'lasso')
 
 # with CV 
+cv_fit <- cv.biglasso(X.bm, y, biglasso_fit = TRUE)
 
 }
 \author{
