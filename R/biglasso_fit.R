@@ -3,10 +3,12 @@
 #' NOTE: this function is designed for users who have a strong understanding of 
 #' statistics and know exactly what they are doing. This is a copy of the main 
 #' `biglasso()` function with more flexible settings. Of note, this function:
+#' 
 #'  * does NOT add an intercept 
 #'  * does NOT standardize the design matrix
+#'  * does NOT set up a path for lambda (the lasso tuning parameter)
 #'  
-#'  both of the above are among the best practices for data analysis. This function 
+#'  all of the above are among the best practices for data analysis. This function 
 #'  is made for use in situations where these steps have already been addressed prior 
 #'  to model fitting.
 #'  
@@ -15,38 +17,29 @@
 #'  
 #'  For now, this function only works with linear regression (`family = 'gaussian'`)
 #'  
-#' The objective function for linear regression or multiple responses linear regression 
-#' (\code{family = "gaussian"} is
-#' \deqn{\frac{1}{2n}\textrm{RSS} + \lambda*\textrm{penalty},}{(1/(2n))*RSS+
-#' \lambda*penalty,}
 #' @param X The design matrix, without an intercept. It must be a
 #' double type \code{\link[bigmemory]{big.matrix}} object. 
 #' @param y The response vector 
 #' @param row.idx The integer vector of row indices of \code{X} that used for
 #' fitting the model. \code{1:nrow(X)} by default.
 #' @param ncores The number of OpenMP threads used for parallel computing.
+#' @param lambda A single value for the lasso tuning parameter. 
 #' @param alpha The elastic-net mixing parameter that controls the relative
 #' contribution from the lasso (l1) and the ridge (l2) penalty. The penalty is
 #' defined as \deqn{ \alpha||\beta||_1 + (1-\alpha)/2||\beta||_2^2.}
 #' \code{alpha=1} is the lasso penalty, \code{alpha=0} the ridge penalty,
 #' \code{alpha} in between 0 and 1 is the elastic-net ("enet") penalty.
-#' @param lambda A single value for lasso penalty parameter lambda. 
+#' @param max.iter Maximum number of iterations.  Default is 1000.
 #' @param eps Convergence threshold for inner coordinate descent.  The
 #' algorithm iterates until the maximum change in the objective after any
 #' coefficient update is less than \code{eps} times the null deviance. Default
 #' value is \code{1e-7}.
-#' @param max.iter Maximum number of iterations.  Default is 1000.
 #' @param dfmax Upper bound for the number of nonzero coefficients.  Default is
 #' no upper bound.  However, for large data sets, computational burden may be
 #' heavy for models with a large number of nonzero coefficients.
 #' @param penalty.factor A multiplicative factor for the penalty applied to
 #' each coefficient. If supplied, \code{penalty.factor} must be a numeric
-#' vector of length equal to the number of columns of \code{X}.  The purpose of
-#' \code{penalty.factor} is to apply differential penalization if some
-#' coefficients are thought to be more likely than others to be in the model.
-#' Current package doesn't allow unpenalized coefficients. That
-#' is\code{penalty.factor} cannot be 0. \code{penalty.factor} is only supported
-#' for "SSR" screen.
+#' vector of length equal to the number of columns of \code{X}.  
 #' @param warn Return warning messages for failures to converge and model
 #' saturation?  Default is TRUE.
 #' @param output.time Whether to print out the start and end time of the model
@@ -70,10 +63,6 @@
 #' \item{penalty.factor}{Same as above.}
 #' \item{n}{The number of observations used in the model fitting. It's equal to
 #' \code{length(row.idx)}.} 
-#' \item{center}{The sample mean vector of the variables, i.e., column mean of
-#' the sub-matrix of \code{X} used for model fitting.} 
-#' \item{scale}{The sample standard deviation of the variables, i.e., column
-#' standard deviation of the sub-matrix of \code{X} used for model fitting.} 
 #' \item{y}{The response vector used in the model fitting. Depending on
 #' \code{row.idx}, it could be a subset of the raw input of the response vector y.}
 #' \item{screen}{Same as above.} 
@@ -97,7 +86,8 @@
 #' cv_fit <- cv.biglasso(X.bm, y, fit_flag = TRUE, ncores = 1)
 #' # NB: the beta coefficients have not be un-transformed in the case above! 
 #' @export biglasso_fit
-biglasso_fit <- function(X, y, row.idx = 1:nrow(X),
+biglasso_fit <- function(X, y,
+                         row.idx = 1:nrow(X),
                          ncores = 1,
                          lambda,
                          alpha = 1, 
@@ -105,7 +95,8 @@ biglasso_fit <- function(X, y, row.idx = 1:nrow(X),
                          eps=1e-5,
                          dfmax = ncol(X)+1,
                          penalty.factor = rep(1, ncol(X)),
-                         warn = TRUE, output.time = FALSE,
+                         warn = TRUE,
+                         output.time = FALSE,
                          return.time = TRUE,
                          verbose = FALSE) {
   
@@ -127,9 +118,6 @@ biglasso_fit <- function(X, y, row.idx = 1:nrow(X),
     if (class(tmp)[1] == "try-error") stop("y must numeric or able to be coerced to numeric")
   }
   
-  # set more defaults/initial values
-  yy <- y - mean(y)
-  
   p <- ncol(X)
   if (length(penalty.factor) != p) stop("penalty.factor does not match up with X")
   
@@ -137,7 +125,7 @@ biglasso_fit <- function(X, y, row.idx = 1:nrow(X),
   
   n <- length(row.idx) ## subset of X. idx: indices of rows.
   if (missing(lambda)) {
-    stop("For biglasso_fit, lambda value must be user-supplied")
+    stop("For biglasso_fit, a single lambda value must be user-supplied")
   }
   
   ## fit model
@@ -148,7 +136,7 @@ biglasso_fit <- function(X, y, row.idx = 1:nrow(X),
   time <- system.time(
     res <- .Call("cdfit_gaussian_simple",
                  X@address,
-                 yy,
+                 y,
                  as.integer(row.idx-1),
                  lambda,
                  alpha,
@@ -163,11 +151,12 @@ biglasso_fit <- function(X, y, row.idx = 1:nrow(X),
   
   
   b <- Matrix(res[[1]], sparse = T)
-  loss <- res[[2]]
-  iter <- res[[3]]
-  rejections <- res[[4]]
-  safe_rejections <- res[[5]]
-  col.idx <- res[[6]]
+  res_lam <- res[[2]]
+  loss <- res[[3]]
+  iter <- res[[4]]
+  rejections <- res[[5]]
+  safe_rejections <- res[[6]]
+  col.idx <- res[[7]]
   
   
   if (output.time) {
@@ -176,7 +165,6 @@ biglasso_fit <- function(X, y, row.idx = 1:nrow(X),
   
   ## Eliminate saturated lambda values, if any
   ind <- !is.na(iter)
-  # if (family %in% c("gaussian","binomial")) a <- a[ind]
   if(!is.list(b)) b <- b[, ind, drop=FALSE]
   iter <- iter[ind]
   lambda <- lambda[ind]
@@ -201,7 +189,7 @@ biglasso_fit <- function(X, y, row.idx = 1:nrow(X),
     n = n,
     center = center,
     scale = scale,
-    y = yy,
+    y = y,
     screen = screen,
     col.idx = col.idx,
     # safe_rejections = safe_rejections,

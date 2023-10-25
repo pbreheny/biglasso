@@ -69,6 +69,9 @@ RcppExport SEXP cdfit_gaussian_simple(SEXP X_, SEXP y_, SEXP row_idx_,
   get_residual(p_keep_ptr, col_idx, z, lambda, xmax_ptr, xMat, y,
                row_idx, alpha, n, p);
   
+  // for debugging 
+  // Rprintf("The lambda value is: ",lambda);
+  
   // Objects to be returned to R
   arma::sp_mat beta = arma::sp_mat(p, L); //Beta
   double *a = R_Calloc(p, double); //Beta from previous iteration
@@ -105,7 +108,7 @@ RcppExport SEXP cdfit_gaussian_simple(SEXP X_, SEXP y_, SEXP row_idx_,
   
   while(iter < max_iter) {
     while (iter < max_iter) {
-      R_CheckUserInterrupt();
+      //R_CheckUserInterrupt();
       while (iter < max_iter) {
         iter++;
         max_update = 0.0;
@@ -115,11 +118,11 @@ RcppExport SEXP cdfit_gaussian_simple(SEXP X_, SEXP y_, SEXP row_idx_,
             z[j] = crossprod_resid_no_std(xMat, r, sumResid, row_idx, n, jj) / n + a[j];
             l1 = lambda * m[jj] * alpha;
             l2 = lambda * m[jj] * (1-alpha);
-            beta(j) = lasso(z[j], l1, l2, 1);
+            beta[j] = lasso(z[j], l1, l2, 1);
             
-            shift = beta(j) - a[j];
+            shift = beta[j] - a[j];
             if (shift != 0) {
-              update = pow(beta(j) - a[j], 2);
+              update = pow(beta[j] - a[j], 2);
               if (update > max_update) {
                 max_update = update;
               }
@@ -128,7 +131,7 @@ RcppExport SEXP cdfit_gaussian_simple(SEXP X_, SEXP y_, SEXP row_idx_,
               a[j] = beta(j); //update a
             }
             // update ever active sets
-            if (beta(j) != 0) {
+            if (beta[j] != 0) {
               ever_active[j] = 1;
             } 
           }
