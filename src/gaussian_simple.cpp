@@ -33,7 +33,7 @@ RcppExport SEXP cdfit_gaussian_simple(SEXP X_, SEXP y_, SEXP row_idx_,
   int *p_keep_ptr = &p_keep;
   
   vector<int> col_idx;
-  vector<double> z;
+  vector<double> z;//vector to hold residuals; to be filled in by get_residual()
   int xmax_idx = 0;
   int *xmax_ptr = &xmax_idx;
   
@@ -154,7 +154,7 @@ RcppExport SEXP cdfit_gaussian_simple(SEXP X_, SEXP y_, SEXP row_idx_,
   }
   
   R_Free(ever_active); R_Free(r); R_Free(a); R_Free(discard_beta); R_Free(strong_set); 
-  return List::create(beta, lambda, loss, iter, n_reject, n_safe_reject, Rcpp::wrap(col_idx));
+  return List::create(beta, lambda, loss, iter, z, n_reject, n_safe_reject, Rcpp::wrap(col_idx));
 }
 
 

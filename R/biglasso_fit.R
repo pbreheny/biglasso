@@ -82,9 +82,6 @@
 #' fit_flex <- biglasso_fit(X.bm, y, lambda = 0.1)
 #' plot(fit_flex, log.l = TRUE, main = 'lasso')
 #'
-#' # with CV 
-#' cv_fit <- cv.biglasso(X.bm, y, fit_flag = TRUE, ncores = 1)
-#' # NB: the beta coefficients have not be un-transformed in the case above! 
 #' @export biglasso_fit
 biglasso_fit <- function(X, y,
                          row.idx = 1:nrow(X),
@@ -154,9 +151,10 @@ biglasso_fit <- function(X, y,
   res_lam <- res[[2]]
   loss <- res[[3]]
   iter <- res[[4]]
-  rejections <- res[[5]]
-  safe_rejections <- res[[6]]
-  col.idx <- res[[7]]
+  resid <- res[[5]]
+  rejections <- res[[6]]
+  safe_rejections <- res[[7]]
+  col.idx <- res[[8]]
   
   
   if (output.time) {
@@ -187,8 +185,6 @@ biglasso_fit <- function(X, y,
     loss = loss,
     penalty.factor = penalty.factor,
     n = n,
-    center = center,
-    scale = scale,
     y = y,
     screen = screen,
     col.idx = col.idx,

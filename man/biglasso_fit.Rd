@@ -8,19 +8,11 @@ biglasso_fit(
   X,
   y,
   row.idx = 1:nrow(X),
-  penalty = c("lasso", "ridge", "enet"),
-  family = "gaussian",
-  screen = "Adaptive",
-  safe.thresh = 0,
-  update.thresh = 1,
   ncores = 1,
-  alpha = 1,
-  lambda.min = ifelse(nrow(X) > ncol(X), 0.001, 0.05),
-  nlambda = 100,
-  lambda.log.scale = TRUE,
   lambda,
-  eps = 1e-07,
+  alpha = 1,
   max.iter = 1000,
+  eps = 1e-05,
   dfmax = ncol(X) + 1,
   penalty.factor = rep(1, ncol(X)),
   warn = TRUE,
@@ -38,32 +30,9 @@ double type \code{\link[bigmemory]{big.matrix}} object.}
 \item{row.idx}{The integer vector of row indices of \code{X} that used for
 fitting the model. \code{1:nrow(X)} by default.}
 
-\item{penalty}{The penalty to be applied to the model. Either \code{"lasso"}
-(the default), \code{"ridge"}, or \code{"enet"} (elastic net).}
-
-\item{screen}{The feature screening rule used at each \code{lambda} that
-discards features to speed up computation: \code{"SSR"} (default if
-\code{penalty="ridge"} or \code{penalty="enet"} )is the sequential strong rule;
-\code{"Adaptive"} (default for \code{penalty="lasso"}
-without \code{penalty.factor}) is our newly proposed adaptive rules which
-reuse screening reference for multiple lambda values. \strong{Note that:}
-(1) for linear regression with elastic net penalty, both \code{"SSR"} and
-\code{"Hybrid"} are applicable since version 1.3-0;  (2) only \code{"SSR"} is
-applicable to elastic-net-penalized logistic regression or cox regression;
-(3) active set cycling strategy is incorporated with these screening rules.}
-
-\item{safe.thresh}{the threshold value between 0 and 1 that controls when to
-stop safe test. For example, 0.01 means to stop safe test at next lambda 
-iteration if the number of features rejected by safe test at current lambda
-iteration is not larger than 1\% of the total number of features. So 1 means
-to always turn off safe test, whereas 0 (default) means to turn off safe test
-if the number of features rejected by safe test is 0 at current lambda.}
-
-\item{update.thresh}{the non negative threshold value that controls how often to
-update the reference of safe rules for "Adaptive" methods. Smaller value means
-updating more often.}
-
 \item{ncores}{The number of OpenMP threads used for parallel computing.}
+
+\item{lambda}{A single value for the lasso tuning parameter.}
 
 \item{alpha}{The elastic-net mixing parameter that controls the relative
 contribution from the lasso (l1) and the ridge (l2) penalty. The penalty is
@@ -71,25 +40,12 @@ defined as \deqn{ \alpha||\beta||_1 + (1-\alpha)/2||\beta||_2^2.}
 \code{alpha=1} is the lasso penalty, \code{alpha=0} the ridge penalty,
 \code{alpha} in between 0 and 1 is the elastic-net ("enet") penalty.}
 
-\item{lambda.min}{The smallest value for lambda, as a fraction of
-lambda.max.  Default is .001 if the number of observations is larger than
-the number of covariates and .05 otherwise.}
-
-\item{nlambda}{The number of lambda values.  Default is 100.}
-
-\item{lambda.log.scale}{Whether compute the grid values of lambda on log
-scale (default) or linear scale.}
-
-\item{lambda}{A user-specified sequence of lambda values.  By default, a
-sequence of values of length \code{nlambda} is computed, equally spaced on
-the log scale.}
+\item{max.iter}{Maximum number of iterations.  Default is 1000.}
 
 \item{eps}{Convergence threshold for inner coordinate descent.  The
 algorithm iterates until the maximum change in the objective after any
 coefficient update is less than \code{eps} times the null deviance. Default
 value is \code{1e-7}.}
-
-\item{max.iter}{Maximum number of iterations.  Default is 1000.}
 
 \item{dfmax}{Upper bound for the number of nonzero coefficients.  Default is
 no upper bound.  However, for large data sets, computational burden may be
@@ -97,12 +53,7 @@ heavy for models with a large number of nonzero coefficients.}
 
 \item{penalty.factor}{A multiplicative factor for the penalty applied to
 each coefficient. If supplied, \code{penalty.factor} must be a numeric
-vector of length equal to the number of columns of \code{X}.  The purpose of
-\code{penalty.factor} is to apply differential penalization if some
-coefficients are thought to be more likely than others to be in the model.
-Current package doesn't allow unpenalized coefficients. That
-is\code{penalty.factor} cannot be 0. \code{penalty.factor} is only supported
-for "SSR" screen.}
+vector of length equal to the number of columns of \code{X}.}
 
 \item{warn}{Return warning messages for failures to converge and model
 saturation?  Default is TRUE.}
@@ -128,16 +79,10 @@ iterations until convergence at each value of \code{lambda}.}
 \item{penalty}{Same as above.}
 \item{family}{Same as above.}
 \item{alpha}{Same as above.} 
-\item{loss}{A vector containing either the residual sum of squares 
-(for \code{"gaussian", "mgaussian"}) or negative log-likelihood
-(for \code{"binomial", "cox"}) of the fitted model at each value of \code{lambda}.}
+\item{loss}{A vector containing either the residual sum of squares of the fitted model at each value of \code{lambda}.}
 \item{penalty.factor}{Same as above.}
 \item{n}{The number of observations used in the model fitting. It's equal to
 \code{length(row.idx)}.} 
-\item{center}{The sample mean vector of the variables, i.e., column mean of
-the sub-matrix of \code{X} used for model fitting.} 
-\item{scale}{The sample standard deviation of the variables, i.e., column
-standard deviation of the sub-matrix of \code{X} used for model fitting.} 
 \item{y}{The response vector used in the model fitting. Depending on
 \code{row.idx}, it could be a subset of the raw input of the response vector y.}
 \item{screen}{Same as above.} 
@@ -151,10 +96,13 @@ value of \code{lambda}.}
 NOTE: this function is designed for users who have a strong understanding of 
 statistics and know exactly what they are doing. This is a copy of the main 
 `biglasso()` function with more flexible settings. Of note, this function:
- * does NOT add an intercept 
+}
+\details{
+* does NOT add an intercept 
  * does NOT standardize the design matrix
+ * does NOT set up a path for lambda (the lasso tuning parameter)
  
- both of the above are among the best practices for data analysis. This function 
+ all of the above are among the best practices for data analysis. This function 
  is made for use in situations where these steps have already been addressed prior 
  to model fitting.
  
@@ -162,12 +110,6 @@ statistics and know exactly what they are doing. This is a copy of the main
  is to `ncvreg::ncvreg()`.
  
  For now, this function only works with linear regression (`family = 'gaussian'`)
- 
-The objective function for linear regression or multiple responses linear regression 
-(\code{family = "gaussian"} is
-\deqn{\frac{1}{2n}\textrm{RSS} + \lambda*\textrm{penalty},}{(1/(2n))*RSS+
-\lambda*penalty,}
-where for \code{family = "mgaussian"}), a group-lasso type penalty is applied.
 }
 \examples{
 
@@ -175,11 +117,8 @@ data(colon)
 X <- colon$X
 y <- colon$y
 X.bm <- as.big.matrix(X)
-fit_flex <- biglasso_fit(X.bm, y)
+fit_flex <- biglasso_fit(X.bm, y, lambda = 0.1)
 plot(fit_flex, log.l = TRUE, main = 'lasso')
-
-# with CV 
-cv_fit <- cv.biglasso(X.bm, y, biglasso_fit = TRUE)
 
 }
 \author{
