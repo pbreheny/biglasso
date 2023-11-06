@@ -50,19 +50,19 @@ RcppExport SEXP cdfit_gaussian_simple(SEXP X_, SEXP y_, SEXP row_idx_,
 #endif
   
   if (verbose) {
-    char buff1[100];
-    time_t now1 = time (0);
-    strftime (buff1, 100, "%Y-%m-%d %H:%M:%S.000", localtime (&now1));
-    Rprintf("\nPreprocessing start: %s\n", buff1);
+    // char buff1[100];
+    // time_t now1 = time (0);
+    // strftime (buff1, 100, "%Y-%m-%d %H:%M:%S.000", localtime (&now1));
+    // Rprintf("\nPreprocessing start: %s\n", buff1);
   }
   
-  if (verbose) {
-    char buff1[100];
-    time_t now1 = time (0);
-    strftime (buff1, 100, "%Y-%m-%d %H:%M:%S.000", localtime (&now1));
-    Rprintf("Preprocessing end: %s\n", buff1);
-    Rprintf("\n-----------------------------------------------\n");
-  }
+  // if (verbose) {
+  //   char buff1[100];
+  //   time_t now1 = time (0);
+  //   strftime (buff1, 100, "%Y-%m-%d %H:%M:%S.000", localtime (&now1));
+  //   Rprintf("Preprocessing end: %s\n", buff1);
+  //   Rprintf("\n-----------------------------------------------\n");
+  // }
   
   
   // Get residual
