@@ -124,7 +124,7 @@ biglasso_fit <- function(X, y,
   if (missing(lambda)) {
     stop("For biglasso_fit, a single lambda value must be user-supplied")
   }
-  
+  browser()
   ## fit model
   if (output.time) {
     cat("\nStart biglasso: ", format(Sys.time()), '\n')

@@ -133,12 +133,12 @@ double crossprod_bm_Xj_Xk(XPtr<BigMatrix> xMat, int *row_idx,
   double *xCol_j = xAcc[j];
   double *xCol_k = xAcc[k];
   double sum_xj_xk = 0.0;
-  double res = 0.0;
+  // double res = 0.0;
   
   for (int i = 0; i < n; i++) {
     sum_xj_xk += xCol_j[row_idx[i]] * xCol_k[row_idx[i]];
   }
-  res = (sum_xj_xk - n * center[j] * center[k]) / (scale[j] * scale[k]);
+  double res = (sum_xj_xk - n * center[j] * center[k]) / (scale[j] * scale[k]);
   
   return res;
 }
@@ -308,10 +308,17 @@ void standardize_and_get_residual(NumericVector &center, NumericVector &scale,
 }
 
 // get residual only -- need this in gaussian_simple 
-void get_residual(int *p_keep_ptr, vector<int> &col_idx, //columns to keep, removing columns whose scale < 1e-6
-                                  vector<double> &z, double lambda,
-                                  int *xmax_ptr, XPtr<BigMatrix> xMat, double *y, 
-                                  int *row_idx, double alpha, int n, int p) {
+void get_residual(int *p_keep_ptr,
+                  vector<int> &col_idx, //columns to keep, removing columns whose scale < 1e-6
+                  vector<double> &z, 
+                  double *lambda, // pass lambda by reference 
+                  int *xmax_ptr,
+                  XPtr<BigMatrix> xMat, 
+                  double *y, 
+                  int *row_idx,
+                  double alpha,
+                  int n, 
+                  int p) {
   MatrixAccessor<double> xAcc(*xMat);
   double *xCol;
   double sum_xy, sum_y;
@@ -329,6 +336,15 @@ void get_residual(int *p_keep_ptr, vector<int> &col_idx, //columns to keep, remo
       sum_y = sum_y + y[i];
     }
     
+    // check for errant zero values
+    if (sum_y != 0.0) {
+      zj = (sum_xy * sum_y) / (n); //residual
+    } else {
+      // Handle the case when sum_y is zero
+      Rprintf("problem: in get_residual, sum_y is 0");
+    }
+    
+    
     col_idx.push_back(j);
     zj = (sum_xy * sum_y) / (n); //residual
     if (fabs(zj) > zmax) {
@@ -339,7 +355,7 @@ void get_residual(int *p_keep_ptr, vector<int> &col_idx, //columns to keep, remo
   }
   
   *p_keep_ptr = col_idx.size();
-   lambda = zmax / alpha;
+  *lambda = zmax / alpha;
 }
 
 // check KKT conditions over features in the inactive set
@@ -439,9 +455,12 @@ int check_rest_safe_set_no_std(int *ever_active, int *strong_set, int *discard_b
                         XPtr<BigMatrix> xpMat, int *row_idx, vector<int> &col_idx,
                         double *a, double lambda,
                         double sumResid, double alpha, double *r, double *m, int n, int p) {
-  
+  if (!xpMat) return 0; // check 
   MatrixAccessor<double> xAcc(*xpMat);
-  double *xCol, sum, l1, l2;
+  double *xCol;
+  double sum = 0.0;
+  double l1 = 0.0;
+  double l2 = 0.0;
   int j, jj, violations = 0;
 #pragma omp parallel for private(j, sum, l1, l2) reduction(+:violations) schedule(static) 
   for (j = 0; j < p; j++) {
@@ -503,7 +522,10 @@ int check_strong_set_no_std(int *e1, int *e2, vector<double> &z, XPtr<BigMatrix>
                      double lambda, double sumResid, double alpha, 
                      double *r, double *m, int n, int p) {
   MatrixAccessor<double> xAcc(*xpMat);
-  double *xCol, sum, l1, l2;
+  double *xCol;
+  double sum = 0.0;
+  double l1 = 0.0;
+  double l2 = 0.0;
   int j, jj, violations = 0;
   
 #pragma omp parallel for private(j, sum, l1, l2) reduction(+:violations) schedule(static) 

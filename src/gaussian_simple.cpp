@@ -25,7 +25,9 @@ RcppExport SEXP cdfit_gaussian_simple(SEXP X_, SEXP y_, SEXP row_idx_,
   double *m = REAL(multiplier_);
   //int dfmax = INTEGER(dfmax_)[0];
   // double update_thresh = REAL(update_thresh_)[0];
-  double lambda = REAL(lambda_)[0];
+  double lambda_val = REAL(lambda_)[0];
+  double *lambda = &lambda_val;
+  
   
   // the 'p' here won't need to change, since constant features are assumed 
   //  to have been already removed 
@@ -66,11 +68,20 @@ RcppExport SEXP cdfit_gaussian_simple(SEXP X_, SEXP y_, SEXP row_idx_,
   
   
   // Get residual
-  get_residual(p_keep_ptr, col_idx, z, lambda, xmax_ptr, xMat, y,
-               row_idx, alpha, n, p);
+  get_residual(p_keep_ptr,
+               col_idx,
+               z, 
+               lambda, 
+               xmax_ptr,
+               xMat, 
+               y,
+               row_idx, 
+               alpha,
+               n, 
+               p);
   
   // for debugging 
-  // Rprintf("The lambda value is: ",lambda);
+  Rprintf("The lambda value is: ", *lambda);
   
   // Objects to be returned to R
   arma::sp_mat beta = arma::sp_mat(p, L); //Beta
@@ -83,16 +94,29 @@ RcppExport SEXP cdfit_gaussian_simple(SEXP X_, SEXP y_, SEXP row_idx_,
   double max_update, update, thresh; // for convergence check
   int i, j, jj, violations; //temp index
   int *ever_active = R_Calloc(p, int); // ever-active set
+  if(ever_active == NULL){
+    Rprintf("Problem: ever_active is NULL");
+  }
   int *strong_set = R_Calloc(p, int); // strong set
+  if(strong_set == NULL){
+    Rprintf("Problem: strong_set is NULL");
+  }
   int *discard_beta = R_Calloc(p, int); // index set of discarded features;
+  if(discard_beta == NULL){
+    Rprintf("Problem: discard_beta is NULL");
+  }
   double cutoff = 0; // cutoff for strong rule
   //int *discard_old = R_Calloc(p, int);
   double *r = R_Calloc(n, double);
+  if(r == NULL){
+    Rprintf("Problem: r is NULL");
+  }
   for (i = 0; i < n; i++) r[i] = y[i];
   double sumResid = sum(r, n);
   loss[0] = gLoss(r, n);
   thresh = eps * loss[0] / n;
   
+  Rprintf("Made it to the loop");
   // here, loop thru residuals and determine which variables (features) are in 
   //  the 'strong set' -- i.e., which variables are most likely to be selected 
   //  in some candidate model 
@@ -116,8 +140,8 @@ RcppExport SEXP cdfit_gaussian_simple(SEXP X_, SEXP y_, SEXP row_idx_,
           if (ever_active[j]) {
             jj = col_idx[j];
             z[j] = crossprod_resid_no_std(xMat, r, sumResid, row_idx, n, jj) / n + a[j];
-            l1 = lambda * m[jj] * alpha;
-            l2 = lambda * m[jj] * (1-alpha);
+            l1 = *lambda * m[jj] * alpha;
+            l2 = *lambda * m[jj] * (1-alpha);
             beta[j] = lasso(z[j], l1, l2, 1);
             
             shift = beta[j] - a[j];
@@ -140,12 +164,12 @@ RcppExport SEXP cdfit_gaussian_simple(SEXP X_, SEXP y_, SEXP row_idx_,
         if (max_update < thresh) break;
       }
       violations = check_strong_set_no_std(ever_active, strong_set, z, xMat,
-                                           row_idx, col_idx, a, lambda,
+                                           row_idx, col_idx, a, *lambda,
                                            sumResid, alpha, r, m, n, p); 
       if (violations==0) break;
     }	
     // Scan for violations in edpp set
-    violations = check_rest_safe_set_no_std(ever_active, strong_set, discard_beta, z, xMat, row_idx, col_idx, a, lambda, sumResid, alpha, r, m, n, p); 
+    violations = check_rest_safe_set_no_std(ever_active, strong_set, discard_beta, z, xMat, row_idx, col_idx, a, *lambda, sumResid, alpha, r, m, n, p); 
     if (violations == 0) {
       loss = gLoss(r, n);
       break;
@@ -154,7 +178,7 @@ RcppExport SEXP cdfit_gaussian_simple(SEXP X_, SEXP y_, SEXP row_idx_,
   }
   
   R_Free(ever_active); R_Free(r); R_Free(a); R_Free(discard_beta); R_Free(strong_set); 
-  return List::create(beta, lambda, loss, iter, z, n_reject, n_safe_reject, Rcpp::wrap(col_idx));
+  return List::create(beta, *lambda, loss, iter, z, n_reject, n_safe_reject, Rcpp::wrap(col_idx));
 }
 
 
