@@ -75,12 +75,14 @@
 #'
 #' @examples
 #' 
+#' /dontrun{
 #' data(colon)
 #' X <- colon$X
 #' y <- colon$y
 #' X.bm <- as.big.matrix(X)
 #' fit_flex <- biglasso_fit(X.bm, y, lambda = 0.1)
 #' plot(fit_flex, log.l = TRUE, main = 'lasso')
+#'}
 #'
 #' @export biglasso_fit
 biglasso_fit <- function(X, y,
@@ -124,11 +126,14 @@ biglasso_fit <- function(X, y,
   if (missing(lambda)) {
     stop("For biglasso_fit, a single lambda value must be user-supplied")
   }
-  browser()
+  
   ## fit model
   if (output.time) {
     cat("\nStart biglasso: ", format(Sys.time()), '\n')
   }
+  
+  Sys.setenv(R_C_BOUNDS_CHECK = "yes")
+  
   
   time <- system.time(
     res <- .Call("cdfit_gaussian_simple",

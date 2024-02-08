@@ -851,3 +851,5 @@ RcppExport SEXP cdfit_gaussian_bedpp_ssr(SEXP X_, SEXP y_, SEXP row_idx_,
   //ProfilerStop();
   return List::create(beta, center, scale, lambda, loss, iter, n_reject, n_bedpp_reject, Rcpp::wrap(col_idx));
 }
+
+

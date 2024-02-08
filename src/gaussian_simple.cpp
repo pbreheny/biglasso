@@ -1,4 +1,5 @@
 #include "utilities.h"
+
 // T. Peter's addition ---------------------------
 // Coordinate descent for gaussian models -- NO adapting or SSR 
 // NOTE: in this simple function, lambda is a SINGLE VALUE, not a path!! 
@@ -81,11 +82,15 @@ RcppExport SEXP cdfit_gaussian_simple(SEXP X_, SEXP y_, SEXP row_idx_,
                p);
   
   // for debugging 
-  Rprintf("The lambda value is: ", *lambda);
+  Rprintf("The lambda value is: %f\n", *lambda);
+
   
   // Objects to be returned to R
   arma::sp_mat beta = arma::sp_mat(p, L); //Beta
   double *a = R_Calloc(p, double); //Beta from previous iteration
+  if(a == NULL){
+    Rprintf("Problem: Allocation of a is NULL");
+  }
   NumericVector loss(L);
   IntegerVector n_reject(L);
   IntegerVector n_safe_reject(L);
@@ -131,9 +136,9 @@ RcppExport SEXP cdfit_gaussian_simple(SEXP X_, SEXP y_, SEXP row_idx_,
   n_reject = p - sum(strong_set, p);
   
   while(iter < max_iter) {
-    while (iter < max_iter) {
+    // while (iter < max_iter) {
       //R_CheckUserInterrupt();
-      while (iter < max_iter) {
+      // while (iter < max_iter) {
         iter++;
         max_update = 0.0;
         for (j = 0; j < p; j++) {
@@ -162,21 +167,21 @@ RcppExport SEXP cdfit_gaussian_simple(SEXP X_, SEXP y_, SEXP row_idx_,
         }
         // Check for convergence 
         if (max_update < thresh) break;
+        
+        // check strong set 
+        violations = check_strong_set_no_std(ever_active, strong_set, z, xMat,
+                                             row_idx, col_idx, a, *lambda,
+                                             sumResid, alpha, r, m, n, p);
+        
+        // scan for violations in edpp set
+        violations = check_rest_safe_set_no_std(ever_active, strong_set, discard_beta, z, xMat, row_idx, col_idx, a, *lambda, sumResid, alpha, r, m, n, p); 
+        if (violations == 0) {
+          loss = gLoss(r, n);
+          break;
+        }
       }
-      violations = check_strong_set_no_std(ever_active, strong_set, z, xMat,
-                                           row_idx, col_idx, a, *lambda,
-                                           sumResid, alpha, r, m, n, p); 
-      if (violations==0) break;
-    }	
-    // Scan for violations in edpp set
-    violations = check_rest_safe_set_no_std(ever_active, strong_set, discard_beta, z, xMat, row_idx, col_idx, a, *lambda, sumResid, alpha, r, m, n, p); 
-    if (violations == 0) {
-      loss = gLoss(r, n);
-      break;
-    }
-    
-  }
-  
+       
+      
   R_Free(ever_active); R_Free(r); R_Free(a); R_Free(discard_beta); R_Free(strong_set); 
   return List::create(beta, *lambda, loss, iter, z, n_reject, n_safe_reject, Rcpp::wrap(col_idx));
 }
