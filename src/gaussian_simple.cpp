@@ -1,52 +1,57 @@
 #include "utilities.h"
 
-// T. Peter's addition ---------------------------
+// T. Peter's addition ----------------------------------------
+// Coordinate descent for gaussian models -- NO adapting or SSR. 
 
-// Coordinate descent for gaussian models -- NO adapting or SSR 
-// NOTE: in this simple function, lambda is a SINGLE VALUE, not a path!! 
+// Here, we are constructing a path of lambda values and fitting the model 
+// We assume *X has already been standardized!* No additional standardization
+// is done here. 
+
+// Note: this code is an adaptation of gaussian.cpp's cdfit_gaussian_ssr -- 
+// items removed from that original code are commented out. 
+
 RcppExport SEXP cdfit_gaussian_simple(SEXP X_, SEXP y_, SEXP row_idx_, 
-                                      SEXP lambda_, SEXP alpha_,
-                                      SEXP eps_, SEXP max_iter_,
-                                      // SEXP dfmax_,
-                                      SEXP multiplier_, 
-                                      SEXP ncore_, 
-                                      SEXP verbose_) {
-  
-  
-  XPtr<BigMatrix> xMat(X_);
-  
+                                   SEXP lambda_, SEXP nlambda_, 
+                                   SEXP lam_scale_, SEXP lambda_min_, 
+                                   SEXP alpha_, SEXP user_, SEXP eps_, 
+                                   SEXP max_iter_, SEXP multiplier_, SEXP dfmax_, 
+                                   SEXP ncore_, SEXP verbose_) {
   // for debugging 
   Rprintf("Entering cdfit_gaussian_simple");
   
+  // declarations 
+  XPtr<BigMatrix> xMat(X_);
+  if (!Rcpp::is<NumericMatrix>(X_)) {
+    Rcpp::stop("X_ is not a numeric matrix");
+  }
   
   double *y = REAL(y_);
-  double alpha = REAL(alpha_)[0];
   int *row_idx = INTEGER(row_idx_);
+  double lambda_min = REAL(lambda_min_)[0];
+  double alpha = REAL(alpha_)[0];
   int n = Rf_length(row_idx_); // number of observations used for fitting model
+  
   int p = xMat->ncol();
-  int L = 1; // again, note that here lambda is a *single* value 
-  // int user = INTEGER(user_)[0];
+  int L = INTEGER(nlambda_)[0];
+  int lam_scale = INTEGER(lam_scale_)[0];
+  int user = INTEGER(user_)[0];
   int verbose = INTEGER(verbose_)[0];
   double eps = REAL(eps_)[0];
-  int iter = 0;
   int max_iter = INTEGER(max_iter_)[0];
   double *m = REAL(multiplier_);
-  // int dfmax = INTEGER(dfmax_)[0];
-  // double update_thresh = REAL(update_thresh_)[0];
-  double lambda_val = REAL(lambda_)[0];
-  double *lambda = &lambda_val;
+  int dfmax = INTEGER(dfmax_)[0];
   
-  
-  // the 'p' here won't need to change, since constant features are assumed 
-  //  to have been already removed 
-  // int p_keep = p; 
+  NumericVector lambda(L);
+  // NumericVector center(p);
+  // NumericVector scale(p);
+  // int p_keep = 0;
   // int *p_keep_ptr = &p_keep;
-  
   vector<int> col_idx;
-  vector<double> z;//vector to hold residuals; to be filled in by get_residual()
+  vector<double> z;
+  double lambda_max = 0.0;
+  double *lambda_max_ptr = &lambda_max;
   int xmax_idx = 0;
   int *xmax_ptr = &xmax_idx;
-  
   
   // set up omp
   int useCores = INTEGER(ncore_)[0];
@@ -66,17 +71,14 @@ RcppExport SEXP cdfit_gaussian_simple(SEXP X_, SEXP y_, SEXP row_idx_,
     Rprintf("\nPreprocessing start: %s\n", buff1);
   }
   
+  // standardize: get center, scale; get p_keep_ptr, col_idx; get z, lambda_max, xmax_idx;
+  // standardize_and_get_residual(center, scale, p_keep_ptr, col_idx, z, lambda_max_ptr,
+  //                              xmax_ptr, xMat, y, row_idx, alpha, n, p);
+  
+  // p = p_keep;   // set p = p_keep, only loop over columns whose scale > 1e-6
+  
   // Get residual
-  get_residual(col_idx,
-               z, 
-               lambda, 
-               xmax_ptr,
-               xMat, 
-               y,
-               row_idx, 
-               alpha,
-               n, 
-               p);
+  get_residual(col_idx, z, lambda, xmax_ptr, xMat, y, row_idx, alpha, n, p);
   
   if (verbose) {
     char buff1[100];
@@ -86,90 +88,143 @@ RcppExport SEXP cdfit_gaussian_simple(SEXP X_, SEXP y_, SEXP row_idx_,
     Rprintf("\n-----------------------------------------------\n");
   }
   
-  
-  
-  
-  // for debugging 
-  // std::cout << "lambda = " << lambda << std::endl;
-  
-  
   // Objects to be returned to R
-  arma::sp_mat beta = arma::sp_mat(p, L); //Beta
+  arma::sp_mat beta = arma::sp_mat(p, L); // beta
   double *a = R_Calloc(p, double); //Beta from previous iteration
-  if(a == NULL){
-    Rprintf("Problem: 'a' is NULL");
-  }
   NumericVector loss(L);
+  IntegerVector iter(L);
   IntegerVector n_reject(L);
-  IntegerVector n_safe_reject(L);
   
-  double l1, l2, shift;
+  double l1, l2, cutoff, shift;
   double max_update, update, thresh; // for convergence check
-  int i, j, jj; //temp index
-  int *ever_active = R_Calloc(p, int); // ever-active set
-  if(ever_active == NULL){
-    Rprintf("Problem: 'ever active' is NULL");
-  }
-  
-  int *discard_beta = R_Calloc(p, int); // index set of discarded features;
-  if(discard_beta == NULL){
-    Rprintf("Problem: 'discard_beta' is NULL");
-  }
-  double cutoff = 0; // cutoff for strong rule
-  //int *discard_old = R_Calloc(p, int);
+  int i, j, jj, l, violations, lstart;
+  int *e1 = R_Calloc(p, int); // ever active set
+  int *e2 = R_Calloc(p, int); // strong set
   double *r = R_Calloc(n, double);
-  if(r == NULL){
-    Rprintf("Problem: 'r' is NULL");
-  }
   for (i = 0; i < n; i++) r[i] = y[i];
   double sumResid = sum(r, n);
-  loss[0] = gLoss(r, n);
+  loss[0] = gLoss(r,n);
   thresh = eps * loss[0] / n;
   
-  Rprintf("Made it to the loop");
-  
-  while(iter < max_iter) {
-    while (iter < max_iter) {
-      R_CheckUserInterrupt();
-      while (iter < max_iter) {
-        iter++;
-        max_update = 0.0;
-        for (j = 0; j < p; j++) {
-          if (ever_active[j]) {
-            jj = col_idx[j];
-            z[j] = crossprod_resid_no_std(xMat, r, sumResid, row_idx, n, jj) / n + a[j];
-            l1 = *lambda * m[jj] * alpha;
-            l2 = *lambda * m[jj] * (1-alpha);
-            beta[j] = lasso(z[j], l1, l2, 1);
-            
-            shift = beta[j] - a[j];
-            if (shift != 0) {
-              update = pow(beta[j] - a[j], 2);
-              if (update > max_update) {
-                max_update = update;
-              }
-              update_resid_no_std(xMat, r, shift, row_idx, n, jj);
-              sumResid = sum(r, n); //update sum of residual
-              a[j] = beta(j); //update a
-            }
-            // update ever active sets
-            if (beta[j] != 0) {
-              ever_active[j] = 1;
-            } 
-          }
-        }
-        // Check for convergence 
-        if (max_update < thresh) break;
-        
+  // set up lambda
+  if (user == 0) {
+    if (lam_scale) { // set up lambda, equally spaced on log scale
+      double log_lambda_max = log(lambda_max);
+      double log_lambda_min = log(lambda_min*lambda_max);
+      
+      double delta = (log_lambda_max - log_lambda_min) / (L-1);
+      for (l = 0; l < L; l++) {
+        lambda[l] = exp(log_lambda_max - l * delta);
+      }
+    } else { // equally spaced on linear scale
+      double delta = (lambda_max - lambda_min*lambda_max) / (L-1);
+      for (l = 0; l < L; l++) {
+        lambda[l] = lambda_max - l * delta;
       }
     }
-    
-    
-    R_Free(ever_active); R_Free(r); R_Free(a); R_Free(discard_beta); 
-    return List::create(beta, *lambda, loss, iter, z, n_reject, n_safe_reject, Rcpp::wrap(col_idx));
+    lstart = 1;
+    n_reject[0] = p;
+  } else {
+    lstart = 0;
+    lambda = Rcpp::as<NumericVector>(lambda_);
   }
+  
+  // Path
+  for (l = lstart; l < L; l++) {
+    if(verbose) {
+      // output time
+      char buff[100];
+      time_t now = time (0);
+      strftime (buff, 100, "%Y-%m-%d %H:%M:%S.000", localtime (&now));
+      Rprintf("Lambda %d. Now time: %s\n", l, buff);
+    }
+    if (l != 0) {
+      // Check dfmax
+      int nv = 0;
+      for (j = 0; j < p; j++) {
+        if (a[j] != 0) nv++;
+      }
+      if (nv > dfmax) {
+        for (int ll=l; ll<L; ll++) iter[ll] = NA_INTEGER;
+        R_Free(a); R_Free(r); R_Free(e1); R_Free(e2);
+        return List::create(beta, 
+                            // center, scale, 
+                            lambda, loss, iter, n_reject, Rcpp::wrap(col_idx));
+      }
+      // strong set
+      cutoff = 2 * lambda[l] - lambda[l-1];
+      // for (j = 0; j < p; j++) {
+      //   if (fabs(z[j]) > (cutoff * alpha * m[col_idx[j]])) {
+      //     e2[j] = 1;
+      //   } else {
+      //     e2[j] = 0;
+      //   }
+      // } 
+    } else {
+      // strong set
+      cutoff = 2*lambda[l] - lambda_max;
+      // for (j = 0; j < p; j++) {
+      //   if (fabs(z[j]) > (cutoff * alpha * m[col_idx[j]])) {
+      //     e2[j] = 1;
+      //   } else {
+      //     e2[j] = 0;
+      //   }
+      // }
+    }
+    n_reject[l] = p - sum(e2, p);
+    
+    while(iter[l] < max_iter) {
+      while(iter[l] < max_iter){
+        while(iter[l] < max_iter) {
+          iter[l]++;
+          
+          //solve lasso over ever-active set
+          max_update = 0.0;
+          for (j = 0; j < p; j++) {
+            if (e1[j]) {
+              jj = col_idx[j];
+              // z[j] = crossprod_resid(xMat, r, sumResid, row_idx, center[jj], scale[jj], n, jj) / n + a[j];
+              z[j] = crossprod_resid_no_std(xMat, r, sumResid, row_idx, n, jj) / n + a[j];
+              l1 = lambda[l] * m[jj] * alpha;
+              l2 = lambda[l] * m[jj] * (1-alpha);
+              beta(j, l) = lasso(z[j], l1, l2, 1);
+              
+              shift = beta(j, l) - a[j];
+              if (shift !=0) {
+                // compute objective update for checking convergence
+                //update =  z[j] * shift - 0.5 * (1 + l2) * (pow(beta(j, l), 2) - pow(a[j], 2)) - l1 * (fabs(beta(j, l)) -  fabs(a[j]));
+                update = pow(beta(j, l) - a[j], 2);
+                if (update > max_update) {
+                  max_update = update;
+                }
+                // update_resid(xMat, r, shift, row_idx, center[jj], scale[jj], n, jj); // update r
+                update_resid_no_std(xMat, r, shift, row_idx, n, jj);
+                sumResid = sum(r, n); //update sum of residual
+                a[j] = beta(j, l); //update a
+              }
+            }
+          }
+          // Check for convergence
+          if (max_update < thresh) break;
+        }
+        
+        // Scan for violations in strong set
+      //   violations = check_strong_set(e1, e2, z, xMat, row_idx, col_idx, center, scale, a, lambda[l], sumResid, alpha, r, m, n, p); 
+      //   if (violations==0) break;
+      // }
+      // 
+      // Scan for violations in rest set
+      // violations = check_rest_set(e1, e2, z, xMat, row_idx, col_idx, center, scale, a, lambda[l], sumResid, alpha, r, m, n, p);
+      // if (violations == 0) {
+      //   loss[l] = gLoss(r, n);
+      //   break;
+      // }
+    }
+  }
+  
+  R_Free(a); R_Free(r); R_Free(e1); R_Free(e2);
+  return List::create(beta, 
+                      // center, scale, 
+                      lambda, loss, iter, n_reject, Rcpp::wrap(col_idx));
 }
-  
-  
-  
   

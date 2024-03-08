@@ -75,14 +75,13 @@
 #'
 #' @examples
 #' 
-#' /dontrun{
 #' data(colon)
 #' X <- colon$X
 #' y <- colon$y
 #' X.bm <- as.big.matrix(X)
-#' fit_flex <- biglasso_fit(X.bm, y, lambda = 0.1)
+#' fit_flex <- biglasso_fit(X.bm, y, lambda = 0.1, verbose = TRUE)
 #' plot(fit_flex, log.l = TRUE, main = 'lasso')
-#'}
+#'
 #'
 #' @export biglasso_fit
 biglasso_fit <- function(X, y,
@@ -150,7 +149,7 @@ biglasso_fit <- function(X, y,
                  PACKAGE = 'biglasso')
     
   )
-  
+
   
   b <- Matrix(res[[1]], sparse = T)
   res_lam <- res[[2]]
