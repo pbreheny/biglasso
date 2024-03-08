@@ -98,7 +98,7 @@ biglasso_fit <- function(X, y,
                          output.time = FALSE,
                          return.time = TRUE,
                          verbose = FALSE) {
-  
+  cat("\nEntering the biglasso_fit() function")
   # set defaults
   penalty <- "lasso"
   alpha <- 1
@@ -133,7 +133,7 @@ biglasso_fit <- function(X, y,
   }
   
   Sys.setenv(R_C_BOUNDS_CHECK = "yes")
-  
+  cat("\nPassed checks, about to call cdfit_gaussian_simple")
   
   time <- system.time(
     res <- .Call("cdfit_gaussian_simple",

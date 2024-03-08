@@ -308,8 +308,7 @@ void standardize_and_get_residual(NumericVector &center, NumericVector &scale,
 }
 
 // get residual only -- need this in gaussian_simple 
-void get_residual(int *p_keep_ptr,
-                  vector<int> &col_idx, //columns to keep, removing columns whose scale < 1e-6
+void get_residual(vector<int> &col_idx, //columns to keep, removing columns whose scale < 1e-6
                   vector<double> &z, 
                   double *lambda, // pass lambda by reference 
                   int *xmax_ptr,
@@ -354,7 +353,7 @@ void get_residual(int *p_keep_ptr,
     z.push_back(zj);
   }
   
-  *p_keep_ptr = col_idx.size();
+  // *p_keep_ptr = col_idx.size();
   *lambda = zmax / alpha;
 }
 

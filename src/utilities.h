@@ -110,7 +110,7 @@ void standardize_and_get_residual(NumericVector &center, NumericVector &scale,
                                   int *row_idx, double alpha, int n, int p);
 
 // get residuals 
-void get_residual(int *p_keep_ptr, vector<int> &col_idx,
+void get_residual(vector<int> &col_idx,
                   vector<double> &z, double *lambda,
                   int *xmax_ptr, XPtr<BigMatrix> xMat, double *y, 
                   int *row_idx, double alpha, int n, int p);

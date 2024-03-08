@@ -1,17 +1,24 @@
 #include "utilities.h"
 
 // T. Peter's addition ---------------------------
+
 // Coordinate descent for gaussian models -- NO adapting or SSR 
 // NOTE: in this simple function, lambda is a SINGLE VALUE, not a path!! 
 RcppExport SEXP cdfit_gaussian_simple(SEXP X_, SEXP y_, SEXP row_idx_, 
                                       SEXP lambda_, SEXP alpha_,
                                       SEXP eps_, SEXP max_iter_,
+                                      // SEXP dfmax_,
                                       SEXP multiplier_, 
                                       SEXP ncore_, 
                                       SEXP verbose_) {
   
   
   XPtr<BigMatrix> xMat(X_);
+  
+  // for debugging 
+  Rprintf("Entering cdfit_gaussian_simple");
+  
+  
   double *y = REAL(y_);
   double alpha = REAL(alpha_)[0];
   int *row_idx = INTEGER(row_idx_);
@@ -24,7 +31,7 @@ RcppExport SEXP cdfit_gaussian_simple(SEXP X_, SEXP y_, SEXP row_idx_,
   int iter = 0;
   int max_iter = INTEGER(max_iter_)[0];
   double *m = REAL(multiplier_);
-  //int dfmax = INTEGER(dfmax_)[0];
+  // int dfmax = INTEGER(dfmax_)[0];
   // double update_thresh = REAL(update_thresh_)[0];
   double lambda_val = REAL(lambda_)[0];
   double *lambda = &lambda_val;
@@ -32,8 +39,8 @@ RcppExport SEXP cdfit_gaussian_simple(SEXP X_, SEXP y_, SEXP row_idx_,
   
   // the 'p' here won't need to change, since constant features are assumed 
   //  to have been already removed 
-  int p_keep = p; 
-  int *p_keep_ptr = &p_keep;
+  // int p_keep = p; 
+  // int *p_keep_ptr = &p_keep;
   
   vector<int> col_idx;
   vector<double> z;//vector to hold residuals; to be filled in by get_residual()
@@ -53,24 +60,14 @@ RcppExport SEXP cdfit_gaussian_simple(SEXP X_, SEXP y_, SEXP row_idx_,
 #endif
   
   if (verbose) {
-    // char buff1[100];
-    // time_t now1 = time (0);
-    // strftime (buff1, 100, "%Y-%m-%d %H:%M:%S.000", localtime (&now1));
-    // Rprintf("\nPreprocessing start: %s\n", buff1);
+    char buff1[100];
+    time_t now1 = time (0);
+    strftime (buff1, 100, "%Y-%m-%d %H:%M:%S.000", localtime (&now1));
+    Rprintf("\nPreprocessing start: %s\n", buff1);
   }
   
-  // if (verbose) {
-  //   char buff1[100];
-  //   time_t now1 = time (0);
-  //   strftime (buff1, 100, "%Y-%m-%d %H:%M:%S.000", localtime (&now1));
-  //   Rprintf("Preprocessing end: %s\n", buff1);
-  //   Rprintf("\n-----------------------------------------------\n");
-  // }
-  
-  
   // Get residual
-  get_residual(p_keep_ptr,
-               col_idx,
+  get_residual(col_idx,
                z, 
                lambda, 
                xmax_ptr,
@@ -81,15 +78,26 @@ RcppExport SEXP cdfit_gaussian_simple(SEXP X_, SEXP y_, SEXP row_idx_,
                n, 
                p);
   
+  if (verbose) {
+    char buff1[100];
+    time_t now1 = time (0);
+    strftime (buff1, 100, "%Y-%m-%d %H:%M:%S.000", localtime (&now1));
+    Rprintf("Preprocessing end: %s\n", buff1);
+    Rprintf("\n-----------------------------------------------\n");
+  }
+  
+  
+  
+  
   // for debugging 
-  Rprintf("The lambda value is: %f\n", *lambda);
-
+  // std::cout << "lambda = " << lambda << std::endl;
+  
   
   // Objects to be returned to R
   arma::sp_mat beta = arma::sp_mat(p, L); //Beta
   double *a = R_Calloc(p, double); //Beta from previous iteration
   if(a == NULL){
-    Rprintf("Problem: Allocation of a is NULL");
+    Rprintf("Problem: 'a' is NULL");
   }
   NumericVector loss(L);
   IntegerVector n_reject(L);
@@ -97,24 +105,21 @@ RcppExport SEXP cdfit_gaussian_simple(SEXP X_, SEXP y_, SEXP row_idx_,
   
   double l1, l2, shift;
   double max_update, update, thresh; // for convergence check
-  int i, j, jj, violations; //temp index
+  int i, j, jj; //temp index
   int *ever_active = R_Calloc(p, int); // ever-active set
   if(ever_active == NULL){
-    Rprintf("Problem: ever_active is NULL");
+    Rprintf("Problem: 'ever active' is NULL");
   }
-  int *strong_set = R_Calloc(p, int); // strong set
-  if(strong_set == NULL){
-    Rprintf("Problem: strong_set is NULL");
-  }
+  
   int *discard_beta = R_Calloc(p, int); // index set of discarded features;
   if(discard_beta == NULL){
-    Rprintf("Problem: discard_beta is NULL");
+    Rprintf("Problem: 'discard_beta' is NULL");
   }
   double cutoff = 0; // cutoff for strong rule
   //int *discard_old = R_Calloc(p, int);
   double *r = R_Calloc(n, double);
   if(r == NULL){
-    Rprintf("Problem: r is NULL");
+    Rprintf("Problem: 'r' is NULL");
   }
   for (i = 0; i < n; i++) r[i] = y[i];
   double sumResid = sum(r, n);
@@ -122,23 +127,11 @@ RcppExport SEXP cdfit_gaussian_simple(SEXP X_, SEXP y_, SEXP row_idx_,
   thresh = eps * loss[0] / n;
   
   Rprintf("Made it to the loop");
-  // here, loop thru residuals and determine which variables (features) are in 
-  //  the 'strong set' -- i.e., which variables are most likely to be selected 
-  //  in some candidate model 
-  for(j = 0; j < p; j++) {
-    if(discard_beta[j]) continue;
-    if(fabs(z[j]) > cutoff * alpha * m[col_idx[j]]) {
-      strong_set[j] = 1;
-    } else {
-      strong_set[j] = 0;
-    }
-  }
-  n_reject = p - sum(strong_set, p);
   
   while(iter < max_iter) {
-    // while (iter < max_iter) {
-      //R_CheckUserInterrupt();
-      // while (iter < max_iter) {
+    while (iter < max_iter) {
+      R_CheckUserInterrupt();
+      while (iter < max_iter) {
         iter++;
         max_update = 0.0;
         for (j = 0; j < p; j++) {
@@ -168,23 +161,15 @@ RcppExport SEXP cdfit_gaussian_simple(SEXP X_, SEXP y_, SEXP row_idx_,
         // Check for convergence 
         if (max_update < thresh) break;
         
-        // check strong set 
-        violations = check_strong_set_no_std(ever_active, strong_set, z, xMat,
-                                             row_idx, col_idx, a, *lambda,
-                                             sumResid, alpha, r, m, n, p);
-        
-        // scan for violations in edpp set
-        violations = check_rest_safe_set_no_std(ever_active, strong_set, discard_beta, z, xMat, row_idx, col_idx, a, *lambda, sumResid, alpha, r, m, n, p); 
-        if (violations == 0) {
-          loss = gLoss(r, n);
-          break;
-        }
       }
-       
-      
-  R_Free(ever_active); R_Free(r); R_Free(a); R_Free(discard_beta); R_Free(strong_set); 
-  return List::create(beta, *lambda, loss, iter, z, n_reject, n_safe_reject, Rcpp::wrap(col_idx));
+    }
+    
+    
+    R_Free(ever_active); R_Free(r); R_Free(a); R_Free(discard_beta); 
+    return List::create(beta, *lambda, loss, iter, z, n_reject, n_safe_reject, Rcpp::wrap(col_idx));
+  }
 }
-
-
-
+  
+  
+  
+  
