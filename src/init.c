@@ -120,7 +120,8 @@ extern SEXP cdfit_gaussian_bedpp_ssr(SEXP X_, SEXP y_, SEXP row_idx_,
 extern SEXP _biglasso_get_eta(SEXP xPSEXP, SEXP row_idx_SEXP, SEXP betaSEXP, SEXP idx_pSEXP, SEXP idx_lSEXP);
 
 static R_CallMethodDef callMethods[] = {
-  {"cdfit_gaussian_simple", (DL_FUNC) &cdfit_mgaussian_ssr, 10},
+  //{"sqsum", (DL_FUNC) &sqsum,}
+  {"cdfit_gaussian_simple", (DL_FUNC) &cdfit_gaussian_simple, 10},
   {"cdfit_mgaussian_ssr", (DL_FUNC) &cdfit_mgaussian_ssr, 15},
   {"cdfit_mgaussian_ada", (DL_FUNC) &cdfit_mgaussian_ada, 17},
   {"cdfit_cox", (DL_FUNC) &cdfit_cox, 18},

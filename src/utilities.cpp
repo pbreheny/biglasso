@@ -110,6 +110,11 @@ double crossprod_bm(XPtr<BigMatrix> xpMat, double *y_, int *row_idx_, double cen
 // crossprod - given specific rows of a *standardized* X
 double crossprod_bm_no_std(XPtr<BigMatrix> xpMat, double *y_, int *row_idx_, 
                     int n_row, int j) {
+  // check 
+  if (!Rcpp::is<NumericMatrix>(xpMat)) {
+    Rcpp::stop("\nError in crossprod_resid_no_std: xpMat is not a matrix");
+  }
+  
   MatrixAccessor<double> xAcc(*xpMat);
   double *xCol = xAcc[j];
   double sum = 0.0;
@@ -160,6 +165,11 @@ double crossprod_resid(XPtr<BigMatrix> xpMat, double *y_, double sumY_, int *row
 //crossprod_resid - given specific rows of *standardized* X: separate computation
 double crossprod_resid_no_std(XPtr<BigMatrix> xpMat, double *y_, double sumY_, int *row_idx_, 
                         int n_row, int j) {
+  // check 
+  if (!Rcpp::is<NumericMatrix>(xpMat)) {
+    Rcpp::stop("\nError in crossprod_resid_no_std: xpMat is not a matrix");
+  }
+  
   MatrixAccessor<double> xAcc(*xpMat);
   double *xCol = xAcc[j];
   
@@ -184,6 +194,12 @@ void update_resid(XPtr<BigMatrix> xpMat, double *r, double shift, int *row_idx_,
 // update residual vector -- no standardization
 void update_resid_no_std(XPtr<BigMatrix> xpMat, double *r, double shift, int *row_idx_, 
                   int n_row, int j) {
+  // check 
+  if (!Rcpp::is<NumericMatrix>(xpMat)) {
+    Rcpp::stop("\nError in update_resid_no_std: xpMat is not a matrix");
+  }
+  
+  
   MatrixAccessor<double> xAcc(*xpMat);
   double *xCol = xAcc[j];
   for (int i=0; i < n_row; i++) {
@@ -192,7 +208,7 @@ void update_resid_no_std(XPtr<BigMatrix> xpMat, double *r, double shift, int *ro
 }
 
 
-// update residul vector and eta vector
+// update residual vector and eta vector
 void update_resid_eta(double *r, double *eta, XPtr<BigMatrix> xpMat, double shift, 
                       int *row_idx_, double center_, double scale_, int n, int j) {
   

@@ -1,4 +1,4 @@
-#' COPY of biglasso, adapted to have more flexible settings 
+#' Simplified call to biglasso: a gaussian model fit with no 'bells and whistles' (e.g., no SSR)
 #' 
 #' NOTE: this function is designed for users who have a strong understanding of 
 #' statistics and know exactly what they are doing. This is a copy of the main 
@@ -145,34 +145,22 @@ biglasso_fit <- function(X, y,
                  as.integer(max.iter),
                  penalty.factor,
                  as.integer(ncores),
-                 verbose,
+                 as.integer(verbose),
                  PACKAGE = 'biglasso')
     
   )
 
+  cat("\nMade it out of C++ function.")
   
-  b <- Matrix(res[[1]], sparse = T)
-  res_lam <- res[[2]]
-  loss <- res[[3]]
-  iter <- res[[4]]
-  resid <- res[[5]]
-  rejections <- res[[6]]
-  safe_rejections <- res[[7]]
-  col.idx <- res[[8]]
-  
+  b <- res[[1]]
+  loss <- res[[2]]
+  iter <- res[[3]]
+  resid <- res[[4]]
   
   if (output.time) {
     cat("\nEnd biglasso: ", format(Sys.time()), '\n')
   }
-  
-  ## Eliminate saturated lambda values, if any
-  ind <- !is.na(iter)
-  if(!is.list(b)) b <- b[, ind, drop=FALSE]
-  iter <- iter[ind]
-  lambda <- lambda[ind]
-  loss <- loss[ind]
-  
-  if (warn & any(iter==max.iter)) warning("Algorithm failed to converge for some values of lambda")
+  browser()
   
   ## Names
   varnames <- if (is.null(colnames(X))) paste("V", 1:p, sep="") else colnames(X)
