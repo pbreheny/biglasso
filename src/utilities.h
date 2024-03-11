@@ -57,6 +57,9 @@ double crossprod_bm(XPtr<BigMatrix> xpMat, double *y_, int *row_idx_, double cen
 double crossprod_bm_no_std(XPtr<BigMatrix> xpMat, double *y_, int *row_idx_, 
                     int n_row, int j);
 
+// NumericVector cumdiff_bm(XPtr<BigMatrix> xpMat, NumericVector &a_, NumericVector &y_,
+//                         int n, int p);
+
 // crossprod of columns X_j and X_k
 double crossprod_bm_Xj_Xk(XPtr<BigMatrix> xMat, int *row_idx,
                           NumericVector &center, NumericVector &scale,

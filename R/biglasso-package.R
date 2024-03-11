@@ -49,7 +49,7 @@
 #' \url{https://arxiv.org/abs/1701.05936} }
 #' 
 #' @name biglasso-package
-#' @docType package
+#' "_PACKAGE"
 #' 
 #' @note The input design matrix X must be a \code{\link[bigmemory]{big.matrix}} object. 
 #' This can be created by the function \code{as.big.matrix} in the R package 

@@ -2,15 +2,18 @@
 % Please edit documentation in R/biglasso_fit.R
 \name{biglasso_fit}
 \alias{biglasso_fit}
-\title{COPY of biglasso, adapted to have more flexible settings}
+\title{Simplified call to biglasso: a gaussian model fit with no 'bells and whistles' (e.g., no SSR)}
 \usage{
 biglasso_fit(
   X,
   y,
-  row.idx = 1:nrow(X),
-  ncores = 1,
+  r,
+  init = rep(0, ncol(X)),
+  xtx,
   lambda,
   alpha = 1,
+  row.idx = 1:nrow(X),
+  ncores = 1,
   max.iter = 1000,
   eps = 1e-05,
   dfmax = ncol(X) + 1,
@@ -27,29 +30,45 @@ double type \code{\link[bigmemory]{big.matrix}} object.}
 
 \item{y}{The response vector}
 
+\item{r}{Residuals (length n vector) corresponding to `init`; 
+these will be calculated if not supplied, but if they have 
+already been calculated elsewhere, it is more efficient to 
+pass them as an argument. 
+WARNING: If you supply an incorrect value of `r`, the 
+solution will be incorrect.}
+
+\item{init}{Initial values for beta.  Default: zero (length p vector)}
+
+\item{xtx}{X scales: the jth element should equal `crossprod(X[,j])/n`.
+In particular, if X is standardized, one should pass
+`xtx = rep(1, p)`.  WARNING: If you supply an incorrect value of
+`xtx`, the solution will be incorrect. (length p vector)}
+
+\item{lambda}{A single value for the lasso tuning parameter.}
+
+\item{alpha}{The elastic-net mixing parameter that controls the relative
+contribution from the lasso (l1) and the ridge (l2) penalty. 
+The penalty is defined as:
+\deqn{ \alpha||\beta||_1 + (1-\alpha)/2||\beta||_2^2.}
+\code{alpha=1} is the lasso penalty, \code{alpha=0} the ridge penalty,
+\code{alpha} in between 0 and 1 is the elastic-net ("enet") penalty.}
+
 \item{row.idx}{The integer vector of row indices of \code{X} that used for
 fitting the model. \code{1:nrow(X)} by default.}
 
 \item{ncores}{The number of OpenMP threads used for parallel computing.}
 
-\item{lambda}{A single value for the lasso tuning parameter.}
-
-\item{alpha}{The elastic-net mixing parameter that controls the relative
-contribution from the lasso (l1) and the ridge (l2) penalty. The penalty is
-defined as \deqn{ \alpha||\beta||_1 + (1-\alpha)/2||\beta||_2^2.}
-\code{alpha=1} is the lasso penalty, \code{alpha=0} the ridge penalty,
-\code{alpha} in between 0 and 1 is the elastic-net ("enet") penalty.}
-
 \item{max.iter}{Maximum number of iterations.  Default is 1000.}
 
-\item{eps}{Convergence threshold for inner coordinate descent.  The
-algorithm iterates until the maximum change in the objective after any
-coefficient update is less than \code{eps} times the null deviance. Default
-value is \code{1e-7}.}
+\item{eps}{Convergence threshold for inner coordinate descent. The
+algorithm iterates until the maximum change in the objective 
+after any coefficient update is less than \code{eps} times 
+the null deviance. Default value is \code{1e-7}.}
 
-\item{dfmax}{Upper bound for the number of nonzero coefficients.  Default is
-no upper bound.  However, for large data sets, computational burden may be
-heavy for models with a large number of nonzero coefficients.}
+\item{dfmax}{Upper bound for the number of nonzero coefficients. Default is
+no upper bound.  However, for large data sets, 
+computational burden may be heavy for models with a large 
+number of nonzero coefficients.}
 
 \item{penalty.factor}{A multiplicative factor for the penalty applied to
 each coefficient. If supplied, \code{penalty.factor} must be a numeric
@@ -117,8 +136,10 @@ data(colon)
 X <- colon$X
 y <- colon$y
 X.bm <- as.big.matrix(X)
-fit_flex <- biglasso_fit(X.bm, y, lambda = 0.1)
+fit_flex <- biglasso_fit(X = X.bm, y = y, r = , xtx = rep(1, ncol(X)), 
+lambda = 0.1, verbose = TRUE)
 plot(fit_flex, log.l = TRUE, main = 'lasso')
+
 
 }
 \author{

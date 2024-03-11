@@ -130,6 +130,27 @@ double crossprod_bm_no_std(XPtr<BigMatrix> xpMat, double *y_, int *row_idx_,
 }
 
 
+// cumulative difference (to use in residual calculation; see ncvreg::rawfit_gaussian
+// lines 63 - 73 for reference)
+// TODO: revisit this and make gaussian_simple setup easier to read...
+// double cumdiff_bm(XPtr<BigMatrix> xpMat, NumericVector &a_, NumericVector &y_,
+//                    int n, int p){
+//   double *res = R_Calloc(n, double);
+//   MatrixAccessor<double> xAcc(*xpMat);
+//   
+//   for (int j=0; j<p; j++) {
+//     double *xCol = xAcc[j];
+//     for (int i=0; i < n; i++){
+//       res[i] -= xCol[i] * a_[i];
+//       
+//     }
+//   }
+//   
+//   return res;
+// }
+
+
+
 // crossprod of columns X_j and X_k
 double crossprod_bm_Xj_Xk(XPtr<BigMatrix> xMat, int *row_idx,
                           NumericVector &center, NumericVector &scale,

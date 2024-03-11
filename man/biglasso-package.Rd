@@ -147,6 +147,16 @@ and Signal Processing (ICASSP), 2012 IEEE International Conference on} (pp.
 (2014). A safe screening rule for sparse logistic regression. \emph{In
 Advances in Neural Information Processing Systems}, pp. 1053-1061.  }
 }
+\seealso{
+Useful links:
+\itemize{
+  \item \url{https://yaohuizeng.github.io/biglasso/index.html}
+  \item \url{https://github.com/YaohuiZeng/biglasso}
+  \item \url{https://arxiv.org/abs/1701.05936}
+  \item Report bugs at \url{https://github.com/YaohuiZeng/biglasso/issues}
+}
+
+}
 \author{
 Yaohui Zeng, Chuyi Wang and Patrick Breheny
 
