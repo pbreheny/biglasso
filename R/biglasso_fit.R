@@ -93,7 +93,7 @@
 #' X <- cbind(1, Prostate$X)
 #' y <- Prostate$y
 #' X.bm <- as.big.matrix(X)
-#' fit_flex <- biglasso_fit(X = X.bm, y = y, lambda = 0.05, penalty.factor=c(0, rep(1, ncol(X)-1)), verbose = TRUE)
+#' fit_flex <- biglasso_fit(X = X.bm, y = y, lambda = 0.1, penalty.factor=c(0, rep(1, ncol(X)-1)), verbose = TRUE)
 #' plot(fit_flex, log.l = TRUE, main = 'lasso')
 #'
 #' @export biglasso_fit

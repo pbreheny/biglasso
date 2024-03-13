@@ -46,11 +46,17 @@ RcppExport SEXP cdfit_gaussian_simple(SEXP X_,
   int xmax_idx = 0;
   int *xmax_ptr = &xmax_idx;
   
+  Rprintf("\nDeclaring beta");
   // declarations: output 
-  
-  NumericVector beta(p);
+  SEXP beta;
+  PROTECT(beta = Rcpp::NumericVector(p)); // Initialize a NumericVector of size p
+  double *b = REAL(beta);
+  for (int j=0; j<p; j++) {
+    b[j] = 0;
+  }
   // TODO: decide if the below would be a better way to set up beta
   // double *beta = R_Calloc(p, double); // vector to hold estimated coefficients from current iteration
+  
   double *a = R_Calloc(p, double); // will hold beta from previous iteration
   double l1, l2, shift;
   double max_update, update, thresh, loss; // for convergence check
@@ -59,11 +65,15 @@ RcppExport SEXP cdfit_gaussian_simple(SEXP X_,
   // int *discard_beta = R_Calloc(p, int); // index set of discarded features;
   
   // set up some initial values
-  for (int j=0; j<p; j++) 
+  for (int j=0; j<p; j++) {
     a[j]=init[j];
+  }
+    
   
-  for (int j=0; j<p; j++) 
+  for (int j=0; j<p; j++) {
     ever_active[j] = 1*(a[j] != 0);
+  }
+    
 
   // set up omp
   int useCores = INTEGER(ncore_)[0];
@@ -105,7 +115,9 @@ RcppExport SEXP cdfit_gaussian_simple(SEXP X_,
   
   
   // calculate gaussian loss 
-  for (i = 0; i < n; i++) r[i] = y[i];
+  for (i = 0; i < n; i++) {
+    r[i] = y[i];
+  }
   double sumResid = sum(r, n);
   double sdy = gLoss(r, n);
   thresh = eps * sdy / n; // TODO: should I be taking square root of loss here? 
@@ -130,14 +142,14 @@ RcppExport SEXP cdfit_gaussian_simple(SEXP X_,
             // update beta
             l1 = *lambda * m[jj] * alpha;
             l2 = *lambda * m[jj] * (1-alpha);
-            beta[j] = lasso(z[j], l1, l2, xtx[j]); // TODO: add SCAD and MCP options
+            b[j] = lasso(z[j], l1, l2, xtx[j]); // TODO: add SCAD and MCP options
             
             // update residuals 
-            shift = beta[j] - a[j];
+            shift = b[j] - a[j];
             // TODO: check the update below against the update in 
             // ncvreg::rawfit_gaussian.cpp lines 104-107
             if (shift != 0) {
-              update = pow(beta[j] - a[j], 2); // TODO: this is different than 
+              update = pow(b[j] - a[j], 2); // TODO: this is different than 
               // ncvreg::rawfit_gaussian... not sure I understand why
               if (update > max_update) {
                 max_update = update;
@@ -149,7 +161,7 @@ RcppExport SEXP cdfit_gaussian_simple(SEXP X_,
         }
         // make current beta the old value 
         for(int j=0; j<p; j++)
-          a[j] = beta[j]; 
+          a[j] = b[j]; 
         
         // check for convergence 
         if (max_update < thresh) break;
@@ -170,15 +182,15 @@ RcppExport SEXP cdfit_gaussian_simple(SEXP X_,
           l2 = *lambda * m[jj] * (1-alpha);
           // TODO: add SCAD and MCP to the below
           Rprintf("\nCalling lasso");
-          beta[j] = lasso(z[j], l1, l2, xtx[j]);
+          b[j] = lasso(z[j], l1, l2, xtx[j]);
           
           
           // if something enters, update active set and residuals
-          if (beta[j] != 0) {
+          if (b[j] != 0) {
             ever_active[j] = 1;
             Rprintf("\nCalling update_resid_no_std");
-            update_resid_no_std(xMat, r, beta[j], row_idx, n, jj);
-            a[j] = beta[j];
+            update_resid_no_std(xMat, r, b[j], row_idx, n, jj);
+            a[j] = b[j];
             violations++;
           }
           
@@ -201,6 +213,8 @@ RcppExport SEXP cdfit_gaussian_simple(SEXP X_,
   // TODO: sort out how to use the line below 
   // REAL(loss)[0] = gLoss(r, n);
   
+  // Don't forget to UNPROTECT beta when you're done with it
+  UNPROTECT(1);
   
   // return list of 4 items: 
   // - beta: numeric (p x 1) vector of estimated coefficients at the supplied lambda value
