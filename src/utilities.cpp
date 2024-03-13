@@ -110,12 +110,13 @@ double crossprod_bm(XPtr<BigMatrix> xpMat, double *y_, int *row_idx_, double cen
 // crossprod - cross product of y with jth column of a *standardized* X
 double crossprod_bm_no_std(XPtr<BigMatrix> xpMat, double *y_, int n_row, int j) {
   MatrixAccessor<double> xAcc(*xpMat); // Initialize MatrixAccessor with the file-backed matrix
-  
+  double *xCol = xAcc[j];  
   double sum = 0.0;
+
   for (int i = 0; i < n_row; i++) {
     // Access elements from the file-backed matrix using MatrixAccessor
-    double *X = xAcc[j * n_row];
-    sum +=  X[i] * y_[i];
+    //double *X = xAcc[j * n_row];
+    sum +=  xCol[i] * y_[i];
   }
   
   return sum;
@@ -180,9 +181,9 @@ double crossprod_resid(XPtr<BigMatrix> xpMat, double *y_, double sumY_, int *row
 double crossprod_resid_no_std(XPtr<BigMatrix> xpMat, double *y_, double sumY_, int *row_idx_, 
                         int n_row, int j) {
   // check 
-  if (!Rcpp::is<NumericMatrix>(xpMat)) {
-    Rcpp::stop("\nError in crossprod_resid_no_std: xpMat is not a matrix");
-  }
+  //if (!Rcpp::is<NumericMatrix>(xpMat)) {
+  //  Rcpp::stop("\nError in crossprod_resid_no_std: xpMat is not a matrix");
+  //}
   
   MatrixAccessor<double> xAcc(*xpMat);
   double *xCol = xAcc[j];
@@ -209,9 +210,9 @@ void update_resid(XPtr<BigMatrix> xpMat, double *r, double shift, int *row_idx_,
 void update_resid_no_std(XPtr<BigMatrix> xpMat, double *r, double shift, int *row_idx_, 
                   int n_row, int j) {
   // check 
-  if (!Rcpp::is<NumericMatrix>(xpMat)) {
-    Rcpp::stop("\nError in update_resid_no_std: xpMat is not a matrix");
-  }
+//  if (!Rcpp::is<NumericMatrix>(xpMat)) {
+//  Rcpp::stop("\nError in update_resid_no_std: xpMat is not a matrix");
+//  }
   
   
   MatrixAccessor<double> xAcc(*xpMat);
