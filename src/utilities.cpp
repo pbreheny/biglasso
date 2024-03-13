@@ -107,27 +107,20 @@ double crossprod_bm(XPtr<BigMatrix> xpMat, double *y_, int *row_idx_, double cen
   return sum;
 }
 
-// crossprod - given specific rows of a *standardized* X
-double crossprod_bm_no_std(XPtr<BigMatrix> xpMat, double *y_, int *row_idx_, 
-                    int n_row, int j) {
-  // check 
-  if (!Rcpp::is<NumericMatrix>(xpMat)) {
-    Rcpp::stop("\nError in crossprod_resid_no_std: xpMat is not a matrix");
-  }
+// crossprod - cross product of y with jth column of a *standardized* X
+double crossprod_bm_no_std(XPtr<BigMatrix> xpMat, double *y_, int n_row, int j) {
+  MatrixAccessor<double> xAcc(*xpMat); // Initialize MatrixAccessor with the file-backed matrix
   
-  MatrixAccessor<double> xAcc(*xpMat);
-  double *xCol = xAcc[j];
   double sum = 0.0;
-  double sum_xy = 0.0;
-  double sum_y = 0.0;
-  for (int i=0; i < n_row; i++) {
-    sum_xy = sum_xy + xCol[row_idx_[i]] * y_[i];
-    sum_y = sum_y + y_[i];
+  for (int i = 0; i < n_row; i++) {
+    // Access elements from the file-backed matrix using MatrixAccessor
+    double *X = xAcc[j * n_row];
+    sum +=  X[i] * y_[i];
   }
-  sum = (sum_xy * sum_y);
   
   return sum;
 }
+
 
 
 // cumulative difference (to use in residual calculation; see ncvreg::rawfit_gaussian
@@ -244,13 +237,11 @@ void update_resid_eta(double *r, double *eta, XPtr<BigMatrix> xpMat, double shif
 }
 
 // Sum of squares of jth column of X
-double sqsum_bm(SEXP xP, int n_row, int j, int useCores) {
-  XPtr<BigMatrix> xpMat(xP); //convert to big.matrix pointer;
-  MatrixAccessor<double> xAcc(*xpMat);
-  double *xCol = xAcc[j];
+double sqsum_bm(XPtr<BigMatrix> xpMat, int n_row, int j) {
+  MatrixAccessor<double> xAcc(*xpMat); // Initialize MatrixAccessor with the file-backed matrix
   
+  double *xCol = xAcc[j];
   double val = 0.0;
-  // #pragma omp parallel for reduction(+:val)
   for (int i=0; i < n_row; i++) {
     val += pow(xCol[i], 2);
   }

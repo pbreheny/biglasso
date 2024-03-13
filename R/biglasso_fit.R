@@ -89,14 +89,12 @@
 #'
 #' @examples
 #' 
-#' data(colon)
-#' X <- colon$X
-#' y <- colon$y
+#' data(Prostate)
+#' X <- cbind(1, Prostate$X)
+#' y <- Prostate$y
 #' X.bm <- as.big.matrix(X)
-#' fit_flex <- biglasso_fit(X = X.bm, y = y, r = , xtx = rep(1, ncol(X)), 
-#' lambda = 0.01, verbose = TRUE)
+#' fit_flex <- biglasso_fit(X = X.bm, y = y, lambda = 0.05, penalty.factor=c(0, rep(1, ncol(X)-1)), verbose = TRUE)
 #' plot(fit_flex, log.l = TRUE, main = 'lasso')
-#'
 #'
 #' @export biglasso_fit
 biglasso_fit <- function(X,
@@ -148,6 +146,8 @@ biglasso_fit <- function(X,
   # setup placeholder for residuals if not supplied 
   if (missing(r)) r <- rep(NA_real_, nrow(X))
   if (!is.double(r)) r <- as.double(r)
+  if (missing(xtx)) xtx <- rep(NA_real_, ncol(X))
+  if (!is.double(xtx)) xtx <- as.double(xtx)
   
   ## fit model
   if (output.time) {
@@ -177,7 +177,6 @@ biglasso_fit <- function(X,
   )
 
   cat("\nMade it out of C++ function.")
- browser() 
   b <- res[[1]]
   loss <- res[[2]]
   iter <- res[[3]]

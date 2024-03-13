@@ -34,6 +34,8 @@ double sum(double *x, int n);
 
 // Sum of squares of jth column of X
 double sqsum(double *X, int n, int j);
+// sqsum for file-backed X
+double sqsum_bm(XPtr<BigMatrix> xpMat, int n_row, int j);
  
 double crossprod(double *X, double *y, int n, int j);
 
@@ -54,8 +56,7 @@ double crossprod_bm(XPtr<BigMatrix> xpMat, double *y_, int *row_idx_, double cen
                     double scale_, int n_row, int j);
 
 //crossprod - given specific rows of *standardized* X
-double crossprod_bm_no_std(XPtr<BigMatrix> xpMat, double *y_, int *row_idx_, 
-                    int n_row, int j);
+double crossprod_bm_no_std(XPtr<BigMatrix> xpMat, double *y_, int n_row, int j);
 
 // NumericVector cumdiff_bm(XPtr<BigMatrix> xpMat, NumericVector &a_, NumericVector &y_,
 //                         int n, int p);
