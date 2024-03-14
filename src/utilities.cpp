@@ -114,9 +114,7 @@ double crossprod_bm_no_std(XPtr<BigMatrix> xpMat, double *y_, int n_row, int j) 
   double sum = 0.0;
 
   for (int i = 0; i < n_row; i++) {
-    // Access elements from the file-backed matrix using MatrixAccessor
-    //double *X = xAcc[j * n_row];
-    sum +=  xCol[i] * y_[i];
+    sum = sum + xCol[i] * y_[i];
   }
   
   return sum;
@@ -178,23 +176,19 @@ double crossprod_resid(XPtr<BigMatrix> xpMat, double *y_, double sumY_, int *row
 }
 
 //crossprod_resid - given specific rows of *standardized* X: separate computation
-double crossprod_resid_no_std(XPtr<BigMatrix> xpMat, double *y_, double sumY_, int *row_idx_, 
-                        int n_row, int j) {
-  // check 
-  //if (!Rcpp::is<NumericMatrix>(xpMat)) {
-  //  Rcpp::stop("\nError in crossprod_resid_no_std: xpMat is not a matrix");
-  //}
-  
-  MatrixAccessor<double> xAcc(*xpMat);
-  double *xCol = xAcc[j];
-  
-  double sum = 0.0;
-  for (int i=0; i < n_row; i++) {
-    sum = sum + xCol[row_idx_[i]] * y_[i];
-  }
-  sum = (sum * sumY_);
-  return sum;
-}
+// double crossprod_resid_no_std(XPtr<BigMatrix> xpMat, double *y_, double sumY_,
+//                         int n_row, int j) {
+// 
+//   MatrixAccessor<double> xAcc(*xpMat);
+//   double *xCol = xAcc[j];
+//   
+//   double sum = 0.0;
+//   for (int i=0; i < n_row; i++) {
+//     sum = sum + xCol[i] * y_[i];
+//   }
+//   sum = (sum * sumY_);
+//   return sum;
+// }
 
 // update residual vector
 void update_resid(XPtr<BigMatrix> xpMat, double *r, double shift, int *row_idx_, 
@@ -207,18 +201,13 @@ void update_resid(XPtr<BigMatrix> xpMat, double *r, double shift, int *row_idx_,
 }
 
 // update residual vector -- no standardization
-void update_resid_no_std(XPtr<BigMatrix> xpMat, double *r, double shift, int *row_idx_, 
+void update_resid_no_std(XPtr<BigMatrix> xpMat, double *r, double shift,
                   int n_row, int j) {
-  // check 
-//  if (!Rcpp::is<NumericMatrix>(xpMat)) {
-//  Rcpp::stop("\nError in update_resid_no_std: xpMat is not a matrix");
-//  }
-  
-  
+
   MatrixAccessor<double> xAcc(*xpMat);
   double *xCol = xAcc[j];
   for (int i=0; i < n_row; i++) {
-    r[i] -= shift * (xCol[row_idx_[i]]);
+    r[i] -= shift * (xCol[i]);
   }
 }
 
@@ -336,55 +325,39 @@ void standardize_and_get_residual(NumericVector &center, NumericVector &scale,
   *lambda_max_ptr = zmax / alpha;
 }
 
-// get residual only -- need this in gaussian_simple 
-void get_residual(vector<int> &col_idx, //columns to keep, removing columns whose scale < 1e-6
-                  vector<double> &z, 
-                  double *lambda, // pass lambda by reference 
-                  int *xmax_ptr,
-                  XPtr<BigMatrix> xMat, 
-                  double *y, 
-                  int *row_idx,
-                  double alpha,
-                  int n, 
-                  int p) {
-  MatrixAccessor<double> xAcc(*xMat);
-  double *xCol;
-  double sum_xy, sum_y;
-  double zmax = 0.0, zj = 0.0;
-  int i, j;
-  
-  for (j = 0; j < p; j++) {
-    xCol = xAcc[j];
-    sum_xy = 0.0;
-    sum_y = 0.0;
-    
-    for (i = 0; i < n; i++) {
-      // NB: this assumes X matrix has *already* been standardized 
-      sum_xy = sum_xy + xCol[row_idx[i]] * y[i];
-      sum_y = sum_y + y[i];
-    }
-    
-    // check for errant zero values
-    if (sum_y != 0.0) {
-      zj = (sum_xy * sum_y) / (n); //residual
-    } else {
-      // Handle the case when sum_y is zero
-      Rprintf("problem: in get_residual, sum_y is 0");
-    }
-    
-    
-    col_idx.push_back(j);
-    zj = (sum_xy * sum_y) / (n); //residual
-    if (fabs(zj) > zmax) {
-      zmax = fabs(zj);
-      *xmax_ptr = j; // xmax_ptr is the index in the raw xMat, not index in col_idx!
-    }
-    z.push_back(zj);
-  }
-  
-  // *p_keep_ptr = col_idx.size();
-  *lambda = zmax / alpha;
-}
+// // get residual only -- need this in gaussian_simple 
+// void get_residual(vector<double> &z, 
+//                   double lambda, 
+//                   int *xmax_ptr,
+//                   XPtr<BigMatrix> xMat, 
+//                   double *y, 
+//                   double alpha,
+//                   int n, 
+//                   int p) {
+//   MatrixAccessor<double> xAcc(*xMat);
+//   double *xCol;
+//   double sum;
+//   double zmax = 0.0, zj = 0.0;
+//   int i, j;
+//   
+//   for (j = 0; j < p; j++) {
+//     xCol = xAcc[j];
+//     sum = 0.0;
+//     
+//     for (i = 0; i < n; i++) {
+//       // NB: this assumes X matrix has *already* been standardized 
+//       sum = sum + xCol[i] * y[i];
+//     }
+//     
+//     zj = (sum * sum) / (n); //residual
+//     if (fabs(zj) > zmax) {
+//       zmax = fabs(zj);
+//       *xmax_ptr = j; // xmax_ptr is the index in the raw xMat, not index in col_idx!
+//     }
+//     z.push_back(zj);
+//   }
+//   lambda = zmax / alpha;
+// }
 
 // check KKT conditions over features in the inactive set
 int check_inactive_set(int *e1, vector<double> &z, XPtr<BigMatrix> xpMat, int *row_idx, 

@@ -20,8 +20,6 @@
 #' @param X               The design matrix, without an intercept. It must be a
 #'                        double type \code{\link[bigmemory]{big.matrix}} object. 
 #' @param y               The response vector 
-#' @param row.idx         The integer vector of row indices of \code{X} that used for
-#'                        fitting the model. \code{1:nrow(X)} by default.
 #' @param ncores          The number of OpenMP threads used for parallel computing.
 #' @param r               Residuals (length n vector) corresponding to `init`; 
 #'                        these will be calculated if not supplied, but if they have 
@@ -59,8 +57,6 @@
 #'                        fitting. Default is FALSE.
 #' @param return.time     Whether to return the computing time of the model
 #'                        fitting. Default is TRUE.
-#' @param verbose         Whether to output the timing of each lambda iteration.
-#'                        Default is FALSE.
 #'                        
 #' @return An object with S3 class \code{"biglasso"} with following variables.
 #' \item{beta}{The fitted matrix of coefficients, store in sparse matrix
@@ -104,7 +100,6 @@ biglasso_fit <- function(X,
                          xtx, 
                          lambda,
                          alpha = 1, 
-                         row.idx = 1:nrow(X),
                          ncores = 1,
                          max.iter = 1000, 
                          eps=1e-5,
@@ -112,8 +107,7 @@ biglasso_fit <- function(X,
                          penalty.factor = rep(1, ncol(X)),
                          warn = TRUE,
                          output.time = FALSE,
-                         return.time = TRUE,
-                         verbose = FALSE) {
+                         return.time = TRUE) {
   cat("\nEntering the biglasso_fit() function")
   # set defaults
   penalty <- "lasso"
@@ -122,8 +116,8 @@ biglasso_fit <- function(X,
   # check types
   if (!("big.matrix" %in% class(X)) || typeof(X) != "double") stop("X must be a double type big.matrix.")
   # subset of the response vector
-  if (is.matrix(y)) y <- y[row.idx,]
-  else y <- y[row.idx]
+  if (is.matrix(y)) y <- drop(y)
+  else y <- y
   
   if (any(is.na(y))) stop("Missing data (NA's) detected.  Take actions (e.g., removing cases, removing features, imputation) to eliminate missing data before fitting the model.")
   
@@ -138,7 +132,7 @@ biglasso_fit <- function(X,
   
   storage.mode(penalty.factor) <- "double"
   
-  n <- length(row.idx) ## subset of X. idx: indices of rows.
+  n <- nrow(X) 
   if (missing(lambda)) {
     stop("For biglasso_fit, a single lambda value must be user-supplied")
   }
@@ -159,7 +153,6 @@ biglasso_fit <- function(X,
     res <- .Call("cdfit_gaussian_simple",
                  X@address,
                  y,
-                 as.integer(row.idx-1),
                  r,
                  init, 
                  xtx,
@@ -169,7 +162,6 @@ biglasso_fit <- function(X,
                  as.integer(max.iter),
                  penalty.factor,
                  as.integer(ncores),
-                 as.integer(verbose),
                  PACKAGE = 'biglasso')
     
    
@@ -187,8 +179,7 @@ biglasso_fit <- function(X,
  
   
   ## Names
-  varnames <- if (is.null(colnames(X))) paste("V", 1:p, sep="") else colnames(X)
-  names(b) <- list(varnames)
+  names(b) <- if (is.null(colnames(X))) paste("V", 1:p, sep="") else colnames(X)
   
   ## Output
   return.val <- list(
