@@ -143,10 +143,8 @@ biglasso_fit <- function(X,
     stop("For biglasso_fit, a single lambda value must be user-supplied")
   }
   
-  # setup placeholder for residuals if not supplied 
-  if (missing(r)) r <- rep(NA_real_, nrow(X))
+  # check types for residuals and xtx
   if (!is.double(r)) r <- as.double(r)
-  if (missing(xtx)) xtx <- rep(NA_real_, ncol(X))
   if (!is.double(xtx)) xtx <- as.double(xtx)
   
   ## fit model
@@ -156,7 +154,7 @@ biglasso_fit <- function(X,
   
   Sys.setenv(R_C_BOUNDS_CHECK = "yes")
   cat("\nPassed checks, about to call cdfit_gaussian_simple")
-  
+
   time <- system.time(
     res <- .Call("cdfit_gaussian_simple",
                  X@address,
@@ -174,6 +172,7 @@ biglasso_fit <- function(X,
                  as.integer(verbose),
                  PACKAGE = 'biglasso')
     
+   
   )
 
   cat("\nMade it out of C++ function.")

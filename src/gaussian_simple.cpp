@@ -35,6 +35,7 @@ RcppExport SEXP cdfit_gaussian_simple(SEXP X_,
   int n = Rf_length(row_idx_); // number of observations used for fitting model
   int p = xMat->ncol();
   int verbose = INTEGER(verbose_)[0];
+  Rprintf("\nHalfway thru declarations");
   double eps = REAL(eps_)[0];
   int iter = 0;
   int max_iter = INTEGER(max_iter_)[0];
@@ -67,7 +68,9 @@ RcppExport SEXP cdfit_gaussian_simple(SEXP X_,
   // set up some initial values
   for (int j=0; j<p; j++) {
     a[j]=init[j];
+    xtx[j] = REAL(xtx_)[j];
   }
+  
   Rprintf("a[0]: %f\n", a[0]);
   Rprintf("xtx[0]: %f\n", xtx[0]);
   
@@ -86,29 +89,6 @@ RcppExport SEXP cdfit_gaussian_simple(SEXP X_,
   omp_set_dynamic(0);
   omp_set_num_threads(useCores);
   #endif
- 
- 
-  // set up r in case it is not user-supplied 
-  if (ISNA(r[0])) {
-    MatrixAccessor<double> xAcc(*xMat);
-    for (int i=0; i<n; i++)
-      r[i] = y[i];
-    for (int j=0; j<p; j++) {
-      double *xCol = xAcc[j];
-      for (int i=0; i<n; i++) {
-        r[i] -= xCol[i]*a[j];
-      }
-    }
-  }
- 
-  // set up xtx in case it is not user-supplied
-  if (ISNA(REAL(xtx_)[0])) {
-    for (int j=0; j<p; j++) 
-      xtx[j] = sqsum_bm(xMat, n, j)/n;
-  } else {
-    for (int j=0; j<p; j++) 
-      xtx[j] = REAL(xtx_)[j];
-  }
  
   Rprintf("\nGetting initial residual value");
   // get residual
