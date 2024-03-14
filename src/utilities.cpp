@@ -207,7 +207,7 @@ void update_resid_no_std(XPtr<BigMatrix> xpMat, double *r, double shift,
   MatrixAccessor<double> xAcc(*xpMat);
   double *xCol = xAcc[j];
   for (int i=0; i < n_row; i++) {
-    r[i] -= shift * (xCol[i]);
+    r[i] -= shift * xCol[i];
   }
 }
 

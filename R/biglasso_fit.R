@@ -59,12 +59,9 @@
 #'                        fitting. Default is TRUE.
 #'                        
 #' @return An object with S3 class \code{"biglasso"} with following variables.
-#' \item{beta}{The fitted matrix of coefficients, store in sparse matrix
-#' representation. The number of rows is equal to the number of coefficients,
-#' whereas the number of columns is equal to \code{nlambda}. For \code{"mgaussian"}
-#' family with m responses, it is a list of m such matrices.} 
+#' \item{beta}{The vector of estimated coefficients} 
 #' \item{iter}{A vector of length \code{nlambda} containing the number of 
-#' iterations until convergence at each value of \code{lambda}.} 
+#' iterations until convergence} 
 #' \item{lambda}{The sequence of regularization parameter values in the path.}
 #' \item{penalty}{Same as above.}
 #' \item{family}{Same as above.}

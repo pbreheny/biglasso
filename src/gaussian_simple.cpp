@@ -18,7 +18,7 @@ RcppExport SEXP cdfit_gaussian_simple(SEXP X_,
                                       SEXP max_iter_,
                                       SEXP multiplier_, 
                                       SEXP ncore_) {
-
+  
   // for debugging 
   Rprintf("\nEntering cdfit_gaussian_simple");
   
@@ -32,7 +32,6 @@ RcppExport SEXP cdfit_gaussian_simple(SEXP X_,
   double lambda = REAL(lambda_)[0];
   int n = xMat->nrow(); // number of observations used for fitting model
   int p = xMat->ncol();
-  Rprintf("\nHalfway thru declarations");
   double eps = REAL(eps_)[0];
   int iter = 0;
   int max_iter = INTEGER(max_iter_)[0];
@@ -52,42 +51,33 @@ RcppExport SEXP cdfit_gaussian_simple(SEXP X_,
   
   // set up some initial values
   for (int j=0; j<p; j++) {
-    a[j]=init[j];
+    a[j]=REAL(init_)[j];
+    ever_active[j] = 1*(a[j] != 0);
     b[j] = 0;
     z[j] = 0;
   }
   
-  Rprintf("a[0]: %f\n", a[0]);
+  Rprintf("\na[0]: %f\n", a[0]);
   Rprintf("xtx[0]: %f\n", xtx[0]);
   
-  for (int j=0; j<p; j++) {
-    ever_active[j] = 1*(a[j] != 0);
-  }
-    
-
   // set up omp
   int useCores = INTEGER(ncore_)[0];
-  #ifdef BIGLASSO_OMP_H_
+#ifdef BIGLASSO_OMP_H_
   int haveCores = omp_get_num_procs();
   if(useCores < 1) {
     useCores = haveCores;
   }
   omp_set_dynamic(0);
   omp_set_num_threads(useCores);
-  #endif
- 
-  // Rprintf("\nGetting initial residual value");
-  // get residual
-  // get_residual(z, lambda, xmax_ptr, xMat, y, row_idx, alpha, n, p);
-
+#endif
+  
   // calculate gaussian loss 
   for (i = 0; i < n; i++) {
-    r[i] = y[i];
+    r[i] = REAL(r_)[i];
   }
   Rprintf("\nr[0]: %f", r[0]);
-  double sumResid = sum(r, n);
-  double sdy = gLoss(r, n);
-  thresh = eps * sdy / n; // TODO: should I be taking square root of loss here? 
+  double sdy = sqrt(gLoss(r, n)/n);
+  thresh = eps * sdy;
   
   Rprintf("\nMade it to the loop");
   // Rprintf("\niter: %d, max_iter: %d", iter, max_iter);
@@ -98,12 +88,12 @@ RcppExport SEXP cdfit_gaussian_simple(SEXP X_,
     while (iter < max_iter) {
       iter++;
       max_update = 0.0;
-        
+      
       // solve over active set 
       for (j = 0; j < p; j++) {
         if (ever_active[j]) {
           Rprintf("\nSolving over active set");
-          cp = crossprod_bm_no_std(xMat, r, n, j) * sumResid;
+          cp = crossprod_bm_no_std(xMat, r, n, j);
           z[j] = cp/n + xtx[j]*a[j];
           Rprintf("\n xtx*a: %f", xtx[j]*a[j]);
           Rprintf("\n z[%d] value is: %f", j, z[j]);
@@ -112,31 +102,31 @@ RcppExport SEXP cdfit_gaussian_simple(SEXP X_,
           l1 = lambda * m[j] * alpha;
           l2 = lambda * m[j] * (1-alpha);
           b[j] = lasso(z[j], l1, l2, xtx[j]); // TODO: add SCAD and MCP options
-            
+          
           Rprintf("\nCurrent beta estimate is: %f", b[j]);
           // update residuals 
           shift = b[j] - a[j];
-          // TODO: check the update below against the update in 
-          // ncvreg::rawfit_gaussian.cpp lines 104-107
+          
           if (shift != 0) {
-            update = pow(b[j] - a[j], 2); // TODO: this is different than 
-            // ncvreg::rawfit_gaussian... not sure I understand why
+            update_resid_no_std(xMat, r, shift, n, j);
+            
+            // update = pow(b[j] - a[j], 2); 
+            update = fabs(shift) * sqrt(xtx[j]);
             if (update > max_update) {
               max_update = update;
             }
-            update_resid_no_std(xMat, r, shift, n, j);
-            sumResid = sum(r, n); //update sum of residual
+            
           }
         }
       }
       // make current beta the old value 
       for(int j=0; j<p; j++)
         a[j] = b[j]; 
-        
+      
       // check for convergence 
       if (max_update < thresh) break;
     }
-      
+    
     // scan for violations 
     int violations = 0;
     Rprintf("\nMade it to the violation loop");
@@ -144,20 +134,21 @@ RcppExport SEXP cdfit_gaussian_simple(SEXP X_,
       if (!ever_active[j]) {
         Rprintf("\nUpdating inactive set");
         Rprintf("\nCalling crossprod_bm_no_std");
-        Rprintf("\nValue of r[%d] is: %f", r[j]);
+        
+        z[j] = crossprod_bm_no_std(xMat, r,  n, j)/n;
+        
+        
+        Rprintf("\nFirst value of r is: %f", r[1]);
         Rprintf("\nValue of z[%d] is: %f", z[j]);
         
-        
-        z[j] = crossprod_bm_no_std(xMat, r,  n, j);
-          
         // update beta
         l1 = lambda * m[j] * alpha;
         l2 = lambda * m[j] * (1-alpha);
         // TODO: add SCAD and MCP to the below
         Rprintf("\nCalling lasso");
         b[j] = lasso(z[j], l1, l2, xtx[j]);
-          
-          
+        
+        
         // if something enters, update active set and residuals
         if (b[j] != 0) {
           ever_active[j] = 1;
@@ -166,14 +157,14 @@ RcppExport SEXP cdfit_gaussian_simple(SEXP X_,
           a[j] = b[j];
           violations++;
         }
-          
-          
+        
+        
       }
     }
     if (violations==0) break;
   }
-    
-    
+  
+  
   // }
   
   Rprintf("\nAbout to return the list");
