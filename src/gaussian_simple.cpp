@@ -20,7 +20,7 @@ RcppExport SEXP cdfit_gaussian_simple(SEXP X_,
                                       SEXP ncore_) {
   
   // for debugging 
-  Rprintf("\nEntering cdfit_gaussian_simple");
+  // Rprintf("\nEntering cdfit_gaussian_simple");
   
   // declarations: input
   XPtr<BigMatrix> xMat(X_);
@@ -40,7 +40,7 @@ RcppExport SEXP cdfit_gaussian_simple(SEXP X_,
   // int xmax_idx = 0;
   // int *xmax_ptr = &xmax_idx;
   
-  Rprintf("\nDeclaring beta");
+  //Rprintf("\nDeclaring beta");
   // declarations: output 
   NumericVector b(p); // Initialize a NumericVector of size p vector to hold estimated coefficients from current iteration
   double *a =  R_Calloc(p, double);// will hold beta from previous iteration
@@ -51,14 +51,18 @@ RcppExport SEXP cdfit_gaussian_simple(SEXP X_,
   
   // set up some initial values
   for (int j=0; j<p; j++) {
-    a[j]=REAL(init_)[j];
+    a[j]=init[j];
     ever_active[j] = 1*(a[j] != 0);
     b[j] = 0;
     z[j] = 0;
   }
   
-  Rprintf("\na[0]: %f\n", a[0]);
-  Rprintf("xtx[0]: %f\n", xtx[0]);
+  for (i = 0; i < n; i++) {
+    r[i] = REAL(r_)[i];
+  }
+  
+ // Rprintf("\na[0]: %f\n", a[0]);
+ // Rprintf("xtx[0]: %f\n", xtx[0]);
   
   // set up omp
   int useCores = INTEGER(ncore_)[0];
@@ -72,14 +76,11 @@ RcppExport SEXP cdfit_gaussian_simple(SEXP X_,
 #endif
   
   // calculate gaussian loss 
-  for (i = 0; i < n; i++) {
-    r[i] = REAL(r_)[i];
-  }
-  Rprintf("\nr[0]: %f", r[0]);
-  double sdy = sqrt(gLoss(r, n)/n);
+  //Rprintf("\nr[0]: %f", r[0]);
+  double sdy = sqrt(gLoss(y, n)/n);
   thresh = eps * sdy;
   
-  Rprintf("\nMade it to the loop");
+  //Rprintf("\nMade it to the loop");
   // Rprintf("\niter: %d, max_iter: %d", iter, max_iter);
   
   // while(iter < max_iter) {
@@ -92,18 +93,18 @@ RcppExport SEXP cdfit_gaussian_simple(SEXP X_,
       // solve over active set 
       for (j = 0; j < p; j++) {
         if (ever_active[j]) {
-          Rprintf("\nSolving over active set");
+          //Rprintf("\nSolving over active set");
           cp = crossprod_bm_no_std(xMat, r, n, j);
           z[j] = cp/n + xtx[j]*a[j];
-          Rprintf("\n xtx*a: %f", xtx[j]*a[j]);
-          Rprintf("\n z[%d] value is: %f", j, z[j]);
+        //  Rprintf("\n xtx*a: %f", xtx[j]*a[j]);
+        //  Rprintf("\n z[%d] value is: %f", j, z[j]);
           
           // update beta
           l1 = lambda * m[j] * alpha;
           l2 = lambda * m[j] * (1-alpha);
           b[j] = lasso(z[j], l1, l2, xtx[j]); // TODO: add SCAD and MCP options
           
-          Rprintf("\nCurrent beta estimate is: %f", b[j]);
+         // Rprintf("\nCurrent beta estimate is: %f", b[j]);
           // update residuals 
           shift = b[j] - a[j];
           
@@ -129,58 +130,58 @@ RcppExport SEXP cdfit_gaussian_simple(SEXP X_,
     
     // scan for violations 
     int violations = 0;
-    Rprintf("\nMade it to the violation loop");
+    //Rprintf("\nMade it to the violation loop");
     for (int j=0; j<p; j++) {
       if (!ever_active[j]) {
-        Rprintf("\nUpdating inactive set");
-        Rprintf("\nCalling crossprod_bm_no_std");
+    //    Rprintf("\nUpdating inactive set");
+     //   Rprintf("\nCalling crossprod_bm_no_std");
         
         z[j] = crossprod_bm_no_std(xMat, r,  n, j)/n;
         
         
-        Rprintf("\nFirst value of r is: %f", r[1]);
-        Rprintf("\nValue of z[%d] is: %f", z[j]);
+     //   Rprintf("\nFirst value of r is: %f", r[1]);
+      //  Rprintf("\nValue of z[%d] is: %f", z[j]);
         
         // update beta
         l1 = lambda * m[j] * alpha;
         l2 = lambda * m[j] * (1-alpha);
         // TODO: add SCAD and MCP to the below
-        Rprintf("\nCalling lasso");
+     //   Rprintf("\nCalling lasso");
         b[j] = lasso(z[j], l1, l2, xtx[j]);
         
         
         // if something enters, update active set and residuals
         if (b[j] != 0) {
           ever_active[j] = 1;
-          Rprintf("\nCalling update_resid_no_std");
+       //   Rprintf("\nCalling update_resid_no_std");
           update_resid_no_std(xMat, r, b[j], n, j);
           a[j] = b[j];
           violations++;
         }
-        
-        
       }
     }
     if (violations==0) break;
   }
   
-  
-  // }
-  
-  Rprintf("\nAbout to return the list");
+  //Rprintf("\nAbout to return the list");
   
   // cleanup steps
   R_Free(a); 
   R_Free(ever_active);
-  // TODO: sort out how to use the line below 
-  // REAL(loss)[0] = gLoss(r, n);
+  loss = gLoss(r, n);
+  
+  // set up returnable vector for residuals (can't return 'r' - it's a pointer)
+  NumericVector resid(n);
+  for (int i=0; i<n; i++) {
+    resid[i] = r[i];
+  }
   
   // return list: 
   // - beta: numeric (p x 1) vector of estimated coefficients at the supplied lambda value
   // - loss: double capturing the loss at this lambda value with these coefs.
   // - iter: integer capturing the number of iterations needed in the coordinate descent
   // - r: numeric (n x 1) vector of residuals // TODO: add this! 
-  return List::create(b, loss, iter);
+  return List::create(b, loss, iter, resid);
 }
 
 

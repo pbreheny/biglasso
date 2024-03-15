@@ -168,12 +168,16 @@ biglasso_fit <- function(X,
   b <- res[[1]]
   loss <- res[[2]]
   iter <- res[[3]]
-  # resid <- res[[4]] # TODO: think about whether I need to add this in 
+  resid <- res[[4]] # TODO: think about whether I need to add this in 
   
   if (output.time) {
     cat("\nEnd biglasso: ", format(Sys.time()), '\n')
   }
  
+  if (warn & (iter==max.iter)) {
+    warning("Maximum number of iterations reached")
+  }
+  
   
   ## Names
   names(b) <- if (is.null(colnames(X))) paste("V", 1:p, sep="") else colnames(X)
@@ -182,6 +186,7 @@ biglasso_fit <- function(X,
   return.val <- list(
     beta = b,
     iter = iter,
+    resid = resid,
     lambda = lambda,
     penalty = penalty,
     family = family,
