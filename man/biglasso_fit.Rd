@@ -117,7 +117,9 @@ y <- Prostate$y
 X.bm <- as.big.matrix(X)
 init <- rep(0, ncol(X)) # using cold starts - will need more iterations
 r <- y - X\%*\%init
-fit_flex <- biglasso_fit(X = X.bm, y = y, r = r, init = init, xtx = rep(1, ncol(X)),lambda = 0.1, penalty.factor=c(0, rep(1, ncol(X)-1)), max.iter = 10000)
+fit_flex <- biglasso_fit(X = X.bm, y = y, r = r, init = init,
+ xtx = rep(1, ncol(X)),lambda = 0.1, penalty.factor=c(0, rep(1, ncol(X)-1)),
+  max.iter = 10000)
 }
 \author{
 Yaohui Zeng, Chuyi Wang, Tabitha Peter, and Patrick Breheny
