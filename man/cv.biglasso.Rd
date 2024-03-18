@@ -16,8 +16,7 @@ cv.biglasso(
   seed,
   cv.ind,
   trace = FALSE,
-  grouped = TRUE,
-  fit_flag = FALSE
+  grouped = TRUE
 )
 }
 \arguments{
@@ -65,9 +64,6 @@ progress by announcing the beginning of each CV fold.  Default is FALSE.}
 \item{grouped}{Whether to calculate CV standard error (\code{cvse}) over
 CV folds (\code{TRUE}), or over all cross-validated predictions. Ignored
 when \code{eval.metric} is 'auc'.}
-
-\item{fit_flag}{Logical: For model fitting, should `biglasso_fit()` be called, 
-instead of `biglasso()`? Defaults to FALSE.}
 }
 \value{
 An object with S3 class \code{"cv.biglasso"} which inherits from

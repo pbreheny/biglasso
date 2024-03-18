@@ -1,8 +1,10 @@
 #' Simplified call to biglasso: a gaussian model fit with no 'bells and whistles' (e.g., no SSR)
 #' 
 #' NOTE: this function is designed for users who have a strong understanding of 
-#' statistics and know exactly what they are doing. This is a copy of the main 
-#' `biglasso()` function with more flexible settings. Of note, this function:
+#' statistics and know exactly what they are doing. This is a simplification of  
+#' the main `biglasso()` function with more flexible settings. 
+#' 
+#' Of note, this function:
 #' 
 #'  * does NOT add an intercept 
 #'  * does NOT standardize the design matrix
@@ -20,11 +22,7 @@
 #' @param X               The design matrix, without an intercept. It must be a
 #'                        double type \code{\link[bigmemory]{big.matrix}} object. 
 #' @param y               The response vector 
-#' @param ncores          The number of OpenMP threads used for parallel computing.
-#' @param r               Residuals (length n vector) corresponding to `init`; 
-#'                        these will be calculated if not supplied, but if they have 
-#'                        already been calculated elsewhere, it is more efficient to 
-#'                        pass them as an argument. 
+#' @param r               Residuals (length n vector) corresponding to `init`. 
 #'                        WARNING: If you supply an incorrect value of `r`, the 
 #'                        solution will be incorrect. 
 #' @param init            Initial values for beta.  Default: zero (length p vector)
@@ -39,6 +37,7 @@
 #'                        \deqn{ \alpha||\beta||_1 + (1-\alpha)/2||\beta||_2^2.}
 #'                        \code{alpha=1} is the lasso penalty, \code{alpha=0} the ridge penalty,
 #'                        \code{alpha} in between 0 and 1 is the elastic-net ("enet") penalty.
+#' @param ncores          The number of OpenMP threads used for parallel computing.
 #' @param max.iter        Maximum number of iterations.  Default is 1000.
 #' @param eps             Convergence threshold for inner coordinate descent. The
 #'                        algorithm iterates until the maximum change in the objective 
@@ -62,33 +61,24 @@
 #' \item{beta}{The vector of estimated coefficients} 
 #' \item{iter}{A vector of length \code{nlambda} containing the number of 
 #' iterations until convergence} 
+#' \item{resid}{Vector of residuals calculated from estimated coefficients.}
 #' \item{lambda}{The sequence of regularization parameter values in the path.}
-#' \item{penalty}{Same as above.}
-#' \item{family}{Same as above.}
-#' \item{alpha}{Same as above.} 
-#' \item{loss}{A vector containing either the residual sum of squares of the fitted model at each value of \code{lambda}.}
-#' \item{penalty.factor}{Same as above.}
-#' \item{n}{The number of observations used in the model fitting. It's equal to
-#' \code{length(row.idx)}.} 
-#' \item{y}{The response vector used in the model fitting. Depending on
-#' \code{row.idx}, it could be a subset of the raw input of the response vector y.}
-#' \item{screen}{Same as above.} 
-#' \item{col.idx}{The indices of features that have 'scale' value greater than
-#' 1e-6. Features with 'scale' less than 1e-6 are removed from model fitting.} 
-#' \item{rejections}{The number of features rejected at each value of \code{lambda}.}
-#' \item{safe_rejections}{The number of features rejected by safe rules at each
-#' value of \code{lambda}.}
+#' \item{alpha}{Same as in `biglasso()`} 
+#' \item{loss}{A vector containing either the residual sum of squares of the fitted model at each value of lambda.}
+#' \item{penalty.factor}{Same as in `biglasso()`.}
+#' \item{n}{The number of observations used in the model fitting.}
+#' \item{y}{The response vector used in the model fitting.}
 #' @author Yaohui Zeng, Chuyi Wang, Tabitha Peter, and Patrick Breheny 
 #'
 #' @examples
 #' 
 #' data(Prostate)
-#' X <- cbind(1, Prostate$X)
+#' X <- cbind(1, Prostate$X) |> ncvreg::std() # standardizing -> xtx is all 1s
 #' y <- Prostate$y
 #' X.bm <- as.big.matrix(X)
-#' fit_flex <- biglasso_fit(X = X.bm, y = y, lambda = 0.1, penalty.factor=c(0, rep(1, ncol(X)-1)), verbose = TRUE)
-#' plot(fit_flex, log.l = TRUE, main = 'lasso')
-#'
+#' init <- rep(0, ncol(X)) # using cold starts - will need more iterations
+#' r <- y - X%*%init
+#' fit_flex <- biglasso_fit(X = X.bm, y = y, r = r, init = init, xtx = rep(1, ncol(X)),lambda = 0.1, penalty.factor=c(0, rep(1, ncol(X)-1)), max.iter = 10000)
 #' @export biglasso_fit
 biglasso_fit <- function(X,
                          y,
@@ -105,7 +95,7 @@ biglasso_fit <- function(X,
                          warn = TRUE,
                          output.time = FALSE,
                          return.time = TRUE) {
-  cat("\nEntering the biglasso_fit() function")
+
   # set defaults
   penalty <- "lasso"
   alpha <- 1
@@ -144,7 +134,6 @@ biglasso_fit <- function(X,
   }
   
   Sys.setenv(R_C_BOUNDS_CHECK = "yes")
-  cat("\nPassed checks, about to call cdfit_gaussian_simple")
 
   time <- system.time(
     res <- .Call("cdfit_gaussian_simple",
@@ -164,7 +153,6 @@ biglasso_fit <- function(X,
    
   )
 
-  cat("\nMade it out of C++ function.")
   b <- res[[1]]
   loss <- res[[2]]
   iter <- res[[3]]
@@ -188,17 +176,14 @@ biglasso_fit <- function(X,
     iter = iter,
     resid = resid,
     lambda = lambda,
-    penalty = penalty,
-    family = family,
+    # TODO: will need to add these later
+    # penalty = penalty,
+    # family = family,
     alpha = alpha,
     loss = loss,
     penalty.factor = penalty.factor,
     n = n,
     y = y
-    # screen = screen,
-    # col.idx = col.idx,
-    # safe_rejections = safe_rejections,
-    # rejections = rejections
   )
   
   if (return.time) return.val$time <- as.numeric(time['elapsed'])

@@ -180,7 +180,7 @@ RcppExport SEXP cdfit_gaussian_simple(SEXP X_,
   // - beta: numeric (p x 1) vector of estimated coefficients at the supplied lambda value
   // - loss: double capturing the loss at this lambda value with these coefs.
   // - iter: integer capturing the number of iterations needed in the coordinate descent
-  // - r: numeric (n x 1) vector of residuals // TODO: add this! 
+  // - resid: numeric (n x 1) vector of residuals // TODO: add this! 
   return List::create(b, loss, iter, resid);
 }
 

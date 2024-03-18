@@ -44,8 +44,6 @@
 #' @param grouped Whether to calculate CV standard error (\code{cvse}) over
 #' CV folds (\code{TRUE}), or over all cross-validated predictions. Ignored
 #' when \code{eval.metric} is 'auc'.
-#' @param fit_flag Logical: For model fitting, should `biglasso_fit()` be called, 
-#' instead of `biglasso()`? Defaults to FALSE.
 #' 
 #' @return An object with S3 class \code{"cv.biglasso"} which inherits from
 #' class \code{"cv.ncvreg"}.  The following variables are contained in the
@@ -89,8 +87,7 @@ cv.biglasso <- function(X, y, row.idx = 1:nrow(X),
                         family = c("gaussian", "binomial", "cox", "mgaussian"),
                         eval.metric = c("default", "MAPE", "auc", "class"),
                         ncores = parallel::detectCores(), ...,
-                        nfolds = 5, seed, cv.ind, trace = FALSE, grouped = TRUE,
-                        fit_flag = FALSE) {
+                        nfolds = 5, seed, cv.ind, trace = FALSE, grouped = TRUE) {
 
   family <- match.arg(family)
   if(!family %in% c("gaussian", "binomial")) stop("CV method for this family not supported yet.")
@@ -105,11 +102,7 @@ cv.biglasso <- function(X, y, row.idx = 1:nrow(X),
     ncores = max.cores
   }
 
-  if(fit_flag){
-    fit <- biglasso_fit(X = X, y = y, row.idx = row.idx, ncores = ncores, ...)
-  } else {
-    fit <- biglasso(X = X, y = y, row.idx = row.idx, family = family, ncores = ncores, ...)
-  }
+  fit <- biglasso(X = X, y = y, row.idx = row.idx, family = family, ncores = ncores, ...)
 
   
   if (eval.metric == "auc") grouped <- TRUE
@@ -156,7 +149,7 @@ cv.biglasso <- function(X, y, row.idx = 1:nrow(X),
     ## pass the descriptor info to each cluster ##
     xdesc <- bigmemory::describe(X)
     parallel::clusterExport(cluster, c("cv.ind", "xdesc", "y", "cv.args",
-                                       "parallel", "eval.metric", "fit_flag", "biglasso_fit"),
+                                       "parallel", "eval.metric", "biglasso_fit"),
                             envir=environment())
     parallel::clusterCall(cluster, function() {
 
@@ -174,7 +167,6 @@ cv.biglasso <- function(X, y, row.idx = 1:nrow(X),
                                         XX = xdesc,
                                         y = y,
                                         eval.metric = eval.metric,
-                                        fit_flag = fit_flag,
                                         cv.ind = cv.ind, 
                                         cv.args = cv.args,
                                         grouped = grouped,
@@ -188,8 +180,7 @@ cv.biglasso <- function(X, y, row.idx = 1:nrow(X),
       res <- fold.results[[i]]
     } else {
       if (trace) cat("Starting CV fold #", i, sep="", "\n")
-      res <- cvf(i, X, y, eval.metric, cv.ind, cv.args, grouped = grouped,
-                 fit_flag = fit_flag)
+      res <- cvf(i, X, y, eval.metric, cv.ind, cv.args, grouped = grouped)
     }
     E[result.ind == i, match(res$ls, fit$lambda)] <- res$loss
     if (fit$family == "binomial") PE[cv.ind == i, match(res$ls, fit$lambda)] <- res$pe
@@ -228,8 +219,7 @@ cv.biglasso <- function(X, y, row.idx = 1:nrow(X),
   structure(val, class=c("cv.biglasso", "cv.ncvreg"))
 }
 
-cvf <- function(i, XX, y, eval.metric, cv.ind, cv.args, grouped, fit_flag,
-                parallel= FALSE) {
+cvf <- function(i, XX, y, eval.metric, cv.ind, cv.args, grouped, parallel= FALSE) {
   # reference to the big.matrix by descriptor info
   if (parallel) {
     XX <- attach.big.matrix(XX)
@@ -239,13 +229,11 @@ cvf <- function(i, XX, y, eval.metric, cv.ind, cv.args, grouped, fit_flag,
   cv.args$row.idx <- which(cv.ind != i)
   cv.args$warn <- FALSE
   cv.args$ncores <- 1
-
+  
   idx.test <- which(cv.ind == i)
-  if(fit_flag){
-    fit.i <- do.call("biglasso_fit", cv.args)
-  } else {
-    fit.i <- do.call("biglasso", cv.args)
-  }
+  
+  fit.i <- do.call("biglasso", cv.args)
+  
 
 
   y2 <- y[cv.ind==i]
