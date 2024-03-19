@@ -1,10 +1,11 @@
 Package: biglasso
-Version: 1.5.2
-Date: 2022-10-05
+Version: 1.5.2.1
+Date: 2024-03-19
 Title: Extending Lasso Model Fitting to Big Data
 Authors@R: c(
     person("Yaohui", "Zeng", role = c("aut")),
     person("Chuyi", "Wang", role = c("aut")),
+    person("Tabitha", "Peter", role = c("aut")),
     person("Patrick", "Breheny", role=c("aut","cre"),
       email="patrick-breheny@uiowa.edu", comment=c(ORCID="0000-0002-0650-1119")))
 Maintainer: Patrick Breheny <patrick-breheny@uiowa.edu>
