@@ -21,6 +21,7 @@
 #' @export
 #' 
 plot.biglasso <- function(x, alpha = 1, log.l = TRUE, ...) {
+
   YY <- if (length(x$penalty.factor)==nrow(x$beta)) coef(x) else coef(x)[-1,,drop=FALSE]
   ## currently not support unpenalized coefficients. NOT USED
   penalized <- which(x$penalty.factor!=0)
@@ -58,4 +59,3 @@ plot.biglasso <- function(x, alpha = 1, log.l = TRUE, ...) {
   
   abline(h=0)
 }
-

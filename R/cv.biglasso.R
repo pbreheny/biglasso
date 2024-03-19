@@ -44,6 +44,7 @@
 #' @param grouped Whether to calculate CV standard error (\code{cvse}) over
 #' CV folds (\code{TRUE}), or over all cross-validated predictions. Ignored
 #' when \code{eval.metric} is 'auc'.
+#' 
 #' @return An object with S3 class \code{"cv.biglasso"} which inherits from
 #' class \code{"cv.ncvreg"}.  The following variables are contained in the
 #' class (adopted from \code{\link[ncvreg]{cv.ncvreg}}).  \item{cve}{The error
@@ -102,6 +103,8 @@ cv.biglasso <- function(X, y, row.idx = 1:nrow(X),
   }
 
   fit <- biglasso(X = X, y = y, row.idx = row.idx, family = family, ncores = ncores, ...)
+
+  
   if (eval.metric == "auc") grouped <- TRUE
 
   E <- matrix(Inf, nrow=if (grouped) nfolds else fit$n, ncol=length(fit$lambda))
@@ -138,8 +141,6 @@ cv.biglasso <- function(X, y, row.idx = 1:nrow(X),
   cv.args$lambda <- fit$lambda
   cv.args$family <- family
 
-
-
   parallel <- FALSE
   if (ncores > 1) {
     cluster <- parallel::makeCluster(ncores)
@@ -148,7 +149,7 @@ cv.biglasso <- function(X, y, row.idx = 1:nrow(X),
     ## pass the descriptor info to each cluster ##
     xdesc <- bigmemory::describe(X)
     parallel::clusterExport(cluster, c("cv.ind", "xdesc", "y", "cv.args",
-                                       "parallel", "eval.metric"),
+                                       "parallel", "eval.metric", "biglasso_fit"),
                             envir=environment())
     parallel::clusterCall(cluster, function() {
 
@@ -160,9 +161,15 @@ cv.biglasso <- function(X, y, row.idx = 1:nrow(X),
       # source("~/GitHub/biglasso/R/predict.R")
       # source("~/GitHub/biglasso/R/loss.R")
     })
-    fold.results <- parallel::parLapply(cl = cluster, X = seq_len(nfolds), fun = cvf, XX = xdesc,
-                                        y = y, eval.metric = eval.metric,
-                                        cv.ind = cv.ind, cv.args = cv.args, grouped = grouped,
+    fold.results <- parallel::parLapply(cl = cluster,
+                                        X = seq_len(nfolds),
+                                        fun = cvf,
+                                        XX = xdesc,
+                                        y = y,
+                                        eval.metric = eval.metric,
+                                        cv.ind = cv.ind, 
+                                        cv.args = cv.args,
+                                        grouped = grouped,
                                         parallel = parallel)
     parallel::stopCluster(cluster)
   }
@@ -222,9 +229,12 @@ cvf <- function(i, XX, y, eval.metric, cv.ind, cv.args, grouped, parallel= FALSE
   cv.args$row.idx <- which(cv.ind != i)
   cv.args$warn <- FALSE
   cv.args$ncores <- 1
-
+  
   idx.test <- which(cv.ind == i)
+  
   fit.i <- do.call("biglasso", cv.args)
+  
+
 
   y2 <- y[cv.ind==i]
   yhat <- matrix(predict(fit.i, XX, row.idx = idx.test, type="response"), length(y2))

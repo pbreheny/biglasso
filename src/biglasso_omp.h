@@ -1,7 +1,11 @@
 
 #ifndef BIGLASSO_OMP_H_
 #define BIGLASSO_OMP_H_
-#if defined(_OPENMP)
+// OpenMP setup is OS dependent
+// if running on a Mac, this assumes most recent version of libomp has been installed via Homebrew to /usr/local/Cellar
+#if __APPLE__ 
+#include "/usr/local/Cellar/libomp/17.0.3/include/omp.h"
+#elif defined(_OPENMP)
 #include <omp.h>
 #else
 #ifndef DISABLE_OPENMP
