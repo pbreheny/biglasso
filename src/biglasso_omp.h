@@ -1,4 +1,3 @@
-
 #ifndef BIGLASSO_OMP_H_
 #define BIGLASSO_OMP_H_
 #if defined(_OPENMP)
