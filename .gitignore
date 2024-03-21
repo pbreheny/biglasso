@@ -14,7 +14,8 @@
 inst/doc
 
 # compiling files
-.o
-.so
-src/*.o
+*.o
+*.so
 src/*.so
+src/*.o
+
