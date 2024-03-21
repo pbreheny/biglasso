@@ -207,7 +207,9 @@ biglasso <- function(X, y, row.idx = 1:nrow(X),
                      return.time = TRUE,
                      verbose = FALSE) {
   
-  # Match deprecated screen methods
+  # set up defaults -------------------------------------------------------
+  
+  # Match deprecated screen methods 
   if(length(screen) == 1 &&
      screen %in% c("SEDPP", "SSR-BEDPP", "SSR-Slores", "SSR-Slores-Batch", 
                    "SSR-Dome", "None", "NS-NAC", "SSR-NAC", "SEDPP-NAC",
@@ -329,7 +331,7 @@ biglasso <- function(X, y, row.idx = 1:nrow(X),
     user.lambda <- TRUE
   }
 
-  ## fit model
+  ## fit model ----------------------------------------------------------
   if (output.time) {
     cat("\nStart biglasso: ", format(Sys.time()), '\n')
   }
@@ -569,7 +571,7 @@ biglasso <- function(X, y, row.idx = 1:nrow(X),
   # p.keep <- length(col.idx)
   col.idx <- col.idx + 1 # indices (in R) for which variables have scale > 1e-6
 
-  ## Eliminate saturated lambda values, if any
+  ## Eliminate saturated lambda values, if any -------------------------------
   ind <- !is.na(iter)
   if (family %in% c("gaussian","binomial")) a <- a[ind]
   if(!is.list(b)) b <- b[, ind, drop=FALSE]
@@ -579,7 +581,7 @@ biglasso <- function(X, y, row.idx = 1:nrow(X),
 
   if (warn & any(iter==max.iter)) warning("Algorithm failed to converge for some values of lambda")
 
-  ## Unstandardize coefficients:
+  ## Unstandardize coefficients --------------------------------------------
   if(family == "cox") {
     beta <- Matrix(0, nrow = p, ncol = length(lambda), sparse = T)
     bb <- b / scale[col.idx]
@@ -615,7 +617,7 @@ biglasso <- function(X, y, row.idx = 1:nrow(X),
   }
   
 
-  ## Names
+  ## Names -----------------------------------------------------------
   varnames <- if (is.null(colnames(X))) paste("V", 1:p, sep="") else colnames(X)
   if(family != 'cox') varnames <- c("(Intercept)", varnames)
   if(family == "mgaussian") {
@@ -624,7 +626,7 @@ biglasso <- function(X, y, row.idx = 1:nrow(X),
     names(beta) <- classnames
   } else dimnames(beta) <- list(varnames, round(lambda, digits = 4))
 
-  ## Output
+  ## Output ---------------------------------------------------------------
   return.val <- list(
     beta = beta,
     iter = iter,
