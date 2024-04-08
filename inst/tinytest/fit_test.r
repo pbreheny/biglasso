@@ -1,7 +1,6 @@
 devtools::load_all('.')
 
 # colon data ----------------------------------------------------------------
-## test biglasso_fit -------------------------------------------------------
 data(colon)
 X <- colon$X |> ncvreg::std()
 # X <- cbind(1, X)
@@ -11,6 +10,7 @@ y <- colon$y
 resid <- drop(y - X %*% init)
 X.bm <- as.big.matrix(X)
 
+## lasso ---------------------------------------------------------------------
 fit1 <- biglasso_fit(X.bm, y, lambda = 0.05, xtx=xtx, r = resid, max.iter = 10000)
 
 # compare with `ncvreg::ncvfit()`
@@ -23,13 +23,35 @@ tinytest::expect_equal(fit1$beta, fit2$beta, tolerance = 0.01)
 # test residuals
 tinytest::expect_equal(fit1$resid, fit2$resid, tolerance = 0.01)
 
+## MCP --------------------------------------------------------------
 fit1b <- biglasso_fit(X.bm, y, lambda = 0.05,
                               xtx=xtx, r = resid,
                               penalty = "MCP")
 
-fit2b <- ncvfit(X = X, y = y, lambda = 0.05, xtx = xtx, r = resid, penalty = "MCP")
+fit2b <- ncvfit(X = X, y = y, lambda = 0.05, xtx = xtx, r = resid,
+                penalty = "MCP")
 
 tinytest::expect_equal(fit1b$resid, fit2b$resid, tolerance = 0.01)
+
+
+## SCAD + path (just an idea) -----------------------------------------------------------
+X_plus_int <- cbind(1, X)
+X.bm.int <- as.big.matrix(X_plus_int)
+xtx.int <- apply(X_plus_int, 2, crossprod)
+resid.int <- drop(y - X_plus_int %*% c(0, init))
+
+fit1c <- biglasso_simple_path(X.bm.int, y, lambda = c(0.1, 0.05, 0.01, 0.001),
+                              xtx=xtx.int, r = resid.int,
+                              penalty = "MCP",
+                              # make intercept unpenalized 
+                              penalty.factor = c(0, rep(1, ncol(X))),
+                              max.iter = 20000)
+
+fit2c <- ncvreg(X, y, lambda = c(0.1, 0.05, 0.01, 0.001),
+                max.iter = 10000)
+
+# TODO: think about whether I can create a test like the below
+# tinytest::expect_equal(fit1c$beta[,2], fit2c$beta[,2], tolerance = 0.01)
 
 # Prostate data ------------------------------------------------------------
 data("Prostate") # part of ncvreg

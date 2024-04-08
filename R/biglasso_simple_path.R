@@ -39,6 +39,8 @@
 #'                        \deqn{ \alpha||\beta||_1 + (1-\alpha)/2||\beta||_2^2.}
 #'                        \code{alpha=1} is the lasso penalty, \code{alpha=0} the ridge penalty,
 #'                        \code{alpha} in between 0 and 1 is the elastic-net ("enet") penalty.
+#' @param gamma           Tuning parameter value for nonconvex penalty. Defaults are
+#'                        3.7 for `penalty = 'SCAD'` and 3 for `penalty = 'MCP'`
 #' @param ncores          The number of OpenMP threads used for parallel computing.
 #' @param max.iter        Maximum number of iterations.  Default is 1000.
 #' @param eps             Convergence threshold for inner coordinate descent. The
@@ -70,7 +72,7 @@
 #' \item{penalty.factor}{Same as in `biglasso()`.}
 #' \item{n}{The number of observations used in the model fitting.}
 #' \item{y}{The response vector used in the model fitting.}
-#' @author Yaohui Zeng, Chuyi Wang, Tabitha Peter, and Patrick Breheny 
+#' @author Tabitha Peter and Patrick Breheny 
 #'
 #' @examples
 #' 
@@ -81,11 +83,13 @@
 #' init <- rep(0, ncol(X)) # using cold starts - will need more iterations
 #' r <- y - X%*%init
 #' fit_lasso <- biglasso_simple_path(X = X.bm, y = y, r = r, init = init,
-#'  xtx = rep(1, ncol(X)), lambda = c(0.5, 0.1, 0.05, 0.01, 0.001), penalty.factor=c(0, rep(1, ncol(X)-1)),
+#'  xtx = rep(1, ncol(X)), lambda = c(0.5, 0.1, 0.05, 0.01, 0.001), 
+#'  penalty.factor=c(0, rep(1, ncol(X)-1)),
 #'   max.iter = 10000)   
 #'   
 #' fit_mcp <- biglasso_simple_path(X = X.bm, y = y, r = r, init = init,
-#'  xtx = rep(1, ncol(X)), lambda = c(0.5, 0.1, 0.05, 0.01, 0.001), penalty.factor=c(0, rep(1, ncol(X)-1)),
+#'  xtx = rep(1, ncol(X)), lambda = c(0.5, 0.1, 0.05, 0.01, 0.001),
+#'   penalty.factor=c(0, rep(1, ncol(X)-1)),
 #'   max.iter = 10000, penalty= 'MCP')  
 #'   
 #' @export biglasso_simple_path
@@ -189,9 +193,8 @@ biglasso_simple_path <- function(X,
     iter = iter,
     resid = resid,
     lambda = lambda,
-    # TODO: will need to add these later
-    # penalty = penalty,
-    # family = family,
+    penalty = penalty,
+    family = family,
     alpha = alpha,
     loss = loss,
     penalty.factor = penalty.factor,

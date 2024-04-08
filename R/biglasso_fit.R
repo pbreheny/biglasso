@@ -72,7 +72,7 @@
 #' \item{penalty.factor}{Same as in `biglasso()`.}
 #' \item{n}{The number of observations used in the model fitting.}
 #' \item{y}{The response vector used in the model fitting.}
-#' @author Yaohui Zeng, Chuyi Wang, Tabitha Peter, and Patrick Breheny 
+#' @author Tabitha Peter and Patrick Breheny 
 #'
 #' @examples
 #' 
@@ -190,8 +190,7 @@ biglasso_fit <- function(X,
     iter = iter,
     resid = resid,
     lambda = lambda,
-    # TODO: will need to add these later
-    # penalty = penalty,
+    penalty = penalty,
     # family = family,
     alpha = alpha,
     loss = loss,
