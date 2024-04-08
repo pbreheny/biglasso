@@ -30,6 +30,8 @@
 #'                        In particular, if X is standardized, one should pass
 #'                        `xtx = rep(1, p)`.  WARNING: If you supply an incorrect value of
 #'                        `xtx`, the solution will be incorrect. (length p vector)
+#' @param penalty         String specifying which penalty to use. Default is 'lasso', 
+#'                        Other options are 'SCAD' and 'MCP' (the latter are non-convex)              
 #' @param lambda          A single value for the lasso tuning parameter. 
 #' @param alpha           The elastic-net mixing parameter that controls the relative
 #'                        contribution from the lasso (l1) and the ridge (l2) penalty. 
@@ -37,6 +39,8 @@
 #'                        \deqn{ \alpha||\beta||_1 + (1-\alpha)/2||\beta||_2^2.}
 #'                        \code{alpha=1} is the lasso penalty, \code{alpha=0} the ridge penalty,
 #'                        \code{alpha} in between 0 and 1 is the elastic-net ("enet") penalty.
+#' @param gamma           Tuning parameter value for nonconvex penalty. Defaults are
+#'                        3.7 for `penalty = 'SCAD'` and 3 for `penalty = 'MCP'`
 #' @param ncores          The number of OpenMP threads used for parallel computing.
 #' @param max.iter        Maximum number of iterations.  Default is 1000.
 #' @param eps             Convergence threshold for inner coordinate descent. The
@@ -78,17 +82,24 @@
 #' X.bm <- as.big.matrix(X)
 #' init <- rep(0, ncol(X)) # using cold starts - will need more iterations
 #' r <- y - X%*%init
-#' fit_flex <- biglasso_fit(X = X.bm, y = y, r = r, init = init,
+#' fit <- biglasso_fit(X = X.bm, y = y, r = r, init = init,
 #'  xtx = rep(1, ncol(X)),lambda = 0.1, penalty.factor=c(0, rep(1, ncol(X)-1)),
 #'   max.iter = 10000)
+#'   
+#' fit <- biglasso_fit(X = X.bm, y = y, r = r, init = init, penalty = 'MCP',
+#'  xtx = rep(1, ncol(X)), lambda = 0.005, penalty.factor=c(0, rep(1, ncol(X)-1)),
+#'   max.iter = 10000)
+#'   
 #' @export biglasso_fit
 biglasso_fit <- function(X,
                          y,
                          r, 
                          init=rep(0, ncol(X)),
                          xtx, 
+                         penalty = "lasso",
                          lambda,
                          alpha = 1, 
+                         gamma, 
                          ncores = 1,
                          max.iter = 1000, 
                          eps=1e-5,
@@ -98,9 +109,8 @@ biglasso_fit <- function(X,
                          output.time = FALSE,
                          return.time = TRUE) {
 
-  # set defaults
-  penalty <- "lasso"
-  alpha <- 1
+  # set default gamma (will need this for cv.plmm)
+  if (missing(gamma)) gamma <- switch(penalty, SCAD = 3.7, 3)
   
   # check types
   if (!("big.matrix" %in% class(X)) || typeof(X) != "double") stop("X must be a double type big.matrix.")
@@ -144,8 +154,10 @@ biglasso_fit <- function(X,
                  r,
                  init, 
                  xtx,
+                 penalty, 
                  lambda,
                  alpha,
+                 gamma, 
                  eps,
                  as.integer(max.iter),
                  penalty.factor,

@@ -43,6 +43,10 @@ int sum(int *vec, int p);
 
 double lasso(double z, double l1, double l2, double v);
 
+double MCP(double z, double l1, double l2, double gamma, double v);
+
+double SCAD(double z, double l1, double l2, double gamma, double v);
+
 double gLoss(double *r, int n);
 
 // get X[i, j]: i-th row, j-th column element

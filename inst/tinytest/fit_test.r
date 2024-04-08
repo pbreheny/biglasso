@@ -1,6 +1,7 @@
 devtools::load_all('.')
 
 # colon data ----------------------------------------------------------------
+## test biglasso_fit -------------------------------------------------------
 data(colon)
 X <- colon$X |> ncvreg::std()
 # X <- cbind(1, X)
@@ -22,7 +23,15 @@ tinytest::expect_equal(fit1$beta, fit2$beta, tolerance = 0.01)
 # test residuals
 tinytest::expect_equal(fit1$resid, fit2$resid, tolerance = 0.01)
 
-# Prostate data -----------------------------------------------
+fit1b <- biglasso_fit(X.bm, y, lambda = 0.05,
+                              xtx=xtx, r = resid,
+                              penalty = "MCP")
+
+fit2b <- ncvfit(X = X, y = y, lambda = 0.05, xtx = xtx, r = resid, penalty = "MCP")
+
+tinytest::expect_equal(fit1b$resid, fit2b$resid, tolerance = 0.01)
+
+# Prostate data ------------------------------------------------------------
 data("Prostate") # part of ncvreg
 X <- Prostate$X |> ncvreg::std()
 X <- cbind(1, X)
@@ -32,19 +41,40 @@ y <- Prostate$y
 resid <- drop(y - X %*% init)
 X.bm <- as.big.matrix(X)
 
+## lasso ------------------------------------------------------------
 fit3 <- biglasso_fit(X = X.bm, y = y, xtx = xtx, r = resid, lambda = 0.1,
+                     penalty = "lasso",
                      max.iter = 10000)
 # fit3$beta
 
 fit4 <- ncvfit(X = X, y = y, init = init, r = resid, xtx = xtx,
                penalty = "lasso", lambda = 0.1)
 # fit4$beta
-
 tinytest::expect_equivalent(fit3$beta, fit4$beta, tolerance = 0.01)
 tinytest::expect_equivalent(fit3$resid, fit4$resid, tolerance = 0.01)
 
+## MCP ---------------------------------------------------------------------
+fit3b <- biglasso_fit(X = X.bm, y = y, xtx = xtx, r = resid, lambda = 0.1,
+                     penalty = "MCP",
+                     max.iter = 10000)
 
-## mini sim --------------------------------------------------
+fit4b <- ncvfit(X = X, y = y, init = init, r = resid, xtx = xtx,
+               penalty = "MCP", lambda = 0.1)
+
+tinytest::expect_equivalent(fit3b$resid, fit4b$resid, tolerance = 0.01)
+
+## SCAD --------------------------------------------------------------------
+
+fit3c <- biglasso_fit(X = X.bm, y = y, xtx = xtx, r = resid, lambda = 0.1,
+                      penalty = "SCAD",
+                      max.iter = 10000)
+
+fit4c <- ncvfit(X = X, y = y, init = init, r = resid, xtx = xtx,
+                penalty = "SCAD", lambda = 0.1)
+
+tinytest::expect_equivalent(fit3c$resid, fit4c$resid, tolerance = 0.01)
+
+# mini sim --------------------------------------------------
 if (interactive()){
   
   nsim <- 100

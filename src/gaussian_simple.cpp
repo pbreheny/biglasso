@@ -12,8 +12,10 @@ RcppExport SEXP cdfit_gaussian_simple(SEXP X_,
                                       SEXP r_,
                                       SEXP init_, 
                                       SEXP xtx_,
+                                      SEXP penalty_,
                                       SEXP lambda_,
                                       SEXP alpha_,
+                                      SEXP gamma_,
                                       SEXP eps_,
                                       SEXP max_iter_,
                                       SEXP multiplier_, 
@@ -29,7 +31,9 @@ RcppExport SEXP cdfit_gaussian_simple(SEXP X_,
   double *init = REAL(init_);
   double *xtx = REAL(xtx_);
   double alpha = REAL(alpha_)[0];
+  double gamma = REAL(gamma_)[0];
   double lambda = REAL(lambda_)[0];
+  const char *penalty = CHAR(STRING_ELT(penalty_, 0));
   int n = xMat->nrow(); // number of observations used for fitting model
   int p = xMat->ncol();
   double eps = REAL(eps_)[0];
@@ -102,7 +106,9 @@ RcppExport SEXP cdfit_gaussian_simple(SEXP X_,
           // update beta
           l1 = lambda * m[j] * alpha;
           l2 = lambda * m[j] * (1-alpha);
-          b[j] = lasso(z[j], l1, l2, xtx[j]); // TODO: add SCAD and MCP options
+          if (strcmp(penalty,"MCP")==0) b[j] = MCP(z[j], l1, l2, gamma, xtx[j]);
+          if (strcmp(penalty,"SCAD")==0) b[j] = SCAD(z[j], l1, l2, gamma, xtx[j]);
+          if (strcmp(penalty,"lasso")==0) b[j] = lasso(z[j], l1, l2, xtx[j]);
           
          // Rprintf("\nCurrent beta estimate is: %f", b[j]);
           // update residuals 
@@ -195,9 +201,11 @@ RcppExport SEXP cdfit_gaussian_simple_path(SEXP X_,
                                            SEXP r_,
                                            SEXP init_, 
                                            SEXP xtx_,
+                                           SEXP penalty_,
                                            SEXP lambda_,
                                            SEXP nlambda_, 
                                            SEXP alpha_,
+                                           SEXP gamma_,
                                            SEXP eps_,
                                            SEXP max_iter_,
                                            SEXP multiplier_, 
@@ -213,6 +221,7 @@ RcppExport SEXP cdfit_gaussian_simple_path(SEXP X_,
   double *init = REAL(init_);
   double *xtx = REAL(xtx_);
   double alpha = REAL(alpha_)[0];
+  double gamma = REAL(gamma_)[0];
   int L = INTEGER(nlambda_)[0];
   NumericVector lambda(L);
   int n = xMat->nrow(); // number of observations used for fitting model
@@ -220,6 +229,7 @@ RcppExport SEXP cdfit_gaussian_simple_path(SEXP X_,
   double eps = REAL(eps_)[0];
   int max_iter = INTEGER(max_iter_)[0];
   double *m = REAL(multiplier_);
+  const char *penalty = CHAR(STRING_ELT(penalty_, 0));
   NumericVector z(p); 
   
   
@@ -290,7 +300,10 @@ RcppExport SEXP cdfit_gaussian_simple_path(SEXP X_,
             l1 = lambda[l] * m[j] * alpha;
             l2 = lambda[l] * m[j] * (1-alpha);
             beta(j,l) = lasso(z[j], l1, l2, xtx[j]); // TODO: add SCAD and MCP options
-            
+            if (strcmp(penalty,"MCP")==0) beta(j,l) = MCP(z[j], l1, l2, gamma, xtx[j]);
+            if (strcmp(penalty,"SCAD")==0) beta(j,l) = SCAD(z[j], l1, l2, gamma, xtx[j]);
+            if (strcmp(penalty,"lasso")==0) beta(j,l) = lasso(z[j], l1, l2, xtx[j]);
+          
             // Rprintf("\nCurrent beta estimate is: %f", b[j]);
             // update residuals 
             shift = beta(j, l) - a[j];

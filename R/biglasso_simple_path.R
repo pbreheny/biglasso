@@ -30,6 +30,8 @@
 #'                        In particular, if X is standardized, one should pass
 #'                        `xtx = rep(1, p)`.  WARNING: If you supply an incorrect value of
 #'                        `xtx`, the solution will be incorrect. (length p vector)
+#' @param penalty         String specifying which penalty to use. Default is 'lasso', 
+#'                        Other options are 'SCAD' and 'MCP' (the latter are non-convex) 
 #' @param lambda          A vector of numeric values the lasso tuning parameter. 
 #' @param alpha           The elastic-net mixing parameter that controls the relative
 #'                        contribution from the lasso (l1) and the ridge (l2) penalty. 
@@ -78,10 +80,13 @@
 #' X.bm <- as.big.matrix(X)
 #' init <- rep(0, ncol(X)) # using cold starts - will need more iterations
 #' r <- y - X%*%init
-#' fit_path <- biglasso_simple_path(X = X.bm, y = y, r = r, init = init,
+#' fit_lasso <- biglasso_simple_path(X = X.bm, y = y, r = r, init = init,
 #'  xtx = rep(1, ncol(X)), lambda = c(0.5, 0.1, 0.05, 0.01, 0.001), penalty.factor=c(0, rep(1, ncol(X)-1)),
 #'   max.iter = 10000)   
 #'   
+#' fit_mcp <- biglasso_simple_path(X = X.bm, y = y, r = r, init = init,
+#'  xtx = rep(1, ncol(X)), lambda = c(0.5, 0.1, 0.05, 0.01, 0.001), penalty.factor=c(0, rep(1, ncol(X)-1)),
+#'   max.iter = 10000, penalty= 'MCP')  
 #'   
 #' @export biglasso_simple_path
 biglasso_simple_path <- function(X,
@@ -89,8 +94,10 @@ biglasso_simple_path <- function(X,
                                  r, 
                                  init=rep(0, ncol(X)),
                                  xtx, 
+                                 penalty = "lasso",
                                  lambda,
                                  alpha = 1, 
+                                 gamma, 
                                  ncores = 1,
                                  max.iter = 1000, 
                                  eps=1e-5,
@@ -100,9 +107,8 @@ biglasso_simple_path <- function(X,
                                  output.time = FALSE,
                                  return.time = TRUE) {
   
-  # set defaults
-  penalty <- "lasso"
-  alpha <- 1
+  # set default gamma (will need this for cv.plmm)
+  if (missing(gamma)) gamma <- switch(penalty, SCAD = 3.7, 3)
   
   # check types
   if (!("big.matrix" %in% class(X)) || typeof(X) != "double") stop("X must be a double type big.matrix.")
@@ -146,9 +152,11 @@ biglasso_simple_path <- function(X,
                  r,
                  init, 
                  xtx,
+                 penalty,
                  lambda,
                  length(lambda), 
                  alpha,
+                 gamma, 
                  eps,
                  as.integer(max.iter),
                  penalty.factor,
