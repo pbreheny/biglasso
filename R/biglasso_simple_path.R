@@ -8,14 +8,14 @@
 #' 
 #'  * does NOT add an intercept 
 #'  * does NOT standardize the design matrix
-#'  * does NOT set up a path for lambda (the lasso tuning parameter)
+#'  * does NOT set up a path for lambda (the lasso tuning parameter) automatically; 
+#'  This vector of values must be user-supplied.
 #'  
-#'  all of the above are among the best practices for data analysis. This function 
-#'  is made for use in situations where these steps have already been addressed prior 
+#'  This function is made for use in situations where these steps have already been addressed prior 
 #'  to model fitting.
 #'  
-#'  In other words, `biglasso_fit()` is to `biglasso()` what `ncvreg::ncvfit()`
-#'  is to `ncvreg::ncvreg()`.
+#'  In other words, `biglasso_simple_path()` is doing the same thing as `biglasso_fit()`,
+#'  with the additional option to fit models across a path of tuning parameter values.
 #'  
 #'  For now, this function only works with linear regression (`family = 'gaussian'`)
 #'  
@@ -31,8 +31,8 @@
 #'                        `xtx = rep(1, p)`.  WARNING: If you supply an incorrect value of
 #'                        `xtx`, the solution will be incorrect. (length p vector)
 #' @param penalty         String specifying which penalty to use. Default is 'lasso', 
-#'                        Other options are 'SCAD' and 'MCP' (the latter are non-convex)              
-#' @param lambda          A single value for the lasso tuning parameter. 
+#'                        Other options are 'SCAD' and 'MCP' (the latter are non-convex) 
+#' @param lambda          A vector of numeric values the lasso tuning parameter. 
 #' @param alpha           The elastic-net mixing parameter that controls the relative
 #'                        contribution from the lasso (l1) and the ridge (l2) penalty. 
 #'                        The penalty is defined as:
@@ -62,7 +62,7 @@
 #'                        fitting. Default is TRUE.
 #'                        
 #' @return An object with S3 class \code{"biglasso"} with following variables.
-#' \item{beta}{The vector of estimated coefficients} 
+#' \item{beta}{A sparse matrix where rows are estimates a given coefficient across all values of lambda} 
 #' \item{iter}{A vector of length \code{nlambda} containing the number of 
 #' iterations until convergence} 
 #' \item{resid}{Vector of residuals calculated from estimated coefficients.}
@@ -82,33 +82,35 @@
 #' X.bm <- as.big.matrix(X)
 #' init <- rep(0, ncol(X)) # using cold starts - will need more iterations
 #' r <- y - X%*%init
-#' fit <- biglasso_fit(X = X.bm, y = y, r = r, init = init,
-#'  xtx = rep(1, ncol(X)),lambda = 0.1, penalty.factor=c(0, rep(1, ncol(X)-1)),
-#'   max.iter = 10000)
+#' fit_lasso <- biglasso_simple_path(X = X.bm, y = y, r = r, init = init,
+#'  xtx = rep(1, ncol(X)), lambda = c(0.5, 0.1, 0.05, 0.01, 0.001), 
+#'  penalty.factor=c(0, rep(1, ncol(X)-1)),
+#'   max.iter = 10000)   
 #'   
-#' fit <- biglasso_fit(X = X.bm, y = y, r = r, init = init, penalty = 'MCP',
-#'  xtx = rep(1, ncol(X)), lambda = 0.005, penalty.factor=c(0, rep(1, ncol(X)-1)),
-#'   max.iter = 10000)
+#' fit_mcp <- biglasso_simple_path(X = X.bm, y = y, r = r, init = init,
+#'  xtx = rep(1, ncol(X)), lambda = c(0.5, 0.1, 0.05, 0.01, 0.001),
+#'   penalty.factor=c(0, rep(1, ncol(X)-1)),
+#'   max.iter = 10000, penalty= 'MCP')  
 #'   
-#' @export biglasso_fit
-biglasso_fit <- function(X,
-                         y,
-                         r, 
-                         init=rep(0, ncol(X)),
-                         xtx, 
-                         penalty = "lasso",
-                         lambda,
-                         alpha = 1, 
-                         gamma, 
-                         ncores = 1,
-                         max.iter = 1000, 
-                         eps=1e-5,
-                         dfmax = ncol(X)+1,
-                         penalty.factor = rep(1, ncol(X)),
-                         warn = TRUE,
-                         output.time = FALSE,
-                         return.time = TRUE) {
-
+#' @export biglasso_simple_path
+biglasso_simple_path <- function(X,
+                                 y,
+                                 r, 
+                                 init=rep(0, ncol(X)),
+                                 xtx, 
+                                 penalty = "lasso",
+                                 lambda,
+                                 alpha = 1, 
+                                 gamma, 
+                                 ncores = 1,
+                                 max.iter = 1000, 
+                                 eps=1e-5,
+                                 dfmax = ncol(X)+1,
+                                 penalty.factor = rep(1, ncol(X)),
+                                 warn = TRUE,
+                                 output.time = FALSE,
+                                 return.time = TRUE) {
+  
   # set default gamma (will need this for cv.plmm)
   if (missing(gamma)) gamma <- switch(penalty, SCAD = 3.7, 3)
   
@@ -146,16 +148,17 @@ biglasso_fit <- function(X,
   }
   
   Sys.setenv(R_C_BOUNDS_CHECK = "yes")
-
+  
   time <- system.time(
-    res <- .Call("cdfit_gaussian_simple",
+    res <- .Call("cdfit_gaussian_simple_path",
                  X@address,
                  y,
                  r,
                  init, 
                  xtx,
-                 penalty, 
+                 penalty,
                  lambda,
+                 length(lambda), 
                  alpha,
                  gamma, 
                  eps,
@@ -164,9 +167,9 @@ biglasso_fit <- function(X,
                  as.integer(ncores),
                  PACKAGE = 'biglasso')
     
-   
+    
   )
-
+  
   b <- res[[1]]
   loss <- res[[2]]
   iter <- res[[3]]
@@ -175,14 +178,14 @@ biglasso_fit <- function(X,
   if (output.time) {
     cat("\nEnd biglasso: ", format(Sys.time()), '\n')
   }
- 
-  if (warn & (iter==max.iter)) {
-    warning("Maximum number of iterations reached")
+  
+  if (warn & any(iter==max.iter)) {
+    warning("Maximum number of iterations reached at ", sum(iter == max.iter), " lambda value(s)")
   }
   
   
   ## Names
-  names(b) <- if (is.null(colnames(X))) paste("V", 1:p, sep="") else colnames(X)
+  rownames(b) <- if (is.null(colnames(X))) paste("V", 1:p, sep="") else colnames(X)
   
   ## Output
   return.val <- list(
@@ -191,7 +194,7 @@ biglasso_fit <- function(X,
     resid = resid,
     lambda = lambda,
     penalty = penalty,
-    # family = family,
+    family = family,
     alpha = alpha,
     loss = loss,
     penalty.factor = penalty.factor,
