@@ -1,3 +1,7 @@
+.Rproj.user
+inst/doc
+docs
+
 # History files
 .Rhistory
 .Rapp.history
@@ -10,12 +14,12 @@
 
 # Mac file
 .DS_Store
-.Rproj.user
-inst/doc
 
 # compiling files
 *.o
 *.so
-src/*.so
-src/*.o
 
+# vignette files
+vignettes/*.bin
+vignettes/*.csv
+vignettes/*.desc
