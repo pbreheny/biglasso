@@ -27,7 +27,6 @@ RcppExport SEXP cdfit_gaussian_simple(SEXP X_,
   // declarations: input
   XPtr<BigMatrix> xMat(X_);
   double *y = REAL(y_);
-  double *r = REAL(r_);// vector to hold residuals 
   double *init = REAL(init_);
   double *xtx = REAL(xtx_);
   double alpha = REAL(alpha_)[0];
@@ -41,6 +40,7 @@ RcppExport SEXP cdfit_gaussian_simple(SEXP X_,
   int max_iter = INTEGER(max_iter_)[0];
   double *m = REAL(multiplier_);
   NumericVector z(p); 
+  
   // int xmax_idx = 0;
   // int *xmax_ptr = &xmax_idx;
   
@@ -48,6 +48,8 @@ RcppExport SEXP cdfit_gaussian_simple(SEXP X_,
   // declarations: output 
   NumericVector b(p); // Initialize a NumericVector of size p vector to hold estimated coefficients from current iteration
   double *a =  R_Calloc(p, double);// will hold beta from previous iteration
+  NumericVector resid(n);
+  double *r = REAL(resid); // pointer for the COPY of residuals (will modify/update these...)
   double l1, l2, shift, cp;
   double max_update, update, thresh, loss; // for convergence check
   int i, j; //temp indices
@@ -62,7 +64,7 @@ RcppExport SEXP cdfit_gaussian_simple(SEXP X_,
   }
   
   for (i = 0; i < n; i++) {
-    r[i] = REAL(r_)[i];
+    r[i] = REAL(r_)[i]; // again, we're making a copy of the residuals for our function to edit
   }
   
  // Rprintf("\na[0]: %f\n", a[0]);
@@ -171,16 +173,12 @@ RcppExport SEXP cdfit_gaussian_simple(SEXP X_,
   
   //Rprintf("\nAbout to return the list");
   
+  // calculate loss
+  loss = gLoss(r, n);
+  
   // cleanup steps
   R_Free(a); 
   R_Free(ever_active);
-  loss = gLoss(r, n);
-  
-  // set up returnable vector for residuals (can't return 'r' - it's a pointer)
-  NumericVector resid(n);
-  for (int i=0; i<n; i++) {
-    resid[i] = r[i];
-  }
   
   // return list: 
   // - beta: numeric (p x 1) vector of estimated coefficients at the supplied lambda value

@@ -14,7 +14,7 @@
 #'  This function is made for use in situations where these steps have already been addressed prior 
 #'  to model fitting.
 #'  
-#'  In other words, `biglasso_simple_path()` is doing the same thing as `biglasso_fit()`,
+#'  In other words, `biglasso_path()` is doing the same thing as `biglasso_fit()`,
 #'  with the additional option to fit models across a path of tuning parameter values.
 #'  
 #'  For now, this function only works with linear regression (`family = 'gaussian'`)
@@ -92,8 +92,8 @@
 #'   penalty.factor=c(0, rep(1, ncol(X)-1)),
 #'   max.iter = 10000, penalty= 'MCP')  
 #'   
-#' @export biglasso_simple_path
-biglasso_simple_path <- function(X,
+#' @export biglasso_path
+biglasso_path <- function(X,
                                  y,
                                  r, 
                                  init=rep(0, ncol(X)),
