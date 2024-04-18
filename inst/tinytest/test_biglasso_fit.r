@@ -1,3 +1,5 @@
+# TKP
+# April 2024 
 devtools::load_all('.')
 library(ncvreg)
 library(glmnet)
@@ -9,8 +11,8 @@ X <- colon$X |> ncvreg::std()
 xtx <- apply(X, 2, crossprod)
 init <- rep(0, ncol(X)) # cold starts - use more iterations (default is 1000)
 y <- colon$y
-resid <- drop(y - X %*% init)
-X.bm <- as.big.matrix(X)
+og_resid <- resid <- drop(y - X %*% init)
+og_X <- X.bm <- as.big.matrix(X)
 
 ## lasso ---------------------------------------------------------------------
 fit1 <- biglasso_fit(X.bm, y, lambda = 0.05, xtx=xtx, r = resid,
@@ -35,6 +37,16 @@ fit2b <- ncvfit(X = X, y = y, lambda = 0.05, xtx = xtx, r = resid,
 
 tinytest::expect_equal(fit1b$resid, fit2b$resid, tolerance = 0.01)
 tinytest::expect_equal(fit1b$beta, fit2b$beta, tolerance = 0.01)
+
+# SCAD --------------------------------------------------------------
+fit1c <- biglasso_fit(X.bm, y, lambda = 0.05, xtx=xtx, r = resid,
+                      penalty = "SCAD", max.iter = 10000)
+
+fit2c <- ncvfit(X = X, y = y, lambda = 0.05, xtx = xtx, r = resid,
+                penalty = "SCAD", max.iter = 10000)
+
+tinytest::expect_equal(fit1c$resid, fit2c$resid, tolerance = 0.01)
+tinytest::expect_equal(fit1c$beta, fit2c$beta, tolerance = 0.01)
 
 # Prostate data ------------------------------------------------------------
 data("Prostate") # part of ncvreg

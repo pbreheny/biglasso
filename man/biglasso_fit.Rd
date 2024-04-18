@@ -135,5 +135,5 @@ fit <- biglasso_fit(X = X.bm, y = y, r = r, init = init, penalty = 'MCP',
   
 }
 \author{
-Yaohui Zeng, Chuyi Wang, Tabitha Peter, and Patrick Breheny
+Tabitha Peter and Patrick Breheny
 }
