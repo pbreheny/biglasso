@@ -76,6 +76,16 @@
 </h1></div>
 <p><code>biglasso</code> extends lasso and elastic-net linear and logistic regression models for ultrahigh-dimensional, multi-gigabyte data sets that cannot be loaded into memory. It utilizes memory-mapped files to store the massive data on the disk and only read those into memory whenever necessary during model fitting. Moreover, some advanced feature screening rules are proposed and implemented to accelerate the model fitting. <strong>As a result, this package is much more memory- and computation-efficient and highly scalable as compared to existing lasso-fitting packages such as <a href="https://CRAN.R-project.org/package=glmnet" class="external-link">glmnet</a> and <a href="https://CRAN.R-project.org/package=ncvreg" class="external-link">ncvreg</a></strong>. Bechmarking experiments using both simulated and real data sets show that <code>biglasso</code> is not only 1.5x to 4x times faster than existing packages, but also at least 2x more memory-efficient. More importantly, to the best of our knowledge, <code>biglasso</code> is the first R package that enables users to fit lasso models with data sets that are larger than available RAM, thus allowing for powerful big data analysis on an ordinary laptop.</p>
 <div class="section level2">
+<h2 id="installation">Installation:<a class="anchor" aria-label="anchor" href="#installation"></a>
+</h2>
+<p>To install the latest stable release version from CRAN:</p>
+<div class="sourceCode" id="cb1"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/utils/install.packages.html" class="external-link">install.packages</a></span><span class="op">(</span><span class="st">"biglasso"</span><span class="op">)</span></span></code></pre></div>
+<p>To install the latest development version from GitHub:</p>
+<div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="fu">remotes</span><span class="fu">::</span><span class="fu">install_github</span><span class="op">(</span><span class="st">"YaohuiZeng/biglasso"</span><span class="op">)</span></span></code></pre></div>
+</div>
+<div class="section level2">
 <h2 id="news">News:<a class="anchor" aria-label="anchor" href="#news"></a>
 </h2>
 <ul>
@@ -273,16 +283,6 @@
 </div>
 </div>
 <div class="section level2">
-<h2 id="installation">Installation:<a class="anchor" aria-label="anchor" href="#installation"></a>
-</h2>
-<p>To install the latest stable release version from CRAN:</p>
-<div class="sourceCode" id="cb1"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/utils/install.packages.html" class="external-link">install.packages</a></span><span class="op">(</span><span class="st">"biglasso"</span><span class="op">)</span></span></code></pre></div>
-<p>To install the latest development version from GitHub:</p>
-<div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="fu">remotes</span><span class="fu">::</span><span class="fu">install_github</span><span class="op">(</span><span class="st">"YaohuiZeng/biglasso"</span><span class="op">)</span></span></code></pre></div>
-</div>
-<div class="section level2">
 <h2 id="reference">Reference:<a class="anchor" aria-label="anchor" href="#reference"></a>
 </h2>
 <ul>
@@ -365,7 +365,7 @@
 
 <div class="pkgdown">
   <p></p>
-<p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.0.8.</p>
+<p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.0.9.</p>
 </div>
 
       </footer>
