@@ -82,34 +82,34 @@
 #' X.bm <- as.big.matrix(X)
 #' init <- rep(0, ncol(X)) # using cold starts - will need more iterations
 #' r <- y - X%*%init
-#' fit_lasso <- biglasso_simple_path(X = X.bm, y = y, r = r, init = init,
+#' fit_lasso <- biglasso_path(X = X.bm, y = y, r = r, init = init,
 #'  xtx = rep(1, ncol(X)), lambda = c(0.5, 0.1, 0.05, 0.01, 0.001), 
 #'  penalty.factor=c(0, rep(1, ncol(X)-1)),
 #'   max.iter = 10000)   
 #'   
-#' fit_mcp <- biglasso_simple_path(X = X.bm, y = y, r = r, init = init,
+#' fit_mcp <- biglasso_path(X = X.bm, y = y, r = r, init = init,
 #'  xtx = rep(1, ncol(X)), lambda = c(0.5, 0.1, 0.05, 0.01, 0.001),
 #'   penalty.factor=c(0, rep(1, ncol(X)-1)),
 #'   max.iter = 10000, penalty= 'MCP')  
 #'   
 #' @export biglasso_path
 biglasso_path <- function(X,
-                                 y,
-                                 r, 
-                                 init=rep(0, ncol(X)),
-                                 xtx, 
-                                 penalty = "lasso",
-                                 lambda,
-                                 alpha = 1, 
-                                 gamma, 
-                                 ncores = 1,
-                                 max.iter = 1000, 
-                                 eps=1e-5,
-                                 dfmax = ncol(X)+1,
-                                 penalty.factor = rep(1, ncol(X)),
-                                 warn = TRUE,
-                                 output.time = FALSE,
-                                 return.time = TRUE) {
+                          y,
+                          r, 
+                          init=rep(0, ncol(X)),
+                          xtx, 
+                          penalty = "lasso",
+                          lambda,
+                          alpha = 1, 
+                          gamma, 
+                          ncores = 1,
+                          max.iter = 1000, 
+                          eps=1e-5,
+                          dfmax = ncol(X)+1,
+                          penalty.factor = rep(1, ncol(X)),
+                          warn = TRUE,
+                          output.time = FALSE,
+                          return.time = TRUE) {
   
   # set default gamma (will need this for cv.plmm)
   if (missing(gamma)) gamma <- switch(penalty, SCAD = 3.7, 3)
