@@ -215,7 +215,6 @@ RcppExport SEXP cdfit_gaussian_simple_path(SEXP X_,
   // declarations: input
   XPtr<BigMatrix> xMat(X_);
   double *y = REAL(y_);
-  double *r = REAL(r_);// vector to hold residuals 
   double *init = REAL(init_);
   double *xtx = REAL(xtx_);
   double alpha = REAL(alpha_)[0];
@@ -235,6 +234,8 @@ RcppExport SEXP cdfit_gaussian_simple_path(SEXP X_,
   // declarations: output 
   arma::sp_mat beta = arma::sp_mat(p, L); // beta matrix to return (rows are features, columns are lambda values)
   double *a =  R_Calloc(p, double);// will hold beta from previous iteration
+  NumericVector resid(n); // create vector of residuals that will be returned 
+  double *r = REAL(resid); // pointer for the COPY of residuals (will modify/update these...)
   NumericVector loss(L);
   IntegerVector iter(L);
   double l1, l2, shift, cp;
@@ -248,12 +249,11 @@ RcppExport SEXP cdfit_gaussian_simple_path(SEXP X_,
   for (int j=0; j<p; j++) {
     a[j]=init[j];
     ever_active[j] = 1*(a[j] != 0);
-    // beta[j] = 0; // TODO: how (if at all) to translate this for the case where beta is a matrix? 
     z[j] = 0;
   }
   
   for (i = 0; i < n; i++) {
-    r[i] = REAL(r_)[i];
+    r[i] = REAL(r_)[i]; // again, note that we're making a copy of the residuals for our function to edit
   }
   
   // Rprintf("\na[0]: %f\n", a[0]);
@@ -359,15 +359,15 @@ RcppExport SEXP cdfit_gaussian_simple_path(SEXP X_,
       }
       if (violations==0) break;
     }
+    // calculate loss 
+    loss[l] = gLoss(r, n);
   }
   
   // Rprintf("\nAbout to return the list");
   
-  // set up returnable vector for residuals (can't return 'r' - it's a pointer)
-  NumericVector resid(n);
-  for (int i=0; i<n; i++) {
-    resid[i] = r[i];
-  }
+  // cleanup steps
+  R_Free(a); 
+  R_Free(ever_active);
   
   // return list: 
   // - beta: numeric (p x 1) vector of estimated coefficients at the supplied lambda value
