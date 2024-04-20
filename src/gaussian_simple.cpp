@@ -155,9 +155,10 @@ RcppExport SEXP cdfit_gaussian_simple(SEXP X_,
         l2 = lambda * m[j] * (1-alpha);
         // TODO: add SCAD and MCP to the below
      //   Rprintf("\nCalling lasso");
-        b[j] = lasso(z[j], l1, l2, xtx[j]);
-        
-        
+     if (strcmp(penalty,"MCP")==0) b[j] = MCP(z[j], l1, l2, gamma, xtx[j]);
+     if (strcmp(penalty,"SCAD")==0) b[j] = SCAD(z[j], l1, l2, gamma, xtx[j]);
+     if (strcmp(penalty,"lasso")==0) b[j] = lasso(z[j], l1, l2, xtx[j]);
+  
         // if something enters, update active set and residuals
         if (b[j] != 0) {
           ever_active[j] = 1;
@@ -343,8 +344,9 @@ RcppExport SEXP cdfit_gaussian_simple_path(SEXP X_,
           l2 = lambda[l] * m[j] * (1-alpha);
           // TODO: add SCAD and MCP to the below
           //   Rprintf("\nCalling lasso");
-          beta(j,l) = lasso(z[j], l1, l2, xtx[j]);
-          
+          if (strcmp(penalty,"MCP")==0) beta(j,l) = MCP(z[j], l1, l2, gamma, xtx[j]);
+          if (strcmp(penalty,"SCAD")==0) beta(j,l) = SCAD(z[j], l1, l2, gamma, xtx[j]);
+          if (strcmp(penalty,"lasso")==0) beta(j,l) = lasso(z[j], l1, l2, xtx[j]);
           
           // if something enters, update active set and residuals
           if (beta(j,l) != 0) {
