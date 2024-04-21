@@ -20,7 +20,7 @@ parameter lambda."><!-- mathjax --><script src="https://cdnjs.cloudflare.com/aja
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">biglasso</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="">1.5.2.1</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="">1.6.0</span>
       </span>
     </div>
 
@@ -35,7 +35,7 @@ parameter lambda."><!-- mathjax --><script src="https://cdnjs.cloudflare.com/aja
   <a href="../news/index.html">Changelog</a>
 </li>
       </ul><ul class="nav navbar-nav navbar-right"><li>
-  <a href="https://github.com/YaohuiZeng/biglasso/" class="external-link">
+  <a href="https://github.com/pbreheny/biglasso/" class="external-link">
     <span class="fab fa-github fa-lg"></span>
      
   </a>
@@ -50,7 +50,7 @@ parameter lambda."><!-- mathjax --><script src="https://cdnjs.cloudflare.com/aja
   <div class="col-md-9 contents">
     <div class="page-header">
     <h1>Fit lasso penalized regression path for big data</h1>
-    <small class="dont-index">Source: <a href="https://github.com/YaohuiZeng/biglasso/blob/HEAD/R/biglasso.R" class="external-link"><code>R/biglasso.R</code></a></small>
+    <small class="dont-index">Source: <a href="https://github.com/pbreheny/biglasso/blob/HEAD/R/biglasso.R" class="external-link"><code>R/biglasso.R</code></a></small>
     <div class="hidden name"><code>biglasso.Rd</code></div>
     </div>
 
@@ -93,7 +93,7 @@ parameter lambda.</p>
     <h2>Arguments</h2>
     <dl><dt>X</dt>
 <dd><p>The design matrix, without an intercept. It must be a
-double type <code><a href="https://rdrr.io/pkg/bigmemory/man/big.matrix.html" class="external-link">big.matrix</a></code> object. The function
+double type <code><a href="https://rdrr.io/pkg/bigmemory/man/big.matrix.html" class="external-link">bigmemory::big.matrix()</a></code> object. The function
 standardizes the data and includes an intercept internally by default during
 the model fitting.</p></dd>
 
@@ -102,9 +102,9 @@ the model fitting.</p></dd>
 <dd><p>The response vector for <code>family="gaussian"</code> or <code>family="binomial"</code>.
 For <code>family="cox"</code>, <code>y</code> should be a two-column matrix with columns
 'time' and 'status'. The latter is a binary variable, with '1' indicating death,
- and '0' indicating right censored. For <code>family="mgaussin"</code>, <code>y</code>
- should be a n*m matrix where n is the sample size and m is the number of
- responses.</p></dd>
+and '0' indicating right censored. For <code>family="mgaussin"</code>, <code>y</code>
+should be a n*m matrix where n is the sample size and m is the number of
+responses.</p></dd>
 
 
 <dt>row.idx</dt>
@@ -146,9 +146,9 @@ applicable to elastic-net-penalized logistic regression or cox regression;
 
 <dt>safe.thresh</dt>
 <dd><p>the threshold value between 0 and 1 that controls when to
-stop safe test. For example, 0.01 means to stop safe test at next lambda 
+stop safe test. For example, 0.01 means to stop safe test at next lambda
 iteration if the number of features rejected by safe test at current lambda
-iteration is not larger than 1% of the total number of features. So 1 means
+iteration is not larger than 1\<!-- % of the total number of features. So 1 means -->
 to always turn off safe test, whereas 0 (default) means to turn off safe test
 if the number of features rejected by safe test is 0 at current lambda.</p></dd>
 
@@ -252,11 +252,11 @@ Default is FALSE.</p></dd>
 representation. The number of rows is equal to the number of coefficients,
 whereas the number of columns is equal to <code>nlambda</code>. For <code>"mgaussian"</code>
 family with m responses, it is a list of m such matrices.</p></dd>
- 
+
 <dt>iter</dt>
-<dd><p>A vector of length <code>nlambda</code> containing the number of 
+<dd><p>A vector of length <code>nlambda</code> containing the number of
 iterations until convergence at each value of <code>lambda</code>.</p></dd>
- 
+
 <dt>lambda</dt>
 <dd><p>The sequence of regularization parameter values in the path.</p></dd>
 
@@ -268,9 +268,9 @@ iterations until convergence at each value of <code>lambda</code>.</p></dd>
 
 <dt>alpha</dt>
 <dd><p>Same as above.</p></dd>
- 
+
 <dt>loss</dt>
-<dd><p>A vector containing either the residual sum of squares 
+<dd><p>A vector containing either the residual sum of squares
 (for <code>"gaussian", "mgaussian"</code>) or negative log-likelihood
 (for <code>"binomial", "cox"</code>) of the fitted model at each value of <code>lambda</code>.</p></dd>
 
@@ -280,26 +280,26 @@ iterations until convergence at each value of <code>lambda</code>.</p></dd>
 <dt>n</dt>
 <dd><p>The number of observations used in the model fitting. It's equal to
 <code>length(row.idx)</code>.</p></dd>
- 
+
 <dt>center</dt>
 <dd><p>The sample mean vector of the variables, i.e., column mean of
 the sub-matrix of <code>X</code> used for model fitting.</p></dd>
- 
+
 <dt>scale</dt>
 <dd><p>The sample standard deviation of the variables, i.e., column
 standard deviation of the sub-matrix of <code>X</code> used for model fitting.</p></dd>
- 
+
 <dt>y</dt>
 <dd><p>The response vector used in the model fitting. Depending on
 <code>row.idx</code>, it could be a subset of the raw input of the response vector y.</p></dd>
 
 <dt>screen</dt>
 <dd><p>Same as above.</p></dd>
- 
+
 <dt>col.idx</dt>
 <dd><p>The indices of features that have 'scale' value greater than
 1e-6. Features with 'scale' less than 1e-6 are removed from model fitting.</p></dd>
- 
+
 <dt>rejections</dt>
 <dd><p>The number of features rejected at each value of <code>lambda</code>.</p></dd>
 
@@ -310,14 +310,14 @@ value of <code>lambda</code>.</p></dd>
 </dl></div>
     <div id="details">
     <h2>Details</h2>
-    <p>The objective function for linear regression or multiple responses linear regression 
+    <p>The objective function for linear regression or multiple responses linear regression
 (<code>family = "gaussian"</code> or <code>family = "mgaussian"</code>) is
 $$\frac{1}{2n}\textrm{RSS} + \lambda*\textrm{penalty},$$
 where for <code>family = "mgaussian"</code>), a group-lasso type penalty is applied.
 For logistic regression
 (<code>family = "binomial"</code>) it is $$-\frac{1}{n} loglike +
 \lambda*\textrm{penalty},$$, for cox regression,
- breslow approximation for ties is applied.</p>
+breslow approximation for ties is applied.</p>
 <p>Several advanced feature screening rules are implemented. For
 lasso-penalized linear regression, all the options of <code>screen</code> are
 applicable. Our proposal adaptive rule - <code>"Adaptive"</code> - achieves highest speedup
@@ -327,20 +327,16 @@ data sets. For cox regression and/or the elastic net penalty, only
     </div>
     <div id="see-also">
     <h2>See also</h2>
-    <div class="dont-index"><p><code><a href="biglasso-package.html">biglasso-package</a></code>, <code><a href="setupX.html">setupX</a></code>,
-<code><a href="cv.biglasso.html">cv.biglasso</a></code>, <code><a href="plot.biglasso.html">plot.biglasso</a></code>,
-<code><a href="https://rdrr.io/pkg/ncvreg/man/ncvreg.html" class="external-link">ncvreg</a></code></p></div>
+    <div class="dont-index"><p><a href="biglasso-package.html">biglasso-package</a>, <code><a href="setupX.html">setupX()</a></code>, <code><a href="cv.biglasso.html">cv.biglasso()</a></code>, <code><a href="plot.biglasso.html">plot.biglasso()</a></code>, <code><a href="https://rdrr.io/pkg/ncvreg/man/ncvreg.html" class="external-link">ncvreg::ncvreg()</a></code></p></div>
     </div>
     <div id="author">
     <h2>Author</h2>
     <p>Yaohui Zeng, Chuyi Wang and Patrick Breheny</p>
-<p>Maintainer: Yaohui Zeng &lt;yaohui.zeng@gmail.com&gt; and Chuyi Wang &lt;wwaa0208@gmail.com&gt;</p>
     </div>
 
     <div id="ref-examples">
     <h2>Examples</h2>
-    <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span></span></span>
-<span class="r-in"><span><span class="co">## Linear regression</span></span></span>
+    <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span><span class="co">## Linear regression</span></span></span>
 <span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/utils/data.html" class="external-link">data</a></span><span class="op">(</span><span class="va">colon</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="va">X</span> <span class="op">&lt;-</span> <span class="va">colon</span><span class="op">$</span><span class="va">X</span></span></span>
 <span class="r-in"><span><span class="va">y</span> <span class="op">&lt;-</span> <span class="va">colon</span><span class="op">$</span><span class="va">y</span></span></span>

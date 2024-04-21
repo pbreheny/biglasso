@@ -25,7 +25,7 @@ nodes of a cluster."><!-- mathjax --><script src="https://cdnjs.cloudflare.com/a
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">biglasso</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="">1.5.2.1</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="">1.6.0</span>
       </span>
     </div>
 
@@ -40,7 +40,7 @@ nodes of a cluster."><!-- mathjax --><script src="https://cdnjs.cloudflare.com/a
   <a href="../news/index.html">Changelog</a>
 </li>
       </ul><ul class="nav navbar-nav navbar-right"><li>
-  <a href="https://github.com/YaohuiZeng/biglasso/" class="external-link">
+  <a href="https://github.com/pbreheny/biglasso/" class="external-link">
     <span class="fab fa-github fa-lg"></span>
      
   </a>
@@ -55,7 +55,7 @@ nodes of a cluster."><!-- mathjax --><script src="https://cdnjs.cloudflare.com/a
   <div class="col-md-9 contents">
     <div class="page-header">
     <h1>Set up design matrix X by reading data from big data file</h1>
-    <small class="dont-index">Source: <a href="https://github.com/YaohuiZeng/biglasso/blob/HEAD/R/setupX.R" class="external-link"><code>R/setupX.R</code></a></small>
+    <small class="dont-index">Source: <a href="https://github.com/pbreheny/biglasso/blob/HEAD/R/setupX.R" class="external-link"><code>R/setupX.R</code></a></small>
     <div class="hidden name"><code>setupX.Rd</code></div>
     </div>
 
@@ -65,7 +65,7 @@ massive data file stored on disk that cannot be fullly loaded into memory.
 The data file must be a well-formated ASCII-file, and contains only one
 single type. Current version only supports <code>double</code> type. Other
 restrictions about the data file are described in
-<code><a href="biglasso-package.html">biglasso-package</a></code>. This function reads the massive data, and
+<a href="biglasso-package.html">biglasso-package</a>. This function reads the massive data, and
 creates a <code>big.matrix</code> object. By default, the resulting
 <code>big.matrix</code> is file-backed, and can be shared across processors or
 nodes of a cluster.</p>
@@ -118,7 +118,7 @@ file-backed <code>big.matrix</code>. By default, its name is the same as
 
 <dt>...</dt>
 <dd><p>Additional arguments that can be passed into function
-<code><a href="https://rdrr.io/pkg/bigmemory/man/write.big.matrix.html" class="external-link">read.big.matrix</a></code>.</p></dd>
+<code><a href="https://rdrr.io/pkg/bigmemory/man/write.big.matrix.html" class="external-link">bigmemory::read.big.matrix()</a></code>.</p></dd>
 
 </dl></div>
     <div id="value">
@@ -126,8 +126,8 @@ file-backed <code>big.matrix</code>. By default, its name is the same as
     
 
 <p>A <code>big.matrix</code> object corresponding to a file-backed
-<code>big.matrix</code>. It's ready to be used as the design matrix <code>X</code> in
-<code><a href="biglasso.html">biglasso</a></code> and <code><a href="cv.biglasso.html">cv.biglasso</a></code>.</p>
+<code><a href="https://rdrr.io/pkg/bigmemory/man/big.matrix.html" class="external-link">bigmemory::big.matrix()</a></code>. It's ready to be used as the design matrix <code>X</code> in
+<code><a href="biglasso.html">biglasso()</a></code> and <code><a href="cv.biglasso.html">cv.biglasso()</a></code>.</p>
     </div>
     <div id="details">
     <h2>Details</h2>
@@ -135,26 +135,22 @@ file-backed <code>big.matrix</code>. By default, its name is the same as
 <code>big.matrix</code> object with two backing files (.bin, .desc) created in
 current working directory. Once set up, the data can be "loaded" into any
 (new) R session by calling <code>attach.big.matrix(discriptorfile)</code>.</p>
-<p>This function is a simple wrapper of
-<code><a href="https://rdrr.io/pkg/bigmemory/man/write.big.matrix.html" class="external-link">read.big.matrix</a></code>. See
-<code><a href="https://rdrr.io/pkg/bigmemory/man/write.big.matrix.html" class="external-link">read.big.matrix</a></code> and the package
+<p>This function is a simple wrapper of <code><a href="https://rdrr.io/pkg/bigmemory/man/write.big.matrix.html" class="external-link">bigmemory::read.big.matrix()</a></code>. See
 <a href="https://CRAN.R-project.org/package=bigmemory" class="external-link">bigmemory</a> for more
 details.</p>
     </div>
     <div id="see-also">
     <h2>See also</h2>
-    <div class="dont-index"><p><code><a href="biglasso.html">biglasso</a></code>, <code>cv.ncvreg</code></p></div>
+    <div class="dont-index"><p><code><a href="biglasso.html">biglasso()</a></code>, <code>cv.ncvreg()</code>, <a href="biglasso-package.html">biglasso-package</a></p></div>
     </div>
     <div id="author">
     <h2>Author</h2>
     <p>Yaohui Zeng and Patrick Breheny</p>
-<p>Maintainer: Yaohui Zeng &lt;yaohui.zeng@gmail.com&gt;</p>
     </div>
 
     <div id="ref-examples">
     <h2>Examples</h2>
     <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span><span class="co">## see the example in "biglasso-package"</span></span></span>
-<span class="r-in"><span></span></span>
 <span class="r-in"></span>
 </code></pre></div>
     </div>

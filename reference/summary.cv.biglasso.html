@@ -17,7 +17,7 @@
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">biglasso</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="">1.5.2.1</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="">1.6.0</span>
       </span>
     </div>
 
@@ -32,7 +32,7 @@
   <a href="../news/index.html">Changelog</a>
 </li>
       </ul><ul class="nav navbar-nav navbar-right"><li>
-  <a href="https://github.com/YaohuiZeng/biglasso/" class="external-link">
+  <a href="https://github.com/pbreheny/biglasso/" class="external-link">
     <span class="fab fa-github fa-lg"></span>
      
   </a>
@@ -47,7 +47,7 @@
   <div class="col-md-9 contents">
     <div class="page-header">
     <h1>Summarizing inferences based on cross-validation</h1>
-    <small class="dont-index">Source: <a href="https://github.com/YaohuiZeng/biglasso/blob/HEAD/R/summary.cv.biglasso.R" class="external-link"><code>R/summary.cv.biglasso.R</code></a></small>
+    <small class="dont-index">Source: <a href="https://github.com/pbreheny/biglasso/blob/HEAD/R/summary-cv-biglasso.R" class="external-link"><code>R/summary-cv-biglasso.R</code></a></small>
     <div class="hidden name"><code>summary.cv.biglasso.Rd</code></div>
     </div>
 
@@ -88,52 +88,49 @@ non-integer printed values.</p></dd>
     
 
 <p><code>summary.cv.biglasso</code> produces an object with S3 class
-<code>"summary.cv.biglasso"</code>.  The class has its own print method and contains
+<code>"summary.cv.biglasso"</code>. The class has its own print method and contains
 the following list elements:</p>
 <dl><dt>penalty</dt>
-<dd><p>The penalty used by
-<code>biglasso</code>.</p></dd>
- <dt>model</dt>
-<dd><p>Either <code>"linear"</code> or <code>"logistic"</code>,
-depending on the <code>family</code> option in <code>biglasso</code>.</p></dd>
- <dt>n</dt>
-<dd><p>Number
-of observations</p></dd>
- <dt>p</dt>
-<dd><p>Number of regression coefficients (not including
-the intercept).</p></dd>
- <dt>min</dt>
-<dd><p>The index of <code>lambda</code> with the smallest
-cross-validation error.</p></dd>
- <dt>lambda</dt>
-<dd><p>The sequence of <code>lambda</code> values
-used by <code>cv.biglasso</code>.</p></dd>
- <dt>cve</dt>
+<dd><p>The penalty used by <code>biglasso</code>.</p></dd>
+
+<dt>model</dt>
+<dd><p>Either <code>"linear"</code> or <code>"logistic"</code>, depending on the <code>family</code> option in <code>biglasso</code>.</p></dd>
+
+<dt>n</dt>
+<dd><p>Number of observations</p></dd>
+
+<dt>p</dt>
+<dd><p>Number of regression coefficients (not including the intercept).</p></dd>
+
+<dt>min</dt>
+<dd><p>The index of <code>lambda</code> with the smallest cross-validation error.</p></dd>
+
+<dt>lambda</dt>
+<dd><p>The sequence of <code>lambda</code> values used by <code>cv.biglasso</code>.</p></dd>
+
+<dt>cve</dt>
 <dd><p>Cross-validation error (deviance).</p></dd>
 
 <dt>r.squared</dt>
-<dd><p>Proportion of variance explained by the model, as estimated
-by cross-validation.</p></dd>
- <dt>snr</dt>
-<dd><p>Signal to noise ratio, as estimated by
-cross-validation.</p></dd>
- <dt>sigma</dt>
-<dd><p>For linear regression models, the scale
-parameter estimate.</p></dd>
- <dt>pe</dt>
-<dd><p>For logistic regression models, the
-prediction error (misclassification error).</p></dd>
+<dd><p>Proportion of variance explained by the model, as estimated by cross-validation.</p></dd>
+
+<dt>snr</dt>
+<dd><p>Signal to noise ratio, as estimated by cross-validation.</p></dd>
+
+<dt>sigma</dt>
+<dd><p>For linear regression models, the scale parameter estimate.</p></dd>
+
+<dt>pe</dt>
+<dd><p>For logistic regression models, the prediction error (misclassification error).</p></dd>
 
 </dl></div>
     <div id="see-also">
     <h2>See also</h2>
-    <div class="dont-index"><p><code><a href="biglasso.html">biglasso</a></code>, <code><a href="cv.biglasso.html">cv.biglasso</a></code>,
-<code><a href="plot.cv.biglasso.html">plot.cv.biglasso</a></code></p></div>
+    <div class="dont-index"><p><code><a href="biglasso.html">biglasso()</a></code>, <code><a href="cv.biglasso.html">cv.biglasso()</a></code>, <code><a href="plot.cv.biglasso.html">plot.cv.biglasso()</a></code>, <a href="biglasso-package.html">biglasso-package</a></p></div>
     </div>
     <div id="author">
     <h2>Author</h2>
     <p>Yaohui Zeng and Patrick Breheny</p>
-<p>Maintainer: Yaohui Zeng &lt;yaohui.zeng@gmail.com&gt;</p>
     </div>
 
     <div id="ref-examples">

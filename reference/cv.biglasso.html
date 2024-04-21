@@ -18,7 +18,7 @@ of values for the regularization parameter lambda."><!-- mathjax --><script src=
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">biglasso</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="">1.5.2.1</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="">1.6.0</span>
       </span>
     </div>
 
@@ -33,7 +33,7 @@ of values for the regularization parameter lambda."><!-- mathjax --><script src=
   <a href="../news/index.html">Changelog</a>
 </li>
       </ul><ul class="nav navbar-nav navbar-right"><li>
-  <a href="https://github.com/YaohuiZeng/biglasso/" class="external-link">
+  <a href="https://github.com/pbreheny/biglasso/" class="external-link">
     <span class="fab fa-github fa-lg"></span>
      
   </a>
@@ -48,7 +48,7 @@ of values for the regularization parameter lambda."><!-- mathjax --><script src=
   <div class="col-md-9 contents">
     <div class="page-header">
     <h1>Cross-validation for biglasso</h1>
-    <small class="dont-index">Source: <a href="https://github.com/YaohuiZeng/biglasso/blob/HEAD/R/cv.biglasso.R" class="external-link"><code>R/cv.biglasso.R</code></a></small>
+    <small class="dont-index">Source: <a href="https://github.com/pbreheny/biglasso/blob/HEAD/R/cv-biglasso.R" class="external-link"><code>R/cv-biglasso.R</code></a></small>
     <div class="hidden name"><code>cv.biglasso.Rd</code></div>
     </div>
 
@@ -77,8 +77,7 @@ of values for the regularization parameter lambda.</p>
     <div id="arguments">
     <h2>Arguments</h2>
     <dl><dt>X</dt>
-<dd><p>The design matrix, without an intercept, as in
-<code><a href="biglasso.html">biglasso</a></code>.</p></dd>
+<dd><p>The design matrix, without an intercept, as in <code><a href="biglasso.html">biglasso()</a></code>.</p></dd>
 
 
 <dt>y</dt>
@@ -110,9 +109,9 @@ characteristic curve (ROC).
 <dd><p>The number of cores to use for parallel execution of the
 cross-validation folds, run on a cluster created by the <code>parallel</code>
 package. (This is also supplied to the <code>ncores</code> argument in
-<code><a href="biglasso.html">biglasso</a></code>, which is the number of OpenMP threads, but only for
-the first call of <code><a href="biglasso.html">biglasso</a></code> that is  run on the entire data. The
-individual calls of <code><a href="biglasso.html">biglasso</a></code> for the CV folds are run without
+<code><a href="biglasso.html">biglasso()</a></code>, which is the number of OpenMP threads, but only for
+the first call of <code><a href="biglasso.html">biglasso()</a></code> that is  run on the entire data. The
+individual calls of <code><a href="biglasso.html">biglasso()</a></code> for the CV folds are run without
 the <code>ncores</code> argument.)</p></dd>
 
 
@@ -150,18 +149,16 @@ when <code>eval.metric</code> is 'auc'.</p></dd>
     
 
 <p>An object with S3 class <code>"cv.biglasso"</code> which inherits from
-class <code>"cv.ncvreg"</code>.  The following variables are contained in the
-class (adopted from <code><a href="https://rdrr.io/pkg/ncvreg/man/cv.ncvreg.html" class="external-link">cv.ncvreg</a></code>).</p>
+class <code>"cv.ncvreg"</code>. The following variables are contained in the
+class (adopted from <code><a href="https://rdrr.io/pkg/ncvreg/man/cv.ncvreg.html" class="external-link">ncvreg::cv.ncvreg()</a></code>).</p>
 <dl><dt>cve</dt>
-<dd><p>The error
-for each value of <code>lambda</code>, averaged across the cross-validation
-folds.</p></dd>
- <dt>cvse</dt>
-<dd><p>The estimated standard error associated with each value
-of for <code>cve</code>.</p></dd>
- <dt>lambda</dt>
-<dd><p>The sequence of regularization parameter
-values along which the cross-validation error was calculated.</p></dd>
+<dd><p>The error for each value of <code>lambda</code>, averaged across the cross-validation folds.</p></dd>
+
+<dt>cvse</dt>
+<dd><p>The estimated standard error associated with each value of for <code>cve</code>.</p></dd>
+
+<dt>lambda</dt>
+<dd><p>The sequence of regularization parameter values along which the cross-validation error was calculated.</p></dd>
 
 <dt>fit</dt>
 <dd><p>The fitted <code>biglasso</code> object for the whole data.</p></dd>
@@ -170,18 +167,16 @@ values along which the cross-validation error was calculated.</p></dd>
 <dd><p>The index of <code>lambda</code> corresponding to <code>lambda.min</code>.</p></dd>
 
 <dt>lambda.min</dt>
-<dd><p>The value of <code>lambda</code> with the minimum
-cross-validation error.</p></dd>
- <dt>lambda.1se</dt>
-<dd><p>The largest value of <code>lambda</code>
-for which the cross-validation error is at most one standard error larger
-than the minimum cross-validation error.</p></dd>
- <dt>null.dev</dt>
-<dd><p>The deviance for
-the intercept-only model.</p></dd>
- <dt>pe</dt>
-<dd><p>If <code>family="binomial"</code>, the
-cross-validation prediction error for each value of <code>lambda</code>.</p></dd>
+<dd><p>The value of <code>lambda</code> with the minimum cross-validation error.</p></dd>
+
+<dt>lambda.1se</dt>
+<dd><p>The largest value of <code>lambda</code> for which the cross-validation error is at most one standard error larger than the minimum cross-validation error.</p></dd>
+
+<dt>null.dev</dt>
+<dd><p>The deviance for the intercept-only model.</p></dd>
+
+<dt>pe</dt>
+<dd><p>If <code>family="binomial"</code>, the cross-validation prediction error for each value of <code>lambda</code>.</p></dd>
 
 <dt>cv.ind</dt>
 <dd><p>Same as above.</p></dd>
@@ -190,22 +185,20 @@ cross-validation prediction error for each value of <code>lambda</code>.</p></dd
     <div id="details">
     <h2>Details</h2>
     <p>The function calls <code>biglasso</code> <code>nfolds</code> times, each time leaving
-out 1/<code>nfolds</code> of the data.  The cross-validation error is based on the
+out 1/<code>nfolds</code> of the data. The cross-validation error is based on the
 residual sum of squares when <code>family="gaussian"</code> and the binomial
-deviance when <code>family="binomial"</code>.<br><br> The S3 class object
-<code>cv.biglasso</code> inherits class <code><a href="https://rdrr.io/pkg/ncvreg/man/cv.ncvreg.html" class="external-link">cv.ncvreg</a></code>.  So S3
+deviance when <code>family="binomial"</code>.</p>
+<p>The S3 class object <code>cv.biglasso</code> inherits class <code><a href="https://rdrr.io/pkg/ncvreg/man/cv.ncvreg.html" class="external-link">ncvreg::cv.ncvreg()</a></code>. So S3
 functions such as <code>"summary", "plot"</code> can be directly applied to the
 <code>cv.biglasso</code> object.</p>
     </div>
     <div id="see-also">
     <h2>See also</h2>
-    <div class="dont-index"><p><code><a href="biglasso.html">biglasso</a></code>, <code><a href="plot.cv.biglasso.html">plot.cv.biglasso</a></code>,
-<code><a href="summary.cv.biglasso.html">summary.cv.biglasso</a></code>, <code><a href="setupX.html">setupX</a></code></p></div>
+    <div class="dont-index"><p><code><a href="biglasso.html">biglasso()</a></code>, <code><a href="plot.cv.biglasso.html">plot.cv.biglasso()</a></code>, <code><a href="summary.cv.biglasso.html">summary.cv.biglasso()</a></code>, <code><a href="setupX.html">setupX()</a></code></p></div>
     </div>
     <div id="author">
     <h2>Author</h2>
     <p>Yaohui Zeng and Patrick Breheny</p>
-<p>Maintainer: Yaohui Zeng &lt;yaohui.zeng@gmail.com&gt;</p>
     </div>
 
     <div id="ref-examples">
@@ -223,7 +216,6 @@ functions such as <code>"summary", "plot"</code> can be directly applied to the
 <span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot</a></span><span class="op">(</span><span class="va">cvfit</span>, type <span class="op">=</span> <span class="st">'all'</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/base/summary.html" class="external-link">summary</a></span><span class="op">(</span><span class="va">cvfit</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="op">}</span></span></span>
-<span class="r-in"><span></span></span>
 </code></pre></div>
     </div>
   </div>

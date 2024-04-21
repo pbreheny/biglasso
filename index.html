@@ -33,7 +33,7 @@
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="index.html">biglasso</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="">1.5.2.1</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="">1.6.0</span>
       </span>
     </div>
 
@@ -51,7 +51,7 @@
       </ul>
 <ul class="nav navbar-nav navbar-right">
 <li>
-  <a href="https://github.com/YaohuiZeng/biglasso/" class="external-link">
+  <a href="https://github.com/pbreheny/biglasso/" class="external-link">
     <span class="fab fa-github fa-lg"></span>
      
   </a>
@@ -72,40 +72,40 @@
 
 <div class="section level1">
 <div class="page-header"><h1 id="biglasso-extend-lasso-model-fitting-to-big-data-in-r">
-<a href="https://yaohuizeng.github.io/biglasso/index.html" class="external-link">biglasso: Extend Lasso Model Fitting to Big Data in R</a><a class="anchor" aria-label="anchor" href="#biglasso-extend-lasso-model-fitting-to-big-data-in-r"></a>
+<a href="https://pbreheny.github.io/biglasso/index.html" class="external-link">biglasso: Extend Lasso Model Fitting to Big Data in R</a><a class="anchor" aria-label="anchor" href="#biglasso-extend-lasso-model-fitting-to-big-data-in-r"></a>
 </h1></div>
 <p><code>biglasso</code> extends lasso and elastic-net linear and logistic regression models for ultrahigh-dimensional, multi-gigabyte data sets that cannot be loaded into memory. It utilizes memory-mapped files to store the massive data on the disk and only read those into memory whenever necessary during model fitting. Moreover, some advanced feature screening rules are proposed and implemented to accelerate the model fitting. <strong>As a result, this package is much more memory- and computation-efficient and highly scalable as compared to existing lasso-fitting packages such as <a href="https://CRAN.R-project.org/package=glmnet" class="external-link">glmnet</a> and <a href="https://CRAN.R-project.org/package=ncvreg" class="external-link">ncvreg</a></strong>. Bechmarking experiments using both simulated and real data sets show that <code>biglasso</code> is not only 1.5x to 4x times faster than existing packages, but also at least 2x more memory-efficient. More importantly, to the best of our knowledge, <code>biglasso</code> is the first R package that enables users to fit lasso models with data sets that are larger than available RAM, thus allowing for powerful big data analysis on an ordinary laptop.</p>
 <div class="section level2">
-<h2 id="installation">Installation:<a class="anchor" aria-label="anchor" href="#installation"></a>
+<h2 id="installation">Installation<a class="anchor" aria-label="anchor" href="#installation"></a>
 </h2>
 <p>To install the latest stable release version from CRAN:</p>
 <div class="sourceCode" id="cb1"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/utils/install.packages.html" class="external-link">install.packages</a></span><span class="op">(</span><span class="st">"biglasso"</span><span class="op">)</span></span></code></pre></div>
 <p>To install the latest development version from GitHub:</p>
 <div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="fu">remotes</span><span class="fu">::</span><span class="fu">install_github</span><span class="op">(</span><span class="st">"YaohuiZeng/biglasso"</span><span class="op">)</span></span></code></pre></div>
+<code class="sourceCode R"><span><span class="fu">remotes</span><span class="fu">::</span><span class="fu">install_github</span><span class="op">(</span><span class="st">"pbreheny/biglasso"</span><span class="op">)</span></span></code></pre></div>
 </div>
 <div class="section level2">
-<h2 id="news">News:<a class="anchor" aria-label="anchor" href="#news"></a>
+<h2 id="news">News<a class="anchor" aria-label="anchor" href="#news"></a>
 </h2>
 <ul>
-<li>See NEWS.md for latest news.</li>
-<li>This package was ranked top 3 for <a href="http://stat-computing.org/awards/jmc/" class="external-link">2017 ASA Chambers Statistical Software Award</a>.</li>
-<li>The technical paper of this package was selected as a Winner of <a href="http://stat-computing.org/awards/student/winners.html" class="external-link">2017 ASA Student Paper Competiton from Section on Statistical Computing</a>.</li>
+<li>See <a href="https://pbreheny.github.io/biglasso/news/index.html" class="external-link">NEWS.md</a> for latest news.</li>
+<li>The technical paper of this package was selected as a Winner of <a href="https://community.amstat.org/jointscsg-section/awards/student-paper-competition" class="external-link">2017 ASA Student Paper Competiton from Section on Statistical Computing</a>.</li>
+<li>This package finished in the top 3 for <a href="https://community.amstat.org/jointscsg-section/awards/john-m-chambers" class="external-link">2017 ASA Chambers Statistical Software Award</a>.</li>
 </ul>
 </div>
 <div class="section level2">
-<h2 id="documentation">Documentation:<a class="anchor" aria-label="anchor" href="#documentation"></a>
+<h2 id="documentation">Documentation<a class="anchor" aria-label="anchor" href="#documentation"></a>
 </h2>
 <ul>
-<li>Here are the <a href="https://CRAN.R-project.org/package=biglasso/biglasso.pdf" class="external-link">R Reference manual</a> and <a href="https://yaohuizeng.github.io/biglasso/index.html" class="external-link">Package Website</a>
+<li>Here are the <a href="https://CRAN.R-project.org/package=biglasso/biglasso.pdf" class="external-link">R Reference manual</a> and <a href="https://pbreheny.github.io/biglasso/index.html" class="external-link">Package Website</a>
 </li>
 <li>Here are the technical papers of the package: i) <a href="https://arxiv.org/abs/1701.05936" class="external-link">The software paper</a>; and ii) <a href="https://arxiv.org/abs/1704.08742" class="external-link">the paper of hybrid safe-strong rules</a>
 </li>
 </ul>
 </div>
 <div class="section level2">
-<h2 id="features">Features:<a class="anchor" aria-label="anchor" href="#features"></a>
+<h2 id="features">Features<a class="anchor" aria-label="anchor" href="#features"></a>
 </h2>
 <ol style="list-style-type: decimal">
 <li>It utilizes memory-mapped files to store the massive data on the disk, only loading data into memory when necessary during model fitting. Consequently, it’s able to seamlessly handle out-of-core computation.</li>
@@ -141,7 +141,7 @@
 ![Alt text](/vignettes/2020-12-18_vary_p_pkgs.png)
 ![Alt text](/vignettes/2020-12-18_vary_n_pkgs.png)
 -->
-<p><img src="https://raw.githubusercontent.com/YaohuiZeng/biglasso/master/vignettes/2020-12-18_vary_p_pkgs.png" width="400" height="300"><img src="https://raw.githubusercontent.com/YaohuiZeng/biglasso/master/vignettes/2020-12-18_vary_n_pkgs.png" width="400" height="300"></p>
+<p><img src="https://raw.githubusercontent.com/pbreheny/biglasso/master/vignettes/2020-12-18_vary_p_pkgs.png" width="400" height="300"><img src="https://raw.githubusercontent.com/pbreheny/biglasso/master/vignettes/2020-12-18_vary_n_pkgs.png" width="400" height="300"></p>
 <p>In all the settings, <code>biglasso</code> (1 core) is uniformly faster than <code>picasso</code>, <code>glmnet</code> and <code>ncvreg</code>. When the data gets bigger, <code>biglasso</code> achieves 6-9x speed-up compared to other packages. Moreover, the computing time of <code>biglasso</code> can be further reduced by half via parallel-computation of multiple cores.</p>
 </div>
 <div class="section level4">
@@ -182,7 +182,7 @@
 <div class="section level3">
 <h3 id="real-data">Real data:<a class="anchor" aria-label="anchor" href="#real-data"></a>
 </h3>
-<p>The performance of the packages are also tested using diverse real data sets: * <a href="http://myweb.uiowa.edu/pbreheny/data/bcTCGA.html" class="external-link">Breast cancer gene expression data</a> (GENE); * <a href="http://yann.lecun.com/exdb/mnist/" class="external-link">MNIST handwritten image data</a> (MNIST); * <a href="https://arxiv.org/abs/1607.05636" class="external-link">Cardiac fibrosis genome-wide association study data</a> (GWAS); * <a href="https://archive.ics.uci.edu/ml/datasets/Bag+of+Words" class="external-link">Subset of New York Times bag-of-words data</a> (NYT).</p>
+<p>The performance of the packages are also tested using diverse real data sets: * <a href="https://iowabiostat.github.io/data-sets/brca1/brca1.html" class="external-link">Breast cancer gene expression data</a> (GENE); * <a href="https://www.kaggle.com/datasets/hojjatk/mnist-dataset/data" class="external-link">MNIST handwritten image data</a> (MNIST); * <a href="https://arxiv.org/abs/1607.05636" class="external-link">Cardiac fibrosis genome-wide association study data</a> (GWAS); * <a href="https://archive.ics.uci.edu/ml/datasets/Bag+of+Words" class="external-link">Subset of New York Times bag-of-words data</a> (NYT).</p>
 <p>The following table summarizes the mean (SE) computing time (in seconds) of solving the lasso along the entire path of 100 <code>lambda</code> values equally spaced on the log scale of <code>lambda / lambda_max</code> from 0.1 to 1 over 20 replications.</p>
 <center>
 <table class="table">
@@ -286,10 +286,11 @@
 <h2 id="reference">Reference:<a class="anchor" aria-label="anchor" href="#reference"></a>
 </h2>
 <ul>
-<li>Zeng Y and Breheny P (2021). The biglasso Package: A Memory- and Computation-Efficient Solver for Lasso Model Fitting with Big Data in R. R Journal, 12: 6-19. URL <a href="https://doi.org/10.32614/RJ-2021-001" class="external-link">https://doi.org/10.32614/RJ-2021-001</a>.</li>
-<li>Zeng Y, Yang T, and Breheny P (2021). Hybrid safe-strong rules for efficient optimization in lasso-type problems. Computational Statistics and Data Analysis, 153: 107063. URL <a href="http://www.sciencedirect.com/science/article/pii/S0167947320301547" class="external-link">http://www.sciencedirect.com/science/article/pii/S0167947320301547</a>
+<li>Zeng Y and Breheny P (2021). The biglasso Package: A Memory- and Computation-Efficient Solver for Lasso Model Fitting with Big Data in R. R Journal, 12: 6-19. URL <a href="https://doi.org/10.32614/RJ-2021-001" class="external-link uri">https://doi.org/10.32614/RJ-2021-001</a>
 </li>
-<li>Wang C and Breheny P (2022). Adaptive hybrid screening for efficient lasso optimization. Journal of Statistical Computation and Simulation, 92: 2233–2256. URL <a href="https://doi.org/10.1080/00949655.2021.2025376" class="external-link">https://doi.org/10.1080/00949655.2021.2025376</a>
+<li>Zeng Y, Yang T, and Breheny P (2021). Hybrid safe-strong rules for efficient optimization in lasso-type problems. Computational Statistics and Data Analysis, 153: 107063. URL <a href="https://doi.org/10.1016/j.csda.2020.107063" class="external-link uri">https://doi.org/10.1016/j.csda.2020.107063</a>
+</li>
+<li>Wang C and Breheny P (2022). Adaptive hybrid screening for efficient lasso optimization. Journal of Statistical Computation and Simulation, 92: 2233–2256. URL <a href="https://doi.org/10.1080/00949655.2021.2025376" class="external-link uri">https://doi.org/10.1080/00949655.2021.2025376</a>
 </li>
 <li>Tibshirani, R., Bien, J., Friedman, J., Hastie, T., Simon, N., Taylor, J., and Tibshirani, R. J. (2012). Strong rules for discarding predictors in lasso-type problems. Journal of the Royal Statistical Society: Series B (Statistical Methodology), 74 (2), 245-266.</li>
 <li>Wang, J., Zhou, J., Wonka, P., and Ye, J. (2013). Lasso screening rules via dual polytope projection. In Advances in Neural Information Processing Systems, pp. 1070-1078.</li>
@@ -301,7 +302,7 @@
 <h2 id="report-bugs">Report bugs：<a class="anchor" aria-label="anchor" href="#report-bugs"></a>
 </h2>
 <ul>
-<li>open an <a href="https://github.com/YaohuiZeng/biglasso/issues" class="external-link">issue</a> or send an email to Patrick Breheny at <a href="mailto:patrick-breheny@uiowa.edu" class="email">patrick-breheny@uiowa.edu</a>
+<li>open an <a href="https://github.com/pbreheny/biglasso/issues" class="external-link">issue</a> or send an email to Patrick Breheny at <a href="mailto:patrick-breheny@uiowa.edu" class="email">patrick-breheny@uiowa.edu</a>
 </li>
 </ul>
 </div>
@@ -314,8 +315,8 @@
 <h2 data-toc-skip>Links</h2>
 <ul class="list-unstyled">
 <li><a href="https://cloud.r-project.org/package=biglasso" class="external-link">View on CRAN</a></li>
-<li><a href="https://github.com/YaohuiZeng/biglasso/" class="external-link">Browse source code</a></li>
-<li><a href="https://github.com/YaohuiZeng/biglasso/issues" class="external-link">Report a bug</a></li>
+<li><a href="https://github.com/pbreheny/biglasso/" class="external-link">Browse source code</a></li>
+<li><a href="https://github.com/pbreheny/biglasso/issues" class="external-link">Report a bug</a></li>
 </ul>
 </div>
 
@@ -347,10 +348,10 @@
 <div class="dev-status">
 <h2 data-toc-skip>Dev status</h2>
 <ul class="list-unstyled">
-<li><a href="https://github.com/YaohuiZeng/biglasso" class="external-link"><img src="https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/YaohuiZeng/biglasso/master/.version.json&amp;style=flat&amp;logo=github" alt="GitHub version"></a></li>
+<li><a href="https://github.com/pbreheny/biglasso" class="external-link"><img src="https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/pbreheny/biglasso/master/.version.json&amp;style=flat&amp;logo=github" alt="GitHub version"></a></li>
 <li><a href="https://cran.r-project.org/package=biglasso" class="external-link"><img src="https://img.shields.io/cran/v/biglasso?logo=R" alt="CRAN version"></a></li>
 <li><a href="https://cran.r-project.org/package=biglasso" class="external-link"><img src="https://cranlogs.r-pkg.org/badges/biglasso" alt="downloads"></a></li>
-<li><a href="https://github.com/YaohuiZeng/biglasso/actions" class="external-link"><img src="https://github.com/YaohuiZeng/biglasso/workflows/R-CMD-check/badge.svg" alt="R-CMD-check"></a></li>
+<li><a href="https://github.com/pbreheny/biglasso/actions" class="external-link"><img src="https://github.com/pbreheny/biglasso/workflows/R-CMD-check/badge.svg" alt="R-CMD-check"></a></li>
 </ul>
 </div>
 
