@@ -1,56 +1,52 @@
-## read and set up design matrix X from external ASCII-file
-
-
 #' Set up design matrix X by reading data from big data file
 #' 
-#' Set up the design matrix X as a \code{big.matrix} object based on external
+#' Set up the design matrix X as a `big.matrix` object based on external
 #' massive data file stored on disk that cannot be fullly loaded into memory.
 #' The data file must be a well-formated ASCII-file, and contains only one
-#' single type. Current version only supports \code{double} type. Other
+#' single type. Current version only supports `double` type. Other
 #' restrictions about the data file are described in
-#' \code{\link{biglasso-package}}. This function reads the massive data, and
-#' creates a \code{big.matrix} object. By default, the resulting
-#' \code{big.matrix} is file-backed, and can be shared across processors or
+#' [biglasso-package]. This function reads the massive data, and
+#' creates a `big.matrix` object. By default, the resulting
+#' `big.matrix` is file-backed, and can be shared across processors or
 #' nodes of a cluster.
 #' 
 #' For a data set, this function needs to be called only one time to set up the
-#' \code{big.matrix} object with two backing files (.bin, .desc) created in
+#' `big.matrix` object with two backing files (.bin, .desc) created in
 #' current working directory. Once set up, the data can be "loaded" into any
-#' (new) R session by calling \code{attach.big.matrix(discriptorfile)}.
+#' (new) R session by calling `attach.big.matrix(discriptorfile)`.
 #' 
-#' This function is a simple wrapper of
-#' \code{\link[bigmemory]{read.big.matrix}}. See
-#' \code{\link[bigmemory]{read.big.matrix}} and the package
+#' This function is a simple wrapper of [bigmemory::read.big.matrix()]. See
 #' \href{https://CRAN.R-project.org/package=bigmemory}{bigmemory} for more
 #' details.
 #' 
 #' @param filename The name of the data file. For example, "dat.txt".
 #' @param dir The directory used to store the binary and descriptor files
-#' associated with the \code{big.matrix}. The default is current working
+#' associated with the `big.matrix`. The default is current working
 #' directory.
 #' @param sep The field separator character. For example, "," for
 #' comma-delimited files (the default); "\\t" for tab-delimited files.
 #' @param backingfile The binary file associated with the file-backed
-#' \code{big.matrix}. By default, its name is the same as \code{filename} with
+#' `big.matrix`. By default, its name is the same as `filename` with
 #' the extension replaced by ".bin".
 #' @param descriptorfile The descriptor file used for the description of the
-#' file-backed \code{big.matrix}. By default, its name is the same as
-#' \code{filename} with the extension replaced by ".desc".
+#' file-backed `big.matrix`. By default, its name is the same as
+#' `filename` with the extension replaced by ".desc".
 #' @param type The data type. Only "double" is supported for now.
 #' @param ... Additional arguments that can be passed into function
-#' \code{\link[bigmemory]{read.big.matrix}}.
-#' @return A \code{big.matrix} object corresponding to a file-backed
-#' \code{big.matrix}. It's ready to be used as the design matrix \code{X} in
-#' \code{\link{biglasso}} and \code{\link{cv.biglasso}}.
+#' [bigmemory::read.big.matrix()].
+#' 
+#' @returns A `big.matrix` object corresponding to a file-backed
+#' [bigmemory::big.matrix()]. It's ready to be used as the design matrix `X` in
+#' [biglasso()] and [cv.biglasso()].
+#' 
 #' @author Yaohui Zeng and Patrick Breheny
 #' 
-#' Maintainer: Yaohui Zeng <yaohui.zeng@@gmail.com>
-#' @seealso \code{\link{biglasso}}, \code{\link{cv.ncvreg}}
+#' @seealso [biglasso()], [cv.ncvreg()], [biglasso-package]
+#' 
 #' @examples
 #' ## see the example in "biglasso-package"
-#' 
-#' @export setupX
-#' 
+#' @export
+
 setupX <- function(filename, dir = getwd(), sep = ",", 
                    backingfile = paste0(unlist(strsplit(filename, 
                                                         split = "\\."))[1], 

@@ -2,26 +2,26 @@
 #'
 #' Internal biglasso functions
 #'
-#' These are not intended for use by users.\code{loss.biglasso} calculates the
+#' These are not intended for use by users. `loss.biglasso` calculates the
 #' value of the loss function for the given predictions (used for cross-validation).
 #'
 #' @param y The observed response vector.
 #' @param yhat The predicted response vector.
 #' @param family Either "gaussian" or "binomial", depending on the response.
 #' @param eval.metric The evaluation metric for the cross-validated error and
-#' for choosing optimal \code{lambda}. "default" for linear regression is MSE
-#' (mean squared error), for logistic regression is misclassification error.
-#' "MAPE", for linear regression only, is the Mean Absolute Percentage Error.
-#' "auc", for logistic regression, is the area under the receiver operating
-#' characteristic curve (ROC).
+#'   for choosing optimal \code{lambda}. "default" for linear regression is MSE
+#'   (mean squared error), for logistic regression is misclassification error.
+#'   "MAPE", for linear regression only, is the Mean Absolute Percentage Error.
+#'   "auc", for logistic regression, is the area under the receiver operating
+#'   characteristic curve (ROC).
 #' @param grouped Whether to calculate loss for the entire CV fold
-#' (\code{TRUE}), or for predictions individually. Must be \code{TRUE} when
-#' \code{eval.metric} is 'auc'.
+#'   (`TRUE`), or for predictions individually. Must be `TRUE` when
+#'   `eval.metric` is 'auc'.
+#' 
 #' @author Yaohui Zeng and Patrick Breheny
 #'
-#' Maintainer: Yaohui Zeng <yaohui.zeng@@gmail.com>
 #' @keywords internal
-#'
+
 loss.biglasso <- function(y, yhat, family, eval.metric, grouped = TRUE) {
   n <- length(y)
   if (!is.matrix(yhat)) {

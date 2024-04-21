@@ -28,12 +28,10 @@ characteristic curve (ROC).}
 Internal biglasso functions
 }
 \details{
-These are not intended for use by users.\code{loss.biglasso} calculates the
+These are not intended for use by users. \code{loss.biglasso} calculates the
 value of the loss function for the given predictions (used for cross-validation).
 }
 \author{
 Yaohui Zeng and Patrick Breheny
-
-Maintainer: Yaohui Zeng <yaohui.zeng@gmail.com>
 }
 \keyword{internal}

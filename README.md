@@ -1,15 +1,15 @@
 <!-- badges: start -->
-[![GitHub version](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/YaohuiZeng/biglasso/master/.version.json&style=flat&logo=github)](https://github.com/YaohuiZeng/biglasso)
+[![GitHub version](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/pbreheny/biglasso/master/.version.json&style=flat&logo=github)](https://github.com/pbreheny/biglasso)
 [![CRAN version](https://img.shields.io/cran/v/biglasso?logo=R)](https://cran.r-project.org/package=biglasso)
 [![downloads](https://cranlogs.r-pkg.org/badges/biglasso)](https://cran.r-project.org/package=biglasso)
-[![R-CMD-check](https://github.com/YaohuiZeng/biglasso/workflows/R-CMD-check/badge.svg)](https://github.com/YaohuiZeng/biglasso/actions)
+[![R-CMD-check](https://github.com/pbreheny/biglasso/workflows/R-CMD-check/badge.svg)](https://github.com/pbreheny/biglasso/actions)
 <!-- badges: end -->
 
-# [biglasso: Extend Lasso Model Fitting to Big Data in R](https://yaohuizeng.github.io/biglasso/index.html)
+# [biglasso: Extend Lasso Model Fitting to Big Data in R](https://pbreheny.github.io/biglasso/index.html)
 
 `biglasso` extends lasso and elastic-net linear and logistic regression models for ultrahigh-dimensional, multi-gigabyte data sets that cannot be loaded into memory. It utilizes memory-mapped files to store the massive data on the disk and only read those into memory whenever necessary during model fitting. Moreover, some advanced feature screening rules are proposed and implemented to accelerate the model fitting. **As a result, this package is much more memory- and computation-efficient and highly scalable as compared to existing lasso-fitting packages such as [glmnet](https://CRAN.R-project.org/package=glmnet) and [ncvreg](https://CRAN.R-project.org/package=ncvreg)**. Bechmarking experiments using both simulated and real data sets show that `biglasso` is not only 1.5x to 4x times faster than existing packages, but also at least 2x more memory-efficient. More importantly, to the best of our knowledge, `biglasso` is the first R package that enables users to fit lasso models with data sets that are larger than available RAM, thus allowing for powerful big data analysis on an ordinary laptop.
 
-## Installation:
+## Installation
 
 To install the latest stable release version from CRAN:
 
@@ -20,28 +20,29 @@ install.packages("biglasso")
 To install the latest development version from GitHub:
 
 ```r
-remotes::install_github("YaohuiZeng/biglasso")
+remotes::install_github("pbreheny/biglasso")
 ```
 
-## News:
-* See NEWS.md for latest news.
-* This package was ranked top 3 for [2017 ASA Chambers Statistical Software Award](http://stat-computing.org/awards/jmc/).
-* The technical paper of this package was selected as a Winner of [2017 ASA Student Paper Competiton from Section on Statistical Computing](http://stat-computing.org/awards/student/winners.html).
+## News
+
+* See [NEWS.md](https://pbreheny.github.io/biglasso/news/index.html) for latest news.
+* The technical paper of this package was selected as a Winner of [2017 ASA Student Paper Competiton from Section on Statistical Computing](https://community.amstat.org/jointscsg-section/awards/student-paper-competition).
+* This package finished in the top 3 for [2017 ASA Chambers Statistical Software Award](https://community.amstat.org/jointscsg-section/awards/john-m-chambers).
 
 
-## Documentation:
+## Documentation
 
-* Here are the [R Reference manual](https://CRAN.R-project.org/package=biglasso/biglasso.pdf) and [Package Website](https://yaohuizeng.github.io/biglasso/index.html)
+* Here are the [R Reference manual](https://CRAN.R-project.org/package=biglasso/biglasso.pdf) and [Package Website](https://pbreheny.github.io/biglasso/index.html)
 * Here are the technical papers of the package: i) [The software paper](https://arxiv.org/abs/1701.05936); and ii) [the paper of hybrid safe-strong rules](https://arxiv.org/abs/1704.08742)
 
 
-## Features:
+## Features
+
 1. It utilizes memory-mapped files to store the massive data on the disk, only loading data into memory when necessary during model fitting. Consequently, it's able to seamlessly handle out-of-core computation.
 2. It is built upon pathwise coordinate descent algorithm with *warm start, active set cycling, and feature screening* strategies, which has been proven to be one of fastest lasso solvers.
 3. We develop new, adaptive feature screening rules that outperform state-of-the-art screening rules such as the sequential strong rule (SSR) and the sequential EDPP rule (SEDPP) with additional 1.5x to 4x speedup.
 4. The implementation is designed to be as memory-efficient as possible by eliminating extra copies of the data created by other R packages, making `biglasso` at least 2x more memory-efficient than `glmnet`.
 5. The underlying computation is implemented in C++, and parallel computing with OpenMP is also supported.
-
 
 ## Benchmarks:
 
@@ -63,7 +64,7 @@ remotes::install_github("YaohuiZeng/biglasso")
 ![Alt text](/vignettes/2020-12-18_vary_n_pkgs.png)
 -->
 
-<img src="https://raw.githubusercontent.com/YaohuiZeng/biglasso/master/vignettes/2020-12-18_vary_p_pkgs.png" width="400" height="300" /><img src="https://raw.githubusercontent.com/YaohuiZeng/biglasso/master/vignettes/2020-12-18_vary_n_pkgs.png" width="400" height="300" />
+<img src="https://raw.githubusercontent.com/pbreheny/biglasso/master/vignettes/2020-12-18_vary_p_pkgs.png" width="400" height="300" /><img src="https://raw.githubusercontent.com/pbreheny/biglasso/master/vignettes/2020-12-18_vary_n_pkgs.png" width="400" height="300" />
 
 In all the settings, `biglasso` (1 core) is uniformly faster than `picasso`, `glmnet` and `ncvreg`.
 When the data gets bigger, `biglasso` achieves 6-9x speed-up compared to other packages.
@@ -93,8 +94,8 @@ The maximum RSS (in **GB**) used by a single fit and 10-fold cross validation is
 ### Real data:
 
 The performance of the packages are also tested using diverse real data sets: 
-* [Breast cancer gene expression data](http://myweb.uiowa.edu/pbreheny/data/bcTCGA.html) (GENE); 
-* [MNIST handwritten image data](http://yann.lecun.com/exdb/mnist/) (MNIST);
+* [Breast cancer gene expression data](https://iowabiostat.github.io/data-sets/brca1/brca1.html) (GENE); 
+* [MNIST handwritten image data](https://www.kaggle.com/datasets/hojjatk/mnist-dataset/data) (MNIST);
 * [Cardiac fibrosis genome-wide association study data](https://arxiv.org/abs/1607.05636) (GWAS);
 * [Subset of New York Times bag-of-words data](https://archive.ics.uci.edu/ml/datasets/Bag+of+Words) (NYT).
 
@@ -132,13 +133,15 @@ Since other three packages cannot handle this data-larger-than-RAM case, we comp
 </center>
 
 ## Reference:
-* Zeng Y and Breheny P (2021). The biglasso Package: A Memory- and Computation-Efficient Solver for Lasso Model Fitting with Big Data in R. R Journal, 12: 6-19. URL [https://doi.org/10.32614/RJ-2021-001](https://doi.org/10.32614/RJ-2021-001).
-* Zeng Y, Yang T, and Breheny P (2021). Hybrid safe-strong rules for efficient optimization in lasso-type problems. Computational Statistics and Data Analysis, 153: 107063. URL [http://www.sciencedirect.com/science/article/pii/S0167947320301547](http://www.sciencedirect.com/science/article/pii/S0167947320301547)
-* Wang C and Breheny P (2022). Adaptive hybrid screening for efficient lasso optimization. Journal of Statistical Computation and Simulation, 92: 2233–2256. URL [https://doi.org/10.1080/00949655.2021.2025376](https://doi.org/10.1080/00949655.2021.2025376)
+
+* Zeng Y and Breheny P (2021). The biglasso Package: A Memory- and Computation-Efficient Solver for Lasso Model Fitting with Big Data in R. R Journal, 12: 6-19. URL <https://doi.org/10.32614/RJ-2021-001>
+* Zeng Y, Yang T, and Breheny P (2021). Hybrid safe-strong rules for efficient optimization in lasso-type problems. Computational Statistics and Data Analysis, 153: 107063. URL <https://doi.org/10.1016/j.csda.2020.107063>
+* Wang C and Breheny P (2022). Adaptive hybrid screening for efficient lasso optimization. Journal of Statistical Computation and Simulation, 92: 2233–2256. URL <https://doi.org/10.1080/00949655.2021.2025376>
 * Tibshirani, R., Bien, J., Friedman, J., Hastie, T., Simon, N., Taylor, J., and Tibshirani, R. J. (2012). Strong rules for discarding predictors in lasso-type problems. Journal of the Royal Statistical Society: Series B (Statistical Methodology), 74 (2), 245-266.
 * Wang, J., Zhou, J., Wonka, P., and Ye, J. (2013). Lasso screening rules via dual polytope projection. In Advances in Neural Information Processing Systems, pp. 1070-1078.
 * Xiang, Z. J., and Ramadge, P. J. (2012, March). Fast lasso screening tests based on correlations. In Acoustics, Speech and Signal Processing (ICASSP), 2012 IEEE International Conference on (pp. 2137-2140). IEEE.
 * Wang, J., Zhou, J., Liu, J., Wonka, P., and Ye, J. (2014). A safe screening rule for sparse logistic regression. In Advances in Neural Information Processing Systems, pp. 1053-1061.
 
 ## Report bugs：
-* open an [issue](https://github.com/YaohuiZeng/biglasso/issues) or send an email to Patrick Breheny at <patrick-breheny@uiowa.edu>
+
+* open an [issue](https://github.com/pbreheny/biglasso/issues) or send an email to Patrick Breheny at <patrick-breheny@uiowa.edu>

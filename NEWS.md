@@ -1,10 +1,15 @@
+# biglasso 1.6.0
+  * New: functions biglasso_fit() and biglasso_path(), which allow users to turn
+    off standardization and intercept
+
 # biglasso 1.5.2
   * Update coercion for compatibility with Matrix 1.5
   * Now using GitHub Actions instead of Travis for CI
 
 # biglasso 1.5.1
   * Internal Cpp changes: initialize Xty, remove unused cutoff variable (#48)
-  * Eliminate CV test against ncvreg (the two packages no longer use the same approach (#47)
+  * Eliminate CV test against ncvreg (the two packages no longer use the same
+    approach (#47)
 
 # biglasso 1.5.0
   * Update headers to maintain compatibility with new version of Rcpp (#40)
@@ -13,14 +18,17 @@
   * changed R package maintainer to Chuyi Wang (wwaa0208@gmail.com)
   * fixed bugs
   * Add 'auc', 'class' options to cv.biglasso eval.metric
-  * predict.cv now predicts standard error over CV folds by default; set 'grouped' argument to FALSE for old behaviour.
-  * predict.cv.biglasso accepts 'lambda.min', 'lambda.1se' argument, similar to predict.cv.glmnet()
+  * predict.cv now predicts standard error over CV folds by default; set
+    'grouped' argument to FALSE for old behaviour.
+  * predict.cv.biglasso accepts 'lambda.min', 'lambda.1se' argument, similar to
+    predict.cv.glmnet()
 
 # biglasso 1.4-0
   * adaptive screening methods were implemented and set as default when applicable
   * added sparse Cox regression
-  *  removed uncompetitive screening methods and combined naming of screening methods
-  *  version 1.4-0 for CRAN submission
+  * removed uncompetitive screening methods and combined naming of screening
+    methods
+  * version 1.4-0 for CRAN submission
 
 # biglasso 1.3-7
   * update email to personal email
@@ -30,7 +38,8 @@
 
 # biglasso 1.3-6
   * optimized the code for computing the slores rule.
-  * added Slores screening without active cycling (-NAC) for logistic regression, research usage only.
+  * added Slores screening without active cycling (-NAC) for logistic
+    regression, research usage only.
   * corrected BEDPP for elastic net.
   * fixed a bug related to "exporting SSR-BEDPP".
 

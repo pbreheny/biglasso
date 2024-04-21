@@ -36,20 +36,21 @@
 \item{object}{A fitted \code{"biglasso"} model object.}
 
 \item{X}{Matrix of values at which predictions are to be made. It must be a
-\code{\link[bigmemory]{big.matrix}} object. Not used for
-\code{type="coefficients"}.}
+\code{\link[bigmemory:big.matrix]{bigmemory::big.matrix()}} object. Not used for \code{type="coefficients"}.}
 
-\item{row.idx}{Similar to that in \code{\link[biglasso]{biglasso}}, it's a
+\item{row.idx}{Similar to that in \code{\link[=biglasso]{biglasso()}}, it's a
 vector of the row indices of \code{X} that used for the prediction.
 \code{1:nrow(X)} by default.}
 
-\item{type}{Type of prediction: \code{"link"} returns the linear predictors;
-\code{"response"} gives the fitted values; \code{"class"} returns the
-binomial outcome with the highest probability; \code{"coefficients"} returns
-the coefficients; \code{"vars"} returns a list containing the indices and
-names of the nonzero variables at each value of \code{lambda};
-\code{"nvars"} returns the number of nonzero coefficients at each value of
-\code{lambda}.}
+\item{type}{Type of prediction:
+\itemize{
+\item \code{"link"} returns the linear predictors
+\item \code{"response"} gives the fitted values
+\item \code{"class"} returns the binomial outcome with the highest probability
+\item \code{"coefficients"} returns the coefficients
+\item \code{"vars"} returns a list containing the indices and names of the nonzero variables at each value of \code{lambda}
+\item \code{"nvars"} returns the number of nonzero coefficients at each value of \code{lambda}
+}}
 
 \item{lambda}{Values of the regularization parameter \code{lambda} at which
 predictions are requested.  Linear interpolation is used for values of
@@ -75,8 +76,8 @@ coefficients. For \code{family="mgaussian"} only.}
 The object returned depends on \code{type}.
 }
 \description{
-Extract predictions (fitted reponse, coefficients, etc.) from a 
-fitted \code{\link{biglasso}} object.
+Extract predictions (fitted reponse, coefficients, etc.) from a
+fitted \code{\link[=biglasso]{biglasso()}} object.
 }
 \examples{
 ## Logistic regression
@@ -94,12 +95,8 @@ predict(fit, type="vars", lambda=c(0.05, 0.1))
 predict(fit, type="nvars", lambda=c(0.05, 0.1))
 }
 \seealso{
-\code{\link{biglasso}}, \code{\link{cv.biglasso}}
+\code{\link[=biglasso]{biglasso()}}, \code{\link[=cv.biglasso]{cv.biglasso()}}
 }
 \author{
 Yaohui Zeng and Patrick Breheny
-
-Maintainer: Yaohui Zeng <yaohui.zeng@gmail.com>
 }
-\keyword{models}
-\keyword{regression}

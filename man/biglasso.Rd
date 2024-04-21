@@ -32,16 +32,16 @@ biglasso(
 }
 \arguments{
 \item{X}{The design matrix, without an intercept. It must be a
-double type \code{\link[bigmemory]{big.matrix}} object. The function
+double type \code{\link[bigmemory:big.matrix]{bigmemory::big.matrix()}} object. The function
 standardizes the data and includes an intercept internally by default during
 the model fitting.}
 
 \item{y}{The response vector for \code{family="gaussian"} or \code{family="binomial"}.
 For \code{family="cox"}, \code{y} should be a two-column matrix with columns
 'time' and 'status'. The latter is a binary variable, with '1' indicating death,
- and '0' indicating right censored. For \code{family="mgaussin"}, \code{y}
- should be a n*m matrix where n is the sample size and m is the number of
- responses.}
+and '0' indicating right censored. For \code{family="mgaussin"}, \code{y}
+should be a n*m matrix where n is the sample size and m is the number of
+responses.}
 
 \item{row.idx}{The integer vector of row indices of \code{X} that used for
 fitting the model. \code{1:nrow(X)} by default.}
@@ -71,9 +71,9 @@ applicable to elastic-net-penalized logistic regression or cox regression;
 (3) active set cycling strategy is incorporated with these screening rules.}
 
 \item{safe.thresh}{the threshold value between 0 and 1 that controls when to
-stop safe test. For example, 0.01 means to stop safe test at next lambda 
+stop safe test. For example, 0.01 means to stop safe test at next lambda
 iteration if the number of features rejected by safe test at current lambda
-iteration is not larger than 1\% of the total number of features. So 1 means
+iteration is not larger than 1\\% of the total number of features. So 1 means
 to always turn off safe test, whereas 0 (default) means to turn off safe test
 if the number of features rejected by safe test is 0 at current lambda.}
 
@@ -136,33 +136,33 @@ Default is FALSE.}
 }
 \value{
 An object with S3 class \code{"biglasso"} for
-\code{"gaussian", "binomial", "cox"} families, or an object with S3 class
+\verb{"gaussian", "binomial", "cox"} families, or an object with S3 class
 \code{"mbiglasso"} for \code{"mgaussian"} family,  with following variables.
 \item{beta}{The fitted matrix of coefficients, store in sparse matrix
 representation. The number of rows is equal to the number of coefficients,
 whereas the number of columns is equal to \code{nlambda}. For \code{"mgaussian"}
-family with m responses, it is a list of m such matrices.} 
-\item{iter}{A vector of length \code{nlambda} containing the number of 
-iterations until convergence at each value of \code{lambda}.} 
+family with m responses, it is a list of m such matrices.}
+\item{iter}{A vector of length \code{nlambda} containing the number of
+iterations until convergence at each value of \code{lambda}.}
 \item{lambda}{The sequence of regularization parameter values in the path.}
 \item{penalty}{Same as above.}
 \item{family}{Same as above.}
-\item{alpha}{Same as above.} 
-\item{loss}{A vector containing either the residual sum of squares 
-(for \code{"gaussian", "mgaussian"}) or negative log-likelihood
-(for \code{"binomial", "cox"}) of the fitted model at each value of \code{lambda}.}
+\item{alpha}{Same as above.}
+\item{loss}{A vector containing either the residual sum of squares
+(for \verb{"gaussian", "mgaussian"}) or negative log-likelihood
+(for \verb{"binomial", "cox"}) of the fitted model at each value of \code{lambda}.}
 \item{penalty.factor}{Same as above.}
 \item{n}{The number of observations used in the model fitting. It's equal to
-\code{length(row.idx)}.} 
+\code{length(row.idx)}.}
 \item{center}{The sample mean vector of the variables, i.e., column mean of
-the sub-matrix of \code{X} used for model fitting.} 
+the sub-matrix of \code{X} used for model fitting.}
 \item{scale}{The sample standard deviation of the variables, i.e., column
-standard deviation of the sub-matrix of \code{X} used for model fitting.} 
+standard deviation of the sub-matrix of \code{X} used for model fitting.}
 \item{y}{The response vector used in the model fitting. Depending on
 \code{row.idx}, it could be a subset of the raw input of the response vector y.}
-\item{screen}{Same as above.} 
+\item{screen}{Same as above.}
 \item{col.idx}{The indices of features that have 'scale' value greater than
-1e-6. Features with 'scale' less than 1e-6 are removed from model fitting.} 
+1e-6. Features with 'scale' less than 1e-6 are removed from model fitting.}
 \item{rejections}{The number of features rejected at each value of \code{lambda}.}
 \item{safe_rejections}{The number of features rejected by safe rules at each
 value of \code{lambda}.}
@@ -174,7 +174,7 @@ lasso, ridge, or elastic-net over a grid of values for the regularization
 parameter lambda.
 }
 \details{
-The objective function for linear regression or multiple responses linear regression 
+The objective function for linear regression or multiple responses linear regression
 (\code{family = "gaussian"} or \code{family = "mgaussian"}) is
 \deqn{\frac{1}{2n}\textrm{RSS} + \lambda*\textrm{penalty},}{(1/(2n))*RSS+
 \lambda*penalty,}
@@ -182,7 +182,7 @@ where for \code{family = "mgaussian"}), a group-lasso type penalty is applied.
 For logistic regression
 (\code{family = "binomial"}) it is \deqn{-\frac{1}{n} loglike +
 \lambda*\textrm{penalty},}{-(1/n)*loglike+\lambda*penalty}, for cox regression,
- breslow approximation for ties is applied.
+breslow approximation for ties is applied.
 
 Several advanced feature screening rules are implemented. For
 lasso-penalized linear regression, all the options of \code{screen} are
@@ -192,7 +192,6 @@ data sets. For cox regression and/or the elastic net penalty, only
 \code{"SSR"} is applicable for now. More efficient rules are under development.
 }
 \examples{
-
 ## Linear regression
 data(colon)
 X <- colon$X
@@ -245,12 +244,8 @@ plot(fit, main = "mgaussian")
 
 }
 \seealso{
-\code{\link{biglasso-package}}, \code{\link{setupX}},
-\code{\link{cv.biglasso}}, \code{\link{plot.biglasso}},
-\code{\link[ncvreg]{ncvreg}}
+\link{biglasso-package}, \code{\link[=setupX]{setupX()}}, \code{\link[=cv.biglasso]{cv.biglasso()}}, \code{\link[=plot.biglasso]{plot.biglasso()}}, \code{\link[ncvreg:ncvreg]{ncvreg::ncvreg()}}
 }
 \author{
 Yaohui Zeng, Chuyi Wang and Patrick Breheny
-
-Maintainer: Yaohui Zeng <yaohui.zeng@gmail.com> and Chuyi Wang <wwaa0208@gmail.com>
 }

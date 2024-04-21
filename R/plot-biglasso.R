@@ -1,25 +1,21 @@
 #' Plot coefficients from a "biglasso" object
 #' 
-#' Produce a plot of the coefficient paths for a fitted \code{\link{biglasso}}
-#' object.
+#' Produce a plot of the coefficient paths for a fitted [biglasso()] object.
 #' 
-#' 
-#' @param x Fitted \code{"biglasso"} model.
+#' @param x Fitted [biglasso()] model.
 #' @param alpha Controls alpha-blending, helpful when the number of covariates
-#' is large.  Default is alpha=1.
+#'   is large.  Default is alpha=1.
 #' @param log.l Should horizontal axis be on the log scale?  Default is TRUE.
-#' @param \dots Other graphical parameters to \code{plot}
+#' @param \dots Other graphical parameters to [plot()]
+#' 
 #' @author Yaohui Zeng and Patrick Breheny
 #' 
-#' Maintainer: Yaohui Zeng <yaohui.zeng@@gmail.com>
-#' @seealso \code{\link{biglasso}}, \code{\link{cv.biglasso}}
-#' @keywords models regression
+#' @seealso [biglasso()], [cv.biglasso()]
+#' 
 #' @examples
-#' 
 #' ## See examples in "biglasso"
-#' 
 #' @export
-#' 
+
 plot.biglasso <- function(x, alpha = 1, log.l = TRUE, ...) {
 
   YY <- if (length(x$penalty.factor)==nrow(x$beta)) coef(x) else coef(x)[-1,,drop=FALSE]

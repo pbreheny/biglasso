@@ -6,52 +6,52 @@
 #' parameter lambda.
 #' 
 #' The objective function for linear regression or multiple responses linear regression 
-#' (\code{family = "gaussian"} or \code{family = "mgaussian"}) is
+#' (`family = "gaussian"` or `family = "mgaussian"`) is
 #' \deqn{\frac{1}{2n}\textrm{RSS} + \lambda*\textrm{penalty},}{(1/(2n))*RSS+
 #' \lambda*penalty,}
-#' where for \code{family = "mgaussian"}), a group-lasso type penalty is applied.
+#' where for `family = "mgaussian"`), a group-lasso type penalty is applied.
 #' For logistic regression
-#' (\code{family = "binomial"}) it is \deqn{-\frac{1}{n} loglike +
+#' (`family = "binomial"`) it is \deqn{-\frac{1}{n} loglike +
 #' \lambda*\textrm{penalty},}{-(1/n)*loglike+\lambda*penalty}, for cox regression,
 #'  breslow approximation for ties is applied.
 #' 
 #' Several advanced feature screening rules are implemented. For
-#' lasso-penalized linear regression, all the options of \code{screen} are
-#' applicable. Our proposal adaptive rule - \code{"Adaptive"} - achieves highest speedup
+#' lasso-penalized linear regression, all the options of `screen` are
+#' applicable. Our proposal adaptive rule - `"Adaptive"` - achieves highest speedup
 #' so it's the recommended one, especially for ultrahigh-dimensional large-scale
 #' data sets. For cox regression and/or the elastic net penalty, only
-#' \code{"SSR"} is applicable for now. More efficient rules are under development.
+#' `"SSR"` is applicable for now. More efficient rules are under development.
 #' 
 #' @param X The design matrix, without an intercept. It must be a
-#' double type \code{\link[bigmemory]{big.matrix}} object. The function
+#' double type [bigmemory::big.matrix()] object. The function
 #' standardizes the data and includes an intercept internally by default during
 #' the model fitting.
-#' @param y The response vector for \code{family="gaussian"} or \code{family="binomial"}.
-#' For \code{family="cox"}, \code{y} should be a two-column matrix with columns
+#' @param y The response vector for `family="gaussian"` or `family="binomial"`.
+#' For `family="cox"`, `y` should be a two-column matrix with columns
 #' 'time' and 'status'. The latter is a binary variable, with '1' indicating death,
-#'  and '0' indicating right censored. For \code{family="mgaussin"}, \code{y}
+#'  and '0' indicating right censored. For `family="mgaussin"`, `y`
 #'  should be a n*m matrix where n is the sample size and m is the number of
 #'  responses.
-#' @param row.idx The integer vector of row indices of \code{X} that used for
-#' fitting the model. \code{1:nrow(X)} by default.
-#' @param penalty The penalty to be applied to the model. Either \code{"lasso"}
-#' (the default), \code{"ridge"}, or \code{"enet"} (elastic net).
-#' @param family Either \code{"gaussian"}, \code{"binomial"}, \code{"cox"} or
-#' \code{"mgaussian"} depending on the response.
+#' @param row.idx The integer vector of row indices of `X` that used for
+#' fitting the model. `1:nrow(X)` by default.
+#' @param penalty The penalty to be applied to the model. Either `"lasso"`
+#' (the default), `"ridge"`, or `"enet"` (elastic net).
+#' @param family Either `"gaussian"`, `"binomial"`, `"cox"` or
+#' `"mgaussian"` depending on the response.
 #' @param alg.logistic The algorithm used in logistic regression. If "Newton"
 #' then the exact hessian is used (default); if "MM" then a
 #' majorization-minimization algorithm is used to set an upper-bound on the
 #' hessian matrix. This can be faster, particularly in data-larger-than-RAM
 #' case.
-#' @param screen The feature screening rule used at each \code{lambda} that
-#' discards features to speed up computation: \code{"SSR"} (default if
-#' \code{penalty="ridge"} or \code{penalty="enet"} )is the sequential strong rule;
-#' \code{"Hybrid"} is our newly proposed hybrid screening rules which combine the
-#' strong rule with a safe rule. \code{"Adaptive"} (default for \code{penalty="lasso"}
-#' without \code{penalty.factor}) is our newly proposed adaptive rules which
+#' @param screen The feature screening rule used at each `lambda` that
+#' discards features to speed up computation: `"SSR"` (default if
+#' `penalty="ridge"` or `penalty="enet"` )is the sequential strong rule;
+#' `"Hybrid"` is our newly proposed hybrid screening rules which combine the
+#' strong rule with a safe rule. `"Adaptive"` (default for `penalty="lasso"`
+#' without `penalty.factor`) is our newly proposed adaptive rules which
 #' reuse screening reference for multiple lambda values. \strong{Note that:}
-#' (1) for linear regression with elastic net penalty, both \code{"SSR"} and
-#' \code{"Hybrid"} are applicable since version 1.3-0;  (2) only \code{"SSR"} is
+#' (1) for linear regression with elastic net penalty, both `"SSR"` and
+#' `"Hybrid"` are applicable since version 1.3-0;  (2) only `"SSR"` is
 #' applicable to elastic-net-penalized logistic regression or cox regression;
 #' (3) active set cycling strategy is incorporated with these screening rules.
 #' @param safe.thresh the threshold value between 0 and 1 that controls when to
@@ -67,8 +67,8 @@
 #' @param alpha The elastic-net mixing parameter that controls the relative
 #' contribution from the lasso (l1) and the ridge (l2) penalty. The penalty is
 #' defined as \deqn{ \alpha||\beta||_1 + (1-\alpha)/2||\beta||_2^2.}
-#' \code{alpha=1} is the lasso penalty, \code{alpha=0} the ridge penalty,
-#' \code{alpha} in between 0 and 1 is the elastic-net ("enet") penalty.
+#' `alpha=1` is the lasso penalty, `alpha=0` the ridge penalty,
+#' `alpha` in between 0 and 1 is the elastic-net ("enet") penalty.
 #' @param lambda.min The smallest value for lambda, as a fraction of
 #' lambda.max.  Default is .001 if the number of observations is larger than
 #' the number of covariates and .05 otherwise.
@@ -76,23 +76,23 @@
 #' @param lambda.log.scale Whether compute the grid values of lambda on log
 #' scale (default) or linear scale.
 #' @param lambda A user-specified sequence of lambda values.  By default, a
-#' sequence of values of length \code{nlambda} is computed, equally spaced on
+#' sequence of values of length `nlambda` is computed, equally spaced on
 #' the log scale.
 #' @param eps Convergence threshold for inner coordinate descent.  The
 #' algorithm iterates until the maximum change in the objective after any
-#' coefficient update is less than \code{eps} times the null deviance. Default
-#' value is \code{1e-7}.
+#' coefficient update is less than `eps` times the null deviance. Default
+#' value is `1e-7`.
 #' @param max.iter Maximum number of iterations.  Default is 1000.
 #' @param dfmax Upper bound for the number of nonzero coefficients.  Default is
 #' no upper bound.  However, for large data sets, computational burden may be
 #' heavy for models with a large number of nonzero coefficients.
 #' @param penalty.factor A multiplicative factor for the penalty applied to
-#' each coefficient. If supplied, \code{penalty.factor} must be a numeric
-#' vector of length equal to the number of columns of \code{X}.  The purpose of
-#' \code{penalty.factor} is to apply differential penalization if some
+#' each coefficient. If supplied, `penalty.factor` must be a numeric
+#' vector of length equal to the number of columns of `X`.  The purpose of
+#' `penalty.factor` is to apply differential penalization if some
 #' coefficients are thought to be more likely than others to be in the model.
 #' Current package doesn't allow unpenalized coefficients. That
-#' is\code{penalty.factor} cannot be 0. \code{penalty.factor} is only supported
+#' is`penalty.factor` cannot be 0. `penalty.factor` is only supported
 #' for "SSR" screen.
 #' @param warn Return warning messages for failures to converge and model
 #' saturation?  Default is TRUE.
@@ -102,45 +102,44 @@
 #' fitting. Default is TRUE.
 #' @param verbose Whether to output the timing of each lambda iteration.
 #' Default is FALSE.
-#' @return An object with S3 class \code{"biglasso"} for
-#' \code{"gaussian", "binomial", "cox"} families, or an object with S3 class
-#' \code{"mbiglasso"} for \code{"mgaussian"} family,  with following variables.
+#' 
+#' @returns An object with S3 class `"biglasso"` for
+#' `"gaussian", "binomial", "cox"` families, or an object with S3 class
+#' `"mbiglasso"` for `"mgaussian"` family,  with following variables.
 #' \item{beta}{The fitted matrix of coefficients, store in sparse matrix
 #' representation. The number of rows is equal to the number of coefficients,
-#' whereas the number of columns is equal to \code{nlambda}. For \code{"mgaussian"}
+#' whereas the number of columns is equal to `nlambda`. For `"mgaussian"`
 #' family with m responses, it is a list of m such matrices.} 
-#' \item{iter}{A vector of length \code{nlambda} containing the number of 
-#' iterations until convergence at each value of \code{lambda}.} 
+#' \item{iter}{A vector of length `nlambda` containing the number of 
+#' iterations until convergence at each value of `lambda`.} 
 #' \item{lambda}{The sequence of regularization parameter values in the path.}
 #' \item{penalty}{Same as above.}
 #' \item{family}{Same as above.}
 #' \item{alpha}{Same as above.} 
 #' \item{loss}{A vector containing either the residual sum of squares 
-#' (for \code{"gaussian", "mgaussian"}) or negative log-likelihood
-#' (for \code{"binomial", "cox"}) of the fitted model at each value of \code{lambda}.}
+#' (for `"gaussian", "mgaussian"`) or negative log-likelihood
+#' (for `"binomial", "cox"`) of the fitted model at each value of `lambda`.}
 #' \item{penalty.factor}{Same as above.}
 #' \item{n}{The number of observations used in the model fitting. It's equal to
-#' \code{length(row.idx)}.} 
+#' `length(row.idx)`.} 
 #' \item{center}{The sample mean vector of the variables, i.e., column mean of
-#' the sub-matrix of \code{X} used for model fitting.} 
+#' the sub-matrix of `X` used for model fitting.} 
 #' \item{scale}{The sample standard deviation of the variables, i.e., column
-#' standard deviation of the sub-matrix of \code{X} used for model fitting.} 
+#' standard deviation of the sub-matrix of `X` used for model fitting.} 
 #' \item{y}{The response vector used in the model fitting. Depending on
-#' \code{row.idx}, it could be a subset of the raw input of the response vector y.}
+#' `row.idx`, it could be a subset of the raw input of the response vector y.}
 #' \item{screen}{Same as above.} 
 #' \item{col.idx}{The indices of features that have 'scale' value greater than
 #' 1e-6. Features with 'scale' less than 1e-6 are removed from model fitting.} 
-#' \item{rejections}{The number of features rejected at each value of \code{lambda}.}
+#' \item{rejections}{The number of features rejected at each value of `lambda`.}
 #' \item{safe_rejections}{The number of features rejected by safe rules at each
-#' value of \code{lambda}.}
+#' value of `lambda`.}
+#' 
 #' @author Yaohui Zeng, Chuyi Wang and Patrick Breheny
 #'
-#' Maintainer: Yaohui Zeng <yaohui.zeng@@gmail.com> and Chuyi Wang <wwaa0208@@gmail.com>
-#' @seealso \code{\link{biglasso-package}}, \code{\link{setupX}},
-#' \code{\link{cv.biglasso}}, \code{\link{plot.biglasso}},
-#' \code{\link[ncvreg]{ncvreg}}
-#' @examples
+#' @seealso [biglasso-package], [setupX()], [cv.biglasso()], [plot.biglasso()], [ncvreg::ncvreg()]
 #' 
+#' @examples
 #' ## Linear regression
 #' data(colon)
 #' X <- colon$X

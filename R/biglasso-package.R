@@ -26,7 +26,7 @@
 #' Data in R. Version >= 1.2-3 represents a major redesign where the source
 #' code is converted into C++ (previously in C), and new feature screening
 #' rules, as well as OpenMP parallel computing, are implemented. Some key
-#' features of \code{biglasso} are summarized as below: \enumerate{ \item it
+#' features of `biglasso` are summarized as below: \enumerate{ \item it
 #' utilizes memory-mapped files to store the massive data on the disk, only
 #' loading data into memory when necessary during model fitting. Consequently,
 #' it's able to seamlessly data-larger-than-RAM cases. \item it is built upon
@@ -38,57 +38,54 @@
 #' additional 1.5x to 4x speedup. \item the implementation is designed to be as
 #' memory-efficient as possible by eliminating extra copies of the data created
 #' by other R packages, making it at least 2x more memory-efficient than
-#' \code{glmnet}. \item the underlying computation is implemented in C++, and
+#' `glmnet`. \item the underlying computation is implemented in C++, and
 #' parallel computing with OpenMP is also supported. }
 #' 
-#' \strong{For more information:} \itemize{ \item Benchmarking results:
-#' \url{https://github.com/YaohuiZeng/biglasso}.
-#' \item Tutorial:
-#' \url{http://yaohuizeng.github.io/biglasso/articles/biglasso.html}
-#' \item Technical paper:
-#' \url{https://arxiv.org/abs/1701.05936} }
+#' **For more information:**
+#' * Benchmarking results: \url{https://github.com/pbreheny/biglasso}
+#' * Tutorial: \url{https://pbreheny.github.io/biglasso/articles/biglasso.html}
+#' * Technical paper: \url{https://arxiv.org/abs/1701.05936}
 #' 
 #' @name biglasso-package
 #' 
-#' @note The input design matrix X must be a \code{\link[bigmemory]{big.matrix}} object. 
-#' This can be created by the function \code{as.big.matrix} in the R package 
+#' @note The input design matrix X must be a [bigmemory::big.matrix()] object. 
+#' This can be created by the function `as.big.matrix` in the R package 
 #' \href{https://CRAN.R-project.org//package=bigmemory}{bigmemory}. 
 #' If the data (design matrix) is very large (e.g. 10 GB) and stored in an external 
 #' file, which is often the case for big data, X can be created by calling the
-#' function \code{\link{setupX}}.
+#' function [setupX()].
 #' \strong{In this case, there are several restrictions about the data file:}
 #' \enumerate{ \item the data file must be a well-formated ASCII-file, with
 #' each row corresponding to an observation and each column a variable; \item
 #' the data file must contain only one single type. Current version only
-#' supports \code{double} type; \item the data file must contain only numeric
+#' supports `double` type; \item the data file must contain only numeric
 #' variables. If there are categorical variables, the user needs to create
 #' dummy variables for each categorical varable (by adding additional columns).}
 #' Future versions will try to address these restrictions.
 #' 
-#' Denote the number of observations and variables be, respectively, \code{n}
-#' and \code{p}. It's worth noting that the package is more suitable for wide
-#' data (ultrahigh-dimensional, \code{p >> n}) as compared to long data
-#' (\code{n >> p}). This is because the model fitting algorithm takes advantage
+#' Denote the number of observations and variables be, respectively, `n`
+#' and `p`. It's worth noting that the package is more suitable for wide
+#' data (ultrahigh-dimensional, `p >> n`) as compared to long data
+#' (`n >> p`). This is because the model fitting algorithm takes advantage
 #' of sparsity assumption of high-dimensional data. To just give the user some
 #' ideas, below are some benchmarking results of the total computing time (in
 #' seconds) for solving lasso-penalized linear regression along a sequence of
 #' 100 values of the tuning parameter. In all cases, assume 20 non-zero
 #' coefficients equal +/- 2 in the true model. (Based on Version 1.2-3,
 #' screening rule "SSR-BEDPP" is used)
-#' \itemize{ \item For wide data case (\code{p > n}), \code{n = 1,000}:
-#' \tabular{ccccc}{ \code{p} \tab 1,000 \tab 10,000 \tab 100,000 \tab 1,000,000
-#' \cr Size of \code{X} \tab 9.5 MB \tab 95 MB \tab 950 MB \tab 9.5 GB \cr
+#' \itemize{ \item For wide data case (`p > n`), `n = 1,000`:
+#' \tabular{ccccc}{ `p` \tab 1,000 \tab 10,000 \tab 100,000 \tab 1,000,000
+#' \cr Size of `X` \tab 9.5 MB \tab 95 MB \tab 950 MB \tab 9.5 GB \cr
 #' Elapsed time (s) \tab 0.11 \tab 0.83 \tab 8.47 \tab 85.50 \cr }
-#' %\item For long data case (\code{n >> p}), \code{p = 1,000}: 
+#' %\item For long data case (`n >> p`), `p = 1,000`: 
 #' %\tabular{ccccc}{
-#' %\code{n} \tab 1,000 \tab 10,000 \tab 100,000 \tab 1,000,000 \cr 
-#' %Size of \code{X} \tab 9.5 MB \tab 95 MB \tab 950 MB \tab 9.5 GB \cr 
+#' %`n` \tab 1,000 \tab 10,000 \tab 100,000 \tab 1,000,000 \cr 
+#' %Size of `X` \tab 9.5 MB \tab 95 MB \tab 950 MB \tab 9.5 GB \cr 
 #' %Elapsed time (s) \tab 2.50 \tab 11.43 \tab 83.69 \tab 1090.62 \cr %} 
 #' }
 #' 
-#' @author Yaohui Zeng, Chuyi Wang and Patrick Breheny
+#' @author Yaohui Zeng, Chuyi Wang, Tabitha Peter, and Patrick Breheny
 #' 
-#' Maintainer: Yaohui Zeng <yaohui.zeng@@gmail.com> and Chuyi Wang <wwaa0208@@gmail.com>
 #' @references \itemize{ \item Zeng, Y., and Breheny, P. (2017). The biglasso
 #' Package: A Memory- and Computation-Efficient Solver for Lasso Model Fitting
 #' with Big Data in R. \url{https://arxiv.org/abs/1701.05936}.  \item
@@ -104,7 +101,7 @@
 #' 2137-2140). IEEE.  \item Wang, J., Zhou, J., Liu, J., Wonka, P., and Ye, J.
 #' (2014). A safe screening rule for sparse logistic regression. \emph{In
 #' Advances in Neural Information Processing Systems}, pp. 1053-1061.  }
-#' @keywords package
+#' 
 #' @examples
 #' \dontrun{
 #' ## Example of reading data from external big data file, fit lasso model, 

@@ -2,7 +2,7 @@
 % Please edit documentation in R/biglasso_path.R
 \name{biglasso_path}
 \alias{biglasso_path}
-\title{Simplified call to biglasso: a gaussian model fit with no 'bells and whistles' (e.g., no SSR)}
+\title{Direct interface to biglasso fitting, no preprocessing, path version}
 \usage{
 biglasso_path(
   X,
@@ -26,48 +26,48 @@ biglasso_path(
 }
 \arguments{
 \item{X}{The design matrix, without an intercept. It must be a
-double type \code{\link[bigmemory]{big.matrix}} object.}
+double type \code{\link[bigmemory:big.matrix]{bigmemory::big.matrix()}} object.}
 
 \item{y}{The response vector}
 
-\item{r}{Residuals (length n vector) corresponding to `init`. 
-WARNING: If you supply an incorrect value of `r`, the 
+\item{r}{Residuals (length n vector) corresponding to \code{init}.
+WARNING: If you supply an incorrect value of \code{r}, the
 solution will be incorrect.}
 
 \item{init}{Initial values for beta.  Default: zero (length p vector)}
 
-\item{xtx}{X scales: the jth element should equal `crossprod(X[,j])/n`.
+\item{xtx}{X scales: the jth element should equal \code{crossprod(X[,j])/n}.
 In particular, if X is standardized, one should pass
-`xtx = rep(1, p)`.  WARNING: If you supply an incorrect value of
-`xtx`, the solution will be incorrect. (length p vector)}
+\code{xtx = rep(1, p)}. WARNING: If you supply an incorrect value of
+\code{xtx}, the solution will be incorrect. (length p vector)}
 
-\item{penalty}{String specifying which penalty to use. Default is 'lasso', 
+\item{penalty}{String specifying which penalty to use. Default is 'lasso',
 Other options are 'SCAD' and 'MCP' (the latter are non-convex)}
 
 \item{lambda}{A vector of numeric values the lasso tuning parameter.}
 
 \item{alpha}{The elastic-net mixing parameter that controls the relative
-contribution from the lasso (l1) and the ridge (l2) penalty. 
+contribution from the lasso (l1) and the ridge (l2) penalty.
 The penalty is defined as:
 \deqn{ \alpha||\beta||_1 + (1-\alpha)/2||\beta||_2^2.}
 \code{alpha=1} is the lasso penalty, \code{alpha=0} the ridge penalty,
 \code{alpha} in between 0 and 1 is the elastic-net ("enet") penalty.}
 
 \item{gamma}{Tuning parameter value for nonconvex penalty. Defaults are
-3.7 for `penalty = 'SCAD'` and 3 for `penalty = 'MCP'`}
+3.7 for \code{penalty = 'SCAD'} and 3 for \code{penalty = 'MCP'}}
 
 \item{ncores}{The number of OpenMP threads used for parallel computing.}
 
 \item{max.iter}{Maximum number of iterations.  Default is 1000.}
 
 \item{eps}{Convergence threshold for inner coordinate descent. The
-algorithm iterates until the maximum change in the objective 
-after any coefficient update is less than \code{eps} times 
+algorithm iterates until the maximum change in the objective
+after any coefficient update is less than \code{eps} times
 the null deviance. Default value is \code{1e-7}.}
 
 \item{dfmax}{Upper bound for the number of nonzero coefficients. Default is
-no upper bound.  However, for large data sets, 
-computational burden may be heavy for models with a large 
+no upper bound.  However, for large data sets,
+computational burden may be heavy for models with a large
 number of nonzero coefficients.}
 
 \item{penalty.factor}{A multiplicative factor for the penalty applied to
@@ -85,56 +85,57 @@ fitting. Default is TRUE.}
 }
 \value{
 An object with S3 class \code{"biglasso"} with following variables.
-\item{beta}{A sparse matrix where rows are estimates a given coefficient across all values of lambda} 
-\item{iter}{A vector of length \code{nlambda} containing the number of 
-iterations until convergence} 
+\item{beta}{A sparse matrix where rows are estimates a given coefficient across all values of lambda}
+\item{iter}{A vector of length \code{nlambda} containing the number of
+iterations until convergence}
 \item{resid}{Vector of residuals calculated from estimated coefficients.}
 \item{lambda}{The sequence of regularization parameter values in the path.}
-\item{alpha}{Same as in `biglasso()`} 
+\item{alpha}{Same as in \code{biglasso()}}
 \item{loss}{A vector containing either the residual sum of squares of the fitted model at each value of lambda.}
-\item{penalty.factor}{Same as in `biglasso()`.}
+\item{penalty.factor}{Same as in \code{biglasso()}.}
 \item{n}{The number of observations used in the model fitting.}
 \item{y}{The response vector used in the model fitting.}
 }
 \description{
-NOTE: this function is designed for users who have a strong understanding of 
-statistics and know exactly what they are doing. This is a simplification of  
-the main `biglasso()` function with more flexible settings.
+This function is intended for users who know exactly what they're doing and
+want complete control over the fitting process. It
+\itemize{
+\item does NOT add an intercept
+\item does NOT standardize the design matrix
+both of the above are critical steps in data analysis. However, a direct API
+has been provided for use in situations where the lasso fitting process is
+an internal component of a more complicated algorithm and standardization
+must be handled externally.
+}
 }
 \details{
-Of note, this function:
+\code{biglasso_path()} works identically to \code{\link[=biglasso_fit]{biglasso_fit()}} except it offers the
+additional option of fitting models across a path of tuning parameter values.
 
- * does NOT add an intercept 
- * does NOT standardize the design matrix
- * does NOT set up a path for lambda (the lasso tuning parameter) automatically; 
- This vector of values must be user-supplied.
- 
- This function is made for use in situations where these steps have already been addressed prior 
- to model fitting.
- 
- In other words, `biglasso_path()` is doing the same thing as `biglasso_fit()`,
- with the additional option to fit models across a path of tuning parameter values.
- 
- For now, this function only works with linear regression (`family = 'gaussian'`)
+Note:
+\itemize{
+\item Hybrid safe-strong rules are turned off for \code{biglasso_fit()}, as these rely
+on standardization
+\item Currently, the function only works with linear regression
+(\code{family = 'gaussian'}).
+}
 }
 \examples{
-
 data(Prostate)
-X <- cbind(1, Prostate$X) |> ncvreg::std() # standardizing -> xtx is all 1s
+X <- cbind(1, Prostate$X)
+xtx <- apply(X, 2, crossprod)/nrow(X)
 y <- Prostate$y
 X.bm <- as.big.matrix(X)
-init <- rep(0, ncol(X)) # using cold starts - will need more iterations
-r <- y - X\%*\%init
-fit_lasso <- biglasso_path(X = X.bm, y = y, r = r, init = init,
- xtx = rep(1, ncol(X)), lambda = c(0.5, 0.1, 0.05, 0.01, 0.001), 
- penalty.factor=c(0, rep(1, ncol(X)-1)),
-  max.iter = 10000)   
+init <- rep(0, ncol(X))
+fit <- biglasso_path(X = X.bm, y = y, r = y, init = init, xtx = xtx,
+  lambda = c(0.5, 0.1, 0.05, 0.01, 0.001), 
+  penalty.factor=c(0, rep(1, ncol(X)-1)), max.iter=2000)
+fit$beta
   
-fit_mcp <- biglasso_path(X = X.bm, y = y, r = r, init = init,
- xtx = rep(1, ncol(X)), lambda = c(0.5, 0.1, 0.05, 0.01, 0.001),
-  penalty.factor=c(0, rep(1, ncol(X)-1)),
-  max.iter = 10000, penalty= 'MCP')  
-  
+fit <- biglasso_path(X = X.bm, y = y, r = y, init = init, xtx = xtx,
+  lambda = c(0.5, 0.1, 0.05, 0.01, 0.001), penalty='MCP',
+  penalty.factor=c(0, rep(1, ncol(X)-1)), max.iter = 2000)
+fit$beta
 }
 \author{
 Tabitha Peter and Patrick Breheny

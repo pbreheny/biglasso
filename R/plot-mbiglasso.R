@@ -1,27 +1,24 @@
 #' Plot coefficients from a "mbiglasso" object
 #' 
 #' Produce a plot of the coefficient paths for a fitted multiple responses
-#' \code{mbiglasso} object.
+#' `mbiglasso` object.
 #' 
-#' 
-#' @param x Fitted \code{"mbiglasso"} model.
+#' @param x Fitted `mbiglasso` model.
 #' @param alpha Controls alpha-blending, helpful when the number of covariates
 #' is large.  Default is alpha=1.
 #' @param log.l Should horizontal axis be on the log scale?  Default is TRUE.
 #' @param norm.beta Should the vertical axis be the l2 norm of coefficients for each variable?
 #' Default is TRUE. If False, the vertical axis is the coefficients.
-#' @param \dots Other graphical parameters to \code{plot}
+#' @param \dots Other graphical parameters to [plot()]
+#' 
 #' @author Chuyi Wang
 #' 
-#' Maintainer: Chuyi Wang <wwaa0208@@gmail.com>
-#' @seealso \code{\link{biglasso}},
-#' @keywords models regression
+#' @seealso [biglasso()]
+#' 
 #' @examples
-#' 
 #' ## See examples in "biglasso"
-#' 
 #' @export
-#' 
+
 plot.mbiglasso <- function(x, alpha = 1, log.l = TRUE, norm.beta = TRUE, ...) {
   YY <- coef(x, intercept = FALSE) 
   ## currently not support unpenalized coefficients. NOT USED

@@ -16,11 +16,9 @@ knitr::opts_chunk$set(
 )
 ```
 
-# 1 User Guide
+# Small Data
 
-## 1.1 Small Data
-
-### 1.1.1 Standar Lasso
+## Linear regression
 
 ```{r}
 library(biglasso)
@@ -42,7 +40,6 @@ X.bm <- as.big.matrix(X)
 str(X.bm)
 ```
 
-
 ```{r}
 dim(X.bm)
 ```
@@ -52,15 +49,14 @@ X.bm[1:5, 1:5]
 ## same results as X[1:5, 1:5]
 ```
 
-
-
 ```{r}
 ## fit entire solution path, using our newly proposed "Adaptive" screening rule (default)
 fit <- biglasso(X.bm, y)
 plot(fit)
 ```
 
-### 1.1.2 Cross-Validation 
+## Cross-Validation 
+
 ```{r}
 ## 10-fold cross-valiation in parallel
 cvfit <- tryCatch(
@@ -95,7 +91,7 @@ summary(cvfit)
 coef(cvfit)[which(coef(cvfit) != 0),]
 ```
 
-### 1.1.3 Logistic Regression
+## Logistic Regression
 
 ```{r}
 data(Heart)
@@ -106,7 +102,7 @@ fit <- biglasso(X.bm, y, family = "binomial")
 plot(fit)
 ```
 
-### 1.1.4 Cox Regression
+## Cox Regression
 
 ```{r}
 library(survival)
@@ -117,7 +113,7 @@ fit <- biglasso(X.bm, y, family = "cox")
 plot(fit)
 ```
 
-### 1.1.5 Multiple responses Linear Regression
+## Multiple response Linear Regression (multi-task learning)
 
 ```{r}
 set.seed(10101)
@@ -130,7 +126,7 @@ fit = biglasso(x.bm, y, family = "mgaussian")
 plot(fit)
 ```
 
-## 1.2 Big Data
+# Big Data
 
 When the raw data file is very large, it's better to convert the raw data file
 into a file-backed `big.matrix` by using a file cache. We can call function 
@@ -191,9 +187,9 @@ par(mfrow = c(2, 2), mar = c(3.5, 3.5, 3, 1), mgp = c(2.5, 0.5, 0))
 plot(cvfit, type = "all")
 ```
 
-# 2 Useful Reference
+# Links
 
-* biglasso R manual: https://cran.r-project.org/package=biglasso/biglasso.pdf
-* biglasso on GitHub: https://github.com/YaohuiZeng/biglasso
-* biglasso website: https://yaohuizeng.github.io/biglasso/index.html
-* big.matrix manipulation: https://cran.r-project.org/package=bigmemory/index.html
+* [biglasso on CRAN](https://cran.r-project.org/package=biglasso)
+* [biglasso on GitHub](https://github.com/pbreheny/biglasso)
+* [biglasso website](https://pbreheny.github.io/biglasso/index.html)
+* [big.matrix manipulation](https://cran.r-project.org/package=bigmemory/index.html)

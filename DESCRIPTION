@@ -1,6 +1,6 @@
 Package: biglasso
-Version: 1.5.2.1
-Date: 2024-03-19
+Version: 1.6.0
+Date: 2024-04-21
 Title: Extending Lasso Model Fitting to Big Data
 Authors@R: c(
     person("Yaohui", "Zeng", role = c("aut")),
@@ -15,8 +15,8 @@ Description: Extend lasso and elastic-net model fitting for ultra
     lasso-fitting packages like 'glmnet' and 'ncvreg', thus allowing
     the user to analyze big data analysis even on an ordinary laptop.
 License: GPL-3
-URL: https://yaohuizeng.github.io/biglasso/index.html, https://github.com/YaohuiZeng/biglasso, https://arxiv.org/abs/1701.05936
-BugReports: https://github.com/YaohuiZeng/biglasso/issues
+URL: https://pbreheny.github.io/biglasso/index.html, https://github.com/pbreheny/biglasso, https://arxiv.org/abs/1701.05936
+BugReports: https://github.com/pbreheny/biglasso/issues
 Depends: R (>= 3.2.0), bigmemory (>= 4.5.0), Matrix, ncvreg
 Imports: Rcpp (>= 0.12.1), methods
 LinkingTo: Rcpp, RcppArmadillo (>= 0.8.600), bigmemory, BH
@@ -28,5 +28,6 @@ Suggests:
     survival,
     knitr,
     rmarkdown
+Roxygen: list(markdown = TRUE)
 RoxygenNote: 7.3.1
 Encoding: UTF-8

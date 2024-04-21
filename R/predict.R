@@ -1,46 +1,46 @@
-#' Model predictions based on a fitted \code{biglasso} object
+#' Model predictions based on a fitted `biglasso` object
 #' 
 #' Extract predictions (fitted reponse, coefficients, etc.) from a 
-#' fitted \code{\link{biglasso}} object.
+#' fitted [biglasso()] object.
 #' 
 #' @name predict.biglasso
 #' @rdname predict.biglasso
 #' @method predict biglasso
 #' 
-#' @param object A fitted \code{"biglasso"} model object.
+#' @param object A fitted `"biglasso"` model object.
 #' @param X Matrix of values at which predictions are to be made. It must be a
-#' \code{\link[bigmemory]{big.matrix}} object. Not used for
-#' \code{type="coefficients"}.
-#' @param row.idx Similar to that in \code{\link[biglasso]{biglasso}}, it's a
-#' vector of the row indices of \code{X} that used for the prediction.
-#' \code{1:nrow(X)} by default.
-#' @param type Type of prediction: \code{"link"} returns the linear predictors;
-#' \code{"response"} gives the fitted values; \code{"class"} returns the
-#' binomial outcome with the highest probability; \code{"coefficients"} returns
-#' the coefficients; \code{"vars"} returns a list containing the indices and
-#' names of the nonzero variables at each value of \code{lambda};
-#' \code{"nvars"} returns the number of nonzero coefficients at each value of
-#' \code{lambda}.
-#' @param lambda Values of the regularization parameter \code{lambda} at which
+#' [bigmemory::big.matrix()] object. Not used for `type="coefficients"`.
+#' @param row.idx Similar to that in [biglasso()], it's a
+#' vector of the row indices of `X` that used for the prediction.
+#' `1:nrow(X)` by default.
+#' @param type Type of prediction:
+#'   * `"link"` returns the linear predictors
+#'   * `"response"` gives the fitted values
+#'   * `"class"` returns the binomial outcome with the highest probability
+#'   * `"coefficients"` returns the coefficients
+#'   * `"vars"` returns a list containing the indices and names of the nonzero variables at each value of `lambda`
+#'   * `"nvars"` returns the number of nonzero coefficients at each value of `lambda`
+#' @param lambda Values of the regularization parameter `lambda` at which
 #' predictions are requested.  Linear interpolation is used for values of
-#' \code{lambda} not in the sequence of lambda values in the fitted models.
+#' `lambda` not in the sequence of lambda values in the fitted models.
 #' @param k Index of the response to predict in multiple responses regression (
-#' \code{family="mgaussian"}).
-#' @param which Indices of the penalty parameter \code{lambda} at which
+#' `family="mgaussian"`).
+#' @param which Indices of the penalty parameter `lambda` at which
 #' predictions are required.  By default, all indices are returned.  If
-#' \code{lambda} is specified, this will override \code{which}.
+#' `lambda` is specified, this will override `which`.
 #' @param intercept Whether the intercept should be included in the returned
-#' coefficients. For \code{family="mgaussian"} only.
-#' @param drop If coefficients for a single value of \code{lambda} are to be
-#' returned, reduce dimensions to a vector?  Setting \code{drop=FALSE} returns
+#' coefficients. For `family="mgaussian"` only.
+#' @param drop If coefficients for a single value of `lambda` are to be
+#' returned, reduce dimensions to a vector?  Setting `drop=FALSE` returns
 #' a 1-column matrix.
 #' @param \dots Not used.
-#' @return The object returned depends on \code{type}.
+#' 
+#' @returns The object returned depends on `type`.
+#' 
 #' @author Yaohui Zeng and Patrick Breheny
 #' 
-#' Maintainer: Yaohui Zeng <yaohui.zeng@@gmail.com>
-#' @seealso \code{\link{biglasso}}, \code{\link{cv.biglasso}}
-#' @keywords models regression
+#' @seealso [biglasso()], [cv.biglasso()]
+#'
 #' @examples
 #' ## Logistic regression
 #' data(colon)

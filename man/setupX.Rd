@@ -35,12 +35,12 @@ file-backed \code{big.matrix}. By default, its name is the same as
 \item{type}{The data type. Only "double" is supported for now.}
 
 \item{...}{Additional arguments that can be passed into function
-\code{\link[bigmemory]{read.big.matrix}}.}
+\code{\link[bigmemory:write.big.matrix]{bigmemory::read.big.matrix()}}.}
 }
 \value{
 A \code{big.matrix} object corresponding to a file-backed
-\code{big.matrix}. It's ready to be used as the design matrix \code{X} in
-\code{\link{biglasso}} and \code{\link{cv.biglasso}}.
+\code{\link[bigmemory:big.matrix]{bigmemory::big.matrix()}}. It's ready to be used as the design matrix \code{X} in
+\code{\link[=biglasso]{biglasso()}} and \code{\link[=cv.biglasso]{cv.biglasso()}}.
 }
 \description{
 Set up the design matrix X as a \code{big.matrix} object based on external
@@ -48,7 +48,7 @@ massive data file stored on disk that cannot be fullly loaded into memory.
 The data file must be a well-formated ASCII-file, and contains only one
 single type. Current version only supports \code{double} type. Other
 restrictions about the data file are described in
-\code{\link{biglasso-package}}. This function reads the massive data, and
+\link{biglasso-package}. This function reads the massive data, and
 creates a \code{big.matrix} object. By default, the resulting
 \code{big.matrix} is file-backed, and can be shared across processors or
 nodes of a cluster.
@@ -59,21 +59,16 @@ For a data set, this function needs to be called only one time to set up the
 current working directory. Once set up, the data can be "loaded" into any
 (new) R session by calling \code{attach.big.matrix(discriptorfile)}.
 
-This function is a simple wrapper of
-\code{\link[bigmemory]{read.big.matrix}}. See
-\code{\link[bigmemory]{read.big.matrix}} and the package
+This function is a simple wrapper of \code{\link[bigmemory:write.big.matrix]{bigmemory::read.big.matrix()}}. See
 \href{https://CRAN.R-project.org/package=bigmemory}{bigmemory} for more
 details.
 }
 \examples{
 ## see the example in "biglasso-package"
-
 }
 \seealso{
-\code{\link{biglasso}}, \code{\link{cv.ncvreg}}
+\code{\link[=biglasso]{biglasso()}}, \code{\link[=cv.ncvreg]{cv.ncvreg()}}, \link{biglasso-package}
 }
 \author{
 Yaohui Zeng and Patrick Breheny
-
-Maintainer: Yaohui Zeng <yaohui.zeng@gmail.com>
 }
