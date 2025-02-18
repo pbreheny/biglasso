@@ -143,7 +143,7 @@
 #' @useDynLib biglasso, .registration = TRUE
 #' @importFrom methods as
 #' @importFrom Rcpp evalCpp
-#' @importFrom Matrix Matrix crossprod
+#' @importMethodsFrom Matrix crossprod
 #' @import stats graphics grDevices bigmemory ncvreg
 #' 
 NULL
