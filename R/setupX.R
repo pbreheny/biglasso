@@ -41,7 +41,7 @@
 #' 
 #' @author Yaohui Zeng and Patrick Breheny
 #' 
-#' @seealso [biglasso()], [cv.ncvreg()], [biglasso-package]
+#' @seealso [biglasso()], [ncvreg::cv.ncvreg()], [biglasso-package]
 #' 
 #' @examples
 #' ## see the example in "biglasso-package"

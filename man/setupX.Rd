@@ -67,7 +67,7 @@ details.
 ## see the example in "biglasso-package"
 }
 \seealso{
-\code{\link[=biglasso]{biglasso()}}, \code{\link[=cv.ncvreg]{cv.ncvreg()}}, \link{biglasso-package}
+\code{\link[=biglasso]{biglasso()}}, \code{\link[ncvreg:cv.ncvreg]{ncvreg::cv.ncvreg()}}, \link{biglasso-package}
 }
 \author{
 Yaohui Zeng and Patrick Breheny
