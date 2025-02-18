@@ -6,7 +6,7 @@ parameter lambda."><!-- mathjax --><script src="https://cdnjs.cloudflare.com/aja
 <script src="https://oss.maxcdn.com/html5shiv/3.7.3/html5shiv.min.js"></script>
 <script src="https://oss.maxcdn.com/respond/1.4.2/respond.min.js"></script>
 <![endif]--></head><body data-spy="scroll" data-target="#toc">
-    
+
 
     <div class="container template-reference-topic">
       <header><div class="navbar navbar-default navbar-fixed-top" role="navigation">
@@ -20,7 +20,7 @@ parameter lambda."><!-- mathjax --><script src="https://cdnjs.cloudflare.com/aja
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">biglasso</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="">1.6.0</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="">1.6.0.1</span>
       </span>
     </div>
 
@@ -37,20 +37,20 @@ parameter lambda."><!-- mathjax --><script src="https://cdnjs.cloudflare.com/aja
       </ul><ul class="nav navbar-nav navbar-right"><li>
   <a href="https://github.com/pbreheny/biglasso/" class="external-link">
     <span class="fab fa-github fa-lg"></span>
-     
+
   </a>
 </li>
       </ul></div><!--/.nav-collapse -->
   </div><!--/.container -->
 </div><!--/.navbar -->
 
-      
+
 
       </header><div class="row">
   <div class="col-md-9 contents">
     <div class="page-header">
     <h1>Fit lasso penalized regression path for big data</h1>
-    <small class="dont-index">Source: <a href="https://github.com/pbreheny/biglasso/blob/HEAD/R/biglasso.R" class="external-link"><code>R/biglasso.R</code></a></small>
+    <small class="dont-index">Source: <a href="https://github.com/pbreheny/biglasso/blob/master/R/biglasso.R" class="external-link"><code>R/biglasso.R</code></a></small>
     <div class="hidden name"><code>biglasso.Rd</code></div>
     </div>
 
@@ -91,14 +91,16 @@ parameter lambda.</p>
 
     <div id="arguments">
     <h2>Arguments</h2>
-    <dl><dt>X</dt>
+
+
+<dl><dt id="arg-x">X<a class="anchor" aria-label="anchor" href="#arg-x"></a></dt>
 <dd><p>The design matrix, without an intercept. It must be a
 double type <code><a href="https://rdrr.io/pkg/bigmemory/man/big.matrix.html" class="external-link">bigmemory::big.matrix()</a></code> object. The function
 standardizes the data and includes an intercept internally by default during
 the model fitting.</p></dd>
 
 
-<dt>y</dt>
+<dt id="arg-y">y<a class="anchor" aria-label="anchor" href="#arg-y"></a></dt>
 <dd><p>The response vector for <code>family="gaussian"</code> or <code>family="binomial"</code>.
 For <code>family="cox"</code>, <code>y</code> should be a two-column matrix with columns
 'time' and 'status'. The latter is a binary variable, with '1' indicating death,
@@ -107,22 +109,22 @@ should be a n*m matrix where n is the sample size and m is the number of
 responses.</p></dd>
 
 
-<dt>row.idx</dt>
+<dt id="arg-row-idx">row.idx<a class="anchor" aria-label="anchor" href="#arg-row-idx"></a></dt>
 <dd><p>The integer vector of row indices of <code>X</code> that used for
 fitting the model. <code>1:nrow(X)</code> by default.</p></dd>
 
 
-<dt>penalty</dt>
+<dt id="arg-penalty">penalty<a class="anchor" aria-label="anchor" href="#arg-penalty"></a></dt>
 <dd><p>The penalty to be applied to the model. Either <code>"lasso"</code>
 (the default), <code>"ridge"</code>, or <code>"enet"</code> (elastic net).</p></dd>
 
 
-<dt>family</dt>
+<dt id="arg-family">family<a class="anchor" aria-label="anchor" href="#arg-family"></a></dt>
 <dd><p>Either <code>"gaussian"</code>, <code>"binomial"</code>, <code>"cox"</code> or
 <code>"mgaussian"</code> depending on the response.</p></dd>
 
 
-<dt>alg.logistic</dt>
+<dt id="arg-alg-logistic">alg.logistic<a class="anchor" aria-label="anchor" href="#arg-alg-logistic"></a></dt>
 <dd><p>The algorithm used in logistic regression. If "Newton"
 then the exact hessian is used (default); if "MM" then a
 majorization-minimization algorithm is used to set an upper-bound on the
@@ -130,7 +132,7 @@ hessian matrix. This can be faster, particularly in data-larger-than-RAM
 case.</p></dd>
 
 
-<dt>screen</dt>
+<dt id="arg-screen">screen<a class="anchor" aria-label="anchor" href="#arg-screen"></a></dt>
 <dd><p>The feature screening rule used at each <code>lambda</code> that
 discards features to speed up computation: <code>"SSR"</code> (default if
 <code>penalty="ridge"</code> or <code>penalty="enet"</code> )is the sequential strong rule;
@@ -144,7 +146,7 @@ applicable to elastic-net-penalized logistic regression or cox regression;
 (3) active set cycling strategy is incorporated with these screening rules.</p></dd>
 
 
-<dt>safe.thresh</dt>
+<dt id="arg-safe-thresh">safe.thresh<a class="anchor" aria-label="anchor" href="#arg-safe-thresh"></a></dt>
 <dd><p>the threshold value between 0 and 1 that controls when to
 stop safe test. For example, 0.01 means to stop safe test at next lambda
 iteration if the number of features rejected by safe test at current lambda
@@ -153,17 +155,17 @@ to always turn off safe test, whereas 0 (default) means to turn off safe test
 if the number of features rejected by safe test is 0 at current lambda.</p></dd>
 
 
-<dt>update.thresh</dt>
+<dt id="arg-update-thresh">update.thresh<a class="anchor" aria-label="anchor" href="#arg-update-thresh"></a></dt>
 <dd><p>the non negative threshold value that controls how often to
 update the reference of safe rules for "Adaptive" methods. Smaller value means
 updating more often.</p></dd>
 
 
-<dt>ncores</dt>
+<dt id="arg-ncores">ncores<a class="anchor" aria-label="anchor" href="#arg-ncores"></a></dt>
 <dd><p>The number of OpenMP threads used for parallel computing.</p></dd>
 
 
-<dt>alpha</dt>
+<dt id="arg-alpha">alpha<a class="anchor" aria-label="anchor" href="#arg-alpha"></a></dt>
 <dd><p>The elastic-net mixing parameter that controls the relative
 contribution from the lasso (l1) and the ridge (l2) penalty. The penalty is
 defined as $$ \alpha||\beta||_1 + (1-\alpha)/2||\beta||_2^2.$$
@@ -171,45 +173,45 @@ defined as $$ \alpha||\beta||_1 + (1-\alpha)/2||\beta||_2^2.$$
 <code>alpha</code> in between 0 and 1 is the elastic-net ("enet") penalty.</p></dd>
 
 
-<dt>lambda.min</dt>
+<dt id="arg-lambda-min">lambda.min<a class="anchor" aria-label="anchor" href="#arg-lambda-min"></a></dt>
 <dd><p>The smallest value for lambda, as a fraction of
 lambda.max.  Default is .001 if the number of observations is larger than
 the number of covariates and .05 otherwise.</p></dd>
 
 
-<dt>nlambda</dt>
+<dt id="arg-nlambda">nlambda<a class="anchor" aria-label="anchor" href="#arg-nlambda"></a></dt>
 <dd><p>The number of lambda values.  Default is 100.</p></dd>
 
 
-<dt>lambda.log.scale</dt>
+<dt id="arg-lambda-log-scale">lambda.log.scale<a class="anchor" aria-label="anchor" href="#arg-lambda-log-scale"></a></dt>
 <dd><p>Whether compute the grid values of lambda on log
 scale (default) or linear scale.</p></dd>
 
 
-<dt>lambda</dt>
+<dt id="arg-lambda">lambda<a class="anchor" aria-label="anchor" href="#arg-lambda"></a></dt>
 <dd><p>A user-specified sequence of lambda values.  By default, a
 sequence of values of length <code>nlambda</code> is computed, equally spaced on
 the log scale.</p></dd>
 
 
-<dt>eps</dt>
+<dt id="arg-eps">eps<a class="anchor" aria-label="anchor" href="#arg-eps"></a></dt>
 <dd><p>Convergence threshold for inner coordinate descent.  The
 algorithm iterates until the maximum change in the objective after any
 coefficient update is less than <code>eps</code> times the null deviance. Default
 value is <code>1e-7</code>.</p></dd>
 
 
-<dt>max.iter</dt>
+<dt id="arg-max-iter">max.iter<a class="anchor" aria-label="anchor" href="#arg-max-iter"></a></dt>
 <dd><p>Maximum number of iterations.  Default is 1000.</p></dd>
 
 
-<dt>dfmax</dt>
+<dt id="arg-dfmax">dfmax<a class="anchor" aria-label="anchor" href="#arg-dfmax"></a></dt>
 <dd><p>Upper bound for the number of nonzero coefficients.  Default is
 no upper bound.  However, for large data sets, computational burden may be
 heavy for models with a large number of nonzero coefficients.</p></dd>
 
 
-<dt>penalty.factor</dt>
+<dt id="arg-penalty-factor">penalty.factor<a class="anchor" aria-label="anchor" href="#arg-penalty-factor"></a></dt>
 <dd><p>A multiplicative factor for the penalty applied to
 each coefficient. If supplied, <code>penalty.factor</code> must be a numeric
 vector of length equal to the number of columns of <code>X</code>.  The purpose of
@@ -220,31 +222,29 @@ is<code>penalty.factor</code> cannot be 0. <code>penalty.factor</code> is only s
 for "SSR" screen.</p></dd>
 
 
-<dt>warn</dt>
+<dt id="arg-warn">warn<a class="anchor" aria-label="anchor" href="#arg-warn"></a></dt>
 <dd><p>Return warning messages for failures to converge and model
 saturation?  Default is TRUE.</p></dd>
 
 
-<dt>output.time</dt>
+<dt id="arg-output-time">output.time<a class="anchor" aria-label="anchor" href="#arg-output-time"></a></dt>
 <dd><p>Whether to print out the start and end time of the model
 fitting. Default is FALSE.</p></dd>
 
 
-<dt>return.time</dt>
+<dt id="arg-return-time">return.time<a class="anchor" aria-label="anchor" href="#arg-return-time"></a></dt>
 <dd><p>Whether to return the computing time of the model
 fitting. Default is TRUE.</p></dd>
 
 
-<dt>verbose</dt>
+<dt id="arg-verbose">verbose<a class="anchor" aria-label="anchor" href="#arg-verbose"></a></dt>
 <dd><p>Whether to output the timing of each lambda iteration.
 Default is FALSE.</p></dd>
 
 </dl></div>
     <div id="value">
     <h2>Value</h2>
-    
-
-<p>An object with S3 class <code>"biglasso"</code> for
+    <p>An object with S3 class <code>"biglasso"</code> for
 <code>"gaussian", "binomial", "cox"</code> families, or an object with S3 class
 <code>"mbiglasso"</code> for <code>"mgaussian"</code> family,  with following variables.</p>
 <dl><dt>beta</dt>
@@ -327,7 +327,7 @@ data sets. For cox regression and/or the elastic net penalty, only
     </div>
     <div id="see-also">
     <h2>See also</h2>
-    <div class="dont-index"><p><a href="biglasso-package.html">biglasso-package</a>, <code><a href="setupX.html">setupX()</a></code>, <code><a href="cv.biglasso.html">cv.biglasso()</a></code>, <code><a href="plot.biglasso.html">plot.biglasso()</a></code>, <code><a href="https://rdrr.io/pkg/ncvreg/man/ncvreg.html" class="external-link">ncvreg::ncvreg()</a></code></p></div>
+    <div class="dont-index"><p><a href="biglasso-package.html">biglasso-package</a>, <code><a href="setupX.html">setupX()</a></code>, <code><a href="cv.biglasso.html">cv.biglasso()</a></code>, <code><a href="plot.biglasso.html">plot.biglasso()</a></code>, <code><a href="https://pbreheny.github.io/ncvreg/reference/ncvreg.html" class="external-link">ncvreg::ncvreg()</a></code></p></div>
     </div>
     <div id="author">
     <h2>Author</h2>
@@ -403,15 +403,15 @@ data sets. For cox regression and/or the elastic net penalty, only
 </div>
 
 <div class="pkgdown">
-  <p></p><p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.0.9.</p>
+  <p></p><p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.1.1.</p>
 </div>
 
       </footer></div>
 
-  
 
 
-  
+
+
 
   </body></html>
 

@@ -4,7 +4,7 @@ fitted biglasso() object."><!-- mathjax --><script src="https://cdnjs.cloudflare
 <script src="https://oss.maxcdn.com/html5shiv/3.7.3/html5shiv.min.js"></script>
 <script src="https://oss.maxcdn.com/respond/1.4.2/respond.min.js"></script>
 <![endif]--></head><body data-spy="scroll" data-target="#toc">
-    
+
 
     <div class="container template-reference-topic">
       <header><div class="navbar navbar-default navbar-fixed-top" role="navigation">
@@ -18,7 +18,7 @@ fitted biglasso() object."><!-- mathjax --><script src="https://cdnjs.cloudflare
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">biglasso</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="">1.6.0</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="">1.6.0.1</span>
       </span>
     </div>
 
@@ -35,20 +35,20 @@ fitted biglasso() object."><!-- mathjax --><script src="https://cdnjs.cloudflare
       </ul><ul class="nav navbar-nav navbar-right"><li>
   <a href="https://github.com/pbreheny/biglasso/" class="external-link">
     <span class="fab fa-github fa-lg"></span>
-     
+
   </a>
 </li>
       </ul></div><!--/.nav-collapse -->
   </div><!--/.container -->
 </div><!--/.navbar -->
 
-      
+
 
       </header><div class="row">
   <div class="col-md-9 contents">
     <div class="page-header">
     <h1>Model predictions based on a fitted <code>biglasso</code> object</h1>
-    <small class="dont-index">Source: <a href="https://github.com/pbreheny/biglasso/blob/HEAD/R/predict.R" class="external-link"><code>R/predict.R</code></a></small>
+    <small class="dont-index">Source: <a href="https://github.com/pbreheny/biglasso/blob/master/R/predict.R" class="external-link"><code>R/predict.R</code></a></small>
     <div class="hidden name"><code>predict.biglasso.Rd</code></div>
     </div>
 
@@ -58,7 +58,7 @@ fitted <code><a href="biglasso.html">biglasso()</a></code> object.</p>
     </div>
 
     <div id="ref-usage">
-    <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="co"># S3 method for biglasso</span></span>
+    <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="co"># S3 method for class 'biglasso'</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/stats/predict.html" class="external-link">predict</a></span><span class="op">(</span></span>
 <span>  <span class="va">object</span>,</span>
 <span>  <span class="va">X</span>,</span>
@@ -69,7 +69,7 @@ fitted <code><a href="biglasso.html">biglasso()</a></code> object.</p>
 <span>  <span class="va">...</span></span>
 <span><span class="op">)</span></span>
 <span></span>
-<span><span class="co"># S3 method for mbiglasso</span></span>
+<span><span class="co"># S3 method for class 'mbiglasso'</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/stats/predict.html" class="external-link">predict</a></span><span class="op">(</span></span>
 <span>  <span class="va">object</span>,</span>
 <span>  <span class="va">X</span>,</span>
@@ -81,31 +81,33 @@ fitted <code><a href="biglasso.html">biglasso()</a></code> object.</p>
 <span>  <span class="va">...</span></span>
 <span><span class="op">)</span></span>
 <span></span>
-<span><span class="co"># S3 method for biglasso</span></span>
+<span><span class="co"># S3 method for class 'biglasso'</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/stats/coef.html" class="external-link">coef</a></span><span class="op">(</span><span class="va">object</span>, <span class="va">lambda</span>, which <span class="op">=</span> <span class="fl">1</span><span class="op">:</span><span class="fu"><a href="https://rdrr.io/r/base/length.html" class="external-link">length</a></span><span class="op">(</span><span class="va">object</span><span class="op">$</span><span class="va">lambda</span><span class="op">)</span>, drop <span class="op">=</span> <span class="cn">TRUE</span>, <span class="va">...</span><span class="op">)</span></span>
 <span></span>
-<span><span class="co"># S3 method for mbiglasso</span></span>
+<span><span class="co"># S3 method for class 'mbiglasso'</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/stats/coef.html" class="external-link">coef</a></span><span class="op">(</span><span class="va">object</span>, <span class="va">lambda</span>, which <span class="op">=</span> <span class="fl">1</span><span class="op">:</span><span class="fu"><a href="https://rdrr.io/r/base/length.html" class="external-link">length</a></span><span class="op">(</span><span class="va">object</span><span class="op">$</span><span class="va">lambda</span><span class="op">)</span>, intercept <span class="op">=</span> <span class="cn">TRUE</span>, <span class="va">...</span><span class="op">)</span></span></code></pre></div>
     </div>
 
     <div id="arguments">
     <h2>Arguments</h2>
-    <dl><dt>object</dt>
+
+
+<dl><dt id="arg-object">object<a class="anchor" aria-label="anchor" href="#arg-object"></a></dt>
 <dd><p>A fitted <code>"biglasso"</code> model object.</p></dd>
 
 
-<dt>X</dt>
+<dt id="arg-x">X<a class="anchor" aria-label="anchor" href="#arg-x"></a></dt>
 <dd><p>Matrix of values at which predictions are to be made. It must be a
 <code><a href="https://rdrr.io/pkg/bigmemory/man/big.matrix.html" class="external-link">bigmemory::big.matrix()</a></code> object. Not used for <code>type="coefficients"</code>.</p></dd>
 
 
-<dt>row.idx</dt>
+<dt id="arg-row-idx">row.idx<a class="anchor" aria-label="anchor" href="#arg-row-idx"></a></dt>
 <dd><p>Similar to that in <code><a href="biglasso.html">biglasso()</a></code>, it's a
 vector of the row indices of <code>X</code> that used for the prediction.
 <code>1:nrow(X)</code> by default.</p></dd>
 
 
-<dt>type</dt>
+<dt id="arg-type">type<a class="anchor" aria-label="anchor" href="#arg-type"></a></dt>
 <dd><p>Type of prediction:</p><ul><li><p><code>"link"</code> returns the linear predictors</p></li>
 <li><p><code>"response"</code> gives the fitted values</p></li>
 <li><p><code>"class"</code> returns the binomial outcome with the highest probability</p></li>
@@ -115,43 +117,41 @@ vector of the row indices of <code>X</code> that used for the prediction.
 </ul></dd>
 
 
-<dt>lambda</dt>
+<dt id="arg-lambda">lambda<a class="anchor" aria-label="anchor" href="#arg-lambda"></a></dt>
 <dd><p>Values of the regularization parameter <code>lambda</code> at which
 predictions are requested.  Linear interpolation is used for values of
 <code>lambda</code> not in the sequence of lambda values in the fitted models.</p></dd>
 
 
-<dt>which</dt>
+<dt id="arg-which">which<a class="anchor" aria-label="anchor" href="#arg-which"></a></dt>
 <dd><p>Indices of the penalty parameter <code>lambda</code> at which
 predictions are required.  By default, all indices are returned.  If
 <code>lambda</code> is specified, this will override <code>which</code>.</p></dd>
 
 
-<dt>...</dt>
+<dt id="arg--">...<a class="anchor" aria-label="anchor" href="#arg--"></a></dt>
 <dd><p>Not used.</p></dd>
 
 
-<dt>k</dt>
+<dt id="arg-k">k<a class="anchor" aria-label="anchor" href="#arg-k"></a></dt>
 <dd><p>Index of the response to predict in multiple responses regression (
 <code>family="mgaussian"</code>).</p></dd>
 
 
-<dt>drop</dt>
+<dt id="arg-drop">drop<a class="anchor" aria-label="anchor" href="#arg-drop"></a></dt>
 <dd><p>If coefficients for a single value of <code>lambda</code> are to be
 returned, reduce dimensions to a vector?  Setting <code>drop=FALSE</code> returns
 a 1-column matrix.</p></dd>
 
 
-<dt>intercept</dt>
+<dt id="arg-intercept">intercept<a class="anchor" aria-label="anchor" href="#arg-intercept"></a></dt>
 <dd><p>Whether the intercept should be included in the returned
 coefficients. For <code>family="mgaussian"</code> only.</p></dd>
 
 </dl></div>
     <div id="value">
     <h2>Value</h2>
-    
-
-<p>The object returned depends on <code>type</code>.</p>
+    <p>The object returned depends on <code>type</code>.</p>
     </div>
     <div id="see-also">
     <h2>See also</h2>
@@ -214,15 +214,15 @@ coefficients. For <code>family="mgaussian"</code> only.</p></dd>
 </div>
 
 <div class="pkgdown">
-  <p></p><p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.0.9.</p>
+  <p></p><p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.1.1.</p>
 </div>
 
       </footer></div>
 
-  
 
 
-  
+
+
 
   </body></html>
 

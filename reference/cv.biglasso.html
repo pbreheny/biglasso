@@ -4,7 +4,7 @@ of values for the regularization parameter lambda."><!-- mathjax --><script src=
 <script src="https://oss.maxcdn.com/html5shiv/3.7.3/html5shiv.min.js"></script>
 <script src="https://oss.maxcdn.com/respond/1.4.2/respond.min.js"></script>
 <![endif]--></head><body data-spy="scroll" data-target="#toc">
-    
+
 
     <div class="container template-reference-topic">
       <header><div class="navbar navbar-default navbar-fixed-top" role="navigation">
@@ -18,7 +18,7 @@ of values for the regularization parameter lambda."><!-- mathjax --><script src=
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">biglasso</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="">1.6.0</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="">1.6.0.1</span>
       </span>
     </div>
 
@@ -35,20 +35,20 @@ of values for the regularization parameter lambda."><!-- mathjax --><script src=
       </ul><ul class="nav navbar-nav navbar-right"><li>
   <a href="https://github.com/pbreheny/biglasso/" class="external-link">
     <span class="fab fa-github fa-lg"></span>
-     
+
   </a>
 </li>
       </ul></div><!--/.nav-collapse -->
   </div><!--/.container -->
 </div><!--/.navbar -->
 
-      
+
 
       </header><div class="row">
   <div class="col-md-9 contents">
     <div class="page-header">
     <h1>Cross-validation for biglasso</h1>
-    <small class="dont-index">Source: <a href="https://github.com/pbreheny/biglasso/blob/HEAD/R/cv-biglasso.R" class="external-link"><code>R/cv-biglasso.R</code></a></small>
+    <small class="dont-index">Source: <a href="https://github.com/pbreheny/biglasso/blob/master/R/cv-biglasso.R" class="external-link"><code>R/cv-biglasso.R</code></a></small>
     <div class="hidden name"><code>cv.biglasso.Rd</code></div>
     </div>
 
@@ -76,26 +76,28 @@ of values for the regularization parameter lambda.</p>
 
     <div id="arguments">
     <h2>Arguments</h2>
-    <dl><dt>X</dt>
+
+
+<dl><dt id="arg-x">X<a class="anchor" aria-label="anchor" href="#arg-x"></a></dt>
 <dd><p>The design matrix, without an intercept, as in <code><a href="biglasso.html">biglasso()</a></code>.</p></dd>
 
 
-<dt>y</dt>
+<dt id="arg-y">y<a class="anchor" aria-label="anchor" href="#arg-y"></a></dt>
 <dd><p>The response vector, as in <code>biglasso</code>.</p></dd>
 
 
-<dt>row.idx</dt>
+<dt id="arg-row-idx">row.idx<a class="anchor" aria-label="anchor" href="#arg-row-idx"></a></dt>
 <dd><p>The integer vector of row indices of <code>X</code> that used for
 fitting the model. as in <code>biglasso</code>.</p></dd>
 
 
-<dt>family</dt>
+<dt id="arg-family">family<a class="anchor" aria-label="anchor" href="#arg-family"></a></dt>
 <dd><p>Either <code>"gaussian"</code>, <code>"binomial"</code>, <code>"cox"</code> or
 <code>"mgaussian"</code> depending on the response. <code>"cox"</code> and <code>"mgaussian"</code>
 are not supported yet.</p></dd>
 
 
-<dt>eval.metric</dt>
+<dt id="arg-eval-metric">eval.metric<a class="anchor" aria-label="anchor" href="#arg-eval-metric"></a></dt>
 <dd><p>The evaluation metric for the cross-validated error and
 for choosing optimal <code>lambda</code>. "default" for linear regression is MSE
 (mean squared error), for logistic regression is binomial deviance.
@@ -105,7 +107,7 @@ characteristic curve (ROC).
 "class", for binary classification, gives the misclassification error.</p></dd>
 
 
-<dt>ncores</dt>
+<dt id="arg-ncores">ncores<a class="anchor" aria-label="anchor" href="#arg-ncores"></a></dt>
 <dd><p>The number of cores to use for parallel execution of the
 cross-validation folds, run on a cluster created by the <code>parallel</code>
 package. (This is also supplied to the <code>ncores</code> argument in
@@ -115,30 +117,30 @@ individual calls of <code><a href="biglasso.html">biglasso()</a></code> for the 
 the <code>ncores</code> argument.)</p></dd>
 
 
-<dt>...</dt>
+<dt id="arg--">...<a class="anchor" aria-label="anchor" href="#arg--"></a></dt>
 <dd><p>Additional arguments to <code>biglasso</code>.</p></dd>
 
 
-<dt>nfolds</dt>
+<dt id="arg-nfolds">nfolds<a class="anchor" aria-label="anchor" href="#arg-nfolds"></a></dt>
 <dd><p>The number of cross-validation folds.  Default is 5.</p></dd>
 
 
-<dt>seed</dt>
+<dt id="arg-seed">seed<a class="anchor" aria-label="anchor" href="#arg-seed"></a></dt>
 <dd><p>The seed of the random number generator in order to obtain
 reproducible results.</p></dd>
 
 
-<dt>cv.ind</dt>
+<dt id="arg-cv-ind">cv.ind<a class="anchor" aria-label="anchor" href="#arg-cv-ind"></a></dt>
 <dd><p>Which fold each observation belongs to.  By default the
 observations are randomly assigned by <code>cv.biglasso</code>.</p></dd>
 
 
-<dt>trace</dt>
+<dt id="arg-trace">trace<a class="anchor" aria-label="anchor" href="#arg-trace"></a></dt>
 <dd><p>If set to TRUE, cv.biglasso will inform the user of its
 progress by announcing the beginning of each CV fold.  Default is FALSE.</p></dd>
 
 
-<dt>grouped</dt>
+<dt id="arg-grouped">grouped<a class="anchor" aria-label="anchor" href="#arg-grouped"></a></dt>
 <dd><p>Whether to calculate CV standard error (<code>cvse</code>) over
 CV folds (<code>TRUE</code>), or over all cross-validated predictions. Ignored
 when <code>eval.metric</code> is 'auc'.</p></dd>
@@ -146,11 +148,9 @@ when <code>eval.metric</code> is 'auc'.</p></dd>
 </dl></div>
     <div id="value">
     <h2>Value</h2>
-    
-
-<p>An object with S3 class <code>"cv.biglasso"</code> which inherits from
+    <p>An object with S3 class <code>"cv.biglasso"</code> which inherits from
 class <code>"cv.ncvreg"</code>. The following variables are contained in the
-class (adopted from <code><a href="https://rdrr.io/pkg/ncvreg/man/cv.ncvreg.html" class="external-link">ncvreg::cv.ncvreg()</a></code>).</p>
+class (adopted from <code><a href="https://pbreheny.github.io/ncvreg/reference/cv.ncvreg.html" class="external-link">ncvreg::cv.ncvreg()</a></code>).</p>
 <dl><dt>cve</dt>
 <dd><p>The error for each value of <code>lambda</code>, averaged across the cross-validation folds.</p></dd>
 
@@ -188,7 +188,7 @@ class (adopted from <code><a href="https://rdrr.io/pkg/ncvreg/man/cv.ncvreg.html
 out 1/<code>nfolds</code> of the data. The cross-validation error is based on the
 residual sum of squares when <code>family="gaussian"</code> and the binomial
 deviance when <code>family="binomial"</code>.</p>
-<p>The S3 class object <code>cv.biglasso</code> inherits class <code><a href="https://rdrr.io/pkg/ncvreg/man/cv.ncvreg.html" class="external-link">ncvreg::cv.ncvreg()</a></code>. So S3
+<p>The S3 class object <code>cv.biglasso</code> inherits class <code><a href="https://pbreheny.github.io/ncvreg/reference/cv.ncvreg.html" class="external-link">ncvreg::cv.ncvreg()</a></code>. So S3
 functions such as <code>"summary", "plot"</code> can be directly applied to the
 <code>cv.biglasso</code> object.</p>
     </div>
@@ -203,7 +203,7 @@ functions such as <code>"summary", "plot"</code> can be directly applied to the
 
     <div id="ref-examples">
     <h2>Examples</h2>
-    <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span><span class="kw">if</span> <span class="op">(</span><span class="cn">FALSE</span><span class="op">)</span> <span class="op">{</span></span></span>
+    <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span><span class="kw">if</span> <span class="op">(</span><span class="cn">FALSE</span><span class="op">)</span> <span class="op">{</span> <span class="co"># \dontrun{</span></span></span>
 <span class="r-in"><span><span class="co">## cv.biglasso</span></span></span>
 <span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/utils/data.html" class="external-link">data</a></span><span class="op">(</span><span class="va">colon</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="va">X</span> <span class="op">&lt;-</span> <span class="va">colon</span><span class="op">$</span><span class="va">X</span></span></span>
@@ -215,7 +215,7 @@ functions such as <code>"summary", "plot"</code> can be directly applied to the
 <span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/graphics/par.html" class="external-link">par</a></span><span class="op">(</span>mfrow <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">2</span>, <span class="fl">2</span><span class="op">)</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot</a></span><span class="op">(</span><span class="va">cvfit</span>, type <span class="op">=</span> <span class="st">'all'</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/base/summary.html" class="external-link">summary</a></span><span class="op">(</span><span class="va">cvfit</span><span class="op">)</span></span></span>
-<span class="r-in"><span><span class="op">}</span></span></span>
+<span class="r-in"><span><span class="op">}</span> <span class="co"># }</span></span></span>
 </code></pre></div>
     </div>
   </div>
@@ -230,15 +230,15 @@ functions such as <code>"summary", "plot"</code> can be directly applied to the
 </div>
 
 <div class="pkgdown">
-  <p></p><p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.0.9.</p>
+  <p></p><p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.1.1.</p>
 </div>
 
       </footer></div>
 
-  
 
 
-  
+
+
 
   </body></html>
 

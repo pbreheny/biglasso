@@ -4,7 +4,7 @@ along with standard error bars."><!-- mathjax --><script src="https://cdnjs.clou
 <script src="https://oss.maxcdn.com/html5shiv/3.7.3/html5shiv.min.js"></script>
 <script src="https://oss.maxcdn.com/respond/1.4.2/respond.min.js"></script>
 <![endif]--></head><body data-spy="scroll" data-target="#toc">
-    
+
 
     <div class="container template-reference-topic">
       <header><div class="navbar navbar-default navbar-fixed-top" role="navigation">
@@ -18,7 +18,7 @@ along with standard error bars."><!-- mathjax --><script src="https://cdnjs.clou
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">biglasso</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="">1.6.0</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="">1.6.0.1</span>
       </span>
     </div>
 
@@ -35,20 +35,20 @@ along with standard error bars."><!-- mathjax --><script src="https://cdnjs.clou
       </ul><ul class="nav navbar-nav navbar-right"><li>
   <a href="https://github.com/pbreheny/biglasso/" class="external-link">
     <span class="fab fa-github fa-lg"></span>
-     
+
   </a>
 </li>
       </ul></div><!--/.nav-collapse -->
   </div><!--/.container -->
 </div><!--/.navbar -->
 
-      
+
 
       </header><div class="row">
   <div class="col-md-9 contents">
     <div class="page-header">
     <h1>Plots the cross-validation curve from a "cv.biglasso" object</h1>
-    <small class="dont-index">Source: <a href="https://github.com/pbreheny/biglasso/blob/HEAD/R/plot-cv-biglasso.R" class="external-link"><code>R/plot-cv-biglasso.R</code></a></small>
+    <small class="dont-index">Source: <a href="https://github.com/pbreheny/biglasso/blob/master/R/plot-cv-biglasso.R" class="external-link"><code>R/plot-cv-biglasso.R</code></a></small>
     <div class="hidden name"><code>plot.cv.biglasso.Rd</code></div>
     </div>
 
@@ -58,7 +58,7 @@ along with standard error bars.</p>
     </div>
 
     <div id="ref-usage">
-    <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="co"># S3 method for cv.biglasso</span></span>
+    <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="co"># S3 method for class 'cv.biglasso'</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot</a></span><span class="op">(</span></span>
 <span>  <span class="va">x</span>,</span>
 <span>  log.l <span class="op">=</span> <span class="cn">TRUE</span>,</span>
@@ -72,15 +72,17 @@ along with standard error bars.</p>
 
     <div id="arguments">
     <h2>Arguments</h2>
-    <dl><dt>x</dt>
+
+
+<dl><dt id="arg-x">x<a class="anchor" aria-label="anchor" href="#arg-x"></a></dt>
 <dd><p>A <code>"cv.biglasso"</code> object.</p></dd>
 
 
-<dt>log.l</dt>
+<dt id="arg-log-l">log.l<a class="anchor" aria-label="anchor" href="#arg-log-l"></a></dt>
 <dd><p>Should horizontal axis be on the log scale?  Default is TRUE.</p></dd>
 
 
-<dt>type</dt>
+<dt id="arg-type">type<a class="anchor" aria-label="anchor" href="#arg-type"></a></dt>
 <dd><p>What to plot on the vertical axis.  <code>cve</code> plots the
 cross-validation error (deviance); <code>rsq</code> plots an estimate of the
 fraction of the deviance explained by the model (R-squared); <code>snr</code>
@@ -90,22 +92,22 @@ deviation); <code>pred</code> plots, for <code>family="binomial"</code>, the est
 prediction error; <code>all</code> produces all of the above.</p></dd>
 
 
-<dt>selected</dt>
+<dt id="arg-selected">selected<a class="anchor" aria-label="anchor" href="#arg-selected"></a></dt>
 <dd><p>If <code>TRUE</code> (the default), places an axis on top of the
 plot denoting the number of variables in the model (i.e., that have a
 nonzero regression coefficient) at that value of <code>lambda</code>.</p></dd>
 
 
-<dt>vertical.line</dt>
+<dt id="arg-vertical-line">vertical.line<a class="anchor" aria-label="anchor" href="#arg-vertical-line"></a></dt>
 <dd><p>If <code>TRUE</code> (the default), draws a vertical line at
 the value where cross-validaton error is minimized.</p></dd>
 
 
-<dt>col</dt>
+<dt id="arg-col">col<a class="anchor" aria-label="anchor" href="#arg-col"></a></dt>
 <dd><p>Controls the color of the dots (CV estimates).</p></dd>
 
 
-<dt>...</dt>
+<dt id="arg--">...<a class="anchor" aria-label="anchor" href="#arg--"></a></dt>
 <dd><p>Other graphical parameters to <code>plot</code></p></dd>
 
 </dl></div>
@@ -127,7 +129,6 @@ along with the estimates at value of <code>lambda</code>.  For <code>rsq</code> 
     <div id="ref-examples">
     <h2>Examples</h2>
     <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span><span class="co">## See examples in "cv.biglasso"</span></span></span>
-<span class="r-in"></span>
 </code></pre></div>
     </div>
   </div>
@@ -142,15 +143,15 @@ along with the estimates at value of <code>lambda</code>.  For <code>rsq</code> 
 </div>
 
 <div class="pkgdown">
-  <p></p><p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.0.9.</p>
+  <p></p><p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.1.1.</p>
 </div>
 
       </footer></div>
 
-  
 
 
-  
+
+
 
   </body></html>
 

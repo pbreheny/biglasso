@@ -13,7 +13,7 @@ powerful big data analysis even with only an ordinary laptop."><!-- mathjax --><
 <script src="https://oss.maxcdn.com/html5shiv/3.7.3/html5shiv.min.js"></script>
 <script src="https://oss.maxcdn.com/respond/1.4.2/respond.min.js"></script>
 <![endif]--></head><body data-spy="scroll" data-target="#toc">
-    
+
 
     <div class="container template-reference-topic">
       <header><div class="navbar navbar-default navbar-fixed-top" role="navigation">
@@ -27,7 +27,7 @@ powerful big data analysis even with only an ordinary laptop."><!-- mathjax --><
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">biglasso</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="">1.6.0</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="">1.6.0.1</span>
       </span>
     </div>
 
@@ -44,20 +44,20 @@ powerful big data analysis even with only an ordinary laptop."><!-- mathjax --><
       </ul><ul class="nav navbar-nav navbar-right"><li>
   <a href="https://github.com/pbreheny/biglasso/" class="external-link">
     <span class="fab fa-github fa-lg"></span>
-     
+
   </a>
 </li>
       </ul></div><!--/.nav-collapse -->
   </div><!--/.container -->
 </div><!--/.navbar -->
 
-      
+
 
       </header><div class="row">
   <div class="col-md-9 contents">
     <div class="page-header">
     <h1>Extending Lasso Model Fitting to Big Data</h1>
-    <small class="dont-index">Source: <a href="https://github.com/pbreheny/biglasso/blob/HEAD/R/biglasso-package.R" class="external-link"><code>R/biglasso-package.R</code></a></small>
+    <small class="dont-index">Source: <a href="https://github.com/pbreheny/biglasso/blob/master/R/biglasso-package.R" class="external-link"><code>R/biglasso-package.R</code></a></small>
     <div class="hidden name"><code>biglasso-package.Rd</code></div>
     </div>
 
@@ -78,7 +78,7 @@ powerful big data analysis even with only an ordinary laptop.</p>
 
     <div id="details">
     <h2>Details</h2>
-    
+
 <table class="table table"><tr><td>Package:</td><td>biglasso</td></tr><tr><td>Type:</td><td>Package</td></tr><tr><td>Version:</td><td>1.4-1</td></tr><tr><td>Date:</td><td>2021-01-29</td></tr><tr><td>License:</td><td>GPL-3</td></tr></table><p>Penalized regression models, in particular the lasso, have been extensively
 applied to analyzing high-dimensional data sets. However, due to the memory
 limit, existing R packages are not capable of fitting lasso models for
@@ -142,7 +142,7 @@ screening rule "SSR-BEDPP" is used)</p><ul><li><p>For wide data case (<code>p &g
 </ul></div>
     <div id="references">
     <h2>References</h2>
-    
+
 <ul><li><p>Zeng, Y., and Breheny, P. (2017). The biglasso
 Package: A Memory- and Computation-Efficient Solver for Lasso Model Fitting
 with Big Data in R. <a href="https://arxiv.org/abs/1701.05936" class="external-link">https://arxiv.org/abs/1701.05936</a>.</p></li>
@@ -169,7 +169,7 @@ Advances in Neural Information Processing Systems</em>, pp. 1053-1061.</p></li>
 
     <div id="ref-examples">
     <h2>Examples</h2>
-    <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span><span class="kw">if</span> <span class="op">(</span><span class="cn">FALSE</span><span class="op">)</span> <span class="op">{</span></span></span>
+    <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span><span class="kw">if</span> <span class="op">(</span><span class="cn">FALSE</span><span class="op">)</span> <span class="op">{</span> <span class="co"># \dontrun{</span></span></span>
 <span class="r-in"><span><span class="co">## Example of reading data from external big data file, fit lasso model, </span></span></span>
 <span class="r-in"><span><span class="co">## and run cross validation in parallel</span></span></span>
 <span class="r-in"><span></span></span>
@@ -204,7 +204,7 @@ Advances in Neural Information Processing Systems</em>, pp. 1053-1061.</p></li>
 <span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/base/print.html" class="external-link">print</a></span><span class="op">(</span><span class="va">time.cvfit</span><span class="op">)</span> <span class="co"># ~ 3 minutes for 10-fold cross validation</span></span></span>
 <span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot</a></span><span class="op">(</span><span class="va">cvfit</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/base/summary.html" class="external-link">summary</a></span><span class="op">(</span><span class="va">cvfit</span><span class="op">)</span></span></span>
-<span class="r-in"><span><span class="op">}</span></span></span>
+<span class="r-in"><span><span class="op">}</span> <span class="co"># }</span></span></span>
 <span class="r-in"><span></span></span>
 </code></pre></div>
     </div>
@@ -220,15 +220,15 @@ Advances in Neural Information Processing Systems</em>, pp. 1053-1061.</p></li>
 </div>
 
 <div class="pkgdown">
-  <p></p><p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.0.9.</p>
+  <p></p><p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.1.1.</p>
 </div>
 
       </footer></div>
 
-  
 
 
-  
+
+
 
   </body></html>
 
