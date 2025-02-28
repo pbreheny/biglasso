@@ -22,12 +22,12 @@ Imports: Rcpp (>= 0.12.1), methods
 LinkingTo: Rcpp, RcppArmadillo (>= 0.8.600), bigmemory, BH
 VignetteBuilder: knitr
 Suggests: 
-    parallel,
-    testthat,
     glmnet,
-    survival,
     knitr,
-    rmarkdown
+    parallel,
+    rmarkdown,
+    survival,
+    tinytest
 Roxygen: list(markdown = TRUE)
 RoxygenNote: 7.3.2
 Encoding: UTF-8
