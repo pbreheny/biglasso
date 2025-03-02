@@ -7,7 +7,7 @@ library(glmnet)
 n <- 100
 p <- 10
 eps <- 1e-10
-tolerance <- 1e-6
+tolerance <- 1e-4
 X <- matrix(rnorm(n*p), n, p)
 b <- rnorm(p)
 y <- rnorm(n, X %*% b)

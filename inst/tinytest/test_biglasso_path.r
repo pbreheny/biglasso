@@ -1,6 +1,3 @@
-# TKP
-# April 2024 
-devtools::load_all('.')
 library(ncvreg)
 library(glmnet)
 
@@ -30,7 +27,7 @@ fit2 <- glmnet(X, y = y, family = "gaussian", lambda = lam,
                penalty.factor = rep(1, ncol(X)),
                penalty = "lasso", max.iter = 10000, standardize = F)
 
-tinytest::expect_equivalent(fit1$beta, fit2$beta, tolerance = 0.001)
+expect_equivalent(fit1$beta, fit2$beta, tolerance = 0.001)
 
 
 # prostate data ---------------------------
@@ -53,7 +50,7 @@ fit4 <- glmnet(X, y = y, family = "gaussian", lambda = lam,
                penalty.factor = rep(1, ncol(X)),
                penalty = "lasso", max.iter = 10000, standardize = F)
 
-tinytest::expect_equivalent(fit3$beta, fit4$beta, tolerance = 0.001)
+expect_equivalent(fit3$beta, fit4$beta, tolerance = 0.001)
 
 
 
