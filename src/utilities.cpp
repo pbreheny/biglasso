@@ -628,79 +628,38 @@ void update_zj(vector<double> &z,
   }
 }
 
-// -----------------------------------------------------------------------------
-// Following functions are directly callled inside R
-// -----------------------------------------------------------------------------
-// standardize big matrix, return just 'center' and 'scale'
-/*
-RcppExport SEXP standardize_bm(SEXP xP, SEXP row_idx_) {
-  BEGIN_RCPP
-  SEXP __sexp_result;
-  {
-    Rcpp::RNGScope __rngScope;
-    XPtr<BigMatrix> xMat(xP);
-    MatrixAccessor<double> xAcc(*xMat);
-    int ncol = xMat->ncol();
-    
-    NumericVector c(ncol);
-    NumericVector s(ncol);
-    IntegerVector row_idx(row_idx_);
-    int nrow = row_idx.size();
-    
-    for (int j = 0; j < ncol; j++) {
-      c[j] = 0; //center
-      s[j] = 0; //scale
-      for (int i = 0; i < nrow; i++) {
-        c[j] += xAcc[j][row_idx[i]]; 
-        s[j] += pow(xAcc[j][row_idx[i]], 2);
-      }
-      c[j] = c[j] / nrow;
-      s[j] = sqrt(s[j] / nrow - pow(c[j], 2));
-    }
-    PROTECT(__sexp_result = Rcpp::List::create(c, s));
-  }
-  UNPROTECT(1);
-  return __sexp_result;
-  END_RCPP
-}
-*/
-
 // compute eta = X %*% beta. X: n-by-p; beta: p-by-l. l is length of lambda
 // [[Rcpp::export]]
 RcppExport SEXP get_eta(SEXP xP, SEXP row_idx_, SEXP beta, SEXP idx_p, SEXP idx_l) {
   BEGIN_RCPP
-  SEXP __sexp_result;
-  {
-    Rcpp::RNGScope __rngScope;
-    XPtr<BigMatrix> xpMat(xP); //convert to big.matrix pointer;
-    MatrixAccessor<double> xAcc(*xpMat);
     
-    // sparse matrix for beta: only pass the non-zero entries and their indices;
-    arma::sp_mat sp_beta = Rcpp::as<arma::sp_mat>(beta);
+  Rcpp::RNGScope __rngScope;
+  XPtr<BigMatrix> xpMat(xP); //convert to big.matrix pointer;
+  MatrixAccessor<double> xAcc(*xpMat);
     
-    IntegerVector row_idx(row_idx_);
-    IntegerVector index_p(idx_p);
-    IntegerVector index_l(idx_l);
+  // sparse matrix for beta: only pass the non-zero entries and their indices;
+  arma::sp_mat sp_beta = Rcpp::as<arma::sp_mat>(beta);
     
-    int n = row_idx.size();
-    int l = sp_beta.n_cols;
-    int nnz = index_p.size();
+  IntegerVector row_idx(row_idx_);
+  IntegerVector index_p(idx_p);
+  IntegerVector index_l(idx_l);
     
-    // initialize result
-    arma::sp_mat sp_res = arma::sp_mat(n, l);
+  int n = row_idx.size();
+  int l = sp_beta.n_cols;
+  int nnz = index_p.size();
     
-    for (int k = 0; k < nnz; k++) {
-      for (int i = 0; i < n; i++) {
-        //double x = (xAcc[index_p[k]][row_idx[i]] - center[index_p[k]]) / scale[index_p[k]];
-        // NOTE: beta here is unstandardized; so no need to standardize x
-        double x = xAcc[index_p[k]][row_idx[i]];
-        sp_res(i, index_l[k]) += x * sp_beta(index_p[k], index_l[k]);
-      }
+  // initialize result
+  arma::sp_mat sp_res = arma::sp_mat(n, l);
+    
+  for (int k = 0; k < nnz; k++) {
+    for (int i = 0; i < n; i++) {
+      //double x = (xAcc[index_p[k]][row_idx[i]] - center[index_p[k]]) / scale[index_p[k]];
+      // NOTE: beta here is unstandardized; so no need to standardize x
+      double x = xAcc[index_p[k]][row_idx[i]];
+      sp_res(i, index_l[k]) += x * sp_beta(index_p[k], index_l[k]);
     }
-    
-    PROTECT(__sexp_result = Rcpp::wrap(sp_res));
   }
-  UNPROTECT(1);
-  return __sexp_result;
+  return Rcpp::wrap(sp_res);
+  
   END_RCPP
 }
