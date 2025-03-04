@@ -1,6 +1,6 @@
 Package: biglasso
-Version: 1.6.0.3
-Date: 2025-03-02
+Version: 1.6.0.4
+Date: 2025-03-04
 Title: Extending Lasso Model Fitting to Big Data
 Authors@R: c(
     person("Yaohui", "Zeng", role = c("aut")),

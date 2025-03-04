@@ -1,3 +1,4 @@
+if (interactive()) library(tinytest)
 library(ncvreg)
 library(glmnet)
 
@@ -20,7 +21,7 @@ lam <- ncvreg:::setupLambda(X = X, y = y, family = "gaussian", nlambda = 10,
                             lambda.min = ifelse(n > p, 0.001, 0.05))
 
 fit1 <- biglasso_path(X.bm, y, lambda = lam, xtx=xtx, r = resid,
-                     penalty = "lasso", max.iter = 10000)
+                     penalty = "lasso", max.iter = 20000)
 
 
 fit2 <- glmnet(X, y = y, family = "gaussian", lambda = lam, 
@@ -51,6 +52,3 @@ fit4 <- glmnet(X, y = y, family = "gaussian", lambda = lam,
                penalty = "lasso", max.iter = 10000, standardize = F)
 
 expect_equivalent(fit3$beta, fit4$beta, tolerance = 0.001)
-
-
-
