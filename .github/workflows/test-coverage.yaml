@@ -46,4 +46,6 @@ jobs:
         uses: codecov/codecov-action@v5
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
-          slug: pbreheny/biglasso
+          files: ./cobertura.xml
+          disable_search: true
+          fail_ci_if_error: true
