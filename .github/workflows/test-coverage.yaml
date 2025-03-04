@@ -42,10 +42,17 @@ jobs:
           covr::to_cobertura(cov)
         shell: Rscript {0}
 
-      - name: Upload coverage reports to Codecov
-        uses: codecov/codecov-action@v5
+      - uses: codecov/codecov-action@v5
         with:
-          token: ${{ secrets.CODECOV_TOKEN }}
-          files: ./cobertura.xml
+          fail_ci_if_error: ${{ github.event_name != 'pull_request' || secrets.CODECOV_TOKEN }}
+          file: ./cobertura.xml
+          plugin: noop
           disable_search: true
-          fail_ci_if_error: true
+          token: ${{ secrets.CODECOV_TOKEN }}
+
+      - name: Upload test results
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-test-failures
+          path: ${{ runner.temp }}/package
