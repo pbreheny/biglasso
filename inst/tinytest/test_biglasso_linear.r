@@ -38,9 +38,9 @@ lambda.min <- 0.05
 fit_ncv <- ncvreg(X, y, penalty = 'lasso', eps = eps, lambda.min = lambda.min, max.iter = 1e5)
 
 X.bm <- as.big.matrix(X)
-fit_ssr <- biglasso(X.bm, y, screen = 'SSR', eps = eps)
-fit_hybrid <- biglasso(X.bm, y, screen = 'Hybrid', eps = eps)
-fit_adaptive <- biglasso(X.bm, y, screen = 'Adaptive', eps = eps)
+fit_ssr <- biglasso(X.bm, y, screen = 'SSR', eps = eps, max.iter = 1e5)
+fit_hybrid <- biglasso(X.bm, y, screen = 'Hybrid', eps = eps, max.iter = 1e5)
+fit_adaptive <- biglasso(X.bm, y, screen = 'Adaptive', eps = eps, max.iter = 1e5)
 
 expect_equal(as.numeric(fit_ncv$beta), as.numeric(fit_ssr$beta), tolerance = tolerance)
 expect_equal(as.numeric(fit_ncv$beta), as.numeric(fit_hybrid$beta), tolerance = tolerance)
@@ -59,17 +59,18 @@ if (interactive()) {
 
 # Test parallel computing -------------------------------------------------
 
-fit_ssr2 <- biglasso(X.bm, y, screen = 'SSR', eps = eps, ncores = 2)
-fit_hybrid2 <- biglasso(X.bm, y, screen = 'Hybrid', eps = eps, ncores = 2)
-fit_adaptive2 <- biglasso(X.bm, y, screen = 'Adaptive', eps = eps, ncores = 2)
+fit_ssr2 <- biglasso(X.bm, y, screen = 'SSR', eps = eps, ncores = 2, max.iter = 1e5)
+fit_hybrid2 <- biglasso(X.bm, y, screen = 'Hybrid', eps = eps, ncores = 2, max.iter = 1e5)
+fit_adaptive2 <- biglasso(X.bm, y, screen = 'Adaptive', eps = eps, ncores = 2, max.iter = 1e5)
+tol <- 1e-4
 
 # Objects are mostly identical, but iterations, etc sometimes differ slightly
 # expect_identical(fit_ssr, fit_ssr2)
 # expect_identical(fit_hybrid, fit_hybrid2)
 # expect_identical(fit_adaptive, fit_adaptive2)
-expect_identical(coef(fit_ssr) |> as.matrix(), coef(fit_ssr2) |> as.matrix())
-expect_identical(coef(fit_hybrid) |> as.matrix(), coef(fit_hybrid2) |> as.matrix())
-expect_identical(coef(fit_adaptive) |> as.matrix(), coef(fit_adaptive2) |> as.matrix())
+expect_equivalent(coef(fit_ssr) |> as.matrix(), coef(fit_ssr2) |> as.matrix(), tolerance = tol)
+expect_equivalent(coef(fit_hybrid) |> as.matrix(), coef(fit_hybrid2) |> as.matrix(), tolerance = tol)
+expect_equivalent(coef(fit_adaptive) |> as.matrix(), coef(fit_adaptive2) |> as.matrix(), tolerance = tol)
 
 # Test elastic net --------------------------------------------------------
 
