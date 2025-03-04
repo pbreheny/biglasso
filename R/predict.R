@@ -135,7 +135,10 @@ predict.mbiglasso <- function(object, X, row.idx = 1:nrow(X),
 #'
 coef.biglasso <- function(object, lambda, which = 1:length(object$lambda), drop = TRUE, ...) {
   if (!missing(lambda)) {
-    ind <- approx(object$lambda,seq(object$lambda),lambda)$y
+    if (max(lambda) > max(object$lambda) | min(lambda) < min(object$lambda)) {
+      stop('Supplied lambda value(s) are outside the range of the model fit.', call.=FALSE)
+    }
+    ind <- stats::approx(object$lambda, seq(object$lambda), lambda)$y
     l <- floor(ind)
     r <- ceiling(ind)
     w <- ind %% 1

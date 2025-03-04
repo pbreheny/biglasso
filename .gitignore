@@ -1,6 +1,8 @@
 .Rproj.user
 inst/doc
 docs
+.cache
+compile_commands.json
 
 # History files
 .Rhistory

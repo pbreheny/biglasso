@@ -31,7 +31,7 @@ p <- 200
 X <- matrix(rnorm(n*p), n, p)
 b <- c(rnorm(50), rep(0, p-50))
 y <- rnorm(n, X %*% b)
-eps <- 1e-8
+eps <- 1e-12
 tolerance <- 1e-3
 lambda.min <- 0.05
 
@@ -45,7 +45,17 @@ fit.adaptive <- biglasso(X.bm, y, screen = 'Adaptive', eps = eps)
 expect_equal(as.numeric(fit.ncv$beta), as.numeric(fit.ssr$beta), tolerance = tolerance)
 expect_equal(as.numeric(fit.ncv$beta), as.numeric(fit.hybrid$beta), tolerance = tolerance)
 expect_equal(as.numeric(fit.ncv$beta), as.numeric(fit.adaptive$beta), tolerance = tolerance)
-
+expect_equal(fit.ncv$lambda, fit.ssr$lambda)
+if (interactive()) {
+  plot(fit.ncv, log.l = TRUE)
+  plot(fit.ssr)
+  nl <- length(fit.ncv$lambda)
+  dif <- matrix(NA, nl, ncol(X) + 1)
+  for (l in 1:nl) {
+    dif[l, ] <- as.numeric(coef(fit.ncv, which=l) - coef(fit.ssr, which=l))
+  }
+  boxplot(dif)
+}
 
 # Test parallel computing -------------------------------------------------
 
@@ -59,6 +69,8 @@ fit.hybrid$time <- NA
 fit.hybrid2$time <- NA
 fit.adaptive$time <- NA
 fit.adaptive2$time <- NA
+fit.hybrid$safe_rejections <- NA   # These are usually very similar, but
+fit.hybrid2$safe_rejections <- NA  # not necessarily identical
 expect_identical(fit.ssr, fit.ssr2)
 expect_identical(fit.hybrid, fit.hybrid2)
 expect_identical(fit.adaptive, fit.adaptive2)

@@ -43,7 +43,7 @@ void slores_init(vector<double>& theta_lam,
   double sum_xmaxTy = crossprod_bm(xMat, y, row_idx, center[xmax_idx], scale[xmax_idx], n, xmax_idx);
   double sign_xmaxTy = sign(sum_xmaxTy);
   int j;
-#pragma omp parallel for private(j) schedule(static) 
+  //#pragma omp parallel for private(j) schedule(static) 
   for (j = 0; j < p; j++) {
     X_theta_lam_xi_pos[j] = -z[j] * n; // = -xTy
     prod_PX_Pxmax_xi_pos[j] = -sign_xmaxTy * crossprod_bm_Xj_Xk(xMat, row_idx, center, scale, n, col_idx[j], xmax_idx); 
@@ -1026,7 +1026,6 @@ RcppExport SEXP cdfit_binomial_ada_slores_ssr(SEXP X_, SEXP y_, SEXP n_pos_, SEX
                                               SEXP eps_, SEXP max_iter_, SEXP multiplier_, 
                                               SEXP dfmax_, SEXP ncore_, SEXP warn_,
                                               SEXP safe_thresh_, SEXP update_thresh_, SEXP verbose_) {
-  //ProfilerStart("Slores-ada.out");
   XPtr<BigMatrix> xMat(X_);
   double *y = REAL(y_);
   int n_pos = INTEGER(n_pos_)[0];
@@ -1246,7 +1245,6 @@ RcppExport SEXP cdfit_binomial_ada_slores_ssr(SEXP X_, SEXP y_, SEXP n_pos_, SEX
         //update_zj(z, slores_reject, slores_reject_old, xMat, row_idx, col_idx, center, scale, sumS, s, m, n, p);
       }
       
-      
 #pragma omp parallel for private(j) schedule(static) 
       for (j = 0; j < p; j++) {
         slores_reject_old[j] = slores_reject[j];
@@ -1367,14 +1365,9 @@ RcppExport SEXP cdfit_binomial_ada_slores_ssr(SEXP X_, SEXP y_, SEXP n_pos_, SEX
         violations = check_rest_set(e1, e2, z, xMat, row_idx, col_idx, center, scale, a, lambda[l], sumS, alpha, s, m, n, p);
       }
       if (violations == 0) break;
-      /*
-       if (n_slores_reject[l] <= p * slores_thresh) {
-       slores = 0; // turn off slores screening for next iteration if not efficient
-       }*/
     }
   }
   R_Free(slores_reject); R_Free(slores_reject_old);
   R_Free(s); R_Free(w); R_Free(a); R_Free(r); R_Free(e1); R_Free(e2); R_Free(eta);
-  //ProfilerStop();
   return List::create(beta0, beta, center, scale, lambda, Dev, iter, n_reject, n_slores_reject, Rcpp::wrap(col_idx));
 }
