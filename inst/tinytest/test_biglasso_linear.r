@@ -67,33 +67,9 @@ fit_adaptive2 <- biglasso(X.bm, y, screen = 'Adaptive', eps = eps, ncores = 2)
 # expect_identical(fit_ssr, fit_ssr2)
 # expect_identical(fit_hybrid, fit_hybrid2)
 # expect_identical(fit_adaptive, fit_adaptive2)
-expect_identical(coef(fit_ssr), coef(fit_ssr2))
-expect_identical(coef(fit_hybrid), coef(fit_hybrid2))
-expect_identical(coef(fit_adaptive), coef(fit_adaptive2))
-
-# Note: biglasso has diverged from ncvreg in its approach to CV (#45)
-## test_that("Test cross validation: ",{
-##   expect_equal(as.numeric(cvfit_ncv$cve), as.numeric(cvfit_ssr$cve), tolerance = tolerance)
-##   expect_equal(as.numeric(cvfit_ncv$cve), as.numeric(cvfit_hybrid$cve), tolerance = tolerance)
-##   expect_equal(as.numeric(cvfit_ncv$cve), as.numeric(cvfit_adaptive$cve), tolerance = tolerance)
-  
-##   expect_equal(as.numeric(cvfit_ncv$cvse), as.numeric(cvfit_ssr$cvse), tolerance = tolerance)
-##   expect_equal(as.numeric(cvfit_ncv$cvse), as.numeric(cvfit_hybrid$cvse), tolerance = tolerance)
-##   expect_equal(as.numeric(cvfit_ncv$cvse), as.numeric(cvfit_adaptive$cvse), tolerance = tolerance)
-  
-##   expect_equal(as.numeric(cvfit_ncv$lambda.min), as.numeric(cvfit_ssr$lambda.min), tolerance = tolerance)
-##   expect_equal(as.numeric(cvfit_ncv$lambda.min), as.numeric(cvfit_hybrid$lambda.min), tolerance = tolerance)
-##   expect_equal(as.numeric(cvfit_ncv$lambda.min), as.numeric(cvfit_adaptive$lambda.min), tolerance = tolerance)
-# cvfit_ssr <- cv.biglasso(X.bm, y, screen = 'SSR', eps = eps,
-#                          ncores = 1, cv.ind = fold)
-# cvfit_hybrid <- cv.biglasso(X.bm, y, screen = 'Hybrid', eps = eps,
-#                             ncores = 1, cv.ind = fold)
-# cvfit_adaptive <- cv.biglasso(X.bm, y, screen = 'Adaptive', eps = eps,
-#                               ncores = 1, cv.ind = fold)
-
-
-## })
-
+expect_identical(coef(fit_ssr) |> as.matrix(), coef(fit_ssr2) |> as.matrix())
+expect_identical(coef(fit_hybrid) |> as.matrix(), coef(fit_hybrid2) |> as.matrix())
+expect_identical(coef(fit_adaptive) |> as.matrix(), coef(fit_adaptive2) |> as.matrix())
 
 # Test elastic net --------------------------------------------------------
 
@@ -116,21 +92,3 @@ fit_ssr.edpp <- biglasso(X.bm, y, penalty = 'enet', screen = 'Hybrid', eps = eps
 
 expect_equal(as.numeric(fit_ncv$beta), as.numeric(fit_ssr$beta), tolerance = tolerance)
 expect_equal(as.numeric(fit_ncv$beta), as.numeric(fit_ssr.edpp$beta), tolerance = tolerance)
-
-## test_that("Elastic net: test cross validation: ",{
-# cvfit_ncv <- cv.ncvreg(X, y, penalty = 'lasso', eps = sqrt(eps), alpha = alpha,
-#                        lambda.min = lambda.min, fold = fold)
-# cvfit_ssr <- cv.biglasso(X.bm, y, screen = 'SSR', penalty = 'enet', eps = eps, alpha = alpha,
-#                          ncores = 1, cv.ind = fold)
-# cvfit_ssr.edpp <- cv.biglasso(X.bm, y, penalty = 'enet', screen = 'Hybrid', eps = eps, alpha = alpha,
-#                               ncores = 2, cv.ind = fold)
-##   expect_equal(as.numeric(cvfit_ncv$cve), as.numeric(cvfit_ssr$cve), tolerance = tolerance)
-##   expect_equal(as.numeric(cvfit_ncv$cve), as.numeric(cvfit_ssr.edpp$cve), tolerance = tolerance)
-  
-##   expect_equal(as.numeric(cvfit_ncv$cvse), as.numeric(cvfit_ssr$cvse), tolerance = tolerance)
-##   expect_equal(as.numeric(cvfit_ncv$cvse), as.numeric(cvfit_ssr.edpp$cvse), tolerance = tolerance)
-  
-##   expect_equal(as.numeric(cvfit_ncv$lambda.min), as.numeric(cvfit_ssr$lambda.min), tolerance = tolerance)
-##   expect_equal(as.numeric(cvfit_ncv$lambda.min), as.numeric(cvfit_ssr.edpp$lambda.min), tolerance = tolerance)
-  
-## })
