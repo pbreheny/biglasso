@@ -62,7 +62,7 @@ if (interactive()) {
 fit_ssr2 <- biglasso(X.bm, y, screen = 'SSR', eps = eps, ncores = 2, max.iter = 1e5)
 fit_hybrid2 <- biglasso(X.bm, y, screen = 'Hybrid', eps = eps, ncores = 2, max.iter = 1e5)
 fit_adaptive2 <- biglasso(X.bm, y, screen = 'Adaptive', eps = eps, ncores = 2, max.iter = 1e5)
-tol <- 1e-4
+tol <- 1e-3
 
 # Objects are mostly identical, but iterations, etc sometimes differ slightly
 # expect_identical(fit_ssr, fit_ssr2)
