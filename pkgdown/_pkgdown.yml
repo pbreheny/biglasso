@@ -1,0 +1,14 @@
+url: https://pbreheny.github.io/biglasso/
+
+template:
+  bootstrap: 5
+  light-switch: true
+
+figures:
+  dev: ragg::agg_png
+  dpi: 96
+  fig.ext: png
+  fig.width: 5
+  fig.height: 5
+  fig.retina: 2
+  bg: "#fff"

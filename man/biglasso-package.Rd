@@ -130,21 +130,35 @@ summary(cvfit)
 
 }
 \references{
-\itemize{ \item Zeng, Y., and Breheny, P. (2017). The biglasso
-Package: A Memory- and Computation-Efficient Solver for Lasso Model Fitting
-with Big Data in R. \url{https://arxiv.org/abs/1701.05936}.  \item
-Tibshirani, R., Bien, J., Friedman, J., Hastie, T., Simon, N., Taylor, J.,
+\itemize{
+\item Zeng Y and Breheny P. (2021) The biglasso Package: A Memory- and
+Computation-Efficient Solver for Lasso Model Fitting with Big Data in R.
+\emph{R Journal}, \strong{12}: 6-19.
+\doi{10.32614/RJ-2021-001}
+
+\item Wang C and Breheny P. (2022) Adaptive hybrid screening for efficient
+lasso optimization.
+\emph{Journal of Statistical Computation and Simulation}, \strong{92}: 2233-2256.
+\doi{10.1080/00949655.2021.2025376}
+
+\item Tibshirani, R., Bien, J., Friedman, J., Hastie, T., Simon, N., Taylor, J.,
 and Tibshirani, R. J. (2012). Strong rules for discarding predictors in
 lasso-type problems. \emph{Journal of the Royal Statistical Society: Series
-B (Statistical Methodology)}, \strong{74}(2), 245-266.  \item Wang, J.,
-Zhou, J., Wonka, P., and Ye, J. (2013). Lasso screening rules via dual
+B (Statistical Methodology)}, \strong{74}(2), 245-266.
+
+\item Wang, J., Zhou, J., Wonka, P., and Ye, J. (2013). Lasso screening rules via dual
 polytope projection. \emph{In Advances in Neural Information Processing
-Systems}, pp. 1070-1078.  \item Xiang, Z. J., and Ramadge, P. J. (2012).
+Systems}, pp. 1070-1078.
+
+\item Xiang, Z. J., and Ramadge, P. J. (2012).
 Fast lasso screening tests based on correlations. \emph{In Acoustics, Speech
 and Signal Processing (ICASSP), 2012 IEEE International Conference on} (pp.
-2137-2140). IEEE.  \item Wang, J., Zhou, J., Liu, J., Wonka, P., and Ye, J.
+2137-2140). IEEE.
+
+\item Wang, J., Zhou, J., Liu, J., Wonka, P., and Ye, J.
 (2014). A safe screening rule for sparse logistic regression. \emph{In
-Advances in Neural Information Processing Systems}, pp. 1053-1061.  }
+Advances in Neural Information Processing Systems}, pp. 1053-1061.
+}
 }
 \author{
 Yaohui Zeng, Chuyi Wang, Tabitha Peter, and Patrick Breheny

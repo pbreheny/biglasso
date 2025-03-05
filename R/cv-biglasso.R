@@ -148,14 +148,7 @@ cv.biglasso <- function(X, y, row.idx = 1:nrow(X),
                                        "parallel", "eval.metric", "biglasso_fit"),
                             envir=environment())
     parallel::clusterCall(cluster, function() {
-
       require(biglasso)
-      # require(bigmemory)
-      # require(Matrix)
-      # dyn.load("~/GitHub/biglasso.Rcheck/biglasso/libs/biglasso.so")
-      # source("~/GitHub/biglasso/R/biglasso.R")
-      # source("~/GitHub/biglasso/R/predict.R")
-      # source("~/GitHub/biglasso/R/loss.R")
     })
     fold.results <- parallel::parLapply(cl = cluster,
                                         X = seq_len(nfolds),

@@ -126,7 +126,11 @@ extern SEXP cdfit_gaussian_bedpp_ssr(SEXP X_, SEXP y_, SEXP row_idx_,
                                      SEXP safe_thresh_,
                                      SEXP verbose_);
 
-extern SEXP _biglasso_get_eta(SEXP xPSEXP, SEXP row_idx_SEXP, SEXP betaSEXP, SEXP idx_pSEXP, SEXP idx_lSEXP);
+extern SEXP _biglasso_get_eta(SEXP xPSEXP,
+                              SEXP row_idx_SEXP,
+                              SEXP betaSEXP,
+                              SEXP idx_pSEXP,
+                              SEXP idx_lSEXP);
 
 static R_CallMethodDef callMethods[] = {
   //{"sqsum", (DL_FUNC) &sqsum,}

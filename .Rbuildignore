@@ -6,3 +6,5 @@
 ^.*\.Rproj$
 ^\.Rproj\.user$
 ^\.vscode$
+^\.cache$
+^compile_commands.json$

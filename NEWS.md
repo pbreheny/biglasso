@@ -1,3 +1,12 @@
+# biglasso 1.6.1
+  * Various internal fixes (see below)
+  * Updating references
+  * Fixing some broken links
+  * Removing an OMP directive that was causing stack imbalance issues
+  * Improved CI testing
+  * Eliminating use of PROTECT in cpp code
+  * Some NAMESPACE changes
+
 # biglasso 1.6.0
   * New: functions biglasso_fit() and biglasso_path(), which allow users to turn
     off standardization and intercept

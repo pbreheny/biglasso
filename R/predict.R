@@ -91,7 +91,7 @@ predict.biglasso <- function(object, X, row.idx = 1:nrow(X),
     if (type =='link') {
       return(drop(eta))
     } else if (type == 'class') {
-      return(drop(Matrix(1*(eta>0))))
+      return(drop(Matrix::Matrix(1*(eta>0))))
     } else { # response
       return(drop(exp(eta)/(1+exp(eta))))
     }

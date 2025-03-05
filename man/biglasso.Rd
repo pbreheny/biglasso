@@ -243,6 +243,12 @@ fit = biglasso(x.bm, y, family = "mgaussian")
 plot(fit, main = "mgaussian")
 
 }
+\references{
+Zeng Y and Breheny P. (2021) The biglasso Package: A Memory- and Computation-
+Efficient Solver for Lasso Model Fitting with Big Data in R.
+\emph{R Journal}, \strong{12}: 6-19.
+\doi{10.32614/RJ-2021-001}
+}
 \seealso{
 \link{biglasso-package}, \code{\link[=setupX]{setupX()}}, \code{\link[=cv.biglasso]{cv.biglasso()}}, \code{\link[=plot.biglasso]{plot.biglasso()}}, \code{\link[ncvreg:ncvreg]{ncvreg::ncvreg()}}
 }

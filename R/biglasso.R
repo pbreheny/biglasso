@@ -137,6 +137,12 @@
 #' 
 #' @author Yaohui Zeng, Chuyi Wang and Patrick Breheny
 #'
+#' @references
+#' Zeng Y and Breheny P. (2021) The biglasso Package: A Memory- and Computation-
+#' Efficient Solver for Lasso Model Fitting with Big Data in R.
+#' *R Journal*, **12**: 6-19.
+#' \doi{10.32614/RJ-2021-001}
+#' 
 #' @seealso [biglasso-package], [setupX()], [cv.biglasso()], [plot.biglasso()], [ncvreg::ncvreg()]
 #' 
 #' @examples
@@ -372,7 +378,7 @@ biglasso <- function(X, y, row.idx = 1:nrow(X),
     )
     
     a <- rep(mean(y), nlambda)
-    b <- Matrix(res[[1]], sparse = T)
+    b <- Matrix::Matrix(res[[1]], sparse = T)
     center <- res[[2]]
     scale <- res[[3]]
     lambda <- res[[4]]
@@ -434,7 +440,7 @@ biglasso <- function(X, y, row.idx = 1:nrow(X),
     )
    
     a <- res[[1]]
-    b <- Matrix(res[[2]], sparse = T)
+    b <- Matrix::Matrix(res[[2]], sparse = T)
     center <- res[[3]]
     scale <- res[[4]]
     lambda <- res[[5]]
@@ -503,7 +509,7 @@ biglasso <- function(X, y, row.idx = 1:nrow(X),
       
     )
     
-    b <- Matrix(res[[1]], sparse = T)
+    b <- Matrix::Matrix(res[[1]], sparse = T)
     center <- res[[2]]
     scale <- res[[3]]
     lambda <- res[[4]]
@@ -582,7 +588,7 @@ biglasso <- function(X, y, row.idx = 1:nrow(X),
 
   ## Unstandardize coefficients --------------------------------------------
   if(family == "cox") {
-    beta <- Matrix(0, nrow = p, ncol = length(lambda), sparse = T)
+    beta <- Matrix::Matrix(0, nrow = p, ncol = length(lambda), sparse = T)
     bb <- b / scale[col.idx]
     beta[col.idx, ] <- bb
   } else if(family == "mgaussian") {
@@ -593,7 +599,7 @@ biglasso <- function(X, y, row.idx = 1:nrow(X),
     beta <- list()
     lam.idx = which(ind)
     for(class in 1:nclass) {
-      beta_class <- Matrix(0, nrow = p+1, ncol = length(lambda), sparse = T)
+      beta_class <- Matrix::Matrix(0, nrow = p+1, ncol = length(lambda), sparse = T)
       beta_class[1,] <- a[class] - crossprod(center[col.idx], (b[[class]])[,ind] / scale[col.idx])
       beta_class[col.idx+1,] <- (b[[class]])[,ind] / scale[col.idx]
       #for(l in 1:length(lam.idx)) {
@@ -609,7 +615,7 @@ biglasso <- function(X, y, row.idx = 1:nrow(X),
     }
     yy <- t(yy)
   } else {
-    beta <- Matrix(0, nrow = (p+1), ncol = length(lambda), sparse = T)
+    beta <- Matrix::Matrix(0, nrow = (p+1), ncol = length(lambda), sparse = T)
     bb <- b / scale[col.idx]
     beta[col.idx+1, ] <- bb
     beta[1,] <- a - crossprod(center[col.idx], bb)
