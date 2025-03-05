@@ -3,6 +3,7 @@
 [![CRAN version](https://img.shields.io/cran/v/biglasso?logo=R)](https://cran.r-project.org/package=biglasso)
 [![downloads](https://cranlogs.r-pkg.org/badges/biglasso)](https://cran.r-project.org/package=biglasso)
 [![R-CMD-check](https://github.com/pbreheny/biglasso/workflows/R-CMD-check/badge.svg)](https://github.com/pbreheny/biglasso/actions)
+[![codecov](https://codecov.io/gh/pbreheny/biglasso/graph/badge.svg?token=V2IDV3BG5O)](https://codecov.io/gh/pbreheny/biglasso)
 <!-- badges: end -->
 
 # [biglasso: Extend Lasso Model Fitting to Big Data in R](https://pbreheny.github.io/biglasso/index.html)
