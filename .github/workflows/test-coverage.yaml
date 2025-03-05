@@ -34,6 +34,7 @@ jobs:
       - name: Test coverage
         run: |
           cov <- covr::package_coverage(
+            type  = 'all',
             quiet = FALSE,
             clean = FALSE,
             install_path = file.path(normalizePath(Sys.getenv("RUNNER_TEMP"), winslash = "/"), "package")
@@ -50,10 +51,3 @@ jobs:
           slug: pbreheny/biglasso
           disable_search: true
           token: ${{ secrets.CODECOV_TOKEN }}
-
-      - name: Upload coverage results
-        if: failure()
-        uses: actions/upload-artifact@v4
-        with:
-          name: cobertura-report
-          path: ./cobertura.xml
