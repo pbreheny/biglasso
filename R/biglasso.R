@@ -7,12 +7,12 @@
 #' 
 #' The objective function for linear regression or multiple responses linear regression 
 #' (`family = "gaussian"` or `family = "mgaussian"`) is
-#' \deqn{\frac{1}{2n}\textrm{RSS} + \lambda*\textrm{penalty},}{(1/(2n))*RSS+
+#' \deqn{\frac{1}{2n}\textrm{RSS} + \lambda \cdot \textrm{penalty},}{(1/(2n))*RSS+
 #' \lambda*penalty,}
 #' where for `family = "mgaussian"`), a group-lasso type penalty is applied.
 #' For logistic regression
-#' (`family = "binomial"`) it is \deqn{-\frac{1}{n} loglike +
-#' \lambda*\textrm{penalty},}{-(1/n)*loglike+\lambda*penalty}, for cox regression,
+#' (`family = "binomial"`) it is \deqn{-\frac{1}{n} \ell +
+#' \lambda \cdot \textrm{penalty},}{-(1/n)*loglik+\lambda*penalty,} for cox regression,
 #'  breslow approximation for ties is applied.
 #' 
 #' Several advanced feature screening rules are implemented. For

@@ -1,0 +1,9 @@
+linters: linters_with_tags(
+    c('best_practices', 'style', 'default', 'readability'),
+    line_length_linter(100),
+    implicit_integer_linter = NULL,
+    undesirable_function_linter(
+      modify_defaults(
+        defaults = default_undesirable_functions,
+        library = NULL))
+  )

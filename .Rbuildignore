@@ -2,6 +2,7 @@
 ^docs$
 ^pkgdown$
 ^\.github$
+^\.lintr$
 ^\.version\.json$
 ^.*\.Rproj$
 ^\.Rproj\.user$
