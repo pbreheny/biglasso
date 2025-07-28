@@ -1,25 +1,49 @@
-/* pre { */
-/*   border: 0px; */
-/*   border-radius: 10px; */
-/* } */
-/* a { */
-/*   color: #00a7e6; */
-/*   text-decoration:none; */
-/* } */
-/* a:hover { */
-/*   color: #00e7a7; */
-/* } */
-/* img { */
-/*   margin: auto; */
-/*   display: block; */
-/* } */
-
-
-pre .img img, pre .r-plt img {
-  margin: auto;
-  display: block;
-  background-color: #fff;
-}
 .dropdown-menu {
-  --bs-dropdown-link-color: #ccc;
+  --bs-dropdown-link-color: #aaa;
 }
+
+a {
+  text-decoration:none;
+}
+
+a:hover {
+  color: #00e7a7;
+}
+
+.navbar {
+  background: color-mix(in oklab, var(--bs-link-color) 50%, var(--bs-body-bg) 50%);
+}
+
+[data-bs-theme="dark"] pre code { color: #f8f8f2 }
+[data-bs-theme="dark"] pre code span.al { color: #ff858f; background-color: #2a0f15; font-weight: bold } /* alert */
+[data-bs-theme="dark"] pre code span.an { color: #f8f8f2} /* annotation */
+[data-bs-theme="dark"] pre code span.at { color: #00e0e0} /* attribute */
+[data-bs-theme="dark"] pre code span.bn { color: #61cc33} /* base n */
+[data-bs-theme="dark"] pre code span.bu { color: #61cc33} /* builtin */
+[data-bs-theme="dark"] pre code span.cf { color: #df9af4; font-weight: bold} /* control flow */
+[data-bs-theme="dark"] pre code span.ch { color: #61cc33} /* character */
+[data-bs-theme="dark"] pre code span.cn { color: #61cc33} /* constant */
+[data-bs-theme="dark"] pre code span.r-in span.co { color: #6abafb; font-style: italic } /* comment */
+[data-bs-theme="dark"] pre code span.r-out.co { color: #ccc; font-style: italic } /* comment */
+[data-bs-theme="dark"] pre code span.cv { color: #61cc33} /* comment variable */
+[data-bs-theme="dark"] pre code span.do { color: #f8f8f2} /* documentation */
+[data-bs-theme="dark"] pre code span.dt { color: #df9af4} /* data type */
+[data-bs-theme="dark"] pre code span.dv { color: #61cc33} /* decimal value */
+[data-bs-theme="dark"] pre code span.er { color: #ff858f; text-decoration: underline} /* error */
+[data-bs-theme="dark"] pre code span.ex { color: #00e0e0; font-weight: bold} /* extension */
+[data-bs-theme="dark"] pre code span.fl { color: #61cc33} /* float */
+[data-bs-theme="dark"] pre code span.fu { color: #ff858f} /* function */
+[data-bs-theme="dark"] pre code span.im { color: #61cc33} /* import */
+[data-bs-theme="dark"] pre code span.in { color: #f8f8f2} /* information */
+[data-bs-theme="dark"] pre code span.kw { color: #df9af4; font-weight: bold} /* keyword */
+[data-bs-theme="dark"] pre code span.op { color: #df9af4} /* operator */
+[data-bs-theme="dark"] pre code span.ot { color: #00e0e0} /* other */
+[data-bs-theme="dark"] pre code span.pp { color: #f8f8f2} /* preprocessor */
+[data-bs-theme="dark"] pre code span.re { color: #00e0e0; background-color: #f8f8f2} /* regular expression? */
+[data-bs-theme="dark"] pre code span.sc { color: #61cc33} /* special character */
+[data-bs-theme="dark"] pre code span.ss { color: #61cc33} /* special string */
+[data-bs-theme="dark"] pre code span.st { color: #61cc33} /* string */
+[data-bs-theme="dark"] pre code span.va { color: #f8f8f2} /* variable */
+[data-bs-theme="dark"] pre code span.vs { color: #61cc33} /* verbatim string */
+[data-bs-theme="dark"] pre code span.wa { color: #dcc6e0} /* warning */
+[data-bs-theme="dark"] pre code .r-pr { color: #777 } /* prompt */

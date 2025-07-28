@@ -12,7 +12,7 @@
   X,
   row.idx = 1:nrow(X),
   type = c("link", "response", "class", "coefficients", "vars", "nvars"),
-  lambda,
+  lambda = NULL,
   which = 1:length(object$lambda),
   ...
 )
@@ -22,15 +22,21 @@
   X,
   row.idx = 1:nrow(X),
   type = c("link", "response", "coefficients", "vars", "nvars"),
-  lambda,
+  lambda = NULL,
   which = 1:length(object$lambda),
   k = 1,
   ...
 )
 
-\method{coef}{biglasso}(object, lambda, which = 1:length(object$lambda), drop = TRUE, ...)
+\method{coef}{biglasso}(object, lambda = NULL, which = 1:length(object$lambda), drop = TRUE, ...)
 
-\method{coef}{mbiglasso}(object, lambda, which = 1:length(object$lambda), intercept = TRUE, ...)
+\method{coef}{mbiglasso}(
+  object,
+  lambda = NULL,
+  which = 1:length(object$lambda),
+  intercept = TRUE,
+  ...
+)
 }
 \arguments{
 \item{object}{A fitted \code{"biglasso"} model object.}
@@ -48,7 +54,8 @@ vector of the row indices of \code{X} that used for the prediction.
 \item \code{"response"} gives the fitted values
 \item \code{"class"} returns the binomial outcome with the highest probability
 \item \code{"coefficients"} returns the coefficients
-\item \code{"vars"} returns a list containing the indices and names of the nonzero variables at each value of \code{lambda}
+\item \code{"vars"} returns a list containing the indices and names of the nonzero variables
+at each value of \code{lambda}
 \item \code{"nvars"} returns the number of nonzero coefficients at each value of \code{lambda}
 }}
 
@@ -82,17 +89,17 @@ fitted \code{\link[=biglasso]{biglasso()}} object.
 \examples{
 ## Logistic regression
 data(colon)
-X <- colon$X
+x <- colon$X
 y <- colon$y
-X.bm <- as.big.matrix(X, backingfile = "")
-fit <- biglasso(X.bm, y, penalty = 'lasso', family = "binomial")
-coef <- coef(fit, lambda=0.05, drop = TRUE)
+x_bm <- as.big.matrix(x, backingfile = "")
+fit <- biglasso(x_bm, y, penalty = "lasso", family = "binomial")
+coef <- coef(fit, lambda = 0.05, drop = TRUE)
 coef[which(coef != 0)]
-predict(fit, X.bm, type="link", lambda=0.05)[1:10]
-predict(fit, X.bm, type="response", lambda=0.05)[1:10]
-predict(fit, X.bm, type="class", lambda=0.1)[1:10]
-predict(fit, type="vars", lambda=c(0.05, 0.1))
-predict(fit, type="nvars", lambda=c(0.05, 0.1))
+predict(fit, x_bm, type = "link", lambda = 0.05)[1:10]
+predict(fit, x_bm, type = "response", lambda = 0.05)[1:10]
+predict(fit, x_bm, type = "class", lambda = 0.1)[1:10]
+predict(fit, type = "vars", lambda = c(0.05, 0.1))
+predict(fit, type = "nvars", lambda = c(0.05, 0.1))
 }
 \seealso{
 \code{\link[=biglasso]{biglasso()}}, \code{\link[=cv.biglasso]{cv.biglasso()}}

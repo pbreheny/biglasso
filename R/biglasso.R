@@ -1,11 +1,11 @@
 #' Fit lasso penalized regression path for big data
-#' 
+#'
 #' Extend lasso model fitting to big data that cannot be loaded into memory.
 #' Fit solution paths for linear, logistic or Cox regression models penalized by
 #' lasso, ridge, or elastic-net over a grid of values for the regularization
 #' parameter lambda.
-#' 
-#' The objective function for linear regression or multiple responses linear regression 
+#'
+#' The objective function for linear regression or multiple responses linear regression
 #' (`family = "gaussian"` or `family = "mgaussian"`) is
 #' \deqn{\frac{1}{2n}\textrm{RSS} + \lambda \cdot \textrm{penalty},}{(1/(2n))*RSS+
 #' \lambda*penalty,}
@@ -14,127 +14,119 @@
 #' (`family = "binomial"`) it is \deqn{-\frac{1}{n} \ell +
 #' \lambda \cdot \textrm{penalty},}{-(1/n)*loglik+\lambda*penalty,} for cox regression,
 #'  breslow approximation for ties is applied.
-#' 
+#'
 #' Several advanced feature screening rules are implemented. For
 #' lasso-penalized linear regression, all the options of `screen` are
 #' applicable. Our proposal adaptive rule - `"Adaptive"` - achieves highest speedup
 #' so it's the recommended one, especially for ultrahigh-dimensional large-scale
 #' data sets. For cox regression and/or the elastic net penalty, only
 #' `"SSR"` is applicable for now. More efficient rules are under development.
-#' 
-#' @param X The design matrix, without an intercept. It must be a
-#' double type [bigmemory::big.matrix()] object. The function
-#' standardizes the data and includes an intercept internally by default during
-#' the model fitting.
-#' @param y The response vector for `family="gaussian"` or `family="binomial"`.
-#' For `family="cox"`, `y` should be a two-column matrix with columns
-#' 'time' and 'status'. The latter is a binary variable, with '1' indicating death,
-#'  and '0' indicating right censored. For `family="mgaussin"`, `y`
-#'  should be a n*m matrix where n is the sample size and m is the number of
-#'  responses.
-#' @param row.idx The integer vector of row indices of `X` that used for
-#' fitting the model. `1:nrow(X)` by default.
-#' @param penalty The penalty to be applied to the model. Either `"lasso"`
-#' (the default), `"ridge"`, or `"enet"` (elastic net).
-#' @param family Either `"gaussian"`, `"binomial"`, `"cox"` or
-#' `"mgaussian"` depending on the response.
-#' @param alg.logistic The algorithm used in logistic regression. If "Newton"
-#' then the exact hessian is used (default); if "MM" then a
-#' majorization-minimization algorithm is used to set an upper-bound on the
-#' hessian matrix. This can be faster, particularly in data-larger-than-RAM
-#' case.
-#' @param screen The feature screening rule used at each `lambda` that
-#' discards features to speed up computation: `"SSR"` (default if
-#' `penalty="ridge"` or `penalty="enet"` )is the sequential strong rule;
-#' `"Hybrid"` is our newly proposed hybrid screening rules which combine the
-#' strong rule with a safe rule. `"Adaptive"` (default for `penalty="lasso"`
-#' without `penalty.factor`) is our newly proposed adaptive rules which
-#' reuse screening reference for multiple lambda values. \strong{Note that:}
-#' (1) for linear regression with elastic net penalty, both `"SSR"` and
-#' `"Hybrid"` are applicable since version 1.3-0;  (2) only `"SSR"` is
-#' applicable to elastic-net-penalized logistic regression or cox regression;
-#' (3) active set cycling strategy is incorporated with these screening rules.
-#' @param safe.thresh the threshold value between 0 and 1 that controls when to
-#' stop safe test. For example, 0.01 means to stop safe test at next lambda 
-#' iteration if the number of features rejected by safe test at current lambda
-#' iteration is not larger than 1\% of the total number of features. So 1 means
-#' to always turn off safe test, whereas 0 (default) means to turn off safe test
-#' if the number of features rejected by safe test is 0 at current lambda.
-#' @param update.thresh the non negative threshold value that controls how often to
-#' update the reference of safe rules for "Adaptive" methods. Smaller value means
-#' updating more often.
+#'
+#' @param X The design matrix, without an intercept. It must be a double type
+#'   [bigmemory::big.matrix()] object. The function standardizes the data and includes an
+#'   intercept internally by default during the model fitting.
+#' @param y The response vector for `family="gaussian"` or `family="binomial"`. For
+#'   `family="cox"`, `y` should be a two-column matrix with columns 'time' and 'status'.
+#'   The latter is a binary variable, with '1' indicating death, and '0' indicating
+#'   right censored. For `family="mgaussin"`, `y` should be a n*m matrix where n is the
+#'   sample size and m is the number of responses.
+#' @param row.idx The integer vector of row indices of `X` that used for fitting the
+#'   model. `1:nrow(X)` by default.
+#' @param penalty The penalty to be applied to the model. Either `"lasso"` (the default),
+#'   `"ridge"`, or `"enet"` (elastic net).
+#' @param family Either `"gaussian"`, `"binomial"`, `"cox"` or `"mgaussian"` depending
+#'   on the response.
+#' @param alg.logistic The algorithm used in logistic regression. If "Newton" then the
+#'   exact hessian is used (default); if "MM" then a majorization-minimization algorithm
+#'   is used to set an upper-bound on the hessian matrix. This can be faster, particularly
+#'   in data-larger-than-RAM case.
+#' @param screen The feature screening rule used at each `lambda` that discards features
+#'   to speed up computation: `"SSR"` (default if `penalty="ridge"` or `penalty="enet"`)
+#'   is the sequential strong rule; `"Hybrid"`, which combines the strong rule with a safe
+#'   rule. `"Adaptive"` (default for `penalty="lasso"` without `penalty.factor`), which is
+#'   a variant of Hybrid that avoids recalculating the safe rule when it would not be
+#'   efficient to do so. **Note that:**
+#'     1. For linear regression with elastic net penalty, both `"SSR"` and `"Hybrid"` are
+#'        applicable since version 1.3-0
+#'     2. Only `"SSR"` is applicable to elastic-net-penalized logistic regression or cox regression
+#'     3. Active set cycling is incorporated into all of these screening rules
+#' @param safe.thresh the threshold value between 0 and 1 that controls when to stop safe
+#'   test. For example, 0.01 means to stop safe test at next lambda iteration if the number
+#'   of features rejected by safe test at current lambda iteration is not larger than 1% of
+#'   the total number of features. So 1 means to always turn off safe test, whereas 0
+#'   (default) means to turn off safe test if the number of features rejected by safe test
+#'   is 0 at current lambda.
+#' @param update.thresh the non negative threshold value that controls how often to update
+#'   the reference of safe rules for "Adaptive" methods. Smaller value means updating more often.
 #' @param ncores The number of OpenMP threads used for parallel computing.
-#' @param alpha The elastic-net mixing parameter that controls the relative
-#' contribution from the lasso (l1) and the ridge (l2) penalty. The penalty is
-#' defined as \deqn{ \alpha||\beta||_1 + (1-\alpha)/2||\beta||_2^2.}
-#' `alpha=1` is the lasso penalty, `alpha=0` the ridge penalty,
-#' `alpha` in between 0 and 1 is the elastic-net ("enet") penalty.
-#' @param lambda.min The smallest value for lambda, as a fraction of
-#' lambda.max.  Default is .001 if the number of observations is larger than
-#' the number of covariates and .05 otherwise.
-#' @param nlambda The number of lambda values.  Default is 100.
-#' @param lambda.log.scale Whether compute the grid values of lambda on log
-#' scale (default) or linear scale.
-#' @param lambda A user-specified sequence of lambda values.  By default, a
-#' sequence of values of length `nlambda` is computed, equally spaced on
-#' the log scale.
-#' @param eps Convergence threshold for inner coordinate descent.  The
-#' algorithm iterates until the maximum change in the objective after any
-#' coefficient update is less than `eps` times the null deviance. Default
-#' value is `1e-7`.
-#' @param max.iter Maximum number of iterations.  Default is 1000.
-#' @param dfmax Upper bound for the number of nonzero coefficients.  Default is
-#' no upper bound.  However, for large data sets, computational burden may be
-#' heavy for models with a large number of nonzero coefficients.
-#' @param penalty.factor A multiplicative factor for the penalty applied to
-#' each coefficient. If supplied, `penalty.factor` must be a numeric
-#' vector of length equal to the number of columns of `X`.  The purpose of
-#' `penalty.factor` is to apply differential penalization if some
-#' coefficients are thought to be more likely than others to be in the model.
-#' Current package doesn't allow unpenalized coefficients. That
-#' is`penalty.factor` cannot be 0. `penalty.factor` is only supported
-#' for "SSR" screen.
-#' @param warn Return warning messages for failures to converge and model
-#' saturation?  Default is TRUE.
-#' @param output.time Whether to print out the start and end time of the model
-#' fitting. Default is FALSE.
-#' @param return.time Whether to return the computing time of the model
-#' fitting. Default is TRUE.
-#' @param verbose Whether to output the timing of each lambda iteration.
-#' Default is FALSE.
-#' 
+#' @param alpha The elastic-net mixing parameter that controls the relative contribution
+#'   from the lasso (l1) and the ridge (l2) penalty. The penalty is defined as
+#'   \deqn{ \alpha||\beta||_1 + (1-\alpha)/2||\beta||_2^2.}
+#'   `alpha=1` is the lasso penalty, `alpha=0` the ridge penalty, `alpha` in between
+#'   0 and 1 is the elastic-net ("enet") penalty.
+#' @param lambda.min The smallest value for lambda, as a fraction of lambda.max.  Default
+#'   is 0.001 if the number of observations is larger than the number of covariates and
+#'   0.05 otherwise.
+#' @param nlambda The number of lambda values. Default is 100.
+#' @param lambda.log.scale Whether compute the grid values of lambda on log scale (default)
+#'   or linear scale.
+#' @param lambda A user-specified sequence of lambda values.  By default, a sequence of
+#'   values of length `nlambda` is computed, equally spaced on the log scale.
+#' @param eps Convergence threshold for inner coordinate descent.  The algorithm iterates
+#'   until the maximum change in the objective after any coefficient update is less than
+#'   `eps` times the null deviance. Default value is `1e-7`.
+#' @param max.iter Maximum number of iterations. Default is 1000.
+#' @param dfmax Upper bound for the number of nonzero coefficients. Default is no upper
+#'   bound. However, for large data sets, computational burden may be heavy for models
+#'   with a large number of nonzero coefficients.
+#' @param penalty.factor A multiplicative factor for the penalty applied to each
+#'   coefficient. If supplied, `penalty.factor` must be a numeric vector of length
+#'   equal to the number of columns of `X`.  The purpose of `penalty.factor` is to apply
+#'   differential penalization if some coefficients are thought to be more likely than
+#'   others to be in the model. Currently, the package doesn't allow unpenalized
+#'   coefficients (`penalty.factor` cannot be 0). `penalty.factor` is only supported
+#'   for "SSR" screen.
+#' @param warn Return warning messages for failures to converge and model saturation?
+#'   Default is TRUE.
+#' @param output.time Whether to print out the start and end time of the model fitting.
+#'   Default is FALSE.
+#' @param return.time Whether to return the computing time of the model fitting.
+#'   Default is TRUE.
+#' @param verbose Whether to output the timing of each lambda iteration. Default is
+#'   FALSE.
+#'
 #' @returns An object with S3 class `"biglasso"` for
 #' `"gaussian", "binomial", "cox"` families, or an object with S3 class
 #' `"mbiglasso"` for `"mgaussian"` family,  with following variables.
 #' \item{beta}{The fitted matrix of coefficients, store in sparse matrix
 #' representation. The number of rows is equal to the number of coefficients,
 #' whereas the number of columns is equal to `nlambda`. For `"mgaussian"`
-#' family with m responses, it is a list of m such matrices.} 
-#' \item{iter}{A vector of length `nlambda` containing the number of 
-#' iterations until convergence at each value of `lambda`.} 
+#' family with m responses, it is a list of m such matrices.}
+#' \item{iter}{A vector of length `nlambda` containing the number of
+#' iterations until convergence at each value of `lambda`.}
 #' \item{lambda}{The sequence of regularization parameter values in the path.}
 #' \item{penalty}{Same as above.}
 #' \item{family}{Same as above.}
-#' \item{alpha}{Same as above.} 
-#' \item{loss}{A vector containing either the residual sum of squares 
+#' \item{alpha}{Same as above.}
+#' \item{loss}{A vector containing either the residual sum of squares
 #' (for `"gaussian", "mgaussian"`) or negative log-likelihood
 #' (for `"binomial", "cox"`) of the fitted model at each value of `lambda`.}
 #' \item{penalty.factor}{Same as above.}
 #' \item{n}{The number of observations used in the model fitting. It's equal to
-#' `length(row.idx)`.} 
+#' `length(row.idx)`.}
 #' \item{center}{The sample mean vector of the variables, i.e., column mean of
-#' the sub-matrix of `X` used for model fitting.} 
+#' the sub-matrix of `X` used for model fitting.}
 #' \item{scale}{The sample standard deviation of the variables, i.e., column
-#' standard deviation of the sub-matrix of `X` used for model fitting.} 
+#' standard deviation of the sub-matrix of `X` used for model fitting.}
 #' \item{y}{The response vector used in the model fitting. Depending on
 #' `row.idx`, it could be a subset of the raw input of the response vector y.}
-#' \item{screen}{Same as above.} 
+#' \item{screen}{Same as above.}
 #' \item{col.idx}{The indices of features that have 'scale' value greater than
-#' 1e-6. Features with 'scale' less than 1e-6 are removed from model fitting.} 
+#' 1e-6. Features with 'scale' less than 1e-6 are removed from model fitting.}
 #' \item{rejections}{The number of features rejected at each value of `lambda`.}
 #' \item{safe_rejections}{The number of features rejected by safe rules at each
 #' value of `lambda`.}
-#' 
+#'
 #' @author Yaohui Zeng, Chuyi Wang and Patrick Breheny
 #'
 #' @references
@@ -142,85 +134,84 @@
 #' Efficient Solver for Lasso Model Fitting with Big Data in R.
 #' *R Journal*, **12**: 6-19.
 #' \doi{10.32614/RJ-2021-001}
-#' 
+#'
 #' @seealso [biglasso-package], [setupX()], [cv.biglasso()], [plot.biglasso()], [ncvreg::ncvreg()]
-#' 
+#'
 #' @examples
 #' ## Linear regression
 #' data(colon)
 #' X <- colon$X
 #' y <- colon$y
-#' X.bm <- as.big.matrix(X)
+#' x_bm <- as.big.matrix(X)
 #' # lasso, default
-#' par(mfrow=c(1,2))
-#' fit.lasso <- biglasso(X.bm, y, family = 'gaussian')
-#' plot(fit.lasso, log.l = TRUE, main = 'lasso')
+#' fit_lasso <- biglasso(x_bm, y, family = "gaussian")
+#' plot(fit_lasso, log.l = TRUE, main = "lasso")
 #' # elastic net
-#' fit.enet <- biglasso(X.bm, y, penalty = 'enet', alpha = 0.5, family = 'gaussian')
-#' plot(fit.enet, log.l = TRUE, main = 'elastic net, alpha = 0.5')
-#' 
+#' fit_enet <- biglasso(x_bm, y, penalty = 'enet', alpha = 0.5, family = 'gaussian')
+#' plot(fit_enet, log.l = TRUE, main = 'elastic net')
+#'
 #' ## Logistic regression
-#' data(colon)
-#' X <- colon$X
-#' y <- colon$y
-#' X.bm <- as.big.matrix(X)
-#' # lasso, default
-#' par(mfrow = c(1, 2))
-#' fit.bin.lasso <- biglasso(X.bm, y, penalty = 'lasso', family = "binomial")
-#' plot(fit.bin.lasso, log.l = TRUE, main = 'lasso')
+#' fit_bin_lasso <- biglasso(x_bm, y, penalty = 'lasso', family = "binomial")
+#' plot(fit_bin_lasso, log.l = TRUE, main = 'lasso')
 #' # elastic net
-#' fit.bin.enet <- biglasso(X.bm, y, penalty = 'enet', alpha = 0.5, family = "binomial")
-#' plot(fit.bin.enet, log.l = TRUE, main = 'elastic net, alpha = 0.5')
-#' 
+#' fit_bin_enet <- biglasso(x_bm, y, penalty = 'enet', alpha = 0.5, family = "binomial")
+#' plot(fit_bin_enet, log.l = TRUE, main = 'elastic net')
+#'
 #' ## Cox regression
 #' set.seed(10101)
-#' N <- 1000; p <- 30; nzc <- p/3
-#' X <- matrix(rnorm(N * p), N, p)
+#' n <- 1000
+#' p <- 30
+#' nzc <- p / 3
+#' x <- matrix(rnorm(n * p), n, p)
 #' beta <- rnorm(nzc)
-#' fx <- X[, seq(nzc)] %*% beta/3
+#' fx <- x[, seq(nzc)] %*% beta/3
 #' hx <- exp(fx)
-#' ty <- rexp(N, hx)
-#' tcens <- rbinom(n = N, prob = 0.3, size = 1)  # censoring indicator
-#' y <- cbind(time = ty, status = 1 - tcens)  # y <- Surv(ty, 1 - tcens) with library(survival)
-#' X.bm <- as.big.matrix(X)
-#' fit <- biglasso(X.bm, y, family = "cox")
+#' ty <- rexp(n, hx)
+#' tcens <- quantile(ty, 0.7)
+#' y <- cbind(time = pmin(ty, tcens), status = ty < tcens)
+#' x_bm <- as.big.matrix(x)
+#' fit <- biglasso(x_bm, y, family = "cox")
 #' plot(fit, main = "cox")
-#' 
+#'
 #' ## Multiple responses linear regression
 #' set.seed(10101)
-#' n=300; p=300; m=5; s=10; b=1
-#' x = matrix(rnorm(n * p), n, p)
-#' beta = matrix(seq(from=-b,to=b,length.out=s*m),s,m)
-#' y = x[,1:s] %*% beta + matrix(rnorm(n*m,0,1),n,m)
-#' x.bm = as.big.matrix(x)
-#' fit = biglasso(x.bm, y, family = "mgaussian")
+#' n <- 300
+#' p <- 300
+#' m <- 5
+#' s <- 10
+#' b <- 1
+#' x <- matrix(rnorm(n * p), n, p)
+#' beta <- matrix(seq(from = -b, to = b, length.out = s * m), s, m)
+#' y = x[, 1:s] %*% beta + matrix(rnorm(n * m, 0, 1), n, m)
+#' x_bm = as.big.matrix(x)
+#' fit = biglasso(x_bm, y, family = "mgaussian")
 #' plot(fit, main = "mgaussian")
-#' 
+#'
 #' @export biglasso
 biglasso <- function(X, y, row.idx = 1:nrow(X),
                      penalty = c("lasso", "ridge", "enet"),
-                     family = c("gaussian", "binomial", "cox", "mgaussian"), 
+                     family = c("gaussian", "binomial", "cox", "mgaussian"),
                      alg.logistic = c("Newton", "MM"),
                      screen = c("Adaptive", "SSR", "Hybrid", "None"),
                      safe.thresh = 0, update.thresh = 1, ncores = 1, alpha = 1,
-                     lambda.min = ifelse(nrow(X) > ncol(X),.001,.05), 
+                     lambda.min = ifelse(nrow(X) > ncol(X),.001,.05),
                      nlambda = 100, lambda.log.scale = TRUE,
-                     lambda, eps = 1e-7, max.iter = 1000, 
+                     lambda, eps = 1e-7, max.iter = 1000,
                      dfmax = ncol(X)+1,
                      penalty.factor = rep(1, ncol(X)),
                      warn = TRUE, output.time = FALSE,
                      return.time = TRUE,
                      verbose = FALSE) {
-  
+
   # set up defaults -------------------------------------------------------
-  
-  # Match deprecated screen methods 
+
+  # Match deprecated screen methods
   if(length(screen) == 1 &&
-     screen %in% c("SEDPP", "SSR-BEDPP", "SSR-Slores", "SSR-Slores-Batch", 
+     screen %in% c("SEDPP", "SSR-BEDPP", "SSR-Slores", "SSR-Slores-Batch",
                    "SSR-Dome", "None", "NS-NAC", "SSR-NAC", "SEDPP-NAC",
-                   "SSR-Dome-NAC", "SSR-BEDPP-NAC", "SSR-Slores-NAC", 
+                   "SSR-Dome-NAC", "SSR-BEDPP-NAC", "SSR-Slores-NAC",
                    "SEDPP-Batch", "SEDPP-Batch-SSR", "SEDPP-Batchfix-SSR")) {
-  
+
     if(screen %in% c("SSR-BEDPP", "SSR-Slores")) {
       warning("Hybrid screen methods (\"SSR-BEDPP\", \"SSR-Slores\") will be renamed as \"Hybrid\". Automatically switching to \"Hybrid\" screen method")
       screen = "Hybrid"
@@ -235,7 +226,7 @@ biglasso <- function(X, y, row.idx = 1:nrow(X),
       screen = "Adaptive"
     }
   }
-  
+
 
   family <- match.arg(family)
   penalty <- match.arg(penalty)
@@ -250,7 +241,7 @@ biglasso <- function(X, y, row.idx = 1:nrow(X),
     screen <- match.arg(screen)
   }
   lambda.min <- max(lambda.min, 1.0e-6)
-  
+
 
   if (identical(penalty, "lasso")) {
     alpha <- 1
@@ -267,7 +258,7 @@ biglasso <- function(X, y, row.idx = 1:nrow(X),
     if (screen == "Adaptive") {
       warning("For now \"enet\" does not support \"Adaptive\" screen. Automatically switching to \"SSR\"." )
       screen <- "SSR"
-    } 
+    }
   }
 
   if (!("big.matrix" %in% class(X)) || typeof(X) != "double") stop("X must be a double type big.matrix.")
@@ -294,7 +285,7 @@ biglasso <- function(X, y, row.idx = 1:nrow(X),
     n.pos <- sum(y) # number of 1's
     ylab <- ifelse(y == 0, -1, 1) # response label vector of {-1, 1}
   }
-  
+
   if (family == 'cox') {
     if (!is.matrix(y)) stop("y must be a matrix or able to be coerced to a matrix")
     if (ncol(y) != 2) stop("y must have two columns for survival data: time-on-study and a censoring indicator")
@@ -305,7 +296,7 @@ biglasso <- function(X, y, row.idx = 1:nrow(X),
     dtime <- sort(unique(y[y[,2]==1,1]))
     row.idx.cox <- which(y[tOrder,1] >= min (dtime))
     d_idx <- integer(length(row.idx.cox))
-    for(i in 1:length(row.idx.cox)) d_idx[i] <- max(which(dtime <= y[tOrder[row.idx.cox[i]],1])) 
+    for(i in 1:length(row.idx.cox)) d_idx[i] <- max(which(dtime <= y[tOrder[row.idx.cox[i]],1]))
   }
 
   if (family == "gaussian") {
@@ -326,7 +317,7 @@ biglasso <- function(X, y, row.idx = 1:nrow(X),
     screen = "SSR"
   }
   storage.mode(penalty.factor) <- "double"
-  
+
   n <- length(row.idx) ## subset of X. idx: indices of rows.
   if (missing(lambda)) {
     user.lambda <- FALSE
@@ -368,7 +359,7 @@ biglasso <- function(X, y, row.idx = 1:nrow(X),
                               lambda.min, alpha,
                               as.integer(user.lambda | any(penalty.factor==0)),
                               eps, as.integer(max.iter), penalty.factor,
-                              as.integer(dfmax), as.integer(ncores), safe.thresh, 
+                              as.integer(dfmax), as.integer(ncores), safe.thresh,
                               as.integer(verbose),
                               PACKAGE = 'biglasso')
                },
@@ -376,7 +367,7 @@ biglasso <- function(X, y, row.idx = 1:nrow(X),
                )
       }
     )
-    
+
     a <- rep(mean(y), nlambda)
     b <- Matrix::Matrix(res[[1]], sparse = T)
     center <- res[[2]]
@@ -385,60 +376,60 @@ biglasso <- function(X, y, row.idx = 1:nrow(X),
     loss <- res[[5]]
     iter <- res[[6]]
     rejections <- res[[7]]
-    
+
     if (screen %in% c("Hybrid", "Adaptive")) {
       safe_rejections <- res[[8]]
       col.idx <- res[[9]]
     } else {
       col.idx <- res[[8]]
     }
-   
+
   } else if (family == 'binomial') {
-    
+
     time <- system.time(
       if (alg.logistic == 'MM') {
         if(screen != "SSR") {
           warning("For now MM algorithm only supports \"SSR\" screen. Automatically switching to \"SSR\".")
           screen = "SSR"
         }
-        res <- .Call("cdfit_binomial_ssr_approx", X@address, yy, as.integer(row.idx-1), 
-                     lambda, as.integer(nlambda), lambda.min, alpha, 
+        res <- .Call("cdfit_binomial_ssr_approx", X@address, yy, as.integer(row.idx-1),
+                     lambda, as.integer(nlambda), lambda.min, alpha,
                      as.integer(user.lambda | any(penalty.factor==0)),
-                     eps, as.integer(max.iter), penalty.factor, 
+                     eps, as.integer(max.iter), penalty.factor,
                      as.integer(dfmax), as.integer(ncores), as.integer(warn),
                      as.integer(verbose),
                      PACKAGE = 'biglasso')
       } else {
         if (screen == "Hybrid") {
           res <- .Call("cdfit_binomial_slores_ssr", X@address, yy, as.integer(n.pos),
-                       as.integer(ylab), as.integer(row.idx-1), 
+                       as.integer(ylab), as.integer(row.idx-1),
                        lambda, as.integer(nlambda), as.integer(lambda.log.scale),
                        lambda.min, alpha, as.integer(user.lambda | any(penalty.factor==0)),
-                       eps, as.integer(max.iter), penalty.factor, 
+                       eps, as.integer(max.iter), penalty.factor,
                        as.integer(dfmax), as.integer(ncores), as.integer(warn), safe.thresh,
                        as.integer(verbose),
                        PACKAGE = 'biglasso')
         }  else if(screen == "Adaptive") {
           res <- .Call("cdfit_binomial_ada_slores_ssr", X@address, yy, as.integer(n.pos),
-                       as.integer(ylab), as.integer(row.idx-1), 
+                       as.integer(ylab), as.integer(row.idx-1),
                        lambda, as.integer(nlambda), as.integer(lambda.log.scale),
                        lambda.min, alpha, as.integer(user.lambda | any(penalty.factor==0)),
-                       eps, as.integer(max.iter), penalty.factor, 
+                       eps, as.integer(max.iter), penalty.factor,
                        as.integer(dfmax), as.integer(ncores), as.integer(warn), safe.thresh,
                        update.thresh, as.integer(verbose),
                        PACKAGE = 'biglasso')
         } else {
-          res <- .Call("cdfit_binomial_ssr", X@address, yy, as.integer(row.idx-1), 
+          res <- .Call("cdfit_binomial_ssr", X@address, yy, as.integer(row.idx-1),
                        lambda, as.integer(nlambda), as.integer(lambda.log.scale),
                        lambda.min, alpha, as.integer(user.lambda | any(penalty.factor==0)),
-                       eps, as.integer(max.iter), penalty.factor, 
+                       eps, as.integer(max.iter), penalty.factor,
                        as.integer(dfmax), as.integer(ncores), as.integer(warn),
                        as.integer(verbose),
                        PACKAGE = 'biglasso')
         }
       }
     )
-   
+
     a <- res[[1]]
     b <- Matrix::Matrix(res[[2]], sparse = T)
     center <- res[[3]]
@@ -447,14 +438,14 @@ biglasso <- function(X, y, row.idx = 1:nrow(X),
     loss <- res[[6]]
     iter <- res[[7]]
     rejections <- res[[8]]
-    
+
     if (screen %in% c("Hybrid", "Adaptive")) {
       safe_rejections <- res[[9]]
       col.idx <- res[[10]]
     } else {
       col.idx <- res[[9]]
     }
-    
+
   } else if (family == "cox") {
     time <- system.time(
       if (screen == 'SSR') {
@@ -471,7 +462,7 @@ biglasso <- function(X, y, row.idx = 1:nrow(X),
                      as.integer(nlambda), as.integer(lambda.log.scale),lambda.min,
                      alpha, as.integer(user.lambda | any(penalty.factor==0)),
                      eps, as.integer(max.iter), penalty.factor, as.integer(dfmax),
-                     as.integer(ncores), as.integer(warn), safe.thresh, 
+                     as.integer(ncores), as.integer(warn), safe.thresh,
                      as.integer(verbose), PACKAGE = 'biglasso')
       } else if (screen == 'scox') {
         res <- .Call("cdfit_cox_scox", X@address, yy, d, as.integer(d_idx-1),
@@ -479,7 +470,7 @@ biglasso <- function(X, y, row.idx = 1:nrow(X),
                      as.integer(nlambda), as.integer(lambda.log.scale),lambda.min,
                      alpha, as.integer(user.lambda | any(penalty.factor==0)),
                      eps, as.integer(max.iter), penalty.factor, as.integer(dfmax),
-                     as.integer(ncores), as.integer(warn), safe.thresh, 
+                     as.integer(ncores), as.integer(warn), safe.thresh,
                      as.integer(verbose), PACKAGE = 'biglasso')
       } else if (screen == 'safe') {
         res <- .Call("cdfit_cox_safe", X@address, yy, d, as.integer(d_idx-1),
@@ -487,7 +478,7 @@ biglasso <- function(X, y, row.idx = 1:nrow(X),
                      as.integer(nlambda), as.integer(lambda.log.scale),lambda.min,
                      alpha, as.integer(user.lambda | any(penalty.factor==0)),
                      eps, as.integer(max.iter), penalty.factor, as.integer(dfmax),
-                     as.integer(ncores), as.integer(warn), safe.thresh, 
+                     as.integer(ncores), as.integer(warn), safe.thresh,
                      as.integer(verbose), PACKAGE = 'biglasso')
       } else if (screen == 'Adaptive') {
         res <- .Call("cdfit_cox_ada_scox", X@address, yy, d, as.integer(d_idx-1),
@@ -506,9 +497,9 @@ biglasso <- function(X, y, row.idx = 1:nrow(X),
                      as.integer(ncores), as.integer(warn), as.integer(verbose),
                      PACKAGE = 'biglasso')
       }
-      
+
     )
-    
+
     b <- Matrix::Matrix(res[[1]], sparse = T)
     center <- res[[2]]
     scale <- res[[3]]
@@ -516,7 +507,7 @@ biglasso <- function(X, y, row.idx = 1:nrow(X),
     loss <- res[[5]]
     iter <- res[[6]]
     rejections <- res[[7]]
-    
+
     if (screen %in% c("scox", "sscox", "safe")) safe_rejections <- rejections # To be updated
     if (screen %in% c("Adaptive")) {
       safe_rejections <- res[[8]]
@@ -543,7 +534,7 @@ biglasso <- function(X, y, row.idx = 1:nrow(X),
                               lambda.min, alpha,
                               as.integer(user.lambda | any(penalty.factor==0)),
                               eps, as.integer(max.iter), penalty.factor,
-                              as.integer(dfmax), as.integer(ncores), 
+                              as.integer(dfmax), as.integer(ncores),
                               safe.thresh, update.thresh, as.integer(verbose),
                               PACKAGE = 'biglasso')
                },
@@ -551,7 +542,7 @@ biglasso <- function(X, y, row.idx = 1:nrow(X),
         )
       }
     )
-    
+
     b <- res[[1]]
     center <- res[[2]]
     scale <- res[[3]]
@@ -559,14 +550,14 @@ biglasso <- function(X, y, row.idx = 1:nrow(X),
     loss <- res[[5]]
     iter <- res[[6]]
     rejections <- res[[7]]
-    
+
     if (screen %in% c("Hybrid", "Adaptive")) {
       safe_rejections <- res[[8]]
       col.idx <- res[[9]]
     } else {
       col.idx <- res[[8]]
     }
-    
+
   } else {
     stop("Current version only supports Gaussian, Binominal or Cox response!")
   }
@@ -620,7 +611,7 @@ biglasso <- function(X, y, row.idx = 1:nrow(X),
     beta[col.idx+1, ] <- bb
     beta[1,] <- a - crossprod(center[col.idx], bb)
   }
-  
+
 
   ## Names -----------------------------------------------------------
   varnames <- if (is.null(colnames(X))) paste("V", 1:p, sep="") else colnames(X)
@@ -649,10 +640,10 @@ biglasso <- function(X, y, row.idx = 1:nrow(X),
     col.idx = col.idx,
     rejections = rejections
   )
-  
+
     if (screen %in% c("Hybrid", "Adaptive")) {
     return.val$safe_rejections <- safe_rejections
-  } 
+  }
   if (return.time) return.val$time <- as.numeric(time['elapsed'])
   if(family == "mgaussian") val <- structure(return.val, class = c("mbiglasso"))
   else val <- structure(return.val, class = c("biglasso", 'ncvreg'))

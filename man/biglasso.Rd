@@ -31,108 +31,100 @@ biglasso(
 )
 }
 \arguments{
-\item{X}{The design matrix, without an intercept. It must be a
-double type \code{\link[bigmemory:big.matrix]{bigmemory::big.matrix()}} object. The function
-standardizes the data and includes an intercept internally by default during
-the model fitting.}
+\item{X}{The design matrix, without an intercept. It must be a double type
+\code{\link[bigmemory:big.matrix]{bigmemory::big.matrix()}} object. The function standardizes the data and includes an
+intercept internally by default during the model fitting.}
 
-\item{y}{The response vector for \code{family="gaussian"} or \code{family="binomial"}.
-For \code{family="cox"}, \code{y} should be a two-column matrix with columns
-'time' and 'status'. The latter is a binary variable, with '1' indicating death,
-and '0' indicating right censored. For \code{family="mgaussin"}, \code{y}
-should be a n*m matrix where n is the sample size and m is the number of
-responses.}
+\item{y}{The response vector for \code{family="gaussian"} or \code{family="binomial"}. For
+\code{family="cox"}, \code{y} should be a two-column matrix with columns 'time' and 'status'.
+The latter is a binary variable, with '1' indicating death, and '0' indicating
+right censored. For \code{family="mgaussin"}, \code{y} should be a n*m matrix where n is the
+sample size and m is the number of responses.}
 
-\item{row.idx}{The integer vector of row indices of \code{X} that used for
-fitting the model. \code{1:nrow(X)} by default.}
+\item{row.idx}{The integer vector of row indices of \code{X} that used for fitting the
+model. \code{1:nrow(X)} by default.}
 
-\item{penalty}{The penalty to be applied to the model. Either \code{"lasso"}
-(the default), \code{"ridge"}, or \code{"enet"} (elastic net).}
+\item{penalty}{The penalty to be applied to the model. Either \code{"lasso"} (the default),
+\code{"ridge"}, or \code{"enet"} (elastic net).}
 
-\item{family}{Either \code{"gaussian"}, \code{"binomial"}, \code{"cox"} or
-\code{"mgaussian"} depending on the response.}
+\item{family}{Either \code{"gaussian"}, \code{"binomial"}, \code{"cox"} or \code{"mgaussian"} depending
+on the response.}
 
-\item{alg.logistic}{The algorithm used in logistic regression. If "Newton"
-then the exact hessian is used (default); if "MM" then a
-majorization-minimization algorithm is used to set an upper-bound on the
-hessian matrix. This can be faster, particularly in data-larger-than-RAM
-case.}
+\item{alg.logistic}{The algorithm used in logistic regression. If "Newton" then the
+exact hessian is used (default); if "MM" then a majorization-minimization algorithm
+is used to set an upper-bound on the hessian matrix. This can be faster, particularly
+in data-larger-than-RAM case.}
 
-\item{screen}{The feature screening rule used at each \code{lambda} that
-discards features to speed up computation: \code{"SSR"} (default if
-\code{penalty="ridge"} or \code{penalty="enet"} )is the sequential strong rule;
-\code{"Hybrid"} is our newly proposed hybrid screening rules which combine the
-strong rule with a safe rule. \code{"Adaptive"} (default for \code{penalty="lasso"}
-without \code{penalty.factor}) is our newly proposed adaptive rules which
-reuse screening reference for multiple lambda values. \strong{Note that:}
-(1) for linear regression with elastic net penalty, both \code{"SSR"} and
-\code{"Hybrid"} are applicable since version 1.3-0;  (2) only \code{"SSR"} is
-applicable to elastic-net-penalized logistic regression or cox regression;
-(3) active set cycling strategy is incorporated with these screening rules.}
+\item{screen}{The feature screening rule used at each \code{lambda} that discards features
+to speed up computation: \code{"SSR"} (default if \code{penalty="ridge"} or \code{penalty="enet"})
+is the sequential strong rule; \code{"Hybrid"}, which combines the strong rule with a safe
+rule. \code{"Adaptive"} (default for \code{penalty="lasso"} without \code{penalty.factor}), which is
+a variant of Hybrid that avoids recalculating the safe rule when it would not be
+efficient to do so. \strong{Note that:}
+1. For linear regression with elastic net penalty, both \code{"SSR"} and \code{"Hybrid"} are
+applicable since version 1.3-0
+2. Only \code{"SSR"} is applicable to elastic-net-penalized logistic regression or cox regression
+3. Active set cycling is incorporated into all of these screening rules}
 
-\item{safe.thresh}{the threshold value between 0 and 1 that controls when to
-stop safe test. For example, 0.01 means to stop safe test at next lambda
-iteration if the number of features rejected by safe test at current lambda
-iteration is not larger than 1\\% of the total number of features. So 1 means
-to always turn off safe test, whereas 0 (default) means to turn off safe test
-if the number of features rejected by safe test is 0 at current lambda.}
+\item{safe.thresh}{the threshold value between 0 and 1 that controls when to stop safe
+test. For example, 0.01 means to stop safe test at next lambda iteration if the number
+of features rejected by safe test at current lambda iteration is not larger than 1\% of
+the total number of features. So 1 means to always turn off safe test, whereas 0
+(default) means to turn off safe test if the number of features rejected by safe test
+is 0 at current lambda.}
 
-\item{update.thresh}{the non negative threshold value that controls how often to
-update the reference of safe rules for "Adaptive" methods. Smaller value means
-updating more often.}
+\item{update.thresh}{the non negative threshold value that controls how often to update
+the reference of safe rules for "Adaptive" methods. Smaller value means updating more often.}
 
 \item{ncores}{The number of OpenMP threads used for parallel computing.}
 
-\item{alpha}{The elastic-net mixing parameter that controls the relative
-contribution from the lasso (l1) and the ridge (l2) penalty. The penalty is
-defined as \deqn{ \alpha||\beta||_1 + (1-\alpha)/2||\beta||_2^2.}
-\code{alpha=1} is the lasso penalty, \code{alpha=0} the ridge penalty,
-\code{alpha} in between 0 and 1 is the elastic-net ("enet") penalty.}
+\item{alpha}{The elastic-net mixing parameter that controls the relative contribution
+from the lasso (l1) and the ridge (l2) penalty. The penalty is defined as
+\deqn{ \alpha||\beta||_1 + (1-\alpha)/2||\beta||_2^2.}
+\code{alpha=1} is the lasso penalty, \code{alpha=0} the ridge penalty, \code{alpha} in between
+0 and 1 is the elastic-net ("enet") penalty.}
 
-\item{lambda.min}{The smallest value for lambda, as a fraction of
-lambda.max.  Default is .001 if the number of observations is larger than
-the number of covariates and .05 otherwise.}
+\item{lambda.min}{The smallest value for lambda, as a fraction of lambda.max.  Default
+is 0.001 if the number of observations is larger than the number of covariates and
+0.05 otherwise.}
 
-\item{nlambda}{The number of lambda values.  Default is 100.}
+\item{nlambda}{The number of lambda values. Default is 100.}
 
-\item{lambda.log.scale}{Whether compute the grid values of lambda on log
-scale (default) or linear scale.}
+\item{lambda.log.scale}{Whether compute the grid values of lambda on log scale (default)
+or linear scale.}
 
-\item{lambda}{A user-specified sequence of lambda values.  By default, a
-sequence of values of length \code{nlambda} is computed, equally spaced on
-the log scale.}
+\item{lambda}{A user-specified sequence of lambda values.  By default, a sequence of
+values of length \code{nlambda} is computed, equally spaced on the log scale.}
 
-\item{eps}{Convergence threshold for inner coordinate descent.  The
-algorithm iterates until the maximum change in the objective after any
-coefficient update is less than \code{eps} times the null deviance. Default
-value is \code{1e-7}.}
+\item{eps}{Convergence threshold for inner coordinate descent.  The algorithm iterates
+until the maximum change in the objective after any coefficient update is less than
+\code{eps} times the null deviance. Default value is \code{1e-7}.}
 
-\item{max.iter}{Maximum number of iterations.  Default is 1000.}
+\item{max.iter}{Maximum number of iterations. Default is 1000.}
 
-\item{dfmax}{Upper bound for the number of nonzero coefficients.  Default is
-no upper bound.  However, for large data sets, computational burden may be
-heavy for models with a large number of nonzero coefficients.}
+\item{dfmax}{Upper bound for the number of nonzero coefficients. Default is no upper
+bound. However, for large data sets, computational burden may be heavy for models
+with a large number of nonzero coefficients.}
 
-\item{penalty.factor}{A multiplicative factor for the penalty applied to
-each coefficient. If supplied, \code{penalty.factor} must be a numeric
-vector of length equal to the number of columns of \code{X}.  The purpose of
-\code{penalty.factor} is to apply differential penalization if some
-coefficients are thought to be more likely than others to be in the model.
-Current package doesn't allow unpenalized coefficients. That
-is\code{penalty.factor} cannot be 0. \code{penalty.factor} is only supported
+\item{penalty.factor}{A multiplicative factor for the penalty applied to each
+coefficient. If supplied, \code{penalty.factor} must be a numeric vector of length
+equal to the number of columns of \code{X}.  The purpose of \code{penalty.factor} is to apply
+differential penalization if some coefficients are thought to be more likely than
+others to be in the model. Currently, the package doesn't allow unpenalized
+coefficients (\code{penalty.factor} cannot be 0). \code{penalty.factor} is only supported
 for "SSR" screen.}
 
-\item{warn}{Return warning messages for failures to converge and model
-saturation?  Default is TRUE.}
+\item{warn}{Return warning messages for failures to converge and model saturation?
+Default is TRUE.}
 
-\item{output.time}{Whether to print out the start and end time of the model
-fitting. Default is FALSE.}
-
-\item{return.time}{Whether to return the computing time of the model
-fitting. Default is TRUE.}
-
-\item{verbose}{Whether to output the timing of each lambda iteration.
+\item{output.time}{Whether to print out the start and end time of the model fitting.
 Default is FALSE.}
+
+\item{return.time}{Whether to return the computing time of the model fitting.
+Default is TRUE.}
+
+\item{verbose}{Whether to output the timing of each lambda iteration. Default is
+FALSE.}
 }
 \value{
 An object with S3 class \code{"biglasso"} for
@@ -176,12 +168,12 @@ parameter lambda.
 \details{
 The objective function for linear regression or multiple responses linear regression
 (\code{family = "gaussian"} or \code{family = "mgaussian"}) is
-\deqn{\frac{1}{2n}\textrm{RSS} + \lambda*\textrm{penalty},}{(1/(2n))*RSS+
+\deqn{\frac{1}{2n}\textrm{RSS} + \lambda \cdot \textrm{penalty},}{(1/(2n))*RSS+
 \lambda*penalty,}
 where for \code{family = "mgaussian"}), a group-lasso type penalty is applied.
 For logistic regression
-(\code{family = "binomial"}) it is \deqn{-\frac{1}{n} loglike +
-\lambda*\textrm{penalty},}{-(1/n)*loglike+\lambda*penalty}, for cox regression,
+(\code{family = "binomial"}) it is \deqn{-\frac{1}{n} \ell +
+\lambda \cdot \textrm{penalty},}{-(1/n)*loglik+\lambda*penalty,} for cox regression,
 breslow approximation for ties is applied.
 
 Several advanced feature screening rules are implemented. For
@@ -196,50 +188,49 @@ data sets. For cox regression and/or the elastic net penalty, only
 data(colon)
 X <- colon$X
 y <- colon$y
-X.bm <- as.big.matrix(X)
+x_bm <- as.big.matrix(X)
 # lasso, default
-par(mfrow=c(1,2))
-fit.lasso <- biglasso(X.bm, y, family = 'gaussian')
-plot(fit.lasso, log.l = TRUE, main = 'lasso')
+fit_lasso <- biglasso(x_bm, y, family = "gaussian")
+plot(fit_lasso, log.l = TRUE, main = "lasso")
 # elastic net
-fit.enet <- biglasso(X.bm, y, penalty = 'enet', alpha = 0.5, family = 'gaussian')
-plot(fit.enet, log.l = TRUE, main = 'elastic net, alpha = 0.5')
+fit_enet <- biglasso(x_bm, y, penalty = 'enet', alpha = 0.5, family = 'gaussian')
+plot(fit_enet, log.l = TRUE, main = 'elastic net')
 
 ## Logistic regression
-data(colon)
-X <- colon$X
-y <- colon$y
-X.bm <- as.big.matrix(X)
-# lasso, default
-par(mfrow = c(1, 2))
-fit.bin.lasso <- biglasso(X.bm, y, penalty = 'lasso', family = "binomial")
-plot(fit.bin.lasso, log.l = TRUE, main = 'lasso')
+fit_bin_lasso <- biglasso(x_bm, y, penalty = 'lasso', family = "binomial")
+plot(fit_bin_lasso, log.l = TRUE, main = 'lasso')
 # elastic net
-fit.bin.enet <- biglasso(X.bm, y, penalty = 'enet', alpha = 0.5, family = "binomial")
-plot(fit.bin.enet, log.l = TRUE, main = 'elastic net, alpha = 0.5')
+fit_bin_enet <- biglasso(x_bm, y, penalty = 'enet', alpha = 0.5, family = "binomial")
+plot(fit_bin_enet, log.l = TRUE, main = 'elastic net')
 
 ## Cox regression
 set.seed(10101)
-N <- 1000; p <- 30; nzc <- p/3
-X <- matrix(rnorm(N * p), N, p)
+n <- 1000
+p <- 30
+nzc <- p / 3
+x <- matrix(rnorm(n * p), n, p)
 beta <- rnorm(nzc)
-fx <- X[, seq(nzc)] \%*\% beta/3
+fx <- x[, seq(nzc)] \%*\% beta/3
 hx <- exp(fx)
-ty <- rexp(N, hx)
-tcens <- rbinom(n = N, prob = 0.3, size = 1)  # censoring indicator
-y <- cbind(time = ty, status = 1 - tcens)  # y <- Surv(ty, 1 - tcens) with library(survival)
-X.bm <- as.big.matrix(X)
-fit <- biglasso(X.bm, y, family = "cox")
+ty <- rexp(n, hx)
+tcens <- quantile(ty, 0.7)
+y <- cbind(time = pmin(ty, tcens), status = ty < tcens)
+x_bm <- as.big.matrix(x)
+fit <- biglasso(x_bm, y, family = "cox")
 plot(fit, main = "cox")
 
 ## Multiple responses linear regression
 set.seed(10101)
-n=300; p=300; m=5; s=10; b=1
-x = matrix(rnorm(n * p), n, p)
-beta = matrix(seq(from=-b,to=b,length.out=s*m),s,m)
-y = x[,1:s] \%*\% beta + matrix(rnorm(n*m,0,1),n,m)
-x.bm = as.big.matrix(x)
-fit = biglasso(x.bm, y, family = "mgaussian")
+n <- 300
+p <- 300
+m <- 5
+s <- 10
+b <- 1
+x <- matrix(rnorm(n * p), n, p)
+beta <- matrix(seq(from = -b, to = b, length.out = s * m), s, m)
+y = x[, 1:s] \%*\% beta + matrix(rnorm(n * m, 0, 1), n, m)
+x_bm = as.big.matrix(x)
+fit = biglasso(x_bm, y, family = "mgaussian")
 plot(fit, main = "mgaussian")
 
 }
