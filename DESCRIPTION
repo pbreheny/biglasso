@@ -1,14 +1,12 @@
 Package: biglasso
-Version: 1.6.1
-Date: 2025-03-05
 Title: Extending Lasso Model Fitting to Big Data
+Version: 1.6.1.1
 Authors@R: c(
   person("Yaohui", "Zeng", role = c("aut")),
   person("Chuyi", "Wang", role = c("aut")),
   person("Tabitha", "Peter", role = c("aut")),
   person("Patrick", "Breheny", role=c("aut","cre"),
     email="patrick-breheny@uiowa.edu", comment=c(ORCID="0000-0002-0650-1119")))
-Maintainer: Patrick Breheny <patrick-breheny@uiowa.edu>
 Description: Extend lasso and elastic-net model fitting for large data sets that
   cannot be loaded into memory. Designed to be more memory- and
   computation-efficient than existing lasso-fitting packages like 'glmnet' and
@@ -19,8 +17,6 @@ URL: https://pbreheny.github.io/biglasso/, https://github.com/pbreheny/biglasso
 BugReports: https://github.com/pbreheny/biglasso/issues
 Depends: R (>= 3.2.0), bigmemory (>= 4.5.0), Matrix, ncvreg
 Imports: Rcpp (>= 0.12.1), methods
-LinkingTo: Rcpp, RcppArmadillo (>= 0.8.600), bigmemory, BH
-VignetteBuilder: knitr
 Suggests: 
     glmnet,
     knitr,
@@ -28,6 +24,8 @@ Suggests:
     rmarkdown,
     survival,
     tinytest
+LinkingTo: Rcpp, RcppArmadillo (>= 0.8.600), bigmemory, BH
+VignetteBuilder: knitr
+Encoding: UTF-8
 Roxygen: list(markdown = TRUE)
 RoxygenNote: 7.3.2
-Encoding: UTF-8
