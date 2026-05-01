@@ -173,6 +173,7 @@ RcppExport SEXP cdfit_gaussian_simple_path(SEXP X_,
                                            SEXP alpha_,
                                            SEXP gamma_,
                                            SEXP eps_,
+                                           SEXP dfmax_,
                                            SEXP max_iter_,
                                            SEXP multiplier_, 
                                            SEXP ncore_) {
@@ -189,6 +190,7 @@ RcppExport SEXP cdfit_gaussian_simple_path(SEXP X_,
   int n = xMat->nrow(); // number of observations used for fitting model
   int p = xMat->ncol();
   double eps = REAL(eps_)[0];
+  int dfmax = INTEGER(dfmax_)[0];
   int max_iter = INTEGER(max_iter_)[0];
   double *m = REAL(multiplier_);
   const char *penalty = CHAR(STRING_ELT(penalty_, 0));
@@ -304,6 +306,16 @@ RcppExport SEXP cdfit_gaussian_simple_path(SEXP X_,
     }
     // calculate loss 
     loss[l] = gLoss(r, n);
+    
+    // check dfmax
+    int nv = 0;
+    for (int j=0; j<p; j++) {
+      if (a[j] != 0) nv++;
+    }
+    if (nv > dfmax) {
+      for (int ll=l; ll<L; ll++) INTEGER(iter)[ll] = NA_INTEGER;
+      break;
+    }
   }
   
   // cleanup steps

@@ -30,6 +30,14 @@ fit2 <- glmnet(X, y = y, family = "gaussian", lambda = lam,
 
 expect_equivalent(fit1$beta, fit2$beta, tolerance = 0.001)
 
+# confirm that dfmax appropriately stops lambda path
+dfmax <- 25
+fit3 <- biglasso_path(X.bm, y, lambda = lam, xtx = xtx, r = resid,
+                      penalty = "lasso", max.iter = 20000, dfmax = dfmax)
+nvar <- predict(fit3, type = "nvars")
+
+expect_true(max(nvar) <= dfmax)
+
 
 # prostate data ---------------------------
 data(Prostate)

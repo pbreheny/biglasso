@@ -95,7 +95,7 @@
 biglasso_path <- function(X,
                           y,
                           r, 
-                          init=rep(0, ncol(X)),
+                          init = rep(0, ncol(X)),
                           xtx, 
                           penalty = "lasso",
                           lambda,
@@ -103,7 +103,7 @@ biglasso_path <- function(X,
                           gamma, 
                           ncores = 1,
                           max.iter = 1000, 
-                          eps=1e-5,
+                          eps = 1e-5,
                           dfmax = ncol(X)+1,
                           penalty.factor = rep(1, ncol(X)),
                           warn = TRUE,
@@ -161,6 +161,7 @@ biglasso_path <- function(X,
                  alpha,
                  gamma, 
                  eps,
+                 as.integer(dfmax),
                  as.integer(max.iter),
                  penalty.factor,
                  as.integer(ncores),
@@ -173,6 +174,13 @@ biglasso_path <- function(X,
   loss <- res[[2]]
   iter <- res[[3]]
   resid <- res[[4]] # TODO: think about whether I need to add this in 
+  
+  ind <- !is.na(iter)
+  b <- b[, ind, drop = FALSE]
+  loss <- loss[ind]
+  iter <- iter[ind]
+  resid <- resid[ind]
+  lambda <- lambda[ind]
   
   if (output.time) {
     cat("\nEnd biglasso: ", format(Sys.time()), '\n')
@@ -193,7 +201,7 @@ biglasso_path <- function(X,
     resid = resid,
     lambda = lambda,
     penalty = penalty,
-    family = family,
+    family = 'gaussian',
     alpha = alpha,
     loss = loss,
     penalty.factor = penalty.factor,
