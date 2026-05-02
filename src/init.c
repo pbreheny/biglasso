@@ -15,7 +15,7 @@ extern SEXP cdfit_gaussian_simple_path(SEXP X_, SEXP y_, SEXP r_, SEXP init_,
                                        SEXP xtx_, SEXP penalty_, 
                                        SEXP lambda_, SEXP nlambda_, 
                                        SEXP alpha_, SEXP gamma_, SEXP eps_, 
-                                       SEXP max_iter_, SEXP multiplier_, 
+                                       SEXP dfmax_, SEXP max_iter_, SEXP multiplier_, 
                                        SEXP ncore_);
 
 // Coordinate descent for mgaussian model
@@ -135,7 +135,7 @@ extern SEXP _biglasso_get_eta(SEXP xPSEXP,
 static R_CallMethodDef callMethods[] = {
   //{"sqsum", (DL_FUNC) &sqsum,}
   {"cdfit_gaussian_simple", (DL_FUNC) &cdfit_gaussian_simple, 13},
-  {"cdfit_gaussian_simple_path", (DL_FUNC) &cdfit_gaussian_simple_path, 14},
+  {"cdfit_gaussian_simple_path", (DL_FUNC) &cdfit_gaussian_simple_path, 15},
   {"cdfit_mgaussian_ssr", (DL_FUNC) &cdfit_mgaussian_ssr, 15},
   {"cdfit_mgaussian_ada", (DL_FUNC) &cdfit_mgaussian_ada, 17},
   {"cdfit_cox", (DL_FUNC) &cdfit_cox, 18},
