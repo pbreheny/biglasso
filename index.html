@@ -138,7 +138,7 @@
 <p>The maximum RSS (in <strong>GB</strong>) used by a single fit and 10-fold cross validation is reported in the Table below. In the single fit case, <code>biglasso</code> consumes 0.60 GB memory in RAM, 23% of that used by <code>glmnet</code> and 24% of that used by <code>ncvreg</code>. Note that the memory consumed by <code>glmnet</code> and <code>ncvreg</code> are respectively 3.4x and 3.3x larger than the size of the raw data. <code>biglasso</code> also requires less additional memory to perform cross-validation, compared other packages. For serial 10-fold cross-validation, <code>biglasso</code> requires just 31% of the memory used by <code>glmnet</code> and 11% of that used by <code>ncvreg</code>, making it 3.2x and 9.4x more memory-efficient compared to these two, respectively.</p>
 <center>
 <table class="table">
-<thead><tr class="header">
+<thead><tr>
 <th align="right">Package</th>
 <th align="center">picasso</th>
 <th align="center">ncvreg</th>
@@ -146,14 +146,14 @@
 <th align="center">biglasso</th>
 </tr></thead>
 <tbody>
-<tr class="odd">
+<tr>
 <td align="right">Single fit</td>
 <td align="center">0.74</td>
 <td align="center">2.47</td>
 <td align="center">2.57</td>
 <td align="center">0.60</td>
 </tr>
-<tr class="even">
+<tr>
 <td align="right">10-fold CV</td>
 <td align="center">-</td>
 <td align="center">4.62</td>
@@ -173,7 +173,7 @@
 <p>The following table summarizes the mean (SE) computing time (in seconds) of solving the lasso along the entire path of 100 <code>lambda</code> values equally spaced on the log scale of <code>lambda / lambda_max</code> from 0.1 to 1 over 20 replications.</p>
 <center>
 <table class="table">
-<thead><tr class="header">
+<thead><tr>
 <th align="right">Package</th>
 <th align="center">GENE</th>
 <th align="center">MNIST</th>
@@ -181,42 +181,42 @@
 <th align="center">NYT</th>
 </tr></thead>
 <tbody>
-<tr class="odd">
+<tr>
 <td align="right"></td>
 <td align="center"><code>n=536</code></td>
 <td align="center"><code>n=784</code></td>
 <td align="center"><code>n=313</code></td>
 <td align="center"><code>n=5,000</code></td>
 </tr>
-<tr class="even">
+<tr>
 <td align="right"></td>
 <td align="center"><code>p=17,322</code></td>
 <td align="center"><code>p=60,000</code></td>
 <td align="center"><code>p=660,495</code></td>
 <td align="center"><code>p=55,000</code></td>
 </tr>
-<tr class="odd">
+<tr>
 <td align="right">picasso</td>
 <td align="center">0.67 (0.02)</td>
 <td align="center">2.94 (0.01)</td>
 <td align="center">14.96 (0.01)</td>
 <td align="center">15.91 (0.16)</td>
 </tr>
-<tr class="even">
+<tr>
 <td align="right">ncvreg</td>
 <td align="center">0.87 (0.01)</td>
 <td align="center">4.22 (0.00)</td>
 <td align="center">19.78 (0.01)</td>
 <td align="center">25.59 (0.12)</td>
 </tr>
-<tr class="odd">
+<tr>
 <td align="right">glmnet</td>
 <td align="center">0.74 (0.01)</td>
 <td align="center">3.82 (0.01)</td>
 <td align="center">16.19 (0.01)</td>
 <td align="center">24.94 (0.16)</td>
 </tr>
-<tr class="even">
+<tr>
 <td align="right">biglasso</td>
 <td align="center">0.31 (0.01)</td>
 <td align="center">0.61 (0.02)</td>
@@ -234,31 +234,31 @@
 <p>Since other three packages cannot handle this data-larger-than-RAM case, we compare the performance of screening rules <code>SSR</code> and <code>Adaptive</code> based on our package <code>biglasso</code>. In addition, two cases in terms of <code>lambda_min</code> are considered: (1) <code>lam_min = 0.1 lam_max</code>; and (2) <code>lam_min = 0.5 lam_max</code>, as in practice there is typically less interest in lower values of <code>lambda</code>for very high-dimensional data such as this case. Again the entire solution path with 100 <code>lambda</code> values is obtained. The table below summarizes the overall computing time (in <strong>minutes</strong>) by screening rule <code>SSR</code> (which is what other three packages are using) and our new rule <code>Adaptive</code>. (No replication is conducted.)</p>
 <center>
 <table class="table">
-<thead><tr class="header">
+<thead><tr>
 <th align="left">Cases</th>
 <th align="right">SSR</th>
 <th align="right">Adaptive</th>
 </tr></thead>
 <tbody>
-<tr class="odd">
+<tr>
 <td align="left">
 <code>lam_min / lam_max = 0.1</code>, 1 core</td>
 <td align="right">189.67</td>
 <td align="right">66.05</td>
 </tr>
-<tr class="even">
+<tr>
 <td align="left">
 <code>lam_min / lam_max = 0.1</code>, 4 cores</td>
 <td align="right">86.31</td>
 <td align="right">46.91</td>
 </tr>
-<tr class="odd">
+<tr>
 <td align="left">
 <code>lam_min / lam_max = 0.5</code>, 1 core</td>
 <td align="right">177.84</td>
 <td align="right">24.84</td>
 </tr>
-<tr class="even">
+<tr>
 <td align="left">
 <code>lam_min / lam_max = 0.5</code>, 4 cores</td>
 <td align="right">85.67</td>
@@ -341,7 +341,7 @@
 </div>
 
 <div class="pkgdown-footer-right">
-  <p>Last updated: December 10, 2025</p>
+  <p>Last updated: May 02, 2026</p>
 </div>
 
     </footer>

@@ -5,6 +5,7 @@
 ### Linear regression
 
 ``` r
+
 library(biglasso)
 #> Loading required package: bigmemory
 #> Loading required package: Matrix
@@ -18,6 +19,7 @@ dim(X)
 ```
 
 ``` r
+
 X[1:5, 1:5]
 #>   Hsa.3004 Hsa.13491 Hsa.13491.1 Hsa.37254 Hsa.541
 #> t  8589.42   5468.24     4263.41   4064.94 1997.89
@@ -28,20 +30,23 @@ X[1:5, 1:5]
 ```
 
 ``` r
+
 ## convert X to a big.matrix object
 ## X.bm is a pointer to the data matrix
 X.bm <- as.big.matrix(X)
 str(X.bm)
 #> Formal class 'big.matrix' [package "bigmemory"] with 1 slot
-#>   ..@ address:<externalptr>
+#>   ..@ address:<pointer: 0x5621ef326f60>
 ```
 
 ``` r
+
 dim(X.bm)
 #> [1]   62 2000
 ```
 
 ``` r
+
 X.bm[1:5, 1:5]
 #>   Hsa.3004 Hsa.13491 Hsa.13491.1 Hsa.37254 Hsa.541
 #> t  8589.42   5468.24     4263.41   4064.94 1997.89
@@ -53,6 +58,7 @@ X.bm[1:5, 1:5]
 ```
 
 ``` r
+
 ## fit entire solution path, using our newly proposed "Adaptive" screening rule (default)
 fit <- biglasso(X.bm, y)
 plot(fit)
@@ -63,6 +69,7 @@ plot(fit)
 ### Cross-Validation
 
 ``` r
+
 ## 10-fold cross-valiation in parallel
 cvfit <- tryCatch(
          {
@@ -79,6 +86,7 @@ After cross-validation, a few things we can do:
 - plot the cross-validation plots:
 
 ``` r
+
 par(mfrow = c(2, 2), mar = c(3.5, 3.5, 3, 1) ,mgp = c(2.5, 0.5, 0))
 plot(cvfit, type = "all")
 ```
@@ -88,6 +96,7 @@ plot(cvfit, type = "all")
 - Summarize CV object:
 
 ``` r
+
 summary(cvfit)
 #> lasso-penalized linear regression with n=62, p=2000
 #> At minimum cross-validation error (lambda=0.0386):
@@ -99,9 +108,10 @@ summary(cvfit)
 #>   Scale estimate (sigma): 0.371
 ```
 
-- Extract non-zero coefficients at the optimal $\lambda$ value:
+- Extract non-zero coefficients at the optimal $`\lambda`$ value:
 
 ``` r
+
 coef(cvfit)[which(coef(cvfit) != 0),]
 #>   (Intercept)      Hsa.8147     Hsa.43279     Hsa.36689      Hsa.3152 
 #>  6.882526e-01 -5.704059e-07 -2.748858e-08 -6.967419e-04  4.940698e-05 
@@ -120,6 +130,7 @@ coef(cvfit)[which(coef(cvfit) != 0),]
 ### Logistic Regression
 
 ``` r
+
 data(Heart)
 X <- Heart$X
 y <- Heart$y
@@ -133,6 +144,7 @@ plot(fit)
 ### Cox Regression
 
 ``` r
+
 library(survival)
 #> 
 #> Attaching package: 'survival'
@@ -153,6 +165,7 @@ plot(fit)
 ### Multiple response Linear Regression (multi-task learning)
 
 ``` r
+
 set.seed(10101)
 n=300; p=300; m=5; s=10; b=1
 x = matrix(rnorm(n * p), n, p)
@@ -174,6 +187,7 @@ backing file (.bin) and a descriptor file (.desc) for the raw data
 matrix:
 
 ``` r
+
 ## The data has 200 observations, 600 features, and 10 non-zero coefficients.
 ## This is not actually very big, but vignettes in R are supposed to render
 ## quickly. Much larger data can be handled in the same way.
@@ -188,8 +202,8 @@ if(!file.exists('BigX.bin')) {
 }
 #> Reading data from file, and creating file-backed big.matrix...
 #> This should take a while if the data is very large...
-#> Start time:  2025-12-10 23:36:15 
-#> End time:  2025-12-10 23:36:17 
+#> Start time:  2026-05-02 13:30:18 
+#> End time:  2026-05-02 13:30:19 
 #> DONE!
 #> 
 #> Note: This function needs to be called only one time to create two backing
@@ -202,6 +216,7 @@ execution. Once done, the data can always be retrieved seamlessly by
 attaching its descriptor file (.desc) in any new R session:
 
 ``` r
+
 rm(list = c("X", "X.bm", "y")) # Pretend starting a new session
 X.bm <- attach.big.matrix("BigX.desc")
 y <- read.csv("y.csv")[,1]
@@ -213,18 +228,21 @@ time-consuming. The code below again fits a lasso-penalized linear
 model, and runs 10-fold cross-validation:
 
 ``` r
+
 system.time({fit <- biglasso(X.bm, y)})
 #>    user  system elapsed 
-#>   0.283   0.001   0.284
+#>    0.27    0.00    0.27
 ```
 
 ``` r
+
 plot(fit)
 ```
 
 ![](biglasso_files/figure-html/unnamed-chunk-18-1.png)
 
 ``` r
+
 # 10-fold cross validation in parallel
 tryCatch(
     {
@@ -235,10 +253,11 @@ tryCatch(
     }
 )
 #>    user  system elapsed 
-#>   0.385   0.010   3.089
+#>   0.373   0.009   2.999
 ```
 
 ``` r
+
 par(mfrow = c(2, 2), mar = c(3.5, 3.5, 3, 1), mgp = c(2.5, 0.5, 0))
 plot(cvfit, type = "all")
 ```

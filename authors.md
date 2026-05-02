@@ -19,7 +19,7 @@ Source:
 Zeng Y, Breheny P (2021). “The biglasso Package: A Memory- and
 Computation-Efficient Solver for Lasso Model Fitting with Big Data in
 R.” *R Journal*, **12**(2), 6–19.
-[doi:10.32614/RJ-2021-001](https://doi.org/10.32614/RJ-2021-001),
+[doi:10.32614/RJ-2021-001](https://doi.org/10.32614/RJ-2021-001).
 1701.05936, <https://doi.org/10.32614/RJ-2021-001>.
 
     @Article{,

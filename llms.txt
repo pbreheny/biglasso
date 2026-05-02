@@ -23,12 +23,14 @@ allowing for powerful big data analysis on an ordinary laptop.
 To install the latest stable release version from CRAN:
 
 ``` r
+
 install.packages("biglasso")
 ```
 
 To install the latest development version from GitHub:
 
 ``` r
+
 remotes::install_github("pbreheny/biglasso")
 ```
 
