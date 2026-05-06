@@ -42,7 +42,7 @@ dim(X)
 X.bm <- as.big.matrix(X, backingfile = "") # convert to big.matrix object
 str(X.bm)
 #> Formal class 'big.matrix' [package "bigmemory"] with 1 slot
-#>   ..@ address:<pointer: 0x560ec8ab53a0> 
+#>   ..@ address:<pointer: 0x55fa3484e320> 
 dim(X.bm)
 #> [1]   62 2000
 ```
