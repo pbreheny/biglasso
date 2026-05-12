@@ -1,12 +1,9 @@
 #include "utilities.h"
 
-// T. Peter's version ---------------------------
+// Coordinate descent for gaussian models; no adaptation or SSR 
 
-// Coordinate descent for gaussian models -- NO adapting or SSR 
-
-// NOTE: in this simple function, lambda is a SINGLE VALUE, not a path!! 
-// NOTE: this function does NOT implement any standardization of X
-// NOTE: this function does NOT center y
+// NOTE: in this simple function, lambda is a single value, not a path
+// NOTE: this function does not standardize X or center y
 RcppExport SEXP cdfit_gaussian_simple(SEXP X_,
                                       SEXP y_,
                                       SEXP r_,
@@ -42,7 +39,7 @@ RcppExport SEXP cdfit_gaussian_simple(SEXP X_,
   NumericVector b(p); // Initialize a NumericVector of size p vector to hold estimated coefficients from current iteration
   double *a =  R_Calloc(p, double);// will hold beta from previous iteration
   NumericVector resid(n);
-  double *r = REAL(resid); // pointer for the COPY of residuals (will modify/update these...)
+  double *r = REAL(resid); // pointer for the residuals
   double l1, l2, shift, cp;
   double max_update, update, thresh, loss; // for convergence check
   int i, j; //temp indices
@@ -57,7 +54,7 @@ RcppExport SEXP cdfit_gaussian_simple(SEXP X_,
   }
   
   for (i = 0; i < n; i++) {
-    r[i] = REAL(r_)[i]; // again, we're making a copy of the residuals for our function to edit
+    r[i] = REAL(r_)[i];
   }
   
   // set up omp
@@ -158,10 +155,8 @@ RcppExport SEXP cdfit_gaussian_simple(SEXP X_,
 
 
 // Coordinate descent for gaussian models -- NO adapting or SSR 
-// NOTE: in this simple function, lambda is a user-supplied path! 
-//  This function does not set up a path on its own. 
-// NOTE: this function does NOT implement any standardization of X
-// NOTE: this function does NOT center y
+// NOTE: in this simple function, lambda is a user-supplied path
+// NOTE: this function does not standardize X or center y
 RcppExport SEXP cdfit_gaussian_simple_path(SEXP X_,
                                            SEXP y_,
                                            SEXP r_,
@@ -201,7 +196,7 @@ RcppExport SEXP cdfit_gaussian_simple_path(SEXP X_,
   arma::sp_mat beta = arma::sp_mat(p, L); // beta matrix to return (rows are features, columns are lambda values)
   double *a =  R_Calloc(p, double);// will hold beta from previous iteration
   NumericVector resid(n); // create vector of residuals that will be returned 
-  double *r = REAL(resid); // pointer for the COPY of residuals (will modify/update these...)
+  double *r = REAL(resid);
   NumericVector loss(L);
   IntegerVector iter(L);
   double l1, l2, shift, cp;
@@ -219,7 +214,7 @@ RcppExport SEXP cdfit_gaussian_simple_path(SEXP X_,
   }
   
   for (i = 0; i < n; i++) {
-    r[i] = REAL(r_)[i]; // again, note that we're making a copy of the residuals for our function to edit
+    r[i] = REAL(r_)[i];
   }
   
   // set up omp

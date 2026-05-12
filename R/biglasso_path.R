@@ -166,20 +166,17 @@ biglasso_path <- function(X,
                  penalty.factor,
                  as.integer(ncores),
                  PACKAGE = 'biglasso')
-    
-    
   )
   
   b <- res[[1]]
   loss <- res[[2]]
   iter <- res[[3]]
-  resid <- res[[4]] # TODO: think about whether I need to add this in 
+  resid <- res[[4]]
   
   ind <- !is.na(iter)
   b <- b[, ind, drop = FALSE]
   loss <- loss[ind]
   iter <- iter[ind]
-  resid <- resid[ind]
   lambda <- lambda[ind]
   
   if (output.time) {

@@ -1,6 +1,6 @@
 Package: biglasso
 Title: Extending Lasso Model Fitting to Big Data
-Version: 1.6.1.1
+Version: 1.6.1.2
 Authors@R: c(
   person("Yaohui", "Zeng", role = c("aut")),
   person("Chuyi", "Wang", role = c("aut")),
