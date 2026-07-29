@@ -134,7 +134,7 @@ biglasso_path <- function(X,
   
   n <- nrow(X) 
   if (missing(lambda)) {
-    stop("For biglasso_fit, a single lambda value must be user-supplied")
+    stop("For biglasso_path, a vector of lambda values must be user-supplied")
   }
   
   # check types for residuals and xtx
