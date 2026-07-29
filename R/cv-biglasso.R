@@ -175,10 +175,10 @@ cv.biglasso <- function(X, y, row.idx = 1:nrow(X),
     if (fit$family == "binomial") PE[cv.ind == i, match(res$ls, fit$lambda)] <- res$pe
   }
 
-  ## Eliminate saturated lambda values, if any
+  # Eliminate saturated lambda values, if any
   # deliberately do *not* eliminate NAs, which can occur when AUC breaks
   ind <- which(apply(!is.infinite(E), 2, all))
-  E <- E[,ind]
+  E <- E[, ind]
   lambda <- fit$lambda[ind]
 
   ## Return
@@ -203,7 +203,7 @@ cv.biglasso <- function(X, y, row.idx = 1:nrow(X),
               eval.metric = eval.metric)
   if (fit$family=="binomial") {
     pe <- apply(PE, 2, mean)
-    val$pe <- pe[is.finite(pe)]
+    val$pe <- pe[ind]
   }
   structure(val, class=c("cv.biglasso", "cv.ncvreg"))
 }

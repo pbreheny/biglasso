@@ -44,7 +44,7 @@ summary.cv.biglasso <- function(object, ...) {
     rsq <- pmin(pmax(1 - exp(object$cve-object$null.dev), 0), 1)
   }
   snr <- rsq/(1-rsq)
-  nvars <- predict(object$fit, type="nvars")
+  nvars <- predict(object$fit, lambda = object$lambda, type = "nvars")
   model <- switch(object$fit$family, gaussian="linear", binomial="logistic", poisson="Poisson", cox="Cox")
   val <- list(penalty=object$fit$penalty, model=model, n=object$fit$n, p=nrow(object$fit$beta)-1, min=object$min, lambda=object$lambda, cve=object$cve, r.squared=rsq, snr=snr, nvars=nvars)
   if (object$fit$family=="gaussian") val$sigma <- sqrt(object$cve)
@@ -62,9 +62,9 @@ print.summary.cv.biglasso <- function(x, digits, ...) {
   cat("At minimum cross-validation error (lambda=", formatC(x$lambda[x$min], digits[2], format="f"), "):\n", sep="")
   cat("-------------------------------------------------\n")
   cat("  Nonzero coefficients: ", x$nvars[x$min], "\n", sep="")
-  cat("  Cross-validation error (deviance): ", formatC(min(x$cve), digits[1], format="f"), "\n", sep="")
-  cat("  R-squared: ", formatC(max(x$r.squared), digits[3], format="f"), "\n", sep="")
-  cat("  Signal-to-noise ratio: ", formatC(max(x$snr), digits[4], format="f"), "\n", sep="")
+  cat("  Cross-validation error (deviance): ", formatC(min(x$cve, na.rm = TRUE), digits[1], format="f"), "\n", sep="")
+  cat("  R-squared: ", formatC(max(x$r.squared, na.rm = TRUE), digits[3], format="f"), "\n", sep="")
+  cat("  Signal-to-noise ratio: ", formatC(max(x$snr, na.rm = TRUE), digits[4], format="f"), "\n", sep="")
   if (x$model == "logistic") cat("  Prediction error: ", formatC(x$pe[x$min], digits[5], format="f"), "\n", sep="")
   if (x$model == "linear") cat("  Scale estimate (sigma): ", formatC(sqrt(x$cve[x$min]), digits[5], format="f"), "\n", sep="")
 }
