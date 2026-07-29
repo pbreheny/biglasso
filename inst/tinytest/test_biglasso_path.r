@@ -14,11 +14,9 @@ og_X <- X.bm <- as.big.matrix(X)
 n <- nrow(X)
 p <- ncol(X)
 
-# choose a lambda path of just 10 values, for sake of testing 
-lam <- ncvreg:::setupLambda(X = X, y = y, family = "gaussian", nlambda = 10,
-                            penalty.factor = rep(1, ncol(X)),
-                            alpha = 1,
-                            lambda.min = ifelse(n > p, 0.001, 0.05))
+lam <- glmnet(X, y = y, family = "gaussian", nlambda = 10,
+             penalty.factor = rep(1, ncol(X)), standardize = FALSE,
+             lambda.min.ratio = ifelse(n > p, 0.001, 0.05))$lambda
 
 fit1 <- biglasso_path(X.bm, y, lambda = lam, xtx=xtx, r = resid,
                      penalty = "lasso", max.iter = 20000)
