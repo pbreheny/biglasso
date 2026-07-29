@@ -10,7 +10,6 @@ library(glmnet)
 
 # Test whole path against glmnet (lasso) -----------------------------------
 
-set.seed(1)
 n <- 150
 p <- 60
 m <- 3
@@ -22,7 +21,7 @@ B[1:6, ] <- matrix(rnorm(6 * m), 6, m)
 Y <- X %*% B + matrix(rnorm(n * m, sd = 0.5), n, m)
 
 X.bm <- as.big.matrix(X)
-fit_glmnet <- suppressWarnings(glmnet(X, Y, family = "mgaussian", thresh = eps))
+fit_glmnet <- glmnet(X, Y, family = "mgaussian", control = list(thresh = eps))
 lambda_big <- fit_glmnet$lambda / sqrt(m)
 
 fit_ssr <- biglasso(X.bm, Y, family = "mgaussian", screen = "SSR",
@@ -71,10 +70,18 @@ fit_enet <- biglasso(X.bm, Y, family = "mgaussian", penalty = "enet", alpha = 0.
 expect_equal(fit_enet$screen, "SSR")  # Adaptive isn't supported for enet
 expect_true(all(sapply(fit_enet$beta, function(b) all(is.finite(as.matrix(b))))))
 
-fit_ridge <- biglasso(X.bm, Y, family = "mgaussian", penalty = "ridge",
+# ridge should never produce exact zeros -- but note penalty = "ridge" is
+# implemented internally as elastic net with alpha = 1e-6, not literal L2-only
+# ridge, and lambda_max is computed as zmax / alpha. That inflates ridge's own
+# auto-generated lambda path by a factor of ~1/alpha = 1e6, so even the
+# *smallest* lambda in that path (default lambda.min = 0.001 * lambda_max) is
+# still a very strong penalty in absolute terms -- not the weakly regularized
+# regime the density check needs. Evaluating at a lambda drawn from the
+# lasso path's scale instead gives genuinely weak regularization (see the
+# analogous, empirically-confirmed fix in test_biglasso_cox.r).
+fit_ridge <- biglasso(X.bm, Y, family = "mgaussian", penalty = "ridge", lambda = min(lambda_big),
                        eps = 1e-10, max.iter = 1e5)
-# ridge should never produce exact zeros
-frac_nonzero <- sapply(fit_ridge$beta, function(b) mean(as.matrix(b[-1, ncol(b)]) != 0))
+frac_nonzero <- sapply(fit_ridge$beta, function(b) mean(as.matrix(b[-1, ]) != 0))
 expect_true(all(frac_nonzero == 1))
 
 

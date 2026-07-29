@@ -96,8 +96,8 @@ predict.biglasso <- function(
 
   beta_t <- as(beta, "TsparseMatrix")
   temp <- get_eta(X@address, as.integer(row.idx - 1), beta, beta_t@i, beta_t@j)
-  if (object$family != "cox") eta <- sweep(temp, 2, alpha, "+")
-
+  eta <- if (object$family == "cox") temp else sweep(temp, 2, alpha, "+")
+  
   # Binomial case
   if (object$family == "binomial") {
     out <- switch(type,
