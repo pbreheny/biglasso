@@ -137,22 +137,10 @@ int check_rest_safe_set(int *ever_active, int *strong_set, int *discard_beta, ve
                         NumericVector &center, NumericVector &scale, double *a, double lambda,
                         double sumResid, double alpha, double *r, double *m, int n, int p);
 
-// check KKT conditions over features in (the safe set - the strong set) for *standardized* X
-int check_rest_safe_set_no_std(int *ever_active, int *strong_set, int *discard_beta, vector<double> &z,
-                        XPtr<BigMatrix> xpMat, int *row_idx, vector<int> &col_idx,
-                        double *a, double lambda,
-                        double sumResid, double alpha, double *r, double *m, int n, int p);
-
 // check KKT conditions over features in the strong set
 int check_strong_set(int *e1, int *e2, vector<double> &z, XPtr<BigMatrix> xpMat, 
                      int *row_idx, vector<int> &col_idx,
                      NumericVector &center, NumericVector &scale, double *a,
-                     double lambda, double sumResid, double alpha, 
-                     double *r, double *m, int n, int p);
-
-// check KKT conditions over features in the strong set for *standardized* X
-int check_strong_set_no_std(int *e1, int *e2, vector<double> &z, XPtr<BigMatrix> xpMat, 
-                     int *row_idx, vector<int> &col_idx, double *a,
                      double lambda, double sumResid, double alpha, 
                      double *r, double *m, int n, int p);
 
