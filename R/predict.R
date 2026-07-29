@@ -136,11 +136,11 @@ predict.mbiglasso <- function(
   ...
 ) {
   type <- match.arg(type)
-  beta <- coef.biglasso(object, lambda = lambda, which = which, drop = FALSE)[[k]]
+  beta <- coef.mbiglasso(object, lambda = lambda, which = which)[[k]]
   if (type == "coefficients") {
     return(beta)
   }
-  if (class(object)[1] == "biglasso") {
+  if (inherits(object, "mbiglasso")) {
     alpha <- beta[1, ]
     beta <- beta[-1, , drop = FALSE]
   }
@@ -194,7 +194,8 @@ coef.biglasso <- function(object, lambda = NULL, which = 1:length(object$lambda)
 
 coef.mbiglasso <- function(object, lambda = NULL, which = 1:length(object$lambda), intercept = TRUE, ...) {
   nclass <- length(object$beta)
-  beta <- list()
+  beta <- vector("list", nclass)
+  names(beta) <- names(object$beta)
   if (intercept) {
     col.idx <- 1:nrow(object$beta[[1]])
   } else {
@@ -202,8 +203,7 @@ coef.mbiglasso <- function(object, lambda = NULL, which = 1:length(object$lambda
   }
   if (is.null(lambda)) {
     for (class in 1:nclass) {
-      beta_class <- (object$beta[[class]])[col.idx, which, drop = FALSE]
-      beta <- append(beta, beta_class)
+      beta[[class]] <- (object$beta[[class]])[col.idx, which, drop = FALSE]
     }
   } else {
     ind <- approx(object$lambda, seq(object$lambda), lambda)$y
@@ -215,7 +215,7 @@ coef.mbiglasso <- function(object, lambda = NULL, which = 1:length(object$lambda
         (object$beta[[class]])[col.idx, l, drop = FALSE] +
         w * (object$beta[[class]])[col.idx, r, drop = FALSE]
       colnames(beta_class) <- round(lambda, 4)
-      beta <- append(beta, beta_class)
+      beta[[class]] <- beta_class
     }
   }
   return(beta)
