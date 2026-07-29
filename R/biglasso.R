@@ -760,7 +760,6 @@ biglasso <- function(
     iter <- res[[6]]
     rejections <- res[[7]]
 
-    if (screen %in% c("scox", "sscox", "safe")) safe_rejections <- rejections # To be updated
     if (screen %in% c("Adaptive")) {
       safe_rejections <- res[[8]]
       col.idx <- res[[9]]
