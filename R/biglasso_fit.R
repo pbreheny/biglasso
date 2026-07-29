@@ -141,8 +141,6 @@ biglasso_fit <- function(X,
   if (output.time) {
     cat("\nStart biglasso: ", format(Sys.time()), '\n')
   }
-  
-  Sys.setenv(R_C_BOUNDS_CHECK = "yes")
 
   time <- system.time(
     res <- .Call("cdfit_gaussian_simple",
