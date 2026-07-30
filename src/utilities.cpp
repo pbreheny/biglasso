@@ -304,12 +304,12 @@ double wsqsum_bm(XPtr<BigMatrix> xpMat, double *w, int *row_idx_, double center_
   return val;
 }
 
-// standardize & get residual 
-void standardize_and_get_residual(NumericVector &center, NumericVector &scale, 
+// standardize & get residual
+void standardize_and_get_residual(NumericVector &center, NumericVector &scale,
                                   int *p_keep_ptr, vector<int> &col_idx, //columns to keep, removing columns whose scale < 1e-6
                                   vector<double> &z, double *lambda_max_ptr,
-                                  int *xmax_ptr, XPtr<BigMatrix> xMat, double *y, 
-                                  int *row_idx, double alpha, int n, int p) {
+                                  int *xmax_ptr, XPtr<BigMatrix> xMat, double *y,
+                                  int *row_idx, double alpha, int n, int p, double *m) {
   MatrixAccessor<double> xAcc(*xMat);
   double *xCol;
   double sum_xy, sum_y;
@@ -335,8 +335,13 @@ void standardize_and_get_residual(NumericVector &center, NumericVector &scale,
     if (scale[j] > 1e-6) {
       col_idx.push_back(j);
       zj = (sum_xy - center[j] * sum_y) / (scale[j] * n); //residual
-      if (fabs(zj) > zmax) {
-        zmax = fabs(zj);
+      // lambda_max must reflect penalty.factor: a variable penalized less
+      // than others should be allowed to enter the model at a larger lambda,
+      // so the threshold that determines lambda_max is |zj| / m[j], not the
+      // raw |zj| (m[j] <= 0 -- unpenalized -- is excluded, since it should
+      // never determine lambda_max).
+      if (m[j] > 0 && fabs(zj) / m[j] > zmax) {
+        zmax = fabs(zj) / m[j];
         *xmax_ptr = j; // xmax_ptr is the index in the raw xMat, not index in col_idx!
       }
       z.push_back(zj);

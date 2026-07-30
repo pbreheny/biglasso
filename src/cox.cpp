@@ -2,12 +2,12 @@
 
 
 // standardize
-void standardize_and_get_residual_cox(NumericVector &center, NumericVector &scale, 
+void standardize_and_get_residual_cox(NumericVector &center, NumericVector &scale,
                                       int *p_keep_ptr, vector<int> &col_idx, //columns to keep, removing columns whose scale < 1e-6
                                       vector<double> &z, double *lambda_max_ptr,
-                                      int *xmax_ptr, XPtr<BigMatrix> xMat, 
+                                      int *xmax_ptr, XPtr<BigMatrix> xMat,
                                       double *y, double *d, int *d_idx, int *row_idx,
-                                      double alpha, int n, int f, int p) {
+                                      double alpha, int n, int f, int p, double *m) {
   MatrixAccessor<double> xAcc(*xMat);
   double *xCol;
   double sum_xs;
@@ -51,9 +51,11 @@ void standardize_and_get_residual_cox(NumericVector &center, NumericVector &scal
     
     if (scale[j] > 1e-6) {
       col_idx.push_back(j);
-      zj = sum_xs / (scale[j] * n); 
-      if (fabs(zj) > zmax) {
-        zmax = fabs(zj);
+      zj = sum_xs / (scale[j] * n);
+      // lambda_max must reflect penalty.factor -- see the analogous comment
+      // in standardize_and_get_residual() in utilities.cpp.
+      if (m[j] > 0 && fabs(zj) / m[j] > zmax) {
+        zmax = fabs(zj) / m[j];
         *xmax_ptr = j; // xmax_ptr is the index in the raw xMat, not index in col_idx!
       }
       z.push_back(zj);
@@ -491,8 +493,8 @@ RcppExport SEXP cdfit_cox(SEXP X_, SEXP y_, SEXP d_, SEXP d_idx_, SEXP row_idx_,
   }
   
   // standardize: get center, scale; get p_keep_ptr, col_idx; get z, lambda_max, xmax_idx;
-  standardize_and_get_residual_cox(center, scale, p_keep_ptr, col_idx, z, lambda_max_ptr, xmax_ptr, xMat, 
-                                   y, d, d_idx, row_idx, alpha, n, f, p);
+  standardize_and_get_residual_cox(center, scale, p_keep_ptr, col_idx, z, lambda_max_ptr, xmax_ptr, xMat,
+                                   y, d, d_idx, row_idx, alpha, n, f, p, m);
   p = p_keep; // set p = p_keep, only loop over columns whose scale > 1e-6
   
   if (verbose) {
@@ -732,8 +734,8 @@ RcppExport SEXP cdfit_cox_ssr(SEXP X_, SEXP y_, SEXP d_, SEXP d_idx_, SEXP row_i
   }
   
   // standardize: get center, scale; get p_keep_ptr, col_idx; get z, lambda_max, xmax_idx;
-  standardize_and_get_residual_cox(center, scale, p_keep_ptr, col_idx, z, lambda_max_ptr, xmax_ptr, xMat, 
-                                   y, d, d_idx, row_idx, alpha, n, f, p);
+  standardize_and_get_residual_cox(center, scale, p_keep_ptr, col_idx, z, lambda_max_ptr, xmax_ptr, xMat,
+                                   y, d, d_idx, row_idx, alpha, n, f, p, m);
   p = p_keep; // set p = p_keep, only loop over columns whose scale > 1e-6
   
   if (verbose) {
@@ -1003,8 +1005,8 @@ RcppExport SEXP cdfit_cox_scox(SEXP X_, SEXP y_, SEXP d_, SEXP d_idx_, SEXP row_
   }
   
   // standardize: get center, scale; get p_keep_ptr, col_idx; get z, lambda_max, xmax_col_idx;
-  standardize_and_get_residual_cox(center, scale, p_keep_ptr, col_idx, z, lambda_max_ptr, xmax_ptr, xMat, 
-                                   y, d, d_idx, row_idx, alpha, n, f, p);
+  standardize_and_get_residual_cox(center, scale, p_keep_ptr, col_idx, z, lambda_max_ptr, xmax_ptr, xMat,
+                                   y, d, d_idx, row_idx, alpha, n, f, p, m);
   p = p_keep; // set p = p_keep, only loop over columns whose scale > 1e-6
   
   if (verbose) {
@@ -1279,8 +1281,8 @@ RcppExport SEXP cdfit_cox_sscox(SEXP X_, SEXP y_, SEXP d_, SEXP d_idx_, SEXP row
   }
   
   // standardize: get center, scale; get p_keep_ptr, col_idx; get z, lambda_max, xmax_col_idx;
-  standardize_and_get_residual_cox(center, scale, p_keep_ptr, col_idx, z, lambda_max_ptr, xmax_ptr, xMat, 
-                                   y, d, d_idx, row_idx, alpha, n, f, p);
+  standardize_and_get_residual_cox(center, scale, p_keep_ptr, col_idx, z, lambda_max_ptr, xmax_ptr, xMat,
+                                   y, d, d_idx, row_idx, alpha, n, f, p, m);
   p = p_keep; // set p = p_keep, only loop over columns whose scale > 1e-6
   
   if (verbose) {
@@ -1568,8 +1570,8 @@ RcppExport SEXP cdfit_cox_ada_scox(SEXP X_, SEXP y_, SEXP d_, SEXP d_idx_, SEXP 
   }
   
   // standardize: get center, scale; get p_keep_ptr, col_idx; get z, lambda_max, xmax_col_idx;
-  standardize_and_get_residual_cox(center, scale, p_keep_ptr, col_idx, z, lambda_max_ptr, xmax_ptr, xMat, 
-                                   y, d, d_idx, row_idx, alpha, n, f, p);
+  standardize_and_get_residual_cox(center, scale, p_keep_ptr, col_idx, z, lambda_max_ptr, xmax_ptr, xMat,
+                                   y, d, d_idx, row_idx, alpha, n, f, p, m);
   p = p_keep; // set p = p_keep, only loop over columns whose scale > 1e-6
   
   if (verbose) {
@@ -1888,8 +1890,8 @@ RcppExport SEXP cdfit_cox_safe(SEXP X_, SEXP y_, SEXP d_, SEXP d_idx_, SEXP row_
   }
   
   // standardize: get center, scale; get p_keep_ptr, col_idx; get z, lambda_max, xmax_col_idx;
-  standardize_and_get_residual_cox(center, scale, p_keep_ptr, col_idx, z, lambda_max_ptr, xmax_ptr, xMat, 
-                                   y, d, d_idx, row_idx, alpha, n, f, p);
+  standardize_and_get_residual_cox(center, scale, p_keep_ptr, col_idx, z, lambda_max_ptr, xmax_ptr, xMat,
+                                   y, d, d_idx, row_idx, alpha, n, f, p, m);
   p = p_keep; // set p = p_keep, only loop over columns whose scale > 1e-6
   
   if (verbose) {

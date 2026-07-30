@@ -105,3 +105,95 @@ expect_equal(unname(as.matrix(lminpred)), unname(lminpred.glmnet), tolerance = t
 l1sepred <- predict(cv.default, X.bm, lambda = "lambda.1se")
 l1sepred.glmnet <- predict(cv.glmnet.default, X, s = "lambda.1se")
 expect_equal(unname(as.matrix(l1sepred)), unname(l1sepred.glmnet), tolerance = tolerance)
+
+
+# Test elastic net ----------------------------------------------------------
+# compared numerically against ncvreg (same approach as the gaussian enet
+# test in test_biglasso_linear.r: biglasso's enet parameterization matches
+# ncvreg's exactly, unlike glmnet's).
+
+n.en <- 200
+p.en <- 30
+X.en <- matrix(rnorm(n.en * p.en), n.en, p.en)
+b.en <- rnorm(p.en, sd = 1 / sqrt(p.en))
+y.en <- rbinom(n.en, 1, prob = 1 / (1 + exp(-(X.en %*% b.en))))
+eps.en <- 1e-10
+alpha.en <- 0.5
+
+fit_ncv_en <- ncvreg(X.en, y.en, family = 'binomial', penalty = 'lasso', alpha = alpha.en,
+                     eps = eps.en, lambda.min = 0.05)
+X.en.bm <- as.big.matrix(X.en)
+fit_big_en <- biglasso(X.en.bm, y.en, family = 'binomial', penalty = 'enet', alpha = alpha.en,
+                       eps = eps.en, lambda.min = 0.05)
+expect_equal(fit_big_en$screen, "SSR")  # Adaptive isn't supported for enet
+expect_equal(as.numeric(fit_ncv_en$beta), as.numeric(fit_big_en$beta), tolerance = tolerance)
+
+
+# Test ridge ------------------------------------------------------------------
+# (Not compared numerically: penalty = "ridge" is elastic net with
+# alpha = 1e-6 internally, which inflates ridge's own auto-generated lambda
+# path -- see the gaussian/cox/mgaussian ridge tests for the full
+# explanation. Evaluating at a lambda drawn from the lasso path's scale
+# instead gives genuinely weak regularization.)
+
+fit_lasso_en <- biglasso(X.en.bm, y.en, family = 'binomial', eps = eps.en, max.iter = 1e5)
+fit_ridge_en <- biglasso(X.en.bm, y.en, family = 'binomial', penalty = 'ridge',
+                         lambda = min(fit_lasso_en$lambda), eps = eps.en, max.iter = 1e5)
+expect_equal(fit_ridge_en$screen, "SSR")  # Adaptive isn't supported for ridge
+expect_true(mean(as.matrix(fit_ridge_en$beta[-1, , drop = FALSE]) != 0) == 1)
+
+
+# Test penalty.factor -----------------------------------------------------------
+# compared numerically against ncvreg (which supports the same multiplicative
+# penalty.factor argument/semantics). Note penalty.factor = 0 is *not* used
+# here: biglasso doesn't support unpenalized coefficients (see ?biglasso) and
+# silently produces a degenerate all-zero lambda path if you try it,
+# regardless of family.
+
+pf <- rep(1, p.en)
+pf[1:5] <- c(0.5, 2, 1, 3, 0.2)  # differential, all nonzero penalization
+fit_ncv_pf <- ncvreg(X.en, y.en, family = 'binomial', penalty = 'lasso', eps = eps.en,
+                     lambda.min = 0.05, penalty.factor = pf)
+fit_big_pf <- biglasso(X.en.bm, y.en, family = 'binomial', screen = 'SSR', eps = eps.en,
+                       lambda.min = 0.05, penalty.factor = pf, max.iter = 1e5)
+expect_equal(fit_ncv_pf$lambda, fit_big_pf$lambda, tolerance = tolerance)
+expect_equal(as.numeric(fit_ncv_pf$beta), as.numeric(fit_big_pf$beta), tolerance = tolerance)
+
+
+# Test dfmax ------------------------------------------------------------------
+# dfmax stops the path once the number of nonzero variables exceeds the
+# bound; the lambda value that first triggers the stop is itself retained
+# (matching glmnet/ncvreg convention), so it's the only point allowed to
+# exceed dfmax. Tested across all screen/alg.logistic combinations, since
+# each has its own C++ dfmax-early-exit code path.
+#
+# Regression test: screen = "Hybrid"/"Adaptive" with the default
+# alg.logistic = "Newton" used to crash with "subscript out of bounds"
+# whenever dfmax triggered early stopping -- the dfmax early-exit
+# List::create() in cdfit_binomial_slores_ssr()/cdfit_binomial_ada_slores_ssr()
+# (src/binomial.cpp) omitted the n_slores_reject element that
+# R/biglasso.R's dispatch unconditionally expects at res[[10]] for these
+# screens. Only alg.logistic = "MM" (which forces screen = "SSR") avoided it.
+
+n.df <- 100
+p.df <- 50
+X.df <- matrix(rnorm(n.df * p.df), n.df, p.df)
+b.df <- c(rnorm(20), rep(0, p.df - 20))
+y.df <- rbinom(n.df, 1, prob = 1 / (1 + exp(-(X.df %*% b.df))))
+X.df.bm <- as.big.matrix(X.df)
+
+for (screen.df in c("SSR", "Hybrid", "Adaptive")) {
+  fit_dfmax <- biglasso(X.df.bm, y.df, family = 'binomial', dfmax = 5, screen = screen.df,
+                        eps = 1e-8, max.iter = 1e5)
+  nv <- Matrix::colSums(fit_dfmax$beta[-1, , drop = FALSE] != 0)
+  expect_true(length(fit_dfmax$lambda) < 100)      # path should stop early
+  expect_true(all(nv[-length(nv)] <= 5))           # dfmax respected until the stopping point
+  expect_true(nv[length(nv)] > 5)                  # last retained point is the one that triggered the stop
+}
+
+fit_dfmax_mm <- biglasso(X.df.bm, y.df, family = 'binomial', dfmax = 5, alg.logistic = 'MM',
+                         eps = 1e-8, max.iter = 1e5)
+nv_mm <- Matrix::colSums(fit_dfmax_mm$beta[-1, , drop = FALSE] != 0)
+expect_true(length(fit_dfmax_mm$lambda) < 100)
+expect_true(all(nv_mm[-length(nv_mm)] <= 5))
+expect_true(nv_mm[length(nv_mm)] > 5)

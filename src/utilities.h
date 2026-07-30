@@ -108,11 +108,11 @@ double wsqsum_bm(XPtr<BigMatrix> xpMat, double *w, int *row_idx_, double center_
                  double scale_, int n_row, int j);
 
 // standardize
-void standardize_and_get_residual(NumericVector &center, NumericVector &scale, 
+void standardize_and_get_residual(NumericVector &center, NumericVector &scale,
                                   int *p_keep_ptr, vector<int> &col_idx,
                                   vector<double> &z, double *lambda_max_ptr,
-                                  int *xmax_ptr, XPtr<BigMatrix> xMat, double *y, 
-                                  int *row_idx, double alpha, int n, int p);
+                                  int *xmax_ptr, XPtr<BigMatrix> xMat, double *y,
+                                  int *row_idx, double alpha, int n, int p, double *m);
 
 // get residuals 
 // void get_residual(vector<double> &z, double lambda,

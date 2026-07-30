@@ -144,7 +144,7 @@ RcppExport SEXP cdfit_gaussian_ssr(SEXP X_, SEXP y_, SEXP row_idx_,
   
   // standardize: get center, scale; get p_keep_ptr, col_idx; get z, lambda_max, xmax_idx;
   standardize_and_get_residual(center, scale, p_keep_ptr, col_idx, z, lambda_max_ptr,
-                               xmax_ptr, xMat, y, row_idx, alpha, n, p);
+                               xmax_ptr, xMat, y, row_idx, alpha, n, p, m);
   
   p = p_keep;   // set p = p_keep, only loop over columns whose scale > 1e-6
   
@@ -344,9 +344,9 @@ RcppExport SEXP cdfit_gaussian_ada_edpp_ssr(SEXP X_, SEXP y_, SEXP row_idx_, SEX
     Rprintf("\nPreprocessing start: %s\n", buff1);
   }
   
-  standardize_and_get_residual(center, scale, p_keep_ptr, col_idx, z, 
-                               lambda_max_ptr, xmax_ptr, xMat, 
-                               y, row_idx, alpha, n, p);
+  standardize_and_get_residual(center, scale, p_keep_ptr, col_idx, z,
+                               lambda_max_ptr, xmax_ptr, xMat,
+                               y, row_idx, alpha, n, p, m);
   p = p_keep; // set p = p_keep, only loop over columns whose scale > 1e-6
   
   if (verbose) {
@@ -656,7 +656,7 @@ RcppExport SEXP cdfit_gaussian_bedpp_ssr(SEXP X_, SEXP y_, SEXP row_idx_,
   
   // standardize: get center, scale; get p_keep_ptr, col_idx; get z, lambda_max, xmax_idx;
   standardize_and_get_residual(center, scale, p_keep_ptr, col_idx, z, lambda_max_ptr,
-                               xmax_ptr, xMat, y, row_idx, alpha, n, p);
+                               xmax_ptr, xMat, y, row_idx, alpha, n, p, m);
   
   p = p_keep; // set p = p_keep, only loop over columns whose scale > 1e-6
   

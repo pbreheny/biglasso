@@ -2,12 +2,12 @@
 //#include "gperftools/profiler.h"
 
 // standardize for multiresponse
-void standardize_and_get_residual(NumericVector &center, NumericVector &scale, 
+void standardize_and_get_residual(NumericVector &center, NumericVector &scale,
                                   int *p_keep_ptr, vector<int> &col_idx, //columns to keep, removing columns whose scale < 1e-6
                                   vector<double> &z, double *lambda_max_ptr,
-                                  int *xmax_ptr, XPtr<BigMatrix> xMat, 
+                                  int *xmax_ptr, XPtr<BigMatrix> xMat,
                                   NumericMatrix &Y, int *row_idx,
-                                  double alpha, int n, int p, int m) {
+                                  double alpha, int n, int p, int m, double *mp) {
   MatrixAccessor<double> xAcc(*xMat);
   double *xCol;
   double *sum_xy = R_Calloc(m, double);
@@ -46,8 +46,10 @@ void standardize_and_get_residual(NumericVector &center, NumericVector &scale,
         zj += pow(sum_xy[k] - center[j] * sum_y[k], 2);
       }
       zj = sqrt(zj) / (scale[j] * n * sqrt(m)); //residual
-      if (fabs(zj) > zmax) {
-        zmax = fabs(zj);
+      // lambda_max must reflect penalty.factor -- see the analogous comment
+      // in standardize_and_get_residual() in utilities.cpp.
+      if (mp[j] > 0 && fabs(zj) / mp[j] > zmax) {
+        zmax = fabs(zj) / mp[j];
         *xmax_ptr = j; // xmax_ptr is the index in the raw xMat, not index in col_idx!
       }
       z.push_back(zj);
@@ -59,13 +61,13 @@ void standardize_and_get_residual(NumericVector &center, NumericVector &scale,
 }
 
 // standardize for multiresponse and store XtY
-void standardize_and_get_residual(NumericVector &center, NumericVector &scale, 
+void standardize_and_get_residual(NumericVector &center, NumericVector &scale,
                                   int *p_keep_ptr, vector<int> &col_idx, //columns to keep, removing columns whose scale < 1e-6
                                   vector<double> &z, vector<double> &XtY,
-                                  double *lambda_max_ptr, int *xmax_ptr, 
-                                  XPtr<BigMatrix> xMat, NumericMatrix &Y, 
+                                  double *lambda_max_ptr, int *xmax_ptr,
+                                  XPtr<BigMatrix> xMat, NumericMatrix &Y,
                                   int *row_idx, double alpha,
-                                  int n, int p, int m) {
+                                  int n, int p, int m, double *mp) {
   MatrixAccessor<double> xAcc(*xMat);
   double *xCol;
   double *sum_xy = R_Calloc(m, double);
@@ -105,8 +107,10 @@ void standardize_and_get_residual(NumericVector &center, NumericVector &scale,
         XtY.push_back((sum_xy[k] - center[j] * sum_y[k]) / scale[j]);
       }
       zj = sqrt(zj) / (scale[j] * n * sqrt(m)); //residual
-      if (fabs(zj) > zmax) {
-        zmax = fabs(zj);
+      // lambda_max must reflect penalty.factor -- see the analogous comment
+      // in standardize_and_get_residual() in utilities.cpp.
+      if (mp[j] > 0 && fabs(zj) / mp[j] > zmax) {
+        zmax = fabs(zj) / mp[j];
         *xmax_ptr = j; // xmax_ptr is the index in the raw xMat, not index in col_idx!
       }
       z.push_back(zj);
@@ -435,7 +439,7 @@ RcppExport SEXP cdfit_mgaussian_ada(SEXP X_, SEXP y_, SEXP row_idx_,
   // standardize: get center, scale; get p_keep_ptr, col_idx; get z, XtY, lambda_max, xmax_idx;
   standardize_and_get_residual(center, scale, p_keep_ptr, col_idx, z, XtY,
                                  lambda_max_ptr, xmax_ptr, xMat, Y, row_idx,
-                                 alpha, n, p, m);
+                                 alpha, n, p, m, mp);
   
   p = p_keep;   // set p = p_keep, only loop over columns whose scale > 1e-6
   
@@ -772,9 +776,9 @@ RcppExport SEXP cdfit_mgaussian_ssr(SEXP X_, SEXP y_, SEXP row_idx_,
   }
   
   // standardize: get center, scale; get p_keep_ptr, col_idx; get z, lambda_max, xmax_idx;
-  standardize_and_get_residual(center, scale, p_keep_ptr, col_idx, z, 
+  standardize_and_get_residual(center, scale, p_keep_ptr, col_idx, z,
                                lambda_max_ptr, xmax_ptr, xMat, Y, row_idx,
-                               alpha, n, p, m);
+                               alpha, n, p, m, mp);
   
   p = p_keep;   // set p = p_keep, only loop over columns whose scale > 1e-6
   

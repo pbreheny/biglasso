@@ -247,7 +247,7 @@ RcppExport SEXP cdfit_binomial_ssr(SEXP X_, SEXP y_, SEXP row_idx_,
   
   // standardize: get center, scale; get p_keep_ptr, col_idx; get z, lambda_max, xmax_idx;
   standardize_and_get_residual(center, scale, p_keep_ptr, col_idx, z, lambda_max_ptr,
-                               xmax_ptr, xMat, y, row_idx, alpha, n, p);
+                               xmax_ptr, xMat, y, row_idx, alpha, n, p, m);
   p = p_keep; // set p = p_keep, only loop over columns whose scale > 1e-6
   
   if (verbose) {
@@ -505,7 +505,7 @@ RcppExport SEXP cdfit_binomial_ssr_approx(SEXP X_, SEXP y_, SEXP row_idx_,
   
   // standardize: get center, scale; get p_keep_ptr, col_idx; get z, lambda_max, xmax_idx;
   standardize_and_get_residual(center, scale, p_keep_ptr, col_idx, z, lambda_max_ptr,
-                               xmax_ptr, xMat, y, row_idx, alpha, n, p);
+                               xmax_ptr, xMat, y, row_idx, alpha, n, p, m);
   // set p = p_keep, only loop over columns whose scale > 1e-6
   p = p_keep;
   
@@ -766,7 +766,7 @@ RcppExport SEXP cdfit_binomial_slores_ssr(SEXP X_, SEXP y_, SEXP n_pos_, SEXP yl
   
   // standardize: get center, scale; get p_keep_ptr, col_idx; get z, lambda_max, xmax_idx;
   standardize_and_get_residual(center, scale, p_keep_ptr, col_idx, z, lambda_max_ptr,
-                               xmax_ptr, xMat, y, row_idx, alpha, n, p);
+                               xmax_ptr, xMat, y, row_idx, alpha, n, p, m);
   p = p_keep; // set p = p_keep, only loop over columns whose scale > 1e-6
   
   if (verbose) {
@@ -880,8 +880,8 @@ RcppExport SEXP cdfit_binomial_slores_ssr(SEXP X_, SEXP y_, SEXP n_pos_, SEXP yl
         R_Free(slores_reject); R_Free(slores_reject_old);
         R_Free(s); R_Free(w); R_Free(a); R_Free(r); R_Free(e1); R_Free(e2); R_Free(eta);
         //ProfilerStop();
-        return List::create(beta0, beta, center, scale, lambda, Dev, 
-                            iter, n_reject, Rcpp::wrap(col_idx));
+        return List::create(beta0, beta, center, scale, lambda, Dev,
+                            iter, n_reject, n_slores_reject, Rcpp::wrap(col_idx));
       }
       cutoff = 2*lambda[l] - lambda[l-1];
     } else {
@@ -1084,7 +1084,7 @@ RcppExport SEXP cdfit_binomial_ada_slores_ssr(SEXP X_, SEXP y_, SEXP n_pos_, SEX
   
   // standardize: get center, scale; get p_keep_ptr, col_idx; get z, lambda_max, xmax_idx;
   standardize_and_get_residual(center, scale, p_keep_ptr, col_idx, z, lambda_max_ptr,
-                               xmax_ptr, xMat, y, row_idx, alpha, n, p);
+                               xmax_ptr, xMat, y, row_idx, alpha, n, p, m);
   p = p_keep; // set p = p_keep, only loop over columns whose scale > 1e-6
   
   if (verbose) {
@@ -1203,8 +1203,8 @@ RcppExport SEXP cdfit_binomial_ada_slores_ssr(SEXP X_, SEXP y_, SEXP n_pos_, SEX
         R_Free(slores_reject); R_Free(slores_reject_old);
         R_Free(s); R_Free(w); R_Free(a); R_Free(r); R_Free(e1); R_Free(e2); R_Free(eta);
         //ProfilerStop();
-        return List::create(beta0, beta, center, scale, lambda, Dev, 
-                            iter, n_reject, Rcpp::wrap(col_idx));
+        return List::create(beta0, beta, center, scale, lambda, Dev,
+                            iter, n_reject, n_slores_reject, Rcpp::wrap(col_idx));
       }
       cutoff = 2*lambda[l] - lambda[l-1];
     } else {
