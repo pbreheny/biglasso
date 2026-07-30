@@ -36,7 +36,7 @@ X[1:5, 1:5]
 X.bm <- as.big.matrix(X)
 str(X.bm)
 #> Formal class 'big.matrix' [package "bigmemory"] with 1 slot
-#>   ..@ address:<pointer: 0x5635e8d79850>
+#>   ..@ address:<pointer: 0x557484d0d840>
 ```
 
 ``` r
@@ -202,8 +202,8 @@ if(!file.exists('BigX.bin')) {
 }
 #> Reading data from file, and creating file-backed big.matrix...
 #> This should take a while if the data is very large...
-#> Start time:  2026-07-29 16:56:10 
-#> End time:  2026-07-29 16:56:11 
+#> Start time:  2026-07-30 15:16:27 
+#> End time:  2026-07-30 15:16:29 
 #> DONE!
 #> 
 #> Note: This function needs to be called only one time to create two backing
@@ -231,7 +231,7 @@ model, and runs 10-fold cross-validation:
 
 system.time({fit <- biglasso(X.bm, y)})
 #>    user  system elapsed 
-#>   0.212   0.003   0.215
+#>   0.214   0.001   0.215
 ```
 
 ``` r
@@ -253,7 +253,7 @@ tryCatch(
     }
 )
 #>    user  system elapsed 
-#>   0.326   0.010   2.781
+#>   0.317   0.011   2.719
 ```
 
 ``` r
