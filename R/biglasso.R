@@ -339,6 +339,13 @@ biglasso <- function(
     if (class(tmp)[1] == "try-error") stop("y must numeric or able to be coerced to numeric")
   }
 
+  # Placeholders so family-specific dispatch tokens (see biglasso-dispatch.R)
+  # can be assembled unconditionally below regardless of family: e.g. 'd' is
+  # only meaningful for family == "cox", but harmlessly evaluates to a
+  # zero-length value for other families rather than an undefined-object
+  # error, since no other family's dispatch table entry ever selects it.
+  n.pos <- ylab <- d <- d_idx <- tOrder <- row.idx.cox <- NULL
+
   if (family == "binomial") {
     if (length(table(y)) > 2) {
       stop("Attemping to use family='binomial' with non-binary data")
@@ -398,443 +405,78 @@ biglasso <- function(
   if (output.time) {
     cat("\nStart biglasso: ", format(Sys.time()), "\n")
   }
-  if (family == "gaussian") {
-    time <- system.time({
-      switch(
-        screen,
-        "Adaptive" = {
-          res <- .Call(
-            "cdfit_gaussian_ada_edpp_ssr",
-            X@address,
-            yy,
-            as.integer(row.idx - 1),
-            lambda,
-            as.integer(nlambda),
-            as.integer(lambda.log.scale),
-            lambda.min,
-            alpha,
-            as.integer(user.lambda | any(penalty.factor == 0)),
-            eps,
-            as.integer(max.iter),
-            penalty.factor,
-            as.integer(dfmax),
-            as.integer(ncores),
-            update.thresh,
-            as.integer(verbose),
-            PACKAGE = "biglasso"
-          )
-        },
-        "SSR" = {
-          res <- .Call(
-            "cdfit_gaussian_ssr",
-            X@address,
-            yy,
-            as.integer(row.idx - 1),
-            lambda,
-            as.integer(nlambda),
-            as.integer(lambda.log.scale),
-            lambda.min,
-            alpha,
-            as.integer(user.lambda | any(penalty.factor == 0)),
-            eps,
-            as.integer(max.iter),
-            penalty.factor,
-            as.integer(dfmax),
-            as.integer(ncores),
-            as.integer(verbose),
-            PACKAGE = "biglasso"
-          )
-        },
-        "Hybrid" = {
-          res <- .Call(
-            "cdfit_gaussian_bedpp_ssr",
-            X@address,
-            yy,
-            as.integer(row.idx - 1),
-            lambda,
-            as.integer(nlambda),
-            as.integer(lambda.log.scale),
-            lambda.min,
-            alpha,
-            as.integer(user.lambda | any(penalty.factor == 0)),
-            eps,
-            as.integer(max.iter),
-            penalty.factor,
-            as.integer(dfmax),
-            as.integer(ncores),
-            safe.thresh,
-            as.integer(verbose),
-            PACKAGE = "biglasso"
-          )
-        },
-        stop("Invalid screening method!")
+
+  # alg.logistic == "MM" dispatches to a routine of its own regardless of
+  # `screen`; `screen` itself is still coerced to "SSR" here purely so the
+  # value reported back in the returned object is accurate (MM only ever
+  # runs the SSR-equivalent routine).
+  if (family == "binomial" && alg.logistic == "MM") {
+    if (screen != "SSR") {
+      warning(
+        "For now MM algorithm only supports \"SSR\" screen. Automatically switching to \"SSR\"."
       )
-    })
-
-    a <- rep(mean(y), nlambda)
-    b <- Matrix::Matrix(res[[1]], sparse = T)
-    center <- res[[2]]
-    scale <- res[[3]]
-    lambda <- res[[4]]
-    loss <- res[[5]]
-    iter <- res[[6]]
-    rejections <- res[[7]]
-
-    if (screen %in% c("Hybrid", "Adaptive")) {
-      safe_rejections <- res[[8]]
-      col.idx <- res[[9]]
-    } else {
-      col.idx <- res[[8]]
+      screen <- "SSR"
     }
-  } else if (family == "binomial") {
-    time <- system.time(
-      if (alg.logistic == "MM") {
-        if (screen != "SSR") {
-          warning(
-            "For now MM algorithm only supports \"SSR\" screen. Automatically switching to \"SSR\"."
-          )
-          screen <- "SSR"
-        }
-        res <- .Call(
-          "cdfit_binomial_ssr_approx",
-          X@address,
-          yy,
-          as.integer(row.idx - 1),
-          lambda,
-          as.integer(nlambda),
-          lambda.min,
-          alpha,
-          as.integer(user.lambda | any(penalty.factor == 0)),
-          eps,
-          as.integer(max.iter),
-          penalty.factor,
-          as.integer(dfmax),
-          as.integer(ncores),
-          as.integer(warn),
-          as.integer(verbose),
-          PACKAGE = "biglasso"
-        )
-      } else {
-        if (screen == "Hybrid") {
-          res <- .Call(
-            "cdfit_binomial_slores_ssr",
-            X@address,
-            yy,
-            as.integer(n.pos),
-            as.integer(ylab),
-            as.integer(row.idx - 1),
-            lambda,
-            as.integer(nlambda),
-            as.integer(lambda.log.scale),
-            lambda.min,
-            alpha,
-            as.integer(user.lambda | any(penalty.factor == 0)),
-            eps,
-            as.integer(max.iter),
-            penalty.factor,
-            as.integer(dfmax),
-            as.integer(ncores),
-            as.integer(warn),
-            safe.thresh,
-            as.integer(verbose),
-            PACKAGE = "biglasso"
-          )
-        } else if (screen == "Adaptive") {
-          res <- .Call(
-            "cdfit_binomial_ada_slores_ssr",
-            X@address,
-            yy,
-            as.integer(n.pos),
-            as.integer(ylab),
-            as.integer(row.idx - 1),
-            lambda,
-            as.integer(nlambda),
-            as.integer(lambda.log.scale),
-            lambda.min,
-            alpha,
-            as.integer(user.lambda | any(penalty.factor == 0)),
-            eps,
-            as.integer(max.iter),
-            penalty.factor,
-            as.integer(dfmax),
-            as.integer(ncores),
-            as.integer(warn),
-            safe.thresh,
-            update.thresh,
-            as.integer(verbose),
-            PACKAGE = "biglasso"
-          )
-        } else {
-          res <- .Call(
-            "cdfit_binomial_ssr",
-            X@address,
-            yy,
-            as.integer(row.idx - 1),
-            lambda,
-            as.integer(nlambda),
-            as.integer(lambda.log.scale),
-            lambda.min,
-            alpha,
-            as.integer(user.lambda | any(penalty.factor == 0)),
-            eps,
-            as.integer(max.iter),
-            penalty.factor,
-            as.integer(dfmax),
-            as.integer(ncores),
-            as.integer(warn),
-            as.integer(verbose),
-            PACKAGE = "biglasso"
-          )
-        }
-      }
-    )
-
-    a <- res[[1]]
-    b <- Matrix::Matrix(res[[2]], sparse = T)
-    center <- res[[3]]
-    scale <- res[[4]]
-    lambda <- res[[5]]
-    loss <- res[[6]]
-    iter <- res[[7]]
-    rejections <- res[[8]]
-
-    if (screen %in% c("Hybrid", "Adaptive")) {
-      safe_rejections <- res[[9]]
-      col.idx <- res[[10]]
-    } else {
-      col.idx <- res[[9]]
-    }
-  } else if (family == "cox") {
-    time <- system.time(
-      if (screen == "SSR") {
-        res <- .Call(
-          "cdfit_cox_ssr",
-          X@address,
-          yy,
-          d,
-          as.integer(d_idx - 1),
-          as.integer(row.idx[tOrder[row.idx.cox]] - 1),
-          lambda,
-          as.integer(nlambda),
-          as.integer(lambda.log.scale),
-          lambda.min,
-          alpha,
-          as.integer(user.lambda | any(penalty.factor == 0)),
-          eps,
-          as.integer(max.iter),
-          penalty.factor,
-          as.integer(dfmax),
-          as.integer(ncores),
-          as.integer(warn),
-          as.integer(verbose),
-          PACKAGE = "biglasso"
-        )
-      } else if (screen == "sscox") {
-        res <- .Call(
-          "cdfit_cox_sscox",
-          X@address,
-          yy,
-          d,
-          as.integer(d_idx - 1),
-          as.integer(row.idx[tOrder[row.idx.cox]] - 1),
-          lambda,
-          as.integer(nlambda),
-          as.integer(lambda.log.scale),
-          lambda.min,
-          alpha,
-          as.integer(user.lambda | any(penalty.factor == 0)),
-          eps,
-          as.integer(max.iter),
-          penalty.factor,
-          as.integer(dfmax),
-          as.integer(ncores),
-          as.integer(warn),
-          safe.thresh,
-          as.integer(verbose),
-          PACKAGE = "biglasso"
-        )
-      } else if (screen == "scox") {
-        res <- .Call(
-          "cdfit_cox_scox",
-          X@address,
-          yy,
-          d,
-          as.integer(d_idx - 1),
-          as.integer(row.idx[tOrder[row.idx.cox]] - 1),
-          lambda,
-          as.integer(nlambda),
-          as.integer(lambda.log.scale),
-          lambda.min,
-          alpha,
-          as.integer(user.lambda | any(penalty.factor == 0)),
-          eps,
-          as.integer(max.iter),
-          penalty.factor,
-          as.integer(dfmax),
-          as.integer(ncores),
-          as.integer(warn),
-          safe.thresh,
-          as.integer(verbose),
-          PACKAGE = "biglasso"
-        )
-      } else if (screen == "safe") {
-        res <- .Call(
-          "cdfit_cox_safe",
-          X@address,
-          yy,
-          d,
-          as.integer(d_idx - 1),
-          as.integer(row.idx[tOrder[row.idx.cox]] - 1),
-          lambda,
-          as.integer(nlambda),
-          as.integer(lambda.log.scale),
-          lambda.min,
-          alpha,
-          as.integer(user.lambda | any(penalty.factor == 0)),
-          eps,
-          as.integer(max.iter),
-          penalty.factor,
-          as.integer(dfmax),
-          as.integer(ncores),
-          as.integer(warn),
-          safe.thresh,
-          as.integer(verbose),
-          PACKAGE = "biglasso"
-        )
-      } else if (screen == "Adaptive") {
-        res <- .Call(
-          "cdfit_cox_ada_scox",
-          X@address,
-          yy,
-          d,
-          as.integer(d_idx - 1),
-          as.integer(row.idx[tOrder[row.idx.cox]] - 1),
-          lambda,
-          as.integer(nlambda),
-          as.integer(lambda.log.scale),
-          lambda.min,
-          alpha,
-          as.integer(user.lambda | any(penalty.factor == 0)),
-          eps,
-          as.integer(max.iter),
-          penalty.factor,
-          as.integer(dfmax),
-          as.integer(ncores),
-          as.integer(warn),
-          safe.thresh,
-          update.thresh,
-          as.integer(verbose),
-          PACKAGE = "biglasso"
-        )
-      } else {
-        res <- .Call(
-          "cdfit_cox",
-          X@address,
-          yy,
-          d,
-          as.integer(d_idx - 1),
-          as.integer(row.idx[tOrder[row.idx.cox]] - 1),
-          lambda,
-          as.integer(nlambda),
-          as.integer(lambda.log.scale),
-          lambda.min,
-          alpha,
-          as.integer(user.lambda | any(penalty.factor == 0)),
-          eps,
-          as.integer(max.iter),
-          penalty.factor,
-          as.integer(dfmax),
-          as.integer(ncores),
-          as.integer(warn),
-          as.integer(verbose),
-          PACKAGE = "biglasso"
-        )
-      }
-    )
-
-    b <- Matrix::Matrix(res[[1]], sparse = T)
-    center <- res[[2]]
-    scale <- res[[3]]
-    lambda <- res[[4]]
-    loss <- res[[5]]
-    iter <- res[[6]]
-    rejections <- res[[7]]
-
-    if (screen %in% c("Adaptive")) {
-      safe_rejections <- res[[8]]
-      col.idx <- res[[9]]
-    } else {
-      col.idx <- res[[8]]
-    }
-  } else if (family == "mgaussian") {
-    time <- system.time({
-      switch(
-        screen,
-        "SSR" = {
-          res <- .Call(
-            "cdfit_mgaussian_ssr",
-            X@address,
-            yy,
-            as.integer(row.idx - 1),
-            lambda,
-            as.integer(nlambda),
-            as.integer(lambda.log.scale),
-            lambda.min,
-            alpha,
-            as.integer(user.lambda | any(penalty.factor == 0)),
-            eps,
-            as.integer(max.iter),
-            penalty.factor,
-            as.integer(dfmax),
-            as.integer(ncores),
-            as.integer(verbose),
-            PACKAGE = "biglasso"
-          )
-        },
-        "Adaptive" = {
-          res <- .Call(
-            "cdfit_mgaussian_ada",
-            X@address,
-            yy,
-            as.integer(row.idx - 1),
-            lambda,
-            as.integer(nlambda),
-            as.integer(lambda.log.scale),
-            lambda.min,
-            alpha,
-            as.integer(user.lambda | any(penalty.factor == 0)),
-            eps,
-            as.integer(max.iter),
-            penalty.factor,
-            as.integer(dfmax),
-            as.integer(ncores),
-            safe.thresh,
-            update.thresh,
-            as.integer(verbose),
-            PACKAGE = "biglasso"
-          )
-        },
-        stop("Invalid screening method!")
-      )
-    })
-
-    b <- res[[1]]
-    center <- res[[2]]
-    scale <- res[[3]]
-    lambda <- res[[4]]
-    loss <- res[[5]]
-    iter <- res[[6]]
-    rejections <- res[[7]]
-
-    if (screen %in% c("Hybrid", "Adaptive")) {
-      safe_rejections <- res[[8]]
-      col.idx <- res[[9]]
-    } else {
-      col.idx <- res[[8]]
-    }
-  } else {
-    stop("Current version only supports Gaussian, Binominal or Cox response!")
   }
+  screen_key <- if (family == "binomial" && alg.logistic == "MM") "MM" else screen
+  spec <- biglasso_dispatch_lookup(family, screen_key)
+
+  # Every token any routine's arg list might reference (see
+  # biglasso-dispatch.R); only the ones named in `spec$args` are ever
+  # actually used; the rest evaluate harmlessly (see the placeholder
+  # comment above) for families/screens that don't need them.
+  dispatch_values <- list(
+    X = X@address,
+    yy = yy,
+    n_pos = as.integer(n.pos),
+    ylab = as.integer(ylab),
+    d = d,
+    d_idx = as.integer(d_idx - 1),
+    row_idx = as.integer(row.idx - 1),
+    row_idx_cox = as.integer(row.idx[tOrder[row.idx.cox]] - 1),
+    lambda = lambda,
+    nlambda = as.integer(nlambda),
+    lambda_log_scale = as.integer(lambda.log.scale),
+    lambda_min = lambda.min,
+    alpha = alpha,
+    user_lambda = as.integer(user.lambda | any(penalty.factor == 0)),
+    eps = eps,
+    max_iter = as.integer(max.iter),
+    penalty_factor = penalty.factor,
+    dfmax = as.integer(dfmax),
+    ncores = as.integer(ncores),
+    warn = as.integer(warn),
+    safe_thresh = safe.thresh,
+    update_thresh = update.thresh,
+    verbose = as.integer(verbose)
+  )
+
+  time <- system.time({
+    res <- do.call(
+      ".Call",
+      c(list(spec$routine), unname(dispatch_values[spec$args]), list(PACKAGE = "biglasso"))
+    )
+  })
+
+  names(res) <- spec$out
+  # 'a' and 'safe_rejections' are only actually present in res for some
+  # (family, screen) combinations (see the 'out' entries in
+  # biglasso-dispatch.R); res$<name> is simply NULL for the rest, which
+  # every downstream use of these two already accounts for.
+  a <- res$a
+  b <- res$b
+  center <- res$center
+  scale <- res$scale
+  lambda <- res$lambda
+  loss <- res$loss
+  iter <- res$iter
+  rejections <- res$rejections
+  safe_rejections <- res$safe_rejections
+  col.idx <- res$col.idx
+  has_safe_rejections <- !is.null(safe_rejections)
+
+  if (family == "gaussian") a <- rep(mean(y), nlambda)
+  if (family != "mgaussian") b <- Matrix::Matrix(b, sparse = TRUE)
   if (output.time) {
     cat("\nEnd biglasso: ", format(Sys.time()), "\n")
   }
@@ -909,7 +551,7 @@ biglasso <- function(
     rejections = rejections
   )
 
-  if (screen %in% c("Hybrid", "Adaptive")) {
+  if (has_safe_rejections) {
     return.val$safe_rejections <- safe_rejections
   }
   if (return.time) return.val$time <- as.numeric(time["elapsed"])
