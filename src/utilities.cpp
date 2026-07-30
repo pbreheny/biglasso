@@ -385,17 +385,23 @@ void standardize_and_get_residual(NumericVector &center, NumericVector &scale,
 //   lambda = zmax / alpha;
 // }
 
-// check KKT conditions over features in the inactive set
-int check_inactive_set(int *e1, vector<double> &z, XPtr<BigMatrix> xpMat, int *row_idx, 
-                       vector<int> &col_idx, NumericVector &center, NumericVector &scale, double *a,
-                       double lambda, double sumResid, double alpha, double *r, double *m, int n, int p) {
-  
+// shared KKT scan behind check_inactive_set/check_safe_set/check_rest_safe_set/
+// check_strong_set/check_rest_set below: they differ only in which array(s)
+// gate eligibility for the scan (test1/test2/discard) and which array(s) get
+// flipped to 1 on a violation (set1/set2). test2 and discard are optional
+// (pass nullptr to skip); set2 is optional likewise.
+static int check_kkt_set(int *test1, int val1, int *test2, int val2, int *discard,
+                         int *set1, int *set2, vector<double> &z, XPtr<BigMatrix> xpMat,
+                         int *row_idx, vector<int> &col_idx, NumericVector &center,
+                         NumericVector &scale, double *a, double lambda, double sumResid,
+                         double alpha, double *r, double *m, int n, int p) {
   MatrixAccessor<double> xAcc(*xpMat);
   double *xCol, sum, l1, l2;
   int j, jj, violations = 0;
-#pragma omp parallel for private(j, sum, l1, l2) reduction(+:violations) schedule(static) 
+#pragma omp parallel for private(j, sum, l1, l2) reduction(+:violations) schedule(static)
   for (j = 0; j < p; j++) {
-    if (e1[j] == 0) {
+    if (test1[j] == val1 && (test2 == nullptr || test2[j] == val2) &&
+        (discard == nullptr || discard[j] == 0)) {
       jj = col_idx[j];
       xCol = xAcc[jj];
       sum = 0.0;
@@ -403,11 +409,12 @@ int check_inactive_set(int *e1, vector<double> &z, XPtr<BigMatrix> xpMat, int *r
         sum = sum + xCol[row_idx[i]] * r[i];
       }
       z[j] = (sum - center[jj] * sumResid) / (scale[jj] * n);
-      
+
       l1 = lambda * m[jj] * alpha;
       l2 = lambda * m[jj] * (1 - alpha);
       if (fabs(z[j] - a[j] * l2) > l1) {
-        e1[j] = 1;
+        set1[j] = 1;
+        if (set2 != nullptr) set2[j] = 1;
         violations++;
       }
     }
@@ -415,35 +422,22 @@ int check_inactive_set(int *e1, vector<double> &z, XPtr<BigMatrix> xpMat, int *r
   return violations;
 }
 
+// check KKT conditions over features in the inactive set
+int check_inactive_set(int *e1, vector<double> &z, XPtr<BigMatrix> xpMat, int *row_idx,
+                       vector<int> &col_idx, NumericVector &center, NumericVector &scale, double *a,
+                       double lambda, double sumResid, double alpha, double *r, double *m, int n, int p) {
+  return check_kkt_set(e1, 0, nullptr, 0, nullptr, e1, nullptr, z, xpMat, row_idx, col_idx,
+                       center, scale, a, lambda, sumResid, alpha, r, m, n, p);
+}
+
 // check KKT conditions over features in the safe set
-int check_safe_set(int *ever_active, int *discard_beta, vector<double> &z, 
+int check_safe_set(int *ever_active, int *discard_beta, vector<double> &z,
                    XPtr<BigMatrix> xpMat, int *row_idx, vector<int> &col_idx,
                    NumericVector &center, NumericVector &scale, double *a,
-                   double lambda, double sumResid, double alpha, 
+                   double lambda, double sumResid, double alpha,
                    double *r, double *m, int n, int p) {
-  MatrixAccessor<double> xAcc(*xpMat);
-  double *xCol, sum, l1, l2;
-  int j, jj, violations = 0;
-  
-#pragma omp parallel for private(j, sum, l1, l2) reduction(+:violations) schedule(static) 
-  for (j = 0; j < p; j++) {
-    if (ever_active[j] == 0 && discard_beta[j] == 0) {
-      jj = col_idx[j];
-      xCol = xAcc[jj];
-      sum = 0.0;
-      for (int i=0; i < n; i++) {
-        sum = sum + xCol[row_idx[i]] * r[i];
-      }
-      z[j] = (sum - center[jj] * sumResid) / (scale[jj] * n);
-      l1 = lambda * m[jj] * alpha;
-      l2 = lambda * m[jj] * (1 - alpha);
-      if (fabs(z[j] - a[j] * l2) > l1) {
-        ever_active[j] = 1;
-        violations++;
-      }
-    }
-  }
-  return violations;
+  return check_kkt_set(ever_active, 0, nullptr, 0, discard_beta, ever_active, nullptr, z, xpMat,
+                       row_idx, col_idx, center, scale, a, lambda, sumResid, alpha, r, m, n, p);
 }
 
 // check KKT conditions over features in (the safe set - the strong set)
@@ -451,92 +445,26 @@ int check_rest_safe_set(int *ever_active, int *strong_set, int *discard_beta, ve
                         XPtr<BigMatrix> xpMat, int *row_idx, vector<int> &col_idx,
                         NumericVector &center, NumericVector &scale, double *a, double lambda,
                         double sumResid, double alpha, double *r, double *m, int n, int p) {
-  
-  MatrixAccessor<double> xAcc(*xpMat);
-  double *xCol, sum, l1, l2;
-  int j, jj, violations = 0;
-#pragma omp parallel for private(j, sum, l1, l2) reduction(+:violations) schedule(static) 
-  for (j = 0; j < p; j++) {
-    if (strong_set[j] == 0 && discard_beta[j] == 0) {
-      jj = col_idx[j];
-      xCol = xAcc[jj];
-      sum = 0.0;
-      for (int i=0; i < n; i++) {
-        sum = sum + xCol[row_idx[i]] * r[i];
-      }
-      z[j] = (sum - center[jj] * sumResid) / (scale[jj] * n);
-      
-      l1 = lambda * m[jj] * alpha;
-      l2 = lambda * m[jj] * (1 - alpha);
-      if (fabs(z[j] - a[j] * l2) > l1) {
-        ever_active[j] = strong_set[j] = 1;
-        violations++;
-      }
-    }
-  }
-  return violations;
+  return check_kkt_set(strong_set, 0, nullptr, 0, discard_beta, ever_active, strong_set, z, xpMat,
+                       row_idx, col_idx, center, scale, a, lambda, sumResid, alpha, r, m, n, p);
 }
 
 // check KKT conditions over features in the strong set
 int check_strong_set(int *e1, int *e2, vector<double> &z, XPtr<BigMatrix> xpMat,
                      int *row_idx, vector<int> &col_idx,
                      NumericVector &center, NumericVector &scale, double *a,
-                     double lambda, double sumResid, double alpha, 
+                     double lambda, double sumResid, double alpha,
                      double *r, double *m, int n, int p) {
-  MatrixAccessor<double> xAcc(*xpMat);
-  double *xCol, sum, l1, l2;
-  int j, jj, violations = 0;
-  
-#pragma omp parallel for private(j, sum, l1, l2) reduction(+:violations) schedule(static) 
-  for (j = 0; j < p; j++) {
-    if (e1[j] == 0 && e2[j] == 1) {
-      jj = col_idx[j];
-      xCol = xAcc[jj];
-      sum = 0.0;
-      for (int i=0; i < n; i++) {
-        sum = sum + xCol[row_idx[i]] * r[i];
-      }
-      z[j] = (sum - center[jj] * sumResid) / (scale[jj] * n);
-      
-      l1 = lambda * m[jj] * alpha;
-      l2 = lambda * m[jj] * (1 - alpha);
-      if(fabs(z[j] - a[j] * l2) > l1) {
-        e1[j] = 1;
-        violations++;
-      }
-    }
-  }
-  return violations;
+  return check_kkt_set(e1, 0, e2, 1, nullptr, e1, nullptr, z, xpMat, row_idx, col_idx,
+                       center, scale, a, lambda, sumResid, alpha, r, m, n, p);
 }
 
 // check KKT conditions over features in the rest set
-int check_rest_set(int *e1, int *e2, vector<double> &z, XPtr<BigMatrix> xpMat, int *row_idx, 
+int check_rest_set(int *e1, int *e2, vector<double> &z, XPtr<BigMatrix> xpMat, int *row_idx,
                    vector<int> &col_idx, NumericVector &center, NumericVector &scale, double *a,
                    double lambda, double sumResid, double alpha, double *r, double *m, int n, int p) {
-  
-  MatrixAccessor<double> xAcc(*xpMat);
-  double *xCol, sum, l1, l2;
-  int j, jj, violations = 0;
-#pragma omp parallel for private(j, sum, l1, l2) reduction(+:violations) schedule(static) 
-  for (j = 0; j < p; j++) {
-    if (e2[j] == 0) {
-      jj = col_idx[j];
-      xCol = xAcc[jj];
-      sum = 0.0;
-      for (int i=0; i < n; i++) {
-        sum = sum + xCol[row_idx[i]] * r[i];
-      }
-      z[j] = (sum - center[jj] * sumResid) / (scale[jj] * n);
-      
-      l1 = lambda * m[jj] * alpha;
-      l2 = lambda * m[jj] * (1 - alpha);
-      if (fabs(z[j] - a[j] * l2) > l1) {
-        e1[j] = e2[j] = 1;
-        violations++;
-      }
-    }
-  }
-  return violations;
+  return check_kkt_set(e2, 0, nullptr, 0, nullptr, e1, e2, z, xpMat, row_idx, col_idx,
+                       center, scale, a, lambda, sumResid, alpha, r, m, n, p);
 }
 
 // update z[j] for features which are rejected at previous lambda but not rejected at current one.
