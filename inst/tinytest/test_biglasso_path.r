@@ -29,10 +29,14 @@ fit2 <- glmnet(X, y = y, family = "gaussian", lambda = lam,
 expect_equivalent(fit1$beta, fit2$beta, tolerance = 0.001)
 
 # confirm that dfmax appropriately stops lambda path
+# (computed directly from $beta rather than via predict(): biglasso_path()
+# is a direct, no-preprocessing engine interface and intentionally isn't
+# part of the biglasso predict()/coef()/plot() ecosystem -- e.g. it has no
+# $family, which predict.biglasso() requires.)
 dfmax <- 25
 fit3 <- biglasso_path(X.bm, y, lambda = lam, xtx = xtx, r = resid,
                       penalty = "lasso", max.iter = 20000, dfmax = dfmax)
-nvar <- predict(fit3, type = "nvars")
+nvar <- Matrix::colSums(fit3$beta != 0)
 
 expect_true(max(nvar) <= dfmax)
 

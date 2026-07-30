@@ -94,117 +94,28 @@
 
 biglasso_path <- function(X,
                           y,
-                          r, 
+                          r,
                           init = rep(0, ncol(X)),
-                          xtx, 
+                          xtx,
                           penalty = "lasso",
                           lambda,
-                          alpha = 1, 
-                          gamma, 
+                          alpha = 1,
+                          gamma,
                           ncores = 1,
-                          max.iter = 1000, 
+                          max.iter = 1000,
                           eps = 1e-5,
                           dfmax = ncol(X)+1,
                           penalty.factor = rep(1, ncol(X)),
                           warn = TRUE,
                           output.time = FALSE,
                           return.time = TRUE) {
-  
-  # set default gamma (will need this for cv.plmm)
-  if (missing(gamma)) gamma <- switch(penalty, SCAD = 3.7, 3)
-  
-  # check types
-  if (!("big.matrix" %in% class(X)) || typeof(X) != "double") stop("X must be a double type big.matrix.")
-  # subset of the response vector
-  if (is.matrix(y)) y <- drop(y)
-  else y <- y
-  
-  if (any(is.na(y))) stop("Missing data (NA's) detected.  Take actions (e.g., removing cases, removing features, imputation) to eliminate missing data before fitting the model.")
-  
-  if (!is.double(y)) {
-    if (is.matrix(y)) tmp <- try(storage.mode(y) <- "numeric", silent=TRUE)
-    else tmp <- try(y <- as.numeric(y), silent=TRUE)
-    if (class(tmp)[1] == "try-error") stop("y must numeric or able to be coerced to numeric")
-  }
-  
-  p <- ncol(X)
-  if (length(penalty.factor) != p) stop("penalty.factor does not match up with X")
-  
-  storage.mode(penalty.factor) <- "double"
-  
-  n <- nrow(X) 
   if (missing(lambda)) {
     stop("For biglasso_path, a vector of lambda values must be user-supplied")
   }
-  
-  # check types for residuals and xtx
-  if (!is.double(r)) r <- as.double(r)
-  if (!is.double(xtx)) xtx <- as.double(xtx)
-  
-  ## fit model
-  if (output.time) {
-    cat("\nStart biglasso: ", format(Sys.time()), '\n')
-  }
-
-  time <- system.time(
-    res <- .Call("cdfit_gaussian_simple_path",
-                 X@address,
-                 y,
-                 r,
-                 init, 
-                 xtx,
-                 penalty,
-                 lambda,
-                 length(lambda), 
-                 alpha,
-                 gamma, 
-                 eps,
-                 as.integer(dfmax),
-                 as.integer(max.iter),
-                 penalty.factor,
-                 as.integer(ncores),
-                 PACKAGE = 'biglasso')
+  biglasso_fit_common(
+    X = X, y = y, r = r, init = init, xtx = xtx, penalty = penalty, lambda = lambda,
+    alpha = alpha, gamma = gamma, ncores = ncores, max.iter = max.iter, eps = eps,
+    dfmax = dfmax, penalty.factor = penalty.factor, warn = warn,
+    output.time = output.time, return.time = return.time, path = TRUE
   )
-  
-  b <- res[[1]]
-  loss <- res[[2]]
-  iter <- res[[3]]
-  resid <- res[[4]]
-  
-  ind <- !is.na(iter)
-  b <- b[, ind, drop = FALSE]
-  loss <- loss[ind]
-  iter <- iter[ind]
-  lambda <- lambda[ind]
-  
-  if (output.time) {
-    cat("\nEnd biglasso: ", format(Sys.time()), '\n')
-  }
-  
-  if (warn & any(iter==max.iter)) {
-    warning("Maximum number of iterations reached at ", sum(iter == max.iter), " lambda value(s)")
-  }
-  
-  
-  ## Names
-  rownames(b) <- if (is.null(colnames(X))) paste("V", 1:p, sep="") else colnames(X)
-  
-  ## Output
-  return.val <- list(
-    beta = b,
-    iter = iter,
-    resid = resid,
-    lambda = lambda,
-    penalty = penalty,
-    family = 'gaussian',
-    alpha = alpha,
-    loss = loss,
-    penalty.factor = penalty.factor,
-    n = n,
-    y = y
-  )
-  
-  if (return.time) return.val$time <- as.numeric(time['elapsed'])
-  
-  val <- structure(return.val, class = c("biglasso", 'ncvreg'))
 }
