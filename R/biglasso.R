@@ -216,58 +216,11 @@ biglasso <- function(
 ) {
   # set up defaults -------------------------------------------------------
 
-  # Match deprecated screen methods
-  if (
-    length(screen) == 1 &&
-      screen %in%
-        c(
-          "SEDPP",
-          "SSR-BEDPP",
-          "SSR-Slores",
-          "SSR-Slores-Batch",
-          "SSR-Dome",
-          "None",
-          "NS-NAC",
-          "SSR-NAC",
-          "SEDPP-NAC",
-          "SSR-Dome-NAC",
-          "SSR-BEDPP-NAC",
-          "SSR-Slores-NAC",
-          "SEDPP-Batch",
-          "SEDPP-Batch-SSR",
-          "SEDPP-Batchfix-SSR"
-        )
-  ) {
-    if (screen %in% c("SSR-BEDPP", "SSR-Slores")) {
-      warning(
-        "Hybrid screen methods (\"SSR-BEDPP\", \"SSR-Slores\") will be renamed as \"Hybrid\". Automatically switching to \"Hybrid\" screen method"
-      )
-      screen <- "Hybrid"
-    }
-    if (screen %in% c("SSR-Slores-Batch", "SEDPP-Batch", "SEDPP-Batch-SSR", "SEDPP-Batchfix-SSR")) {
-      warning(
-        "Adaptive or batch screen methods (\"SSR-Slores-Batch\", \"SEDPP-Batch\", \"SEDPP-Batch-SSR\", \"SEDPP-Batchfix-SSR\") will be renamed as \"Adaptive\". Automatically switching to \"Adaptive\" screen method."
-      )
-      screen <- "Adaptive"
-    }
-    if (
-      screen %in%
-        c(
-          "SEDPP",
-          "SSR-Dome",
-          "NS-NAC",
-          "SSR-NAC",
-          "SEDPP-NAC",
-          "SSR-Dome-NAC",
-          "SSR-BEDPP-NAC",
-          "SSR-Slores-NAC"
-        )
-    ) {
-      warning(
-        "The following screen methods will be removed:\n\"SEDPP\", \"SSR-Dome\", \"NS-NAC\", \"SSR-NAC\", \"SEDPP-NAC\",\"SSR-Dome-NAC\", \"SSR-BEDPP-NAC\", \"SSR-Slores-NAC\".\nAutomatically switching to \"Adaptive\" screen method."
-      )
-      screen <- "Adaptive"
-    }
+  # Match deprecated screen methods (see biglasso-deprecated-screen.R)
+  if (length(screen) == 1 && screen %in% names(biglasso_deprecated_screen_map)) {
+    group <- biglasso_deprecated_screen_groups[[biglasso_deprecated_screen_map[[screen]]]]
+    warning(group$message)
+    screen <- group$new
   }
 
   family <- match.arg(family)
