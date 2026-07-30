@@ -1,8 +1,23 @@
 #include "utilities.h"
 //#include "gperftools/profiler.h"
 
+// This file re-implements several primitives already declared in
+// utilities.h (standardize_and_get_residual, crossprod_resid, update_resid,
+// check_strong_set, check_rest_set, check_rest_safe_set) rather than reusing
+// them, because those versions are single-response: they thread a scalar
+// residual (double *r / double sumResid) through a per-variable dot product.
+// Here, y is an n x m matrix (m responses fit jointly via a group-lasso
+// penalty), so every equivalent primitive needs the residual to be a
+// (n x m) matrix and needs each per-variable "score" to be the L2 norm
+// across all m responses (see the sqrt(m)/pow(.,2) sums below), not a
+// single number -- a structural difference, not incidental duplication.
+// The "_multiresp" suffix keeps them from silently overloading the
+// single-response versions pulled in via utilities.h (both are visible in
+// this translation unit; C++ picks between them by argument types alone,
+// which is easy to misread as "the same function" while skimming).
+
 // standardize for multiresponse
-void standardize_and_get_residual(NumericVector &center, NumericVector &scale,
+void standardize_and_get_residual_multiresp(NumericVector &center, NumericVector &scale,
                                   int *p_keep_ptr, vector<int> &col_idx, //columns to keep, removing columns whose scale < 1e-6
                                   vector<double> &z, double *lambda_max_ptr,
                                   int *xmax_ptr, XPtr<BigMatrix> xMat,
@@ -61,7 +76,7 @@ void standardize_and_get_residual(NumericVector &center, NumericVector &scale,
 }
 
 // standardize for multiresponse and store XtY
-void standardize_and_get_residual(NumericVector &center, NumericVector &scale,
+void standardize_and_get_residual_multiresp(NumericVector &center, NumericVector &scale,
                                   int *p_keep_ptr, vector<int> &col_idx, //columns to keep, removing columns whose scale < 1e-6
                                   vector<double> &z, vector<double> &XtY,
                                   double *lambda_max_ptr, int *xmax_ptr,
@@ -121,8 +136,9 @@ void standardize_and_get_residual(NumericVector &center, NumericVector &scale,
   R_Free(sum_xy); R_Free(sum_y);
 }
 
-// Crossproduct xjTR
-void crossprod_resid(double *xTR, XPtr<BigMatrix> xMat, double *R,
+// Crossproduct xjTR; multi-response analog of crossprod_resid() in
+// utilities.cpp -- see the file-level comment at the top of this file.
+void crossprod_resid_multiresp(double *xTR, XPtr<BigMatrix> xMat, double *R,
                      double *sumResid, int *row_idx,
                      double center, double scale, int n, int m, int j) {
   MatrixAccessor<double> xAcc(*xMat);
@@ -154,8 +170,9 @@ void lasso(arma::field<arma::sp_mat> &beta, double *xTR, double z, double l1, do
   }
 }
 
-// update residul matrix
-void update_resid(XPtr<BigMatrix> xpMat, double *R, double *sumResid, double *shift,
+// update residual matrix; multi-response analog of update_resid() in
+// utilities.cpp -- see the file-level comment at the top of this file.
+void update_resid_multiresp(XPtr<BigMatrix> xpMat, double *R, double *sumResid, double *shift,
                   int *row_idx, double center, double scale, int n, int m, int j) {
   MatrixAccessor<double> xAcc(*xpMat);
   double *xCol = xAcc[j];
@@ -181,7 +198,7 @@ void bedpp_init(XPtr<BigMatrix> xMat, double *R, double *sumResid, vector<double
   // compute x_maxtY
   double *xTR = R_Calloc(m, double);
   int j, jj, k;
-  crossprod_resid(xTR, xMat, R, sumResid, row_idx,
+  crossprod_resid_multiresp(xTR, xMat, R, sumResid, row_idx,
                   center[xmax_idx], scale[xmax_idx], n, m, xmax_idx);
 #pragma omp parallel for private(j, jj, xjtx) schedule(static) 
   for(j = 0; j < p; j ++) {
@@ -249,8 +266,11 @@ void edpp_update(XPtr<BigMatrix> xpMat, double *R, double *sumResid,
   }
 }
 
-// check KKT conditions over features in the strong set
-int check_strong_set(int *e1, int *e2, vector<double> &z, XPtr<BigMatrix> xpMat, 
+// check KKT conditions over features in the strong set; multi-response
+// analog of check_strong_set() in utilities.cpp (the KKT threshold is the
+// joint L2 norm across all m responses -- see the file-level comment at the
+// top of this file).
+int check_strong_set_multiresp(int *e1, int *e2, vector<double> &z, XPtr<BigMatrix> xpMat,
                      int *row_idx, vector<int> &col_idx, 
                      NumericVector &center, NumericVector &scale, double *a,
                      double lambda, double *sumResid, double alpha, 
@@ -291,8 +311,10 @@ int check_strong_set(int *e1, int *e2, vector<double> &z, XPtr<BigMatrix> xpMat,
   return violations;
 }
 
-// check KKT conditions over features in the rest set
-int check_rest_set(int *e1, int *e2, vector<double> &z, XPtr<BigMatrix> xpMat, 
+// check KKT conditions over features in the rest set; multi-response analog
+// of check_rest_set() in utilities.cpp -- see the file-level comment at the
+// top of this file.
+int check_rest_set_multiresp(int *e1, int *e2, vector<double> &z, XPtr<BigMatrix> xpMat,
                    int *row_idx, vector<int> &col_idx, NumericVector &center,
                    NumericVector &scale, double *a, double lambda, double *sumResid,
                    double alpha, double *R, double *mp, int n, int p, int m) {
@@ -332,8 +354,10 @@ int check_rest_set(int *e1, int *e2, vector<double> &z, XPtr<BigMatrix> xpMat,
   return violations;
 }
 
-// check KKT conditions over features in (the safe set - the strong set)
-int check_rest_safe_set(int *e1, int *e2, int *discard_beta, vector<double> &z, 
+// check KKT conditions over features in (the safe set - the strong set);
+// multi-response analog of check_rest_safe_set() in utilities.cpp -- see
+// the file-level comment at the top of this file.
+int check_rest_safe_set_multiresp(int *e1, int *e2, int *discard_beta, vector<double> &z,
                         XPtr<BigMatrix> xpMat, int *row_idx, vector<int> &col_idx,
                         NumericVector &center, NumericVector &scale, double *a,
                         double lambda, double *sumResid, double alpha, double *R,
@@ -437,7 +461,7 @@ RcppExport SEXP cdfit_mgaussian_ada(SEXP X_, SEXP y_, SEXP row_idx_,
   vector<double> XtY;
   
   // standardize: get center, scale; get p_keep_ptr, col_idx; get z, XtY, lambda_max, xmax_idx;
-  standardize_and_get_residual(center, scale, p_keep_ptr, col_idx, z, XtY,
+  standardize_and_get_residual_multiresp(center, scale, p_keep_ptr, col_idx, z, XtY,
                                  lambda_max_ptr, xmax_ptr, xMat, Y, row_idx,
                                  alpha, n, p, m, mp);
   
@@ -659,7 +683,7 @@ RcppExport SEXP cdfit_mgaussian_ada(SEXP X_, SEXP y_, SEXP row_idx_,
           for (j = 0; j < p; j++) {
             if (e1[j]) {
               jj = col_idx[j];
-              crossprod_resid(xTR, xMat, R, sumResid, row_idx, center[jj], scale[jj], n, m, jj);
+              crossprod_resid_multiresp(xTR, xMat, R, sumResid, row_idx, center[jj], scale[jj], n, m, jj);
               z[j] = 0;
               for(k = 0; k < m; k++) {
                 xTR[k] = (xTR[k] / n + a[j * m + k]) / sqrt(m);
@@ -682,7 +706,7 @@ RcppExport SEXP cdfit_mgaussian_ada(SEXP X_, SEXP y_, SEXP row_idx_,
                 if (update > max_update) {
                   max_update = update;
                 }
-                update_resid(xMat, R, sumResid, shift, row_idx, center[jj], scale[jj], n, m, jj); // update R and sumResid
+                update_resid_multiresp(xMat, R, sumResid, shift, row_idx, center[jj], scale[jj], n, m, jj); // update R and sumResid
                 for(k = 0; k < m; k++) a[j * m + k] = beta.at(k).at(j, l);
               }
             }
@@ -692,14 +716,14 @@ RcppExport SEXP cdfit_mgaussian_ada(SEXP X_, SEXP y_, SEXP row_idx_,
         }
         
         // Scan for violations in strong set
-        violations = check_strong_set(e1, e2, z, xMat, row_idx, col_idx,
+        violations = check_strong_set_multiresp(e1, e2, z, xMat, row_idx, col_idx,
                                       center, scale, a, lambda[l], sumResid,
                                       alpha, R, mp, n, p, m); 
         if (violations==0) break;
       }
       
       // Scan for violations in rest safe set
-      violations = check_rest_safe_set(e1, e2, discard_beta, z, xMat,
+      violations = check_rest_safe_set_multiresp(e1, e2, discard_beta, z, xMat,
                                        row_idx, col_idx, center, scale, a,
                                        lambda[l], sumResid, alpha, R, mp, n, p, m);
       if (violations == 0) {
@@ -776,7 +800,7 @@ RcppExport SEXP cdfit_mgaussian_ssr(SEXP X_, SEXP y_, SEXP row_idx_,
   }
   
   // standardize: get center, scale; get p_keep_ptr, col_idx; get z, lambda_max, xmax_idx;
-  standardize_and_get_residual(center, scale, p_keep_ptr, col_idx, z,
+  standardize_and_get_residual_multiresp(center, scale, p_keep_ptr, col_idx, z,
                                lambda_max_ptr, xmax_ptr, xMat, Y, row_idx,
                                alpha, n, p, m, mp);
   
@@ -895,7 +919,7 @@ RcppExport SEXP cdfit_mgaussian_ssr(SEXP X_, SEXP y_, SEXP row_idx_,
           for (j = 0; j < p; j++) {
             if (e1[j]) {
               jj = col_idx[j];
-              crossprod_resid(xTR, xMat, R, sumResid, row_idx, center[jj], scale[jj], n, m, jj);
+              crossprod_resid_multiresp(xTR, xMat, R, sumResid, row_idx, center[jj], scale[jj], n, m, jj);
               z[j] = 0;
               for(k = 0; k < m; k++) {
                 xTR[k] = (xTR[k] / n + a[j * m + k]) / sqrt(m);
@@ -918,7 +942,7 @@ RcppExport SEXP cdfit_mgaussian_ssr(SEXP X_, SEXP y_, SEXP row_idx_,
                 if (update > max_update) {
                   max_update = update;
                 }
-                update_resid(xMat, R, sumResid, shift, row_idx, center[jj], scale[jj], n, m, jj); // update R and sumResid
+                update_resid_multiresp(xMat, R, sumResid, shift, row_idx, center[jj], scale[jj], n, m, jj); // update R and sumResid
                 for(k = 0; k < m; k++) a[j * m + k] = beta.at(k).at(j, l);
               }
             }
@@ -928,12 +952,12 @@ RcppExport SEXP cdfit_mgaussian_ssr(SEXP X_, SEXP y_, SEXP row_idx_,
         }
         
         // Scan for violations in strong set
-        violations = check_strong_set(e1, e2, z, xMat, row_idx, col_idx, center, scale, a, lambda[l], sumResid, alpha, R, mp, n, p, m); 
+        violations = check_strong_set_multiresp(e1, e2, z, xMat, row_idx, col_idx, center, scale, a, lambda[l], sumResid, alpha, R, mp, n, p, m); 
         if (violations==0) break;
       }
       
       // Scan for violations in rest set
-      violations = check_rest_set(e1, e2, z, xMat, row_idx, col_idx, center, scale, a, lambda[l], sumResid, alpha, R, mp, n, p, m);
+      violations = check_rest_set_multiresp(e1, e2, z, xMat, row_idx, col_idx, center, scale, a, lambda[l], sumResid, alpha, R, mp, n, p, m);
       if (violations == 0) {
         loss[l] = 0;
         for(i = 0; i < n; i++) {
