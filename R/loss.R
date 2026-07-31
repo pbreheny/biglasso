@@ -88,10 +88,6 @@ loss.biglasso <- function(y, yhat, family, eval.metric, grouped = TRUE) {
     } else {
       stop(sprintf("eval.metric %s not supported for family %s.", eval.metric, family))
     }
-  } else if (family=="poisson") {
-    yly <- y*log(y)
-    yly[y==0] <- 0
-    val <- 2*(yly - y + yhat - y*log(yhat))
   }
   if (grouped) {
     val <- apply(val, 2, mean)

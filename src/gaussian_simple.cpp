@@ -13,7 +13,7 @@ static double update_beta(const char *penalty, double z, double l1, double l2,
 
 // shared coordinate-descent path solver behind cdfit_gaussian_simple() and
 // cdfit_gaussian_simple_path(); the former just calls this with a length-1
-// lambda vector and a dfmax that can never be triggered (p features max)
+// lambda vector
 static arma::sp_mat cdfit_gaussian_simple_core(XPtr<BigMatrix> xMat, double *r, double *init,
                                                double *xtx, const char *penalty,
                                                NumericVector &lambda, double alpha, double gamma,
@@ -125,6 +125,7 @@ RcppExport SEXP cdfit_gaussian_simple(SEXP X_,
                                       SEXP alpha_,
                                       SEXP gamma_,
                                       SEXP eps_,
+                                      SEXP dfmax_,
                                       SEXP max_iter_,
                                       SEXP multiplier_,
                                       SEXP ncore_) {
@@ -139,6 +140,7 @@ RcppExport SEXP cdfit_gaussian_simple(SEXP X_,
   int n = xMat->nrow(); // number of observations used for fitting model
   int p = xMat->ncol();
   double eps = REAL(eps_)[0];
+  int dfmax = INTEGER(dfmax_)[0];
   int max_iter = INTEGER(max_iter_)[0];
   double *m = REAL(multiplier_);
   NumericVector lambda = NumericVector::create(REAL(lambda_)[0]);
@@ -152,9 +154,8 @@ RcppExport SEXP cdfit_gaussian_simple(SEXP X_,
   double thresh = eps * sqrt(gLoss(y, n) / n);
   NumericVector loss(1);
   IntegerVector iter(1);
-  // dfmax = p: a single-lambda fit never truncates on dfmax
   arma::sp_mat beta = cdfit_gaussian_simple_core(xMat, r, init, xtx, penalty, lambda, alpha,
-                                                 gamma, thresh, p, max_iter, m, n, p, loss, iter);
+                                                 gamma, thresh, dfmax, max_iter, m, n, p, loss, iter);
 
   NumericVector b(p); // estimated coefficients
   for (int j = 0; j < p; j++) b[j] = beta(j, 0);

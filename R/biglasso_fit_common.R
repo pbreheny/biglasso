@@ -57,7 +57,7 @@ biglasso_fit_common <- function(X, y, r, init, xtx, penalty, lambda, alpha, gamm
   } else {
     call_args <- list(
       X@address, y, r, init, xtx, penalty, lambda, alpha, gamma,
-      eps, as.integer(max.iter), penalty.factor, as.integer(ncores)
+      eps, as.integer(dfmax), as.integer(max.iter), penalty.factor, as.integer(ncores)
     )
     routine <- "cdfit_gaussian_simple"
   }
@@ -87,7 +87,8 @@ biglasso_fit_common <- function(X, y, r, init, xtx, penalty, lambda, alpha, gamm
       warning("Maximum number of iterations reached at ", sum(iter == max.iter), " lambda value(s)")
     }
   } else {
-    if (warn && iter == max.iter) warning("Maximum number of iterations reached")
+    # iter is NA rather than max.iter when the fit was cut short by dfmax
+    if (warn && !is.na(iter) && iter == max.iter) warning("Maximum number of iterations reached")
   }
 
   ## Names

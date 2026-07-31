@@ -145,7 +145,7 @@ cv.biglasso <- function(X, y, row.idx = 1:nrow(X),
     ## pass the descriptor info to each cluster ##
     xdesc <- bigmemory::describe(X)
     parallel::clusterExport(cluster, c("cv.ind", "xdesc", "y", "cv.args",
-                                       "parallel", "eval.metric", "biglasso_fit"),
+                                       "parallel", "eval.metric"),
                             envir=environment())
     parallel::clusterCall(cluster, function() {
       require(biglasso)
