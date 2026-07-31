@@ -12,7 +12,7 @@ vignette: >
 knitr::opts_chunk$set(
   collapse = TRUE,
   comment = "#>",
-  fig.width=6, fig.height=4
+  fig.width = 6, fig.height = 4
 )
 ```
 
@@ -60,12 +60,12 @@ plot(fit)
 ```{r}
 ## 10-fold cross-valiation in parallel
 cvfit <- tryCatch(
-         {
-                cv.biglasso(X.bm, y, seed = 1234, nfolds = 10, ncores = 4)
-         },
-         error = function(cond) {
-                cv.biglasso(X.bm, y, seed = 1234, nfolds = 10, ncores = 2)
-         }
+  {
+    cv.biglasso(X.bm, y, seed = 1234, nfolds = 10, ncores = 4)
+  },
+  error = function(cond) {
+    cv.biglasso(X.bm, y, seed = 1234, nfolds = 10, ncores = 2)
+  }
 )
 ```
 
@@ -74,7 +74,7 @@ After cross-validation, a few things we can do:
 - plot the cross-validation plots:
 
 ```{r}
-par(mfrow = c(2, 2), mar = c(3.5, 3.5, 3, 1) ,mgp = c(2.5, 0.5, 0))
+par(mfrow = c(2, 2), mar = c(3.5, 3.5, 3, 1), mgp = c(2.5, 0.5, 0))
 plot(cvfit, type = "all")
 ```
 
@@ -88,7 +88,7 @@ summary(cvfit)
 - Extract non-zero coefficients at the optimal $\lambda$ value:
 
 ```{r}
-coef(cvfit)[which(coef(cvfit) != 0),]
+coef(cvfit)[which(coef(cvfit) != 0), ]
 ```
 
 ## Logistic Regression
@@ -106,7 +106,7 @@ plot(fit)
 
 ```{r}
 library(survival)
-X <- heart[,4:7]
+X <- heart[, 4:7]
 y <- Surv(heart$stop - heart$start, heart$event)
 X.bm <- as.big.matrix(X)
 fit <- biglasso(X.bm, y, family = "cox")
@@ -117,12 +117,16 @@ plot(fit)
 
 ```{r}
 set.seed(10101)
-n=300; p=300; m=5; s=10; b=1
-x = matrix(rnorm(n * p), n, p)
-beta = matrix(seq(from=-b,to=b,length.out=s*m),s,m)
-y = x[,1:s] %*% beta + matrix(rnorm(n*m,0,1),n,m)
-x.bm = as.big.matrix(x)
-fit = biglasso(x.bm, y, family = "mgaussian")
+n <- 300
+p <- 300
+m <- 5
+s <- 10
+b <- 1
+x <- matrix(rnorm(n * p), n, p)
+beta <- matrix(seq(from = -b, to = b, length.out = s * m), s, m)
+y <- x[, 1:s] %*% beta + matrix(rnorm(n * m, 0, 1), n, m)
+x.bm <- as.big.matrix(x)
+fit <- biglasso(x.bm, y, family = "mgaussian")
 plot(fit)
 ```
 
@@ -137,10 +141,10 @@ and a descriptor file (.desc) for the raw data matrix:
 ## The data has 200 observations, 600 features, and 10 non-zero coefficients.
 ## This is not actually very big, but vignettes in R are supposed to render
 ## quickly. Much larger data can be handled in the same way.
-if(!file.exists('BigX.bin')) {
+if (!file.exists("BigX.bin")) {
   X <- matrix(rnorm(1000 * 5000), 1000, 5000)
   beta <- c(-5:5)
-  y <- as.numeric(X[,1:11] %*% beta)
+  y <- as.numeric(X[, 1:11] %*% beta)
   write.csv(X, "BigX.csv", row.names = F)
   write.csv(y, "y.csv", row.names = F)
   ## Pretend that the data in "BigX.csv" is too large to fit into memory
@@ -155,7 +159,7 @@ file (.desc) in any new R session:
 ```{r, warning=F}
 rm(list = c("X", "X.bm", "y")) # Pretend starting a new session
 X.bm <- attach.big.matrix("BigX.desc")
-y <- read.csv("y.csv")[,1]
+y <- read.csv("y.csv")[, 1]
 ```
 
 This is very appealing for big data analysis in that we don't need to "read" the
@@ -163,7 +167,9 @@ raw data again in a R session, which would be very time-consuming. The code belo
 again fits a lasso-penalized linear model, and runs 10-fold cross-validation:
 
 ```{r}
-system.time({fit <- biglasso(X.bm, y)})
+system.time({
+  fit <- biglasso(X.bm, y)
+})
 ```
 
 ```{r}
@@ -173,12 +179,16 @@ plot(fit)
 ```{r}
 # 10-fold cross validation in parallel
 tryCatch(
-	{
-		system.time({cvfit <- cv.biglasso(X.bm, y, seed = 1234, ncores = 4, nfolds = 10)})
-	},
-	error = function(cond) {
-  	  	system.time({cvfit <- cv.biglasso(X.bm, y, seed = 1234, ncores = 2, nfolds = 10)})
-	}
+  {
+    system.time({
+      cvfit <- cv.biglasso(X.bm, y, seed = 1234, ncores = 4, nfolds = 10)
+    })
+  },
+  error = function(cond) {
+    system.time({
+      cvfit <- cv.biglasso(X.bm, y, seed = 1234, ncores = 2, nfolds = 10)
+    })
+  }
 )
 ```
 

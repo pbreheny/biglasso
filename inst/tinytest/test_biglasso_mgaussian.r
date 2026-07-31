@@ -1,4 +1,6 @@
-if (interactive()) library(tinytest)
+if (interactive()) {
+  library(tinytest)
+}
 library(glmnet)
 
 # NOTE on comparing against glmnet: biglasso's multi-response ("mgaussian")
@@ -24,10 +26,24 @@ X.bm <- as.big.matrix(X)
 fit_glmnet <- glmnet(X, Y, family = "mgaussian", control = list(thresh = eps))
 lambda_big <- fit_glmnet$lambda / sqrt(m)
 
-fit_ssr <- biglasso(X.bm, Y, family = "mgaussian", screen = "SSR",
-                     lambda = lambda_big, eps = eps, max.iter = 1e5)
-fit_ada <- biglasso(X.bm, Y, family = "mgaussian", screen = "Adaptive",
-                     lambda = lambda_big, eps = eps, max.iter = 1e5)
+fit_ssr <- biglasso(
+  X.bm,
+  Y,
+  family = "mgaussian",
+  screen = "SSR",
+  lambda = lambda_big,
+  eps = eps,
+  max.iter = 1e5
+)
+fit_ada <- biglasso(
+  X.bm,
+  Y,
+  family = "mgaussian",
+  screen = "Adaptive",
+  lambda = lambda_big,
+  eps = eps,
+  max.iter = 1e5
+)
 
 expect_equal(fit_glmnet$lambda, fit_ssr$lambda * sqrt(m))
 expect_equal(fit_glmnet$lambda, fit_ada$lambda * sqrt(m))
@@ -51,8 +67,16 @@ expect_true(all(diff(fit_ssr$loss) <= 1e-8))
 
 # Test parallel computing ---------------------------------------------------
 
-fit_ssr2 <- biglasso(X.bm, Y, family = "mgaussian", screen = "SSR",
-                      lambda = lambda_big, eps = eps, ncores = 2, max.iter = 1e5)
+fit_ssr2 <- biglasso(
+  X.bm,
+  Y,
+  family = "mgaussian",
+  screen = "SSR",
+  lambda = lambda_big,
+  eps = eps,
+  ncores = 2,
+  max.iter = 1e5
+)
 tol <- 1e-2
 for (k in 1:m) {
   expect_equivalent(as.matrix(fit_ssr$beta[[k]]), as.matrix(fit_ssr2$beta[[k]]), tolerance = tol)
@@ -65,9 +89,16 @@ for (k in 1:m) {
 # sqrt(m) rescaling that holds for pure lasso, so these are sanity/shape
 # checks instead of exact-agreement checks.)
 
-fit_enet <- biglasso(X.bm, Y, family = "mgaussian", penalty = "enet", alpha = 0.5,
-                      eps = 1e-10, max.iter = 1e5)
-expect_equal(fit_enet$screen, "SSR")  # Adaptive isn't supported for enet
+fit_enet <- biglasso(
+  X.bm,
+  Y,
+  family = "mgaussian",
+  penalty = "enet",
+  alpha = 0.5,
+  eps = 1e-10,
+  max.iter = 1e5
+)
+expect_equal(fit_enet$screen, "SSR") # Adaptive isn't supported for enet
 expect_true(all(sapply(fit_enet$beta, function(b) all(is.finite(as.matrix(b))))))
 
 # ridge should never produce exact zeros -- but note penalty = "ridge" is
@@ -79,8 +110,15 @@ expect_true(all(sapply(fit_enet$beta, function(b) all(is.finite(as.matrix(b)))))
 # regime the density check needs. Evaluating at a lambda drawn from the
 # lasso path's scale instead gives genuinely weak regularization (see the
 # analogous, empirically-confirmed fix in test_biglasso_cox.r).
-fit_ridge <- biglasso(X.bm, Y, family = "mgaussian", penalty = "ridge", lambda = min(lambda_big),
-                       eps = 1e-10, max.iter = 1e5)
+fit_ridge <- biglasso(
+  X.bm,
+  Y,
+  family = "mgaussian",
+  penalty = "ridge",
+  lambda = min(lambda_big),
+  eps = 1e-10,
+  max.iter = 1e5
+)
 frac_nonzero <- sapply(fit_ridge$beta, function(b) mean(as.matrix(b[-1, ]) != 0))
 expect_true(all(frac_nonzero == 1))
 
@@ -88,9 +126,16 @@ expect_true(all(frac_nonzero == 1))
 # Test penalty.factor --------------------------------------------------------
 
 pf <- rep(1, p)
-pf[1] <- 0  # unpenalized: should remain in the model at every lambda
-fit_pf <- biglasso(X.bm, Y, family = "mgaussian", screen = "SSR", penalty.factor = pf,
-                    eps = eps, max.iter = 1e5)
+pf[1] <- 0 # unpenalized: should remain in the model at every lambda
+fit_pf <- biglasso(
+  X.bm,
+  Y,
+  family = "mgaussian",
+  screen = "SSR",
+  penalty.factor = pf,
+  eps = eps,
+  max.iter = 1e5
+)
 expect_true(all(sapply(fit_pf$beta, function(b) all(as.matrix(b[2, ]) != 0))))
 
 
@@ -104,9 +149,9 @@ fit_dfmax <- biglasso(X.bm, Y, family = "mgaussian", dfmax = 3, eps = eps, max.i
 nv <- sapply(1:ncol(fit_dfmax$beta[[1]]), function(l) {
   max(sapply(fit_dfmax$beta, function(b) sum(b[-1, l] != 0)))
 })
-expect_true(length(fit_dfmax$lambda) < 100)      # path should stop early
-expect_true(all(nv[-length(nv)] <= 3))           # dfmax respected until the stopping point
-expect_true(nv[length(nv)] > 3)                  # last retained point is the one that triggered the stop
+expect_true(length(fit_dfmax$lambda) < 100) # path should stop early
+expect_true(all(nv[-length(nv)] <= 3)) # dfmax respected until the stopping point
+expect_true(nv[length(nv)] > 3) # last retained point is the one that triggered the stop
 
 
 # Test response names propagate to beta list names --------------------------
@@ -131,7 +176,7 @@ for (k in 1:m) {
   expect_equal(as.numeric(link[, li]), as.numeric(manual_link), tolerance = 1e-6)
 
   resp <- predict(fit_ssr, X.bm, type = "response", k = k)
-  expect_equal(resp, link)  # mgaussian has no link function
+  expect_equal(resp, link) # mgaussian has no link function
 
   coefs <- predict(fit_ssr, X.bm, type = "coefficients", k = k)
   expect_equal(as.matrix(coefs), as.matrix(coef(fit_ssr)[[k]]))
@@ -155,7 +200,7 @@ plot(fit_ssr)
 plot(fit_ssr, norm.beta = FALSE)
 dev.off()
 unlink(tmp_pdf)
-expect_true(TRUE)  # reaching this point means plot.mbiglasso() didn't error
+expect_true(TRUE) # reaching this point means plot.mbiglasso() didn't error
 
 
 # Test cv.biglasso() rejects family = "mgaussian" -----------------------------

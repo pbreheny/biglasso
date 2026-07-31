@@ -6,23 +6,24 @@
 // apply the requested penalty to a single coordinate
 static double update_beta(const char *penalty, double z, double l1, double l2,
                           double gamma, double v) {
-  if (strcmp(penalty, "MCP") == 0) return MCP(z, l1, l2, gamma, v);
-  if (strcmp(penalty, "SCAD") == 0) return SCAD(z, l1, l2, gamma, v);
+  if (strcmp(penalty, "MCP") == 0)
+    return MCP(z, l1, l2, gamma, v);
+  if (strcmp(penalty, "SCAD") == 0)
+    return SCAD(z, l1, l2, gamma, v);
   return lasso(z, l1, l2, v);
 }
 
 // shared coordinate-descent path solver behind cdfit_gaussian_simple() and
 // cdfit_gaussian_simple_path(); the former just calls this with a length-1
 // lambda vector
-static arma::sp_mat cdfit_gaussian_simple_core(XPtr<BigMatrix> xMat, double *r, double *init,
-                                               double *xtx, const char *penalty,
-                                               NumericVector &lambda, double alpha, double gamma,
-                                               double thresh, int dfmax, int max_iter, double *m,
-                                               int n, int p, NumericVector &loss,
-                                               IntegerVector &iter) {
+static arma::sp_mat cdfit_gaussian_simple_core(
+    XPtr<BigMatrix> xMat, double *r, double *init, double *xtx,
+    const char *penalty, NumericVector &lambda, double alpha, double gamma,
+    double thresh, int dfmax, int max_iter, double *m, int n, int p,
+    NumericVector &loss, IntegerVector &iter) {
   int L = lambda.size();
   arma::sp_mat beta(p, L);
-  double *a = R_Calloc(p, double); // will hold beta from previous iteration
+  double *a = R_Calloc(p, double);     // will hold beta from previous iteration
   int *ever_active = R_Calloc(p, int); // ever-active set
   NumericVector z(p);
   double l1, l2, shift, cp, max_update, update;
@@ -55,15 +56,18 @@ static arma::sp_mat cdfit_gaussian_simple_core(XPtr<BigMatrix> xMat, double *r, 
             if (shift != 0) {
               update_resid_no_std(xMat, r, shift, n, j);
               update = fabs(shift) * sqrt(xtx[j]);
-              if (update > max_update) max_update = update;
+              if (update > max_update)
+                max_update = update;
             }
           }
         }
         // make current beta the old value
-        for (j = 0; j < p; j++) a[j] = beta(j, l);
+        for (j = 0; j < p; j++)
+          a[j] = beta(j, l);
 
         // check for convergence
-        if (max_update < thresh) break;
+        if (max_update < thresh)
+          break;
       }
 
       // scan for violations
@@ -85,7 +89,8 @@ static arma::sp_mat cdfit_gaussian_simple_core(XPtr<BigMatrix> xMat, double *r, 
           }
         }
       }
-      if (violations == 0) break;
+      if (violations == 0)
+        break;
     }
 
     loss[l] = gLoss(r, n);
@@ -93,10 +98,12 @@ static arma::sp_mat cdfit_gaussian_simple_core(XPtr<BigMatrix> xMat, double *r, 
     // check dfmax
     int nv = 0;
     for (j = 0; j < p; j++) {
-      if (a[j] != 0) nv++;
+      if (a[j] != 0)
+        nv++;
     }
     if (nv > dfmax) {
-      for (int ll = l; ll < L; ll++) iter[ll] = NA_INTEGER;
+      for (int ll = l; ll < L; ll++)
+        iter[ll] = NA_INTEGER;
       break;
     }
   }
@@ -107,20 +114,11 @@ static arma::sp_mat cdfit_gaussian_simple_core(XPtr<BigMatrix> xMat, double *r, 
 }
 
 // NOTE: in this simple function, lambda is a single value, not a path
-RcppExport SEXP cdfit_gaussian_simple(SEXP X_,
-                                      SEXP y_,
-                                      SEXP r_,
-                                      SEXP init_,
-                                      SEXP xtx_,
-                                      SEXP penalty_,
-                                      SEXP lambda_,
-                                      SEXP alpha_,
-                                      SEXP gamma_,
-                                      SEXP eps_,
-                                      SEXP dfmax_,
-                                      SEXP max_iter_,
-                                      SEXP multiplier_,
-                                      SEXP ncore_) {
+RcppExport SEXP cdfit_gaussian_simple(SEXP X_, SEXP y_, SEXP r_, SEXP init_,
+                                      SEXP xtx_, SEXP penalty_, SEXP lambda_,
+                                      SEXP alpha_, SEXP gamma_, SEXP eps_,
+                                      SEXP dfmax_, SEXP max_iter_,
+                                      SEXP multiplier_, SEXP ncore_) {
 
   XPtr<BigMatrix> xMat(X_);
   double *y = REAL(y_);
@@ -139,44 +137,39 @@ RcppExport SEXP cdfit_gaussian_simple(SEXP X_,
 
   NumericVector resid(n); // residuals to be returned
   double *r = REAL(resid);
-  for (int i = 0; i < n; i++) r[i] = REAL(r_)[i];
+  for (int i = 0; i < n; i++)
+    r[i] = REAL(r_)[i];
 
   set_omp_cores(INTEGER(ncore_)[0]);
 
   double thresh = eps * sqrt(gLoss(y, n) / n);
   NumericVector loss(1);
   IntegerVector iter(1);
-  arma::sp_mat beta = cdfit_gaussian_simple_core(xMat, r, init, xtx, penalty, lambda, alpha,
-                                                 gamma, thresh, dfmax, max_iter, m, n, p, loss, iter);
+  arma::sp_mat beta = cdfit_gaussian_simple_core(
+      xMat, r, init, xtx, penalty, lambda, alpha, gamma, thresh, dfmax,
+      max_iter, m, n, p, loss, iter);
 
   NumericVector b(p); // estimated coefficients
-  for (int j = 0; j < p; j++) b[j] = beta(j, 0);
+  for (int j = 0; j < p; j++)
+    b[j] = beta(j, 0);
 
   // return list:
-  // - b: numeric (p x 1) vector of estimated coefficients at the supplied lambda value
+  // - b: numeric (p x 1) vector of estimated coefficients at the supplied
+  // lambda value
   // - loss: double capturing the loss at this lambda value with these coefs.
-  // - iter: integer capturing the number of iterations needed in the coordinate descent
+  // - iter: integer capturing the number of iterations needed in the coordinate
+  // descent
   // - resid: numeric (n x 1) vector of residuals
   return List::create(b, loss[0], iter[0], resid);
 }
 
-
 // NOTE: in this simple function, lambda is a user-supplied path
-RcppExport SEXP cdfit_gaussian_simple_path(SEXP X_,
-                                           SEXP y_,
-                                           SEXP r_,
-                                           SEXP init_,
-                                           SEXP xtx_,
-                                           SEXP penalty_,
-                                           SEXP lambda_,
-                                           SEXP nlambda_,
-                                           SEXP alpha_,
-                                           SEXP gamma_,
-                                           SEXP eps_,
-                                           SEXP dfmax_,
-                                           SEXP max_iter_,
-                                           SEXP multiplier_,
-                                           SEXP ncore_) {
+RcppExport SEXP cdfit_gaussian_simple_path(SEXP X_, SEXP y_, SEXP r_,
+                                           SEXP init_, SEXP xtx_, SEXP penalty_,
+                                           SEXP lambda_, SEXP nlambda_,
+                                           SEXP alpha_, SEXP gamma_, SEXP eps_,
+                                           SEXP dfmax_, SEXP max_iter_,
+                                           SEXP multiplier_, SEXP ncore_) {
 
   XPtr<BigMatrix> xMat(X_);
   double *y = REAL(y_);
@@ -195,7 +188,8 @@ RcppExport SEXP cdfit_gaussian_simple_path(SEXP X_,
 
   NumericVector resid(n); // residuals to be returned
   double *r = REAL(resid);
-  for (int i = 0; i < n; i++) r[i] = REAL(r_)[i];
+  for (int i = 0; i < n; i++)
+    r[i] = REAL(r_)[i];
 
   set_omp_cores(INTEGER(ncore_)[0]);
 
@@ -203,14 +197,16 @@ RcppExport SEXP cdfit_gaussian_simple_path(SEXP X_,
   int L = INTEGER(nlambda_)[0];
   NumericVector loss(L);
   IntegerVector iter(L);
-  arma::sp_mat beta = cdfit_gaussian_simple_core(xMat, r, init, xtx, penalty, lambda, alpha,
-                                                 gamma, thresh, dfmax, max_iter, m, n, p, loss,
-                                                 iter);
+  arma::sp_mat beta = cdfit_gaussian_simple_core(
+      xMat, r, init, xtx, penalty, lambda, alpha, gamma, thresh, dfmax,
+      max_iter, m, n, p, loss, iter);
 
   // return list:
-  // - beta: numeric (p x L) sparse matrix of estimated coefficients along the lambda path
+  // - beta: numeric (p x L) sparse matrix of estimated coefficients along the
+  // lambda path
   // - loss: double capturing the loss at this lambda value with these coefs.
-  // - iter: integer capturing the number of iterations needed in the coordinate descent
+  // - iter: integer capturing the number of iterations needed in the coordinate
+  // descent
   // - resid: numeric (n x 1) vector of residuals
   return List::create(beta, loss, iter, resid);
 }

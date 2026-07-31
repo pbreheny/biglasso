@@ -1,4 +1,6 @@
-if (interactive()) library(tinytest)
+if (interactive()) {
+  library(tinytest)
+}
 library(survival)
 library(glmnet)
 
@@ -13,12 +15,12 @@ tolerance <- 1e-3
 X <- matrix(rnorm(n * p), n, p)
 b <- c(rep(1, 3), rep(-1, 3), rep(0, p - 6))
 fx <- X[, 1:6] %*% b[1:6] / 2
-ty <- pmax(round(rexp(n, exp(fx)), 1), 0.1)  # rounding introduces ties
+ty <- pmax(round(rexp(n, exp(fx)), 1), 0.1) # rounding introduces ties
 cens <- quantile(ty, 0.7)
 status <- as.numeric(ty < cens)
 time <- pmin(ty, cens)
 y <- cbind(time = time, status = status)
-expect_true(sum(duplicated(time[status == 1])) > 0)  # sanity: data really has ties
+expect_true(sum(duplicated(time[status == 1])) > 0) # sanity: data really has ties
 
 X.bm <- as.big.matrix(X)
 
@@ -46,7 +48,13 @@ expect_equal(as.numeric(coef(fit_coxph)), as.numeric(fit0$beta), tolerance = tol
 # (biglasso's Cox lambda parameterization matches glmnet's directly -- no
 # rescaling needed here, unlike family = "mgaussian".)
 
-fit_glmnet <- glmnet(X, Surv(time, status), family = "cox", cox.ties = "breslow", control = list(thresh = eps))
+fit_glmnet <- glmnet(
+  X,
+  Surv(time, status),
+  family = "cox",
+  cox.ties = "breslow",
+  control = list(thresh = eps)
+)
 lam <- fit_glmnet$lambda
 
 screens <- c("SSR", "scox", "sscox", "safe", "Adaptive", "None")
@@ -107,7 +115,15 @@ y_par <- cbind(time = time_par, status = status_par)
 X_par.bm <- as.big.matrix(X_par)
 
 fit_par1 <- biglasso(X_par.bm, y_par, family = "cox", screen = "SSR", eps = eps, max.iter = 1e5)
-fit_par2 <- biglasso(X_par.bm, y_par, family = "cox", screen = "SSR", eps = eps, max.iter = 1e5, ncores = 2)
+fit_par2 <- biglasso(
+  X_par.bm,
+  y_par,
+  family = "cox",
+  screen = "SSR",
+  eps = eps,
+  max.iter = 1e5,
+  ncores = 2
+)
 tol <- 1e-2
 expect_equivalent(as.matrix(fit_par1$beta), as.matrix(fit_par2$beta), tolerance = tol)
 
@@ -118,9 +134,16 @@ expect_equivalent(as.matrix(fit_par1$beta), as.matrix(fit_par2$beta), tolerance 
 # the gaussian "enet" test in test_biglasso_linear.r, which compares against
 # ncvreg instead. These are sanity/shape checks.)
 
-fit_enet <- biglasso(X.bm, y, family = "cox", penalty = "enet", alpha = 0.5,
-                      eps = 1e-10, max.iter = 1e5)
-expect_equal(fit_enet$screen, "SSR")  # Adaptive isn't supported for enet
+fit_enet <- biglasso(
+  X.bm,
+  y,
+  family = "cox",
+  penalty = "enet",
+  alpha = 0.5,
+  eps = 1e-10,
+  max.iter = 1e5
+)
+expect_equal(fit_enet$screen, "SSR") # Adaptive isn't supported for enet
 expect_true(all(is.finite(as.matrix(fit_enet$beta))))
 
 # ridge should never produce exact zeros -- but note penalty = "ridge" is
@@ -134,8 +157,15 @@ expect_true(all(is.finite(as.matrix(fit_enet$beta))))
 # from the lasso path's scale instead gives genuinely weak regularization
 # (verified empirically: 0/1000 trials failed this way, vs. ~8% when
 # evaluating at the tail of ridge's own path).
-fit_ridge <- biglasso(X.bm, y, family = "cox", penalty = "ridge", lambda = min(lam),
-                       eps = 1e-10, max.iter = 1e5)
+fit_ridge <- biglasso(
+  X.bm,
+  y,
+  family = "cox",
+  penalty = "ridge",
+  lambda = min(lam),
+  eps = 1e-10,
+  max.iter = 1e5
+)
 expect_equal(fit_ridge$screen, "SSR")
 frac_nonzero <- mean(as.matrix(fit_ridge$beta) != 0)
 expect_true(frac_nonzero == 1)
@@ -144,9 +174,16 @@ expect_true(frac_nonzero == 1)
 # Test penalty.factor -----------------------------------------------------------
 
 pf <- rep(1, p)
-pf[1] <- 0  # unpenalized: should remain in the model at every lambda
-fit_pf <- biglasso(X.bm, y, family = "cox", screen = "SSR", penalty.factor = pf,
-                    eps = eps, max.iter = 1e5)
+pf[1] <- 0 # unpenalized: should remain in the model at every lambda
+fit_pf <- biglasso(
+  X.bm,
+  y,
+  family = "cox",
+  screen = "SSR",
+  penalty.factor = pf,
+  eps = eps,
+  max.iter = 1e5
+)
 expect_true(all(as.matrix(fit_pf$beta[1, ]) != 0))
 
 
@@ -176,16 +213,16 @@ link <- predict(fits[["SSR"]], X.bm, type = "link")
 expect_equal(as.numeric(link[, li]), as.numeric(manual_link), tolerance = 1e-6)
 
 resp <- predict(fits[["SSR"]], X.bm, type = "response")
-expect_equal(resp, link)  # cox has no separate response-scale transform
+expect_equal(resp, link) # cox has no separate response-scale transform
 
 coefs <- predict(fits[["SSR"]], X.bm, type = "coefficients")
 expect_equal(as.matrix(coefs), as.matrix(coef(fits[["SSR"]])))
-expect_equal(nrow(coefs), p)  # no intercept row for cox
+expect_equal(nrow(coefs), p) # no intercept row for cox
 
 nv2 <- predict(fits[["SSR"]], X.bm, type = "nvars")
 expect_equal(as.numeric(nv2), as.numeric(Matrix::colSums(fits[["SSR"]]$beta != 0)))
 
-expect_error(predict(fits[["SSR"]], X.bm, type = "class"))  # class is binomial-only
+expect_error(predict(fits[["SSR"]], X.bm, type = "class")) # class is binomial-only
 
 
 # Test plot.biglasso for cox ---------------------------------------------------
@@ -198,7 +235,7 @@ pdf(tmp_pdf)
 plot(fits[["SSR"]])
 dev.off()
 unlink(tmp_pdf)
-expect_true(TRUE)  # reaching this point means plot.biglasso() didn't error
+expect_true(TRUE) # reaching this point means plot.biglasso() didn't error
 
 
 # Test cv.biglasso() rejects family = "cox" ------------------------------------

@@ -2,6 +2,5 @@
 # Generator token: 10BE3573-1514-4C36-9D1C-5A225CD40393
 
 get_eta <- function(xP, row_idx_, beta, idx_p, idx_l) {
-    .Call(`_biglasso_get_eta`, xP, row_idx_, beta, idx_p, idx_l)
+  .Call(`_biglasso_get_eta`, xP, row_idx_, beta, idx_p, idx_l)
 }
-

@@ -1,4 +1,6 @@
-if (interactive()) library(tinytest)
+if (interactive()) {
+  library(tinytest)
+}
 library(bigmemory)
 
 # Test setupX() ---------------------------------------------------------------
@@ -22,24 +24,29 @@ setwd(old_wd)
 
 expect_true(inherits(X.bm, "big.matrix"))
 expect_equal(dim(X.bm), c(n, p))
-expect_equivalent(X.bm[, ], X)
+expect_equivalent(X.bm[,], X)
 expect_true(file.exists(file.path(tmp_dir, "dat.bin")))
 expect_true(file.exists(file.path(tmp_dir, "dat.desc")))
 
 # re-attach from the descriptor without re-reading the raw file
 X.bm2 <- attach.big.matrix(file.path(tmp_dir, "dat.desc"))
-expect_equivalent(X.bm2[, ], X)
+expect_equivalent(X.bm2[,], X)
 
 # custom backing/descriptor file names, tab-separated
 data_file2 <- file.path(tmp_dir, "dat2.txt")
 write.table(X, file = data_file2, sep = "\t", row.names = FALSE, col.names = FALSE)
 setwd(tmp_dir)
-X.bm3 <- setupX("dat2.txt", dir = tmp_dir, sep = "\t",
-                backingfile = "custom.bin", descriptorfile = "custom.desc")
+X.bm3 <- setupX(
+  "dat2.txt",
+  dir = tmp_dir,
+  sep = "\t",
+  backingfile = "custom.bin",
+  descriptorfile = "custom.desc"
+)
 setwd(old_wd)
 expect_true(file.exists(file.path(tmp_dir, "custom.bin")))
 expect_true(file.exists(file.path(tmp_dir, "custom.desc")))
-expect_equivalent(X.bm3[, ], X)
+expect_equivalent(X.bm3[,], X)
 
 # the resulting big.matrix is directly usable as biglasso()'s X
 b <- rnorm(p)
@@ -75,7 +82,7 @@ plot(fit_gauss, alpha = 0.5, main = "custom")
 plot(fit_bin)
 dev.off()
 unlink(tmp_pdf)
-expect_true(TRUE)  # reaching this point means plot.biglasso() didn't error
+expect_true(TRUE) # reaching this point means plot.biglasso() didn't error
 
 
 # Test cv.biglasso() + summary.cv.biglasso() -----------------------------------
@@ -98,7 +105,7 @@ expect_equal(s_gauss$sigma, sqrt(cvfit_gauss$cve))
 rsq_gauss <- pmin(pmax(1 - cvfit_gauss$cve / cvfit_gauss$null.dev, 0), 1)
 expect_equal(s_gauss$r.squared, rsq_gauss)
 expect_equal(s_gauss$snr, rsq_gauss / (1 - rsq_gauss))
-expect_false("pe" %in% names(s_gauss))  # pe is binomial-only; note $pe partial-matches $penalty
+expect_false("pe" %in% names(s_gauss)) # pe is binomial-only; note $pe partial-matches $penalty
 expect_equal(s_gauss$nvars, predict(cvfit_gauss$fit, lambda = cvfit_gauss$lambda, type = "nvars"))
 
 out_gauss <- capture.output(print(s_gauss))
@@ -107,11 +114,20 @@ expect_true(any(grepl("Scale estimate \\(sigma\\)", out_gauss)))
 expect_false(any(grepl("Prediction error", out_gauss)))
 
 out_gauss_1digit <- capture.output(print(s_gauss, digits = 1))
-expect_true(any(grepl(paste0("R-squared: ", formatC(max(s_gauss$r.squared), 1, format = "f")),
-                       out_gauss_1digit)))
+expect_true(any(grepl(
+  paste0("R-squared: ", formatC(max(s_gauss$r.squared), 1, format = "f")),
+  out_gauss_1digit
+)))
 
-cvfit_bin <- cv.biglasso(X.bm, y_bin, family = "binomial", seed = 1, nfolds = 5,
-                         ncores = 1, nlambda = 20)
+cvfit_bin <- cv.biglasso(
+  X.bm,
+  y_bin,
+  family = "binomial",
+  seed = 1,
+  nfolds = 5,
+  ncores = 1,
+  nlambda = 20
+)
 s_bin <- summary(cvfit_bin)
 
 expect_equal(s_bin$model, "logistic")
@@ -146,4 +162,4 @@ plot(cvfit_bin, type = "all")
 expect_error(plot(cvfit_bin, type = "scale"))
 dev.off()
 unlink(tmp_pdf)
-expect_true(TRUE)  # reaching this point means the non-error plot calls above didn't error
+expect_true(TRUE) # reaching this point means the non-error plot calls above didn't error

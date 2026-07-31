@@ -10,8 +10,14 @@ plot_biglasso_lines <- function(l, Y, xlab, alpha, draw_ylab, ...) {
   p <- nrow(Y)
 
   plot.args <- list(
-    x = l, y = 1:length(l), ylim = range(Y), xlab = xlab, ylab = "",
-    type = "n", xlim = rev(range(l)), las = 1
+    x = l,
+    y = 1:length(l),
+    ylim = range(Y),
+    xlab = xlab,
+    ylab = "",
+    type = "n",
+    xlim = rev(range(l)),
+    las = 1
   )
   new.args <- list(...)
   if (length(new.args)) {

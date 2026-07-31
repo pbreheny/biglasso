@@ -1,4 +1,6 @@
-if (interactive()) library(tinytest)
+if (interactive()) {
+  library(tinytest)
+}
 library(ncvreg)
 library(glmnet)
 
@@ -8,7 +10,7 @@ n <- 100
 p <- 10
 eps <- 1e-12
 tolerance <- 1e-3
-X <- matrix(rnorm(n*p), n, p)
+X <- matrix(rnorm(n * p), n, p)
 # b is scaled by 1/sqrt(p) so the linear predictor's variance stays ~1
 # regardless of p, keeping fitted probabilities away from the (quasi-)
 # separation regime where glm()/glmnet()'s unregularized-limit MLE becomes
@@ -17,25 +19,44 @@ X <- matrix(rnorm(n*p), n, p)
 b <- rnorm(p, sd = 1 / sqrt(p))
 
 y <- rbinom(n, 1, prob = exp(1 + X %*% b) / (1 + exp(1 + X %*% b)))
-fit.mle <- glm(y ~ X, family = 'binomial')
+fit.mle <- glm(y ~ X, family = "binomial")
 beta <- fit.mle$coefficients
 
 X.bm <- as.big.matrix(X)
-fit.ssr <- biglasso(X.bm, y, family = 'binomial', eps = eps, lambda.min = 0)
-fit.ssr.mm <- biglasso(X.bm, y, family = 'binomial', eps = eps, alg.logistic = 'MM', lambda.min = 0)
-fit.hybrid <- biglasso(X.bm, y, family = 'binomial', eps = eps, screen = 'Hybrid', lambda.min = 0)
-fit.adaptive <- biglasso(X.bm, y, family = 'binomial', eps = eps, screen = 'Adaptive', lambda.min = 0)
+fit.ssr <- biglasso(X.bm, y, family = "binomial", eps = eps, lambda.min = 0)
+fit.ssr.mm <- biglasso(X.bm, y, family = "binomial", eps = eps, alg.logistic = "MM", lambda.min = 0)
+fit.hybrid <- biglasso(X.bm, y, family = "binomial", eps = eps, screen = "Hybrid", lambda.min = 0)
+fit.adaptive <- biglasso(
+  X.bm,
+  y,
+  family = "binomial",
+  eps = eps,
+  screen = "Adaptive",
+  lambda.min = 0
+)
 
 expect_equal(as.numeric(beta), as.numeric(fit.ssr$beta[, 100]), tolerance = tolerance)
-expect_equal(as.numeric(fit.ssr$beta[, 100]), as.numeric(fit.hybrid$beta[, 100]), tolerance = tolerance)
-expect_equal(as.numeric(fit.ssr$beta[, 100]), as.numeric(fit.ssr.mm$beta[, 100]), tolerance = tolerance)
-expect_equal(as.numeric(fit.ssr$beta[, 100]), as.numeric(fit.adaptive$beta[, 100]), tolerance = tolerance)
+expect_equal(
+  as.numeric(fit.ssr$beta[, 100]),
+  as.numeric(fit.hybrid$beta[, 100]),
+  tolerance = tolerance
+)
+expect_equal(
+  as.numeric(fit.ssr$beta[, 100]),
+  as.numeric(fit.ssr.mm$beta[, 100]),
+  tolerance = tolerance
+)
+expect_equal(
+  as.numeric(fit.ssr$beta[, 100]),
+  as.numeric(fit.adaptive$beta[, 100]),
+  tolerance = tolerance
+)
 
 
 # Test against glmnet -----------------------------------------------------
 
 glmnet.control(fdev = 0, devmax = 1)
-fit.glm <- glmnet(X, y, family = 'binomial', lambda.min.ratio = 0, control = list(thresh = eps))
+fit.glm <- glmnet(X, y, family = "binomial", lambda.min.ratio = 0, control = list(thresh = eps))
 
 expect_equal(as.numeric(fit.glm$beta), as.numeric(fit.ssr$beta[-1, ]), tolerance = tolerance)
 expect_equal(as.numeric(fit.glm$beta), as.numeric(fit.ssr.mm$beta[-1, ]), tolerance = tolerance)
@@ -47,37 +68,123 @@ expect_equal(as.numeric(fit.glm$beta), as.numeric(fit.adaptive$beta[-1, ]), tole
 
 cv.ind <- rep(1:10, 10)
 
-cv.default <- cv.biglasso(X.bm, y, family = 'binomial',
-  eps = eps, nfolds = 10, cv.ind = cv.ind, eval.metric = "default", ncores = 1)
-cv.default.ungrouped <- cv.biglasso(X.bm, y, family = 'binomial',
-  eps = eps, nfolds = 10, cv.ind = cv.ind, eval.metric = "default", ncores = 1, grouped = FALSE)
+cv.default <- cv.biglasso(
+  X.bm,
+  y,
+  family = "binomial",
+  eps = eps,
+  nfolds = 10,
+  cv.ind = cv.ind,
+  eval.metric = "default",
+  ncores = 1
+)
+cv.default.ungrouped <- cv.biglasso(
+  X.bm,
+  y,
+  family = "binomial",
+  eps = eps,
+  nfolds = 10,
+  cv.ind = cv.ind,
+  eval.metric = "default",
+  ncores = 1,
+  grouped = FALSE
+)
 
-cv.auc <- cv.biglasso(X.bm, y, eval.metric = "auc", family = 'binomial',
-  eps = eps, nfolds = 10, cv.ind = cv.ind, ncores = 1)
+cv.auc <- cv.biglasso(
+  X.bm,
+  y,
+  eval.metric = "auc",
+  family = "binomial",
+  eps = eps,
+  nfolds = 10,
+  cv.ind = cv.ind,
+  ncores = 1
+)
 
-cv.class <- cv.biglasso(X.bm, y, eval.metric = "class", family = 'binomial',
-  eps = eps, nfolds = 10, cv.ind = cv.ind, ncores = 1)
-cv.class.ungrouped <- cv.biglasso(X.bm, y, eval.metric = "class", family = 'binomial',
-  eps = eps, nfolds = 10, cv.ind = cv.ind, ncores = 1, grouped = FALSE)
+cv.class <- cv.biglasso(
+  X.bm,
+  y,
+  eval.metric = "class",
+  family = "binomial",
+  eps = eps,
+  nfolds = 10,
+  cv.ind = cv.ind,
+  ncores = 1
+)
+cv.class.ungrouped <- cv.biglasso(
+  X.bm,
+  y,
+  eval.metric = "class",
+  family = "binomial",
+  eps = eps,
+  nfolds = 10,
+  cv.ind = cv.ind,
+  ncores = 1,
+  grouped = FALSE
+)
 
-cv.glmnet.default <- cv.glmnet(X, y, family = 'binomial',
-  lambda = cv.default$lambda, nfolds = 10, foldid = cv.ind, control = list(thresh = eps))
-cv.glmnet.default.ungrouped <- cv.glmnet(X, y, family = 'binomial',
-  lambda = cv.default$lambda, nfolds = 10, foldid = cv.ind, grouped = FALSE, control = list(thresh = eps))
+cv.glmnet.default <- cv.glmnet(
+  X,
+  y,
+  family = "binomial",
+  lambda = cv.default$lambda,
+  nfolds = 10,
+  foldid = cv.ind,
+  control = list(thresh = eps)
+)
+cv.glmnet.default.ungrouped <- cv.glmnet(
+  X,
+  y,
+  family = "binomial",
+  lambda = cv.default$lambda,
+  nfolds = 10,
+  foldid = cv.ind,
+  grouped = FALSE,
+  control = list(thresh = eps)
+)
 
-cv.glmnet.auc <- cv.glmnet(X, y, family = 'binomial', type.measure = "auc",
-  lambda = cv.default$lambda, nfolds = 10, foldid = cv.ind, control = list(thresh = eps))
+cv.glmnet.auc <- cv.glmnet(
+  X,
+  y,
+  family = "binomial",
+  type.measure = "auc",
+  lambda = cv.default$lambda,
+  nfolds = 10,
+  foldid = cv.ind,
+  control = list(thresh = eps)
+)
 
-cv.glmnet.class <- cv.glmnet(X, y, family = 'binomial', type.measure = "class",
-  lambda = cv.default$lambda, nfolds = 10, foldid = cv.ind, control = list(thresh = eps))
-cv.glmnet.class.ungrouped <- cv.glmnet(X, y, family = 'binomial', type.measure = "class",
-  lambda = cv.default$lambda, nfolds = 10, foldid = cv.ind, grouped = FALSE, control = list(thresh = eps))
+cv.glmnet.class <- cv.glmnet(
+  X,
+  y,
+  family = "binomial",
+  type.measure = "class",
+  lambda = cv.default$lambda,
+  nfolds = 10,
+  foldid = cv.ind,
+  control = list(thresh = eps)
+)
+cv.glmnet.class.ungrouped <- cv.glmnet(
+  X,
+  y,
+  family = "binomial",
+  type.measure = "class",
+  lambda = cv.default$lambda,
+  nfolds = 10,
+  foldid = cv.ind,
+  grouped = FALSE,
+  control = list(thresh = eps)
+)
 
 # default
 expect_equal(cv.default$cve, cv.glmnet.default$cvm, tolerance = tolerance)
 expect_equal(cv.default$cvse, cv.glmnet.default$cvsd, tolerance = tolerance)
-expect_equal(cv.default.ungrouped$cve, cv.glmnet.default$cvm, tolerance = tolerance)  # comparing grouped vs. ungrouped on purpose here
-expect_equal(cv.default.ungrouped$cvse, unname(cv.glmnet.default.ungrouped$cvsd), tolerance = tolerance)
+expect_equal(cv.default.ungrouped$cve, cv.glmnet.default$cvm, tolerance = tolerance) # comparing grouped vs. ungrouped on purpose here
+expect_equal(
+  cv.default.ungrouped$cvse,
+  unname(cv.glmnet.default.ungrouped$cvsd),
+  tolerance = tolerance
+)
 expect_equal(cv.default$lambda.min, cv.glmnet.default$lambda.min)
 expect_equal(cv.default.ungrouped$lambda.min, cv.glmnet.default.ungrouped$lambda.min)
 expect_equal(cv.default.ungrouped$lambda.1se, cv.glmnet.default.ungrouped$lambda.1se)
@@ -120,12 +227,26 @@ y.en <- rbinom(n.en, 1, prob = 1 / (1 + exp(-(X.en %*% b.en))))
 eps.en <- 1e-10
 alpha.en <- 0.5
 
-fit_ncv_en <- ncvreg(X.en, y.en, family = 'binomial', penalty = 'lasso', alpha = alpha.en,
-                     eps = eps.en, lambda.min = 0.05)
+fit_ncv_en <- ncvreg(
+  X.en,
+  y.en,
+  family = "binomial",
+  penalty = "lasso",
+  alpha = alpha.en,
+  eps = eps.en,
+  lambda.min = 0.05
+)
 X.en.bm <- as.big.matrix(X.en)
-fit_big_en <- biglasso(X.en.bm, y.en, family = 'binomial', penalty = 'enet', alpha = alpha.en,
-                       eps = eps.en, lambda.min = 0.05)
-expect_equal(fit_big_en$screen, "SSR")  # Adaptive isn't supported for enet
+fit_big_en <- biglasso(
+  X.en.bm,
+  y.en,
+  family = "binomial",
+  penalty = "enet",
+  alpha = alpha.en,
+  eps = eps.en,
+  lambda.min = 0.05
+)
+expect_equal(fit_big_en$screen, "SSR") # Adaptive isn't supported for enet
 expect_equal(as.numeric(fit_ncv_en$beta), as.numeric(fit_big_en$beta), tolerance = tolerance)
 
 
@@ -136,10 +257,17 @@ expect_equal(as.numeric(fit_ncv_en$beta), as.numeric(fit_big_en$beta), tolerance
 # explanation. Evaluating at a lambda drawn from the lasso path's scale
 # instead gives genuinely weak regularization.)
 
-fit_lasso_en <- biglasso(X.en.bm, y.en, family = 'binomial', eps = eps.en, max.iter = 1e5)
-fit_ridge_en <- biglasso(X.en.bm, y.en, family = 'binomial', penalty = 'ridge',
-                         lambda = min(fit_lasso_en$lambda), eps = eps.en, max.iter = 1e5)
-expect_equal(fit_ridge_en$screen, "SSR")  # Adaptive isn't supported for ridge
+fit_lasso_en <- biglasso(X.en.bm, y.en, family = "binomial", eps = eps.en, max.iter = 1e5)
+fit_ridge_en <- biglasso(
+  X.en.bm,
+  y.en,
+  family = "binomial",
+  penalty = "ridge",
+  lambda = min(fit_lasso_en$lambda),
+  eps = eps.en,
+  max.iter = 1e5
+)
+expect_equal(fit_ridge_en$screen, "SSR") # Adaptive isn't supported for ridge
 expect_true(mean(as.matrix(fit_ridge_en$beta[-1, , drop = FALSE]) != 0) == 1)
 
 
@@ -151,11 +279,26 @@ expect_true(mean(as.matrix(fit_ridge_en$beta[-1, , drop = FALSE]) != 0) == 1)
 # regardless of family.
 
 pf <- rep(1, p.en)
-pf[1:5] <- c(0.5, 2, 1, 3, 0.2)  # differential, all nonzero penalization
-fit_ncv_pf <- ncvreg(X.en, y.en, family = 'binomial', penalty = 'lasso', eps = eps.en,
-                     lambda.min = 0.05, penalty.factor = pf)
-fit_big_pf <- biglasso(X.en.bm, y.en, family = 'binomial', screen = 'SSR', eps = eps.en,
-                       lambda.min = 0.05, penalty.factor = pf, max.iter = 1e5)
+pf[1:5] <- c(0.5, 2, 1, 3, 0.2) # differential, all nonzero penalization
+fit_ncv_pf <- ncvreg(
+  X.en,
+  y.en,
+  family = "binomial",
+  penalty = "lasso",
+  eps = eps.en,
+  lambda.min = 0.05,
+  penalty.factor = pf
+)
+fit_big_pf <- biglasso(
+  X.en.bm,
+  y.en,
+  family = "binomial",
+  screen = "SSR",
+  eps = eps.en,
+  lambda.min = 0.05,
+  penalty.factor = pf,
+  max.iter = 1e5
+)
 expect_equal(fit_ncv_pf$lambda, fit_big_pf$lambda, tolerance = tolerance)
 expect_equal(as.numeric(fit_ncv_pf$beta), as.numeric(fit_big_pf$beta), tolerance = tolerance)
 
@@ -183,16 +326,30 @@ y.df <- rbinom(n.df, 1, prob = 1 / (1 + exp(-(X.df %*% b.df))))
 X.df.bm <- as.big.matrix(X.df)
 
 for (screen.df in c("SSR", "Hybrid", "Adaptive")) {
-  fit_dfmax <- biglasso(X.df.bm, y.df, family = 'binomial', dfmax = 5, screen = screen.df,
-                        eps = 1e-8, max.iter = 1e5)
+  fit_dfmax <- biglasso(
+    X.df.bm,
+    y.df,
+    family = "binomial",
+    dfmax = 5,
+    screen = screen.df,
+    eps = 1e-8,
+    max.iter = 1e5
+  )
   nv <- Matrix::colSums(fit_dfmax$beta[-1, , drop = FALSE] != 0)
-  expect_true(length(fit_dfmax$lambda) < 100)      # path should stop early
-  expect_true(all(nv[-length(nv)] <= 5))           # dfmax respected until the stopping point
-  expect_true(nv[length(nv)] > 5)                  # last retained point is the one that triggered the stop
+  expect_true(length(fit_dfmax$lambda) < 100) # path should stop early
+  expect_true(all(nv[-length(nv)] <= 5)) # dfmax respected until the stopping point
+  expect_true(nv[length(nv)] > 5) # last retained point is the one that triggered the stop
 }
 
-fit_dfmax_mm <- biglasso(X.df.bm, y.df, family = 'binomial', dfmax = 5, alg.logistic = 'MM',
-                         eps = 1e-8, max.iter = 1e5)
+fit_dfmax_mm <- biglasso(
+  X.df.bm,
+  y.df,
+  family = "binomial",
+  dfmax = 5,
+  alg.logistic = "MM",
+  eps = 1e-8,
+  max.iter = 1e5
+)
 nv_mm <- Matrix::colSums(fit_dfmax_mm$beta[-1, , drop = FALSE] != 0)
 expect_true(length(fit_dfmax_mm$lambda) < 100)
 expect_true(all(nv_mm[-length(nv_mm)] <= 5))

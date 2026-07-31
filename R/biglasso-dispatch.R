@@ -28,119 +28,423 @@ biglasso_dispatch_table <- list(
   gaussian = list(
     Adaptive = list(
       routine = "cdfit_gaussian_ada_edpp_ssr",
-      args = c("X", "yy", "row_idx", "lambda", "nlambda", "lambda_log_scale", "lambda_min",
-               "alpha", "user_lambda", "eps", "max_iter", "penalty_factor", "dfmax", "ncores",
-               "update_thresh", "verbose"),
-      out = c("b", "center", "scale", "lambda", "loss", "iter", "rejections",
-              "safe_rejections", "col.idx")
+      args = c(
+        "X",
+        "yy",
+        "row_idx",
+        "lambda",
+        "nlambda",
+        "lambda_log_scale",
+        "lambda_min",
+        "alpha",
+        "user_lambda",
+        "eps",
+        "max_iter",
+        "penalty_factor",
+        "dfmax",
+        "ncores",
+        "update_thresh",
+        "verbose"
+      ),
+      out = c(
+        "b",
+        "center",
+        "scale",
+        "lambda",
+        "loss",
+        "iter",
+        "rejections",
+        "safe_rejections",
+        "col.idx"
+      )
     ),
     SSR = list(
       routine = "cdfit_gaussian_ssr",
-      args = c("X", "yy", "row_idx", "lambda", "nlambda", "lambda_log_scale", "lambda_min",
-               "alpha", "user_lambda", "eps", "max_iter", "penalty_factor", "dfmax", "ncores",
-               "verbose"),
+      args = c(
+        "X",
+        "yy",
+        "row_idx",
+        "lambda",
+        "nlambda",
+        "lambda_log_scale",
+        "lambda_min",
+        "alpha",
+        "user_lambda",
+        "eps",
+        "max_iter",
+        "penalty_factor",
+        "dfmax",
+        "ncores",
+        "verbose"
+      ),
       out = c("b", "center", "scale", "lambda", "loss", "iter", "rejections", "col.idx")
     ),
     Hybrid = list(
       routine = "cdfit_gaussian_bedpp_ssr",
-      args = c("X", "yy", "row_idx", "lambda", "nlambda", "lambda_log_scale", "lambda_min",
-               "alpha", "user_lambda", "eps", "max_iter", "penalty_factor", "dfmax", "ncores",
-               "safe_thresh", "verbose"),
-      out = c("b", "center", "scale", "lambda", "loss", "iter", "rejections",
-              "safe_rejections", "col.idx")
+      args = c(
+        "X",
+        "yy",
+        "row_idx",
+        "lambda",
+        "nlambda",
+        "lambda_log_scale",
+        "lambda_min",
+        "alpha",
+        "user_lambda",
+        "eps",
+        "max_iter",
+        "penalty_factor",
+        "dfmax",
+        "ncores",
+        "safe_thresh",
+        "verbose"
+      ),
+      out = c(
+        "b",
+        "center",
+        "scale",
+        "lambda",
+        "loss",
+        "iter",
+        "rejections",
+        "safe_rejections",
+        "col.idx"
+      )
     )
   ),
   binomial = list(
     MM = list(
       routine = "cdfit_binomial_ssr_approx",
-      args = c("X", "yy", "row_idx", "lambda", "nlambda", "lambda_min", "alpha", "user_lambda",
-               "eps", "max_iter", "penalty_factor", "dfmax", "ncores", "warn", "verbose"),
+      args = c(
+        "X",
+        "yy",
+        "row_idx",
+        "lambda",
+        "nlambda",
+        "lambda_min",
+        "alpha",
+        "user_lambda",
+        "eps",
+        "max_iter",
+        "penalty_factor",
+        "dfmax",
+        "ncores",
+        "warn",
+        "verbose"
+      ),
       out = c("a", "b", "center", "scale", "lambda", "loss", "iter", "rejections", "col.idx")
     ),
     Hybrid = list(
       routine = "cdfit_binomial_slores_ssr",
-      args = c("X", "yy", "n_pos", "ylab", "row_idx", "lambda", "nlambda", "lambda_log_scale",
-               "lambda_min", "alpha", "user_lambda", "eps", "max_iter", "penalty_factor",
-               "dfmax", "ncores", "warn", "safe_thresh", "verbose"),
-      out = c("a", "b", "center", "scale", "lambda", "loss", "iter", "rejections",
-              "safe_rejections", "col.idx")
+      args = c(
+        "X",
+        "yy",
+        "n_pos",
+        "ylab",
+        "row_idx",
+        "lambda",
+        "nlambda",
+        "lambda_log_scale",
+        "lambda_min",
+        "alpha",
+        "user_lambda",
+        "eps",
+        "max_iter",
+        "penalty_factor",
+        "dfmax",
+        "ncores",
+        "warn",
+        "safe_thresh",
+        "verbose"
+      ),
+      out = c(
+        "a",
+        "b",
+        "center",
+        "scale",
+        "lambda",
+        "loss",
+        "iter",
+        "rejections",
+        "safe_rejections",
+        "col.idx"
+      )
     ),
     Adaptive = list(
       routine = "cdfit_binomial_ada_slores_ssr",
-      args = c("X", "yy", "n_pos", "ylab", "row_idx", "lambda", "nlambda", "lambda_log_scale",
-               "lambda_min", "alpha", "user_lambda", "eps", "max_iter", "penalty_factor",
-               "dfmax", "ncores", "warn", "safe_thresh", "update_thresh", "verbose"),
-      out = c("a", "b", "center", "scale", "lambda", "loss", "iter", "rejections",
-              "safe_rejections", "col.idx")
+      args = c(
+        "X",
+        "yy",
+        "n_pos",
+        "ylab",
+        "row_idx",
+        "lambda",
+        "nlambda",
+        "lambda_log_scale",
+        "lambda_min",
+        "alpha",
+        "user_lambda",
+        "eps",
+        "max_iter",
+        "penalty_factor",
+        "dfmax",
+        "ncores",
+        "warn",
+        "safe_thresh",
+        "update_thresh",
+        "verbose"
+      ),
+      out = c(
+        "a",
+        "b",
+        "center",
+        "scale",
+        "lambda",
+        "loss",
+        "iter",
+        "rejections",
+        "safe_rejections",
+        "col.idx"
+      )
     ),
     SSR = list(
       routine = "cdfit_binomial_ssr",
-      args = c("X", "yy", "row_idx", "lambda", "nlambda", "lambda_log_scale", "lambda_min",
-               "alpha", "user_lambda", "eps", "max_iter", "penalty_factor", "dfmax", "ncores",
-               "warn", "verbose"),
+      args = c(
+        "X",
+        "yy",
+        "row_idx",
+        "lambda",
+        "nlambda",
+        "lambda_log_scale",
+        "lambda_min",
+        "alpha",
+        "user_lambda",
+        "eps",
+        "max_iter",
+        "penalty_factor",
+        "dfmax",
+        "ncores",
+        "warn",
+        "verbose"
+      ),
       out = c("a", "b", "center", "scale", "lambda", "loss", "iter", "rejections", "col.idx")
     )
   ),
   cox = list(
     SSR = list(
       routine = "cdfit_cox_ssr",
-      args = c("X", "yy", "d", "d_idx", "row_idx_cox", "lambda", "nlambda", "lambda_log_scale",
-               "lambda_min", "alpha", "user_lambda", "eps", "max_iter", "penalty_factor",
-               "dfmax", "ncores", "warn", "verbose"),
+      args = c(
+        "X",
+        "yy",
+        "d",
+        "d_idx",
+        "row_idx_cox",
+        "lambda",
+        "nlambda",
+        "lambda_log_scale",
+        "lambda_min",
+        "alpha",
+        "user_lambda",
+        "eps",
+        "max_iter",
+        "penalty_factor",
+        "dfmax",
+        "ncores",
+        "warn",
+        "verbose"
+      ),
       out = c("b", "center", "scale", "lambda", "loss", "iter", "rejections", "col.idx")
     ),
     sscox = list(
       routine = "cdfit_cox_sscox",
-      args = c("X", "yy", "d", "d_idx", "row_idx_cox", "lambda", "nlambda", "lambda_log_scale",
-               "lambda_min", "alpha", "user_lambda", "eps", "max_iter", "penalty_factor",
-               "dfmax", "ncores", "warn", "safe_thresh", "verbose"),
+      args = c(
+        "X",
+        "yy",
+        "d",
+        "d_idx",
+        "row_idx_cox",
+        "lambda",
+        "nlambda",
+        "lambda_log_scale",
+        "lambda_min",
+        "alpha",
+        "user_lambda",
+        "eps",
+        "max_iter",
+        "penalty_factor",
+        "dfmax",
+        "ncores",
+        "warn",
+        "safe_thresh",
+        "verbose"
+      ),
       out = c("b", "center", "scale", "lambda", "loss", "iter", "rejections", "col.idx")
     ),
     scox = list(
       routine = "cdfit_cox_scox",
-      args = c("X", "yy", "d", "d_idx", "row_idx_cox", "lambda", "nlambda", "lambda_log_scale",
-               "lambda_min", "alpha", "user_lambda", "eps", "max_iter", "penalty_factor",
-               "dfmax", "ncores", "warn", "safe_thresh", "verbose"),
+      args = c(
+        "X",
+        "yy",
+        "d",
+        "d_idx",
+        "row_idx_cox",
+        "lambda",
+        "nlambda",
+        "lambda_log_scale",
+        "lambda_min",
+        "alpha",
+        "user_lambda",
+        "eps",
+        "max_iter",
+        "penalty_factor",
+        "dfmax",
+        "ncores",
+        "warn",
+        "safe_thresh",
+        "verbose"
+      ),
       out = c("b", "center", "scale", "lambda", "loss", "iter", "rejections", "col.idx")
     ),
     safe = list(
       routine = "cdfit_cox_safe",
-      args = c("X", "yy", "d", "d_idx", "row_idx_cox", "lambda", "nlambda", "lambda_log_scale",
-               "lambda_min", "alpha", "user_lambda", "eps", "max_iter", "penalty_factor",
-               "dfmax", "ncores", "warn", "safe_thresh", "verbose"),
+      args = c(
+        "X",
+        "yy",
+        "d",
+        "d_idx",
+        "row_idx_cox",
+        "lambda",
+        "nlambda",
+        "lambda_log_scale",
+        "lambda_min",
+        "alpha",
+        "user_lambda",
+        "eps",
+        "max_iter",
+        "penalty_factor",
+        "dfmax",
+        "ncores",
+        "warn",
+        "safe_thresh",
+        "verbose"
+      ),
       out = c("b", "center", "scale", "lambda", "loss", "iter", "rejections", "col.idx")
     ),
     Adaptive = list(
       routine = "cdfit_cox_ada_scox",
-      args = c("X", "yy", "d", "d_idx", "row_idx_cox", "lambda", "nlambda", "lambda_log_scale",
-               "lambda_min", "alpha", "user_lambda", "eps", "max_iter", "penalty_factor",
-               "dfmax", "ncores", "warn", "safe_thresh", "update_thresh", "verbose"),
-      out = c("b", "center", "scale", "lambda", "loss", "iter", "rejections",
-              "safe_rejections", "col.idx")
+      args = c(
+        "X",
+        "yy",
+        "d",
+        "d_idx",
+        "row_idx_cox",
+        "lambda",
+        "nlambda",
+        "lambda_log_scale",
+        "lambda_min",
+        "alpha",
+        "user_lambda",
+        "eps",
+        "max_iter",
+        "penalty_factor",
+        "dfmax",
+        "ncores",
+        "warn",
+        "safe_thresh",
+        "update_thresh",
+        "verbose"
+      ),
+      out = c(
+        "b",
+        "center",
+        "scale",
+        "lambda",
+        "loss",
+        "iter",
+        "rejections",
+        "safe_rejections",
+        "col.idx"
+      )
     ),
     None = list(
       routine = "cdfit_cox",
-      args = c("X", "yy", "d", "d_idx", "row_idx_cox", "lambda", "nlambda", "lambda_log_scale",
-               "lambda_min", "alpha", "user_lambda", "eps", "max_iter", "penalty_factor",
-               "dfmax", "ncores", "warn", "verbose"),
+      args = c(
+        "X",
+        "yy",
+        "d",
+        "d_idx",
+        "row_idx_cox",
+        "lambda",
+        "nlambda",
+        "lambda_log_scale",
+        "lambda_min",
+        "alpha",
+        "user_lambda",
+        "eps",
+        "max_iter",
+        "penalty_factor",
+        "dfmax",
+        "ncores",
+        "warn",
+        "verbose"
+      ),
       out = c("b", "center", "scale", "lambda", "loss", "iter", "rejections", "col.idx")
     )
   ),
   mgaussian = list(
     SSR = list(
       routine = "cdfit_mgaussian_ssr",
-      args = c("X", "yy", "row_idx", "lambda", "nlambda", "lambda_log_scale", "lambda_min",
-               "alpha", "user_lambda", "eps", "max_iter", "penalty_factor", "dfmax", "ncores",
-               "verbose"),
+      args = c(
+        "X",
+        "yy",
+        "row_idx",
+        "lambda",
+        "nlambda",
+        "lambda_log_scale",
+        "lambda_min",
+        "alpha",
+        "user_lambda",
+        "eps",
+        "max_iter",
+        "penalty_factor",
+        "dfmax",
+        "ncores",
+        "verbose"
+      ),
       out = c("b", "center", "scale", "lambda", "loss", "iter", "rejections", "col.idx")
     ),
     Adaptive = list(
       routine = "cdfit_mgaussian_ada",
-      args = c("X", "yy", "row_idx", "lambda", "nlambda", "lambda_log_scale", "lambda_min",
-               "alpha", "user_lambda", "eps", "max_iter", "penalty_factor", "dfmax", "ncores",
-               "safe_thresh", "update_thresh", "verbose"),
-      out = c("b", "center", "scale", "lambda", "loss", "iter", "rejections",
-              "safe_rejections", "col.idx")
+      args = c(
+        "X",
+        "yy",
+        "row_idx",
+        "lambda",
+        "nlambda",
+        "lambda_log_scale",
+        "lambda_min",
+        "alpha",
+        "user_lambda",
+        "eps",
+        "max_iter",
+        "penalty_factor",
+        "dfmax",
+        "ncores",
+        "safe_thresh",
+        "update_thresh",
+        "verbose"
+      ),
+      out = c(
+        "b",
+        "center",
+        "scale",
+        "lambda",
+        "loss",
+        "iter",
+        "rejections",
+        "safe_rejections",
+        "col.idx"
+      )
     )
   )
 )
@@ -149,6 +453,8 @@ biglasso_dispatch_table <- list(
 # already be "MM" for alg.logistic == "MM".
 biglasso_dispatch_lookup <- function(family, screen_key) {
   spec <- biglasso_dispatch_table[[family]][[screen_key]]
-  if (is.null(spec)) stop("Invalid screening method!")
+  if (is.null(spec)) {
+    stop("Invalid screening method!")
+  }
   spec
 }

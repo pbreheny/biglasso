@@ -2,8 +2,8 @@
 #'
 #' Internal biglasso functions
 #'
-#' These are not intended for use by users. `loss.biglasso` calculates the
-#' value of the loss function for the given predictions (used for cross-validation).
+#' These are not intended for use by users. `loss.biglasso` calculates the value of the loss
+#' function for the given predictions (used for cross-validation).
 #'
 #' @param y The observed response vector.
 #' @param yhat The predicted response vector.
@@ -14,37 +14,40 @@
 #'   "MAPE", for linear regression only, is the Mean Absolute Percentage Error.
 #'   "auc", for logistic regression, is the area under the receiver operating
 #'   characteristic curve (ROC).
-#' @param grouped Whether to calculate loss for the entire CV fold
-#'   (`TRUE`), or for predictions individually. Must be `TRUE` when
-#'   `eval.metric` is 'auc'.
-#' 
-#' @author Yaohui Zeng and Patrick Breheny
+#' @param grouped Whether to calculate loss for the entire CV fold (`TRUE`), or for predictions
+#'   individually. Must be `TRUE` when `eval.metric` is 'auc'.
 #'
 #' @keywords internal
-
+#'
+#' @author Yaohui Zeng and Patrick Breheny
 loss.biglasso <- function(y, yhat, family, eval.metric, grouped = TRUE) {
   n <- length(y)
   if (!is.matrix(yhat)) {
     yhat <- as.matrix(yhat)
   }
-  if (family=="gaussian") {
-    if (eval.metric == 'default') {
-      val <- (y-yhat)^2
-    } else if (eval.metric == "MAPE") { # Mean Absolute Percent Error (MAPE)
-      val <- sweep(abs(y-as.matrix(yhat)), 1, y, "/")
+  if (family == "gaussian") {
+    if (eval.metric == "default") {
+      val <- (y - yhat)^2
+    } else if (eval.metric == "MAPE") {
+      # Mean Absolute Percent Error (MAPE)
+      val <- sweep(abs(y - as.matrix(yhat)), 1, y, "/")
     } else {
       stop("Not supported")
     }
-  } else if (family=="binomial") {
-    if (eval.metric == 'default') {
+  } else if (family == "binomial") {
+    if (eval.metric == "default") {
       yhat[yhat < 0.00001] <- 0.00001
       yhat[yhat > 0.99999] <- 0.99999
-      val <- matrix(NA, nrow=nrow(yhat), ncol=ncol(yhat))
-      if (sum(y==1)) val[y==1,] <- -2*log(yhat[y==1, , drop=FALSE])
-      if (sum(y==0)) val[y==0,] <- -2*log(1-yhat[y==0, , drop=FALSE])
-    } else if (eval.metric == 'auc') {
-      if (!grouped) stop("eval.metric == 'auc' needs grouped == TRUE")
-      grouped <- FALSE  # ironically! Because grouping won't be necessary in the end.
+      val <- matrix(NA, nrow = nrow(yhat), ncol = ncol(yhat))
+      if (sum(y == 1)) {
+        val[y == 1, ] <- -2 * log(yhat[y == 1, , drop = FALSE])
+      }
+      if (sum(y == 0)) val[y == 0, ] <- -2 * log(1 - yhat[y == 0, , drop = FALSE])
+    } else if (eval.metric == "auc") {
+      if (!grouped) {
+        stop("eval.metric == 'auc' needs grouped == TRUE")
+      }
+      grouped <- FALSE # ironically! Because grouping won't be necessary in the end.
       # AUC estimator according to e.g. 10.1007/978-3-540-74976-9_8:
       # D0: indices of negative examples
       # D1: indices of positive examples
@@ -77,11 +80,10 @@ loss.biglasso <- function(y, yhat, family, eval.metric, grouped = TRUE) {
         val <- rep(NA_real_, ncol(yhat))
       } else {
         val <- apply(yhat, 2, function(yhcol) {
-          (mean(rank(yhcol, ties.method = "average")[t1]) - (t1.len + 1) / 2) /
-            t0.len
+          (mean(rank(yhcol, ties.method = "average")[t1]) - (t1.len + 1) / 2) / t0.len
         })
       }
-    } else if (eval.metric == 'class') {
+    } else if (eval.metric == "class") {
       yhat.class <- yhat > 0.5
       val <- yhat.class != y
       mode(val) <- "numeric"

@@ -1,18 +1,12 @@
 #' Model predictions based on a fitted `biglasso` object
 #'
-#' Extract predictions (fitted reponse, coefficients, etc.) from a
-#' fitted [biglasso()] object.
-#'
-#' @name predict.biglasso
-#' @rdname predict.biglasso
-#' @method predict biglasso
+#' Extract predictions (fitted reponse, coefficients, etc.) from a fitted [biglasso()] object.
 #'
 #' @param object A fitted `"biglasso"` model object.
 #' @param X Matrix of values at which predictions are to be made. It must be a
-#' [bigmemory::big.matrix()] object. Not used for `type="coefficients"`.
-#' @param row.idx Similar to that in [biglasso()], it's a
-#' vector of the row indices of `X` that used for the prediction.
-#' `1:nrow(X)` by default.
+#'   [bigmemory::big.matrix()] object. Not used for `type="coefficients"`.
+#' @param row.idx Similar to that in [biglasso()], it's a vector of the row indices of `X` that used
+#'   for the prediction. `1:nrow(X)` by default.
 #' @param type Type of prediction:
 #'   * `"link"` returns the linear predictors
 #'   * `"response"` gives the fitted values
@@ -21,24 +15,20 @@
 #'   * `"vars"` returns a list containing the indices and names of the nonzero variables
 #'     at each value of `lambda`
 #'   * `"nvars"` returns the number of nonzero coefficients at each value of `lambda`
-#' @param lambda Values of the regularization parameter `lambda` at which
-#' predictions are requested.  Linear interpolation is used for values of
-#' `lambda` not in the sequence of lambda values in the fitted models.
+#' @param lambda Values of the regularization parameter `lambda` at which predictions are requested.
+#'   Linear interpolation is used for values of `lambda` not in the sequence of lambda values in the
+#'   fitted models.
 #' @param k Index of the response to predict in multiple responses regression (
-#' `family="mgaussian"`).
-#' @param which Indices of the penalty parameter `lambda` at which
-#' predictions are required.  By default, all indices are returned.  If
-#' `lambda` is specified, this will override `which`.
-#' @param intercept Whether the intercept should be included in the returned
-#' coefficients. For `family="mgaussian"` only.
-#' @param drop If coefficients for a single value of `lambda` are to be
-#' returned, reduce dimensions to a vector?  Setting `drop=FALSE` returns
-#' a 1-column matrix.
+#'   `family="mgaussian"`).
+#' @param which Indices of the penalty parameter `lambda` at which predictions are required. By
+#'   default, all indices are returned. If `lambda` is specified, this will override `which`.
+#' @param intercept Whether the intercept should be included in the returned coefficients. For
+#'   `family="mgaussian"` only.
+#' @param drop If coefficients for a single value of `lambda` are to be returned, reduce dimensions
+#'   to a vector? Setting `drop=FALSE` returns a 1-column matrix.
 #' @param \dots Not used.
 #'
 #' @returns The object returned depends on `type`.
-#'
-#' @author Yaohui Zeng and Patrick Breheny
 #'
 #' @seealso [biglasso()], [cv.biglasso()]
 #'
@@ -56,20 +46,20 @@
 #' predict(fit, x_bm, type = "class", lambda = 0.1)[1:10]
 #' predict(fit, type = "vars", lambda = c(0.05, 0.1))
 #' predict(fit, type = "nvars", lambda = c(0.05, 0.1))
+#'
+#' @rdname predict.biglasso
 #' @export
-
+#'
+#' @name predict.biglasso
+#'
+#' @method predict biglasso
+#'
+#' @author Yaohui Zeng and Patrick Breheny
 predict.biglasso <- function(
   object,
   X,
   row.idx = 1:nrow(X),
-  type = c(
-    "link",
-    "response",
-    "class",
-    "coefficients",
-    "vars",
-    "nvars"
-  ),
+  type = c("link", "response", "class", "coefficients", "vars", "nvars"),
   lambda = NULL,
   which = 1:length(object$lambda),
   ...
@@ -77,12 +67,15 @@ predict.biglasso <- function(
   type <- match.arg(type)
   beta <- coef.biglasso(object, lambda = lambda, which = which, drop = FALSE)
   res <- predict_biglasso_common(beta, X, row.idx, type, strip_intercept = object$family != "cox")
-  if (res$done) return(res$value)
+  if (res$done) {
+    return(res$value)
+  }
   eta <- res$eta
 
   # Binomial case
   if (object$family == "binomial") {
-    out <- switch(type,
+    out <- switch(
+      type,
       link = drop(eta),
       class = drop(Matrix::Matrix(1 * (eta > 0))),
       drop(exp(eta) / (1 + exp(eta)))
@@ -97,21 +90,15 @@ predict.biglasso <- function(
   drop(eta)
 }
 
-#' @method predict mbiglasso
 #' @rdname predict.biglasso
 #' @export
-
+#'
+#' @method predict mbiglasso
 predict.mbiglasso <- function(
   object,
   X,
   row.idx = 1:nrow(X),
-  type = c(
-    "link",
-    "response",
-    "coefficients",
-    "vars",
-    "nvars"
-  ),
+  type = c("link", "response", "coefficients", "vars", "nvars"),
   lambda = NULL,
   which = 1:length(object$lambda),
   k = 1,
@@ -120,7 +107,9 @@ predict.mbiglasso <- function(
   type <- match.arg(type)
   beta <- coef.mbiglasso(object, lambda = lambda, which = which)[[k]]
   res <- predict_biglasso_common(beta, X, row.idx, type, strip_intercept = TRUE)
-  if (res$done) return(res$value)
+  if (res$done) {
+    return(res$value)
+  }
   res$eta
 }
 
@@ -159,15 +148,23 @@ predict_biglasso_common <- function(beta, X, row.idx, type, strip_intercept) {
 
   beta_t <- as(beta, "TsparseMatrix")
   eta <- get_eta(X@address, as.integer(row.idx - 1), beta, beta_t@i, beta_t@j)
-  if (!is.null(alpha)) eta <- sweep(eta, 2, alpha, "+")
+  if (!is.null(alpha)) {
+    eta <- sweep(eta, 2, alpha, "+")
+  }
   list(done = FALSE, eta = eta)
 }
 
-#' @method coef biglasso
 #' @rdname predict.biglasso
 #' @export
-
-coef.biglasso <- function(object, lambda = NULL, which = 1:length(object$lambda), drop = TRUE, ...) {
+#'
+#' @method coef biglasso
+coef.biglasso <- function(
+  object,
+  lambda = NULL,
+  which = 1:length(object$lambda),
+  drop = TRUE,
+  ...
+) {
   if (is.null(lambda)) {
     beta <- object$beta[, which, drop = FALSE]
   } else {
@@ -188,11 +185,17 @@ coef.biglasso <- function(object, lambda = NULL, which = 1:length(object$lambda)
   }
 }
 
-#' @method coef mbiglasso
 #' @rdname predict.biglasso
 #' @export
-
-coef.mbiglasso <- function(object, lambda = NULL, which = 1:length(object$lambda), intercept = TRUE, ...) {
+#'
+#' @method coef mbiglasso
+coef.mbiglasso <- function(
+  object,
+  lambda = NULL,
+  which = 1:length(object$lambda),
+  intercept = TRUE,
+  ...
+) {
   nclass <- length(object$beta)
   beta <- vector("list", nclass)
   names(beta) <- names(object$beta)

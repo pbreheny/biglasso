@@ -7,16 +7,37 @@
 #   - whether `lambda`/`dfmax` produce a single fit or a path (`path`)
 # Every other validation/dispatch/output-assembly step is identical and
 # lives here.
-biglasso_fit_common <- function(X, y, r, init, xtx, penalty, lambda, alpha, gamma,
-                                ncores, max.iter, eps, dfmax, penalty.factor, warn,
-                                output.time, return.time, path) {
-  if (missing(gamma)) gamma <- switch(penalty, SCAD = 3.7, 3)
+biglasso_fit_common <- function(
+  X,
+  y,
+  r,
+  init,
+  xtx,
+  penalty,
+  lambda,
+  alpha,
+  gamma,
+  ncores,
+  max.iter,
+  eps,
+  dfmax,
+  penalty.factor,
+  warn,
+  output.time,
+  return.time,
+  path
+) {
+  if (missing(gamma)) {
+    gamma <- switch(penalty, SCAD = 3.7, 3)
+  }
 
   # check types
   if (!("big.matrix" %in% class(X)) || typeof(X) != "double") {
     stop("X must be a double type big.matrix.")
   }
-  if (is.matrix(y)) y <- drop(y)
+  if (is.matrix(y)) {
+    y <- drop(y)
+  }
 
   if (any(is.na(y))) {
     stop(
@@ -34,14 +55,20 @@ biglasso_fit_common <- function(X, y, r, init, xtx, penalty, lambda, alpha, gamm
   }
 
   p <- ncol(X)
-  if (length(penalty.factor) != p) stop("penalty.factor does not match up with X")
+  if (length(penalty.factor) != p) {
+    stop("penalty.factor does not match up with X")
+  }
   storage.mode(penalty.factor) <- "double"
 
   n <- nrow(X)
 
   # check types for residuals and xtx
-  if (!is.double(r)) r <- as.double(r)
-  if (!is.double(xtx)) xtx <- as.double(xtx)
+  if (!is.double(r)) {
+    r <- as.double(r)
+  }
+  if (!is.double(xtx)) {
+    xtx <- as.double(xtx)
+  }
 
   ## fit model
   if (output.time) {
@@ -50,14 +77,39 @@ biglasso_fit_common <- function(X, y, r, init, xtx, penalty, lambda, alpha, gamm
 
   if (path) {
     call_args <- list(
-      X@address, y, r, init, xtx, penalty, lambda, length(lambda), alpha, gamma,
-      eps, as.integer(dfmax), as.integer(max.iter), penalty.factor, as.integer(ncores)
+      X@address,
+      y,
+      r,
+      init,
+      xtx,
+      penalty,
+      lambda,
+      length(lambda),
+      alpha,
+      gamma,
+      eps,
+      as.integer(dfmax),
+      as.integer(max.iter),
+      penalty.factor,
+      as.integer(ncores)
     )
     routine <- "cdfit_gaussian_simple_path"
   } else {
     call_args <- list(
-      X@address, y, r, init, xtx, penalty, lambda, alpha, gamma,
-      eps, as.integer(dfmax), as.integer(max.iter), penalty.factor, as.integer(ncores)
+      X@address,
+      y,
+      r,
+      init,
+      xtx,
+      penalty,
+      lambda,
+      alpha,
+      gamma,
+      eps,
+      as.integer(dfmax),
+      as.integer(max.iter),
+      penalty.factor,
+      as.integer(ncores)
     )
     routine <- "cdfit_gaussian_simple"
   }
@@ -93,7 +145,11 @@ biglasso_fit_common <- function(X, y, r, init, xtx, penalty, lambda, alpha, gamm
 
   ## Names
   varnames <- if (is.null(colnames(X))) paste("V", 1:p, sep = "") else colnames(X)
-  if (path) rownames(b) <- varnames else names(b) <- varnames
+  if (path) {
+    rownames(b) <- varnames
+  } else {
+    names(b) <- varnames
+  }
 
   ## Output
   return.val <- list(
@@ -108,7 +164,9 @@ biglasso_fit_common <- function(X, y, r, init, xtx, penalty, lambda, alpha, gamm
     n = n,
     y = y
   )
-  if (return.time) return.val$time <- as.numeric(time["elapsed"])
+  if (return.time) {
+    return.val$time <- as.numeric(time["elapsed"])
+  }
 
   structure(return.val, class = c("biglasso", "ncvreg"))
 }
