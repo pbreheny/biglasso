@@ -76,28 +76,10 @@ predict.biglasso <- function(
 ) {
   type <- match.arg(type)
   beta <- coef.biglasso(object, lambda = lambda, which = which, drop = FALSE)
-  if (type == "coefficients") {
-    return(beta)
-  }
-  if (inherits(object, "biglasso") && object$family != "cox") {
-    alpha <- beta[1, ]
-    beta <- beta[-1, , drop = FALSE]
-  }
+  res <- predict_biglasso_common(beta, X, row.idx, type, strip_intercept = object$family != "cox")
+  if (res$done) return(res$value)
+  eta <- res$eta
 
-  if (type == "nvars") {
-    return(Matrix::colSums(beta != 0))
-  } else if (type == "vars") {
-    return(drop(apply(beta != 0, 2, FUN = which)))
-  }
-
-  if (!inherits(X, "big.matrix")) {
-    stop("X must be a big.matrix object.", call. = FALSE)
-  }
-
-  beta_t <- as(beta, "TsparseMatrix")
-  temp <- get_eta(X@address, as.integer(row.idx - 1), beta, beta_t@i, beta_t@j)
-  eta <- if (object$family == "cox") temp else sweep(temp, 2, alpha, "+")
-  
   # Binomial case
   if (object$family == "binomial") {
     out <- switch(type,
@@ -137,19 +119,38 @@ predict.mbiglasso <- function(
 ) {
   type <- match.arg(type)
   beta <- coef.mbiglasso(object, lambda = lambda, which = which)[[k]]
+  res <- predict_biglasso_common(beta, X, row.idx, type, strip_intercept = TRUE)
+  if (res$done) return(res$value)
+  res$eta
+}
+
+# Shared eta-computation/type-dispatch body behind predict.biglasso() and
+# predict.mbiglasso(): both start from a beta matrix (intercept row
+# included) and go coefficients-early-return -> optional intercept-stripping
+# -> nvars/vars-early-return -> get_eta(). They differ only in whether the
+# intercept row is stripped (`strip_intercept`, never done for family =
+# "cox") and in what happens to eta afterwards -- the binomial link/class/
+# response dispatch has no mgaussian equivalent, so it stays in
+# predict.biglasso() itself rather than living here.
+# Returns list(done = TRUE, value = ...) for the early-return types
+# ("coefficients", "nvars", "vars"), or list(done = FALSE, eta = ...)
+# otherwise.
+predict_biglasso_common <- function(beta, X, row.idx, type, strip_intercept) {
   if (type == "coefficients") {
-    return(beta)
+    return(list(done = TRUE, value = beta))
   }
-  if (inherits(object, "mbiglasso")) {
+
+  alpha <- NULL
+  if (strip_intercept) {
     alpha <- beta[1, ]
     beta <- beta[-1, , drop = FALSE]
   }
 
   if (type == "nvars") {
-    return(Matrix::colSums(beta != 0, na.rm = TRUE))
+    return(list(done = TRUE, value = Matrix::colSums(beta != 0, na.rm = TRUE)))
   }
   if (type == "vars") {
-    return(drop(apply(beta != 0, 2, FUN = which)))
+    return(list(done = TRUE, value = drop(apply(beta != 0, 2, FUN = which))))
   }
 
   if (!inherits(X, "big.matrix")) {
@@ -157,10 +158,9 @@ predict.mbiglasso <- function(
   }
 
   beta_t <- as(beta, "TsparseMatrix")
-  temp <- get_eta(X@address, as.integer(row.idx - 1), beta, beta_t@i, beta_t@j)
-  eta <- sweep(temp, 2, alpha, "+")
-
-  return(eta)
+  eta <- get_eta(X@address, as.integer(row.idx - 1), beta, beta_t@i, beta_t@j)
+  if (!is.null(alpha)) eta <- sweep(eta, 2, alpha, "+")
+  list(done = FALSE, eta = eta)
 }
 
 #' @method coef biglasso
