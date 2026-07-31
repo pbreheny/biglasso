@@ -88,6 +88,78 @@ void bedpp_screen(int *bedpp_reject, const vector<double>& sign_lammax_xtxmax,
   }
 }
 
+// shared inner CD loop behind cdfit_gaussian_ssr(), cdfit_gaussian_ada_edpp_ssr(),
+// and cdfit_gaussian_bedpp_ssr(): sweeps the ever-active set to convergence, then
+// checks the strong set for violations and, if none, the rest set -- gated by a
+// safe-rule discard set (`discard_beta`, e.g. EDPP/BEDPP rejections) when one is
+// supplied, or ungated (plain check_rest_set()) when `discard_beta` is nullptr --
+// repeating until lambda[l] converges with no violations anywhere. Mutates `beta`,
+// `a`, `r`, `sumResid`, `z`, `ever_active`, `strong_set`, `iter[l]`, and `loss[l]`
+// (the last only set on convergence) in place.
+static void cdfit_gaussian_lambda_core(arma::sp_mat &beta, double *a, double *r, double &sumResid,
+                                       vector<double> &z, int *ever_active, int *strong_set,
+                                       int *discard_beta, XPtr<BigMatrix> xMat, int *row_idx,
+                                       vector<int> &col_idx, NumericVector &center,
+                                       NumericVector &scale, double *m, double alpha,
+                                       double lambda_l, double thresh, int max_iter, int n, int p,
+                                       int l, IntegerVector &iter, NumericVector &loss) {
+  double l1, l2, shift, max_update, update;
+  int j, jj, violations;
+
+  while (iter[l] < max_iter) {
+    while (iter[l] < max_iter) {
+      while (iter[l] < max_iter) {
+        iter[l]++;
+
+        // solve lasso over ever-active set
+        max_update = 0.0;
+        for (j = 0; j < p; j++) {
+          if (ever_active[j]) {
+            jj = col_idx[j];
+            z[j] = crossprod_resid(xMat, r, sumResid, row_idx, center[jj], scale[jj], n, jj) / n + a[j];
+            l1 = lambda_l * m[jj] * alpha;
+            l2 = lambda_l * m[jj] * (1 - alpha);
+            beta(j, l) = lasso(z[j], l1, l2, 1);
+
+            shift = beta(j, l) - a[j];
+            if (shift != 0) {
+              // compute objective update for checking convergence
+              update = pow(beta(j, l) - a[j], 2);
+              if (update > max_update) {
+                max_update = update;
+              }
+              update_resid(xMat, r, shift, row_idx, center[jj], scale[jj], n, jj); // update r
+              sumResid = sum(r, n); // update sum of residual
+              a[j] = beta(j, l); // update a
+            }
+          }
+        }
+        // Check for convergence
+        if (max_update < thresh) break;
+      }
+
+      // Scan for violations in strong set
+      violations = check_strong_set(ever_active, strong_set, z, xMat, row_idx, col_idx, center,
+                                    scale, a, lambda_l, sumResid, alpha, r, m, n, p);
+      if (violations == 0) break;
+    }
+
+    // Scan for violations in rest set
+    if (discard_beta == nullptr) {
+      violations = check_rest_set(ever_active, strong_set, z, xMat, row_idx, col_idx, center, scale,
+                                  a, lambda_l, sumResid, alpha, r, m, n, p);
+    } else {
+      violations = check_rest_safe_set(ever_active, strong_set, discard_beta, z, xMat, row_idx,
+                                       col_idx, center, scale, a, lambda_l, sumResid, alpha, r, m,
+                                       n, p);
+    }
+    if (violations == 0) {
+      loss[l] = gLoss(r, n);
+      break;
+    }
+  }
+}
+
 // Coordinate descent for gaussian models with ssr
 RcppExport SEXP cdfit_gaussian_ssr(SEXP X_, SEXP y_, SEXP row_idx_, 
                                    SEXP lambda_, SEXP nlambda_, 
@@ -155,9 +227,9 @@ RcppExport SEXP cdfit_gaussian_ssr(SEXP X_, SEXP y_, SEXP row_idx_,
   IntegerVector iter(L);
   IntegerVector n_reject(L);
   
-  double l1, l2, cutoff, shift;
-  double max_update, update, thresh; // for convergence check
-  int i, j, jj, l, violations, lstart;
+  double cutoff;
+  double thresh; // for convergence check
+  int i, j, l, lstart;
   int *e1 = R_Calloc(p, int); // ever active set
   int *e2 = R_Calloc(p, int); // strong set
   double *r = R_Calloc(n, double);
@@ -230,54 +302,12 @@ RcppExport SEXP cdfit_gaussian_ssr(SEXP X_, SEXP y_, SEXP row_idx_,
       }
     }
     n_reject[l] = p - sum(e2, p);
-    
-    while(iter[l] < max_iter) {
-      while(iter[l] < max_iter){
-        while(iter[l] < max_iter) {
-          iter[l]++;
-          
-          //solve lasso over ever-active set
-          max_update = 0.0;
-          for (j = 0; j < p; j++) {
-            if (e1[j]) {
-              jj = col_idx[j];
-              z[j] = crossprod_resid(xMat, r, sumResid, row_idx, center[jj], scale[jj], n, jj) / n + a[j];
-              l1 = lambda[l] * m[jj] * alpha;
-              l2 = lambda[l] * m[jj] * (1-alpha);
-              beta(j, l) = lasso(z[j], l1, l2, 1);
-              
-              shift = beta(j, l) - a[j];
-              if (shift !=0) {
-                // compute objective update for checking convergence
-                //update =  z[j] * shift - 0.5 * (1 + l2) * (pow(beta(j, l), 2) - pow(a[j], 2)) - l1 * (fabs(beta(j, l)) -  fabs(a[j]));
-                update = pow(beta(j, l) - a[j], 2);
-                if (update > max_update) {
-                  max_update = update;
-                }
-                update_resid(xMat, r, shift, row_idx, center[jj], scale[jj], n, jj); // update r
-                sumResid = sum(r, n); //update sum of residual
-                a[j] = beta(j, l); //update a
-              }
-            }
-          }
-          // Check for convergence
-          if (max_update < thresh) break;
-        }
-        
-        // Scan for violations in strong set
-        violations = check_strong_set(e1, e2, z, xMat, row_idx, col_idx, center, scale, a, lambda[l], sumResid, alpha, r, m, n, p); 
-        if (violations==0) break;
-      }
-      
-      // Scan for violations in rest set
-      violations = check_rest_set(e1, e2, z, xMat, row_idx, col_idx, center, scale, a, lambda[l], sumResid, alpha, r, m, n, p);
-      if (violations == 0) {
-        loss[l] = gLoss(r, n);
-        break;
-      }
-    }
+
+    cdfit_gaussian_lambda_core(beta, a, r, sumResid, z, e1, e2, nullptr, xMat, row_idx, col_idx,
+                               center, scale, m, alpha, lambda[l], thresh, max_iter, n, p, l, iter,
+                               loss);
   }
-  
+
   R_Free(a); R_Free(r); R_Free(e1); R_Free(e2);
   return List::create(beta, center, scale, lambda, loss, iter, n_reject, Rcpp::wrap(col_idx));
 }
@@ -350,9 +380,8 @@ RcppExport SEXP cdfit_gaussian_ada_edpp_ssr(SEXP X_, SEXP y_, SEXP row_idx_, SEX
   IntegerVector n_reject(L);
   IntegerVector n_safe_reject(L);
   
-  double l1, l2, shift;
-  double max_update, update, thresh; // for convergence check
-  int i, j, jj, l, violations, lstart; //temp index
+  double thresh; // for convergence check
+  int i, j, jj, l, lstart; //temp index
   int *ever_active = R_Calloc(p, int); // ever-active set
   int *strong_set = R_Calloc(p, int); // strong set
   int *discard_beta = R_Calloc(p, int); // index set of discarded features;
@@ -526,55 +555,12 @@ RcppExport SEXP cdfit_gaussian_ada_edpp_ssr(SEXP X_, SEXP y_, SEXP row_idx_, SEX
     }
     n_reject[l] = p - sum(strong_set, p);
     //for(j = 0; j < p; j++) discard_old[j] = discard_beta[j];
-    
-    while(iter[l] < max_iter) {
-      while (iter[l] < max_iter) {
-        while (iter[l] < max_iter) {
-          iter[l]++;
-          
-          max_update = 0.0;
-          for (j = 0; j < p; j++) {
-            if (ever_active[j]) {
-              jj = col_idx[j];
-              z[j] = crossprod_resid(xMat, r, sumResid, row_idx, center[jj], scale[jj], n, jj) / n + a[j];
-              l1 = lambda[l] * m[jj] * alpha;
-              l2 = lambda[l] * m[jj] * (1-alpha);
-              beta(j, l) = lasso(z[j], l1, l2, 1);
-              
-              shift = beta(j, l) - a[j];
-              if (shift != 0) {
-                // compute objective update for checking convergence
-                //update =  z[j] * shift - 0.5 * (1 + l2) * (pow(beta(j, l+1), 2) - pow(a[j], 2)) - l1 * (fabs(beta(j, l+1)) -  fabs(a[j]));
-                update = pow(beta(j, l) - a[j], 2);
-                if (update > max_update) {
-                  max_update = update;
-                }
-                update_resid(xMat, r, shift, row_idx, center[jj], scale[jj], n, jj);
-                sumResid = sum(r, n); //update sum of residual
-                a[j] = beta(j, l); //update a
-              }
-              // update ever active sets
-              if (beta(j, l) != 0) {
-                ever_active[j] = 1;
-              } 
-            }
-          }
-          // Check for convergence
-          if (max_update < thresh) break;
-        }
-        violations = check_strong_set(ever_active, strong_set, z, xMat, row_idx, col_idx, center, scale, a, lambda[l], sumResid, alpha, r, m, n, p); 
-        if (violations==0) break;
-      }	
-      // Scan for violations in edpp set
-      violations = check_rest_safe_set(ever_active, strong_set, discard_beta, z, xMat, row_idx, col_idx, center, scale, a, lambda[l], sumResid, alpha, r, m, n, p); 
-      if (violations == 0) {
-        loss[l] = gLoss(r, n);
-        break;
-      }
-      
-    }
+
+    cdfit_gaussian_lambda_core(beta, a, r, sumResid, z, ever_active, strong_set, discard_beta, xMat,
+                               row_idx, col_idx, center, scale, m, alpha, lambda[l], thresh, max_iter,
+                               n, p, l, iter, loss);
   }
-  
+
   R_Free(ever_active); R_Free(r); R_Free(a); R_Free(discard_beta); R_Free(lhs2); R_Free(Xty); R_Free(Xtr); R_Free(yhat); R_Free(strong_set); //R_Free(discard_old);
   //ProfilerStop();
   return List::create(beta, center, scale, lambda, loss, iter, n_reject, n_safe_reject, Rcpp::wrap(col_idx));
@@ -652,9 +638,9 @@ RcppExport SEXP cdfit_gaussian_bedpp_ssr(SEXP X_, SEXP y_, SEXP row_idx_,
   IntegerVector n_reject(L); // number of total rejections;
   IntegerVector n_bedpp_reject(L); 
   
-  double l1, l2, cutoff, shift;
-  double max_update, update, thresh; // for convergence check
-  int i, j, jj, l, violations, lstart; 
+  double cutoff;
+  double thresh; // for convergence check
+  int i, j, l, lstart;
   int *e1 = R_Calloc(p, int); // ever-active set
   int *e2 = R_Calloc(p, int); // strong set
   double *r = R_Calloc(n, double);
@@ -766,58 +752,11 @@ RcppExport SEXP cdfit_gaussian_bedpp_ssr(SEXP X_, SEXP y_, SEXP row_idx_,
       }
     }
     n_reject[l] = p - sum(e2, p); // e2 set means not reject by bedpp or hsr;
-    
-    while(iter[l] < max_iter) {
-      while(iter[l] < max_iter){
-        while(iter[l] < max_iter) {
-          iter[l]++;
-          
-          //solve lasso over ever-active set
-          max_update = 0.0;
-          for (j = 0; j < p; j++) {
-            if (e1[j]) { 
-              jj = col_idx[j];
-              z[j] = crossprod_resid(xMat, r, sumResid, row_idx, center[jj], scale[jj], n, jj) / n + a[j];
-              l1 = lambda[l] * m[jj] * alpha;
-              l2 = lambda[l] * m[jj] * (1-alpha);
-              beta(j, l) = lasso(z[j], l1, l2, 1);
-              
-              shift = beta(j, l) - a[j];
-              if (shift !=0) {
-                // compute objective update for checking convergence
-                //update =  z[j] * shift - 0.5 * (1 + l2) * (pow(beta(j, l), 2) - pow(a[j], 2)) - l1 * (fabs(beta(j, l)) -  fabs(a[j]));
-                update = pow(beta(j, l) - a[j], 2);
-                if (update > max_update) {
-                  max_update = update;
-                }
-                update_resid(xMat, r, shift, row_idx, center[jj], scale[jj], n, jj); // Update r
-                sumResid = sum(r, n); //update sum of residual
-                a[j] = beta(j, l); //update a
-              }
-            }
-          }
-          // Check for convergence
-          if (max_update < thresh) break;
-        }
-        
-        // Scan for violations in strong set
-        violations = check_strong_set(e1, e2, z, xMat, row_idx, col_idx, center, scale, a, lambda[l], sumResid, alpha, r, m, n, p);
-        if (violations == 0) break;
-      }
-      
-      // Scan for violations in rest set
-      if (bedpp) {
-        violations = check_rest_safe_set(e1, e2, bedpp_reject, z, xMat, row_idx, col_idx,center, scale, a, lambda[l], sumResid, alpha, r, m, n, p);
-      } else {
-        violations = check_rest_set(e1, e2, z, xMat, row_idx, col_idx, center, scale, a, lambda[l], sumResid, alpha, r, m, n, p);
-      }
-      
-      if (violations == 0) {
-        loss[l] = gLoss(r, n);
-        break;
-      }
-    }
-    
+
+    cdfit_gaussian_lambda_core(beta, a, r, sumResid, z, e1, e2, bedpp ? bedpp_reject : nullptr, xMat,
+                               row_idx, col_idx, center, scale, m, alpha, lambda[l], thresh, max_iter,
+                               n, p, l, iter, loss);
+
     if (n_bedpp_reject[l] <= p * bedpp_thresh) {
       bedpp = 0; // turn off bedpp for next iteration if not efficient
     }
