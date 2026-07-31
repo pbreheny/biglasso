@@ -45,7 +45,10 @@
 #'   is the sequential strong rule; `"Hybrid"`, which combines the strong rule with a safe
 #'   rule. `"Adaptive"` (default for `penalty="lasso"` without `penalty.factor`), which is
 #'   a variant of Hybrid that avoids recalculating the safe rule when it would not be
-#'   efficient to do so. **Note that:**
+#'   efficient to do so. Valid values are family-dependent: `"Hybrid"` is only available
+#'   for `family="gaussian"`; for `family="cox"`, `"Hybrid"` is not available but three
+#'   additional cox-specific safe-rule variants are: `"scox"`, `"sscox"`, and `"safe"`.
+#'   **Note that:**
 #'     1. For linear regression with elastic net penalty, both `"SSR"` and `"Hybrid"` are
 #'        applicable since version 1.3-0
 #'     2. Only `"SSR"` is applicable to elastic-net-penalized logistic regression or cox regression
@@ -226,23 +229,31 @@ biglasso <- function(
   family <- match.arg(family)
   penalty <- match.arg(penalty)
   alg.logistic <- match.arg(alg.logistic)
+
+  # Valid `screen` values are family-dependent (see biglasso-dispatch.R);
+  # "MM" is an internal pseudo-key (selected via alg.logistic, not `screen`),
+  # not a user-facing screen value.
+  valid_screen <- names(biglasso_dispatch_table[[family]])
+  valid_screen <- valid_screen[valid_screen != "MM"]
+
   if (!identical(penalty, "lasso") || any(penalty.factor != 1) || alg.logistic == "MM") {
     if (length(screen) == 1) {
-      screen <- match.arg(screen, choices = c("SSR", "Adaptive", "Hybrid", "None"))
+      screen <- match.arg(screen, choices = valid_screen)
     } else {
       screen <- "SSR"
     }
   } else if (family == "cox") {
     if (length(screen) == 1) {
-      screen <- match.arg(
-        screen,
-        choices = c("SSR", "Adaptive", "Hybrid", "None", "scox", "sscox", "safe")
-      )
+      screen <- match.arg(screen, choices = valid_screen)
     } else {
       screen <- "SSR"
     }
   } else {
-    screen <- match.arg(screen)
+    if (length(screen) == 1) {
+      screen <- match.arg(screen, choices = valid_screen)
+    } else {
+      screen <- "Adaptive"
+    }
   }
   lambda.min <- max(lambda.min, 1.0e-6)
 

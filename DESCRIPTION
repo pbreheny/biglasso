@@ -6,7 +6,8 @@ Authors@R: c(
   person("Chuyi", "Wang", role = c("aut")),
   person("Tabitha", "Peter", role = c("aut")),
   person("Patrick", "Breheny", role=c("aut","cre"),
-    email="patrick-breheny@uiowa.edu", comment=c(ORCID="0000-0002-0650-1119")))
+    email="patrick-breheny@uiowa.edu", comment=c(ORCID="0000-0002-0650-1119"))
+  )
 Description: Extend lasso and elastic-net model fitting for large data sets that
   cannot be loaded into memory. Designed to be more memory- and
   computation-efficient than existing lasso-fitting packages like 'glmnet' and
@@ -28,4 +29,4 @@ LinkingTo: Rcpp, RcppArmadillo (>= 0.8.600), bigmemory, BH
 VignetteBuilder: knitr
 Encoding: UTF-8
 Roxygen: list(markdown = TRUE)
-RoxygenNote: 7.3.2
+Config/roxygen2/version: 8.0.0

@@ -35,7 +35,7 @@ file-backed \code{big.matrix}. By default, its name is the same as
 \item{type}{The data type. Only "double" is supported for now.}
 
 \item{...}{Additional arguments that can be passed into function
-\code{\link[bigmemory:write.big.matrix]{bigmemory::read.big.matrix()}}.}
+\code{\link[bigmemory:read.big.matrix]{bigmemory::read.big.matrix()}}.}
 }
 \value{
 A \code{big.matrix} object corresponding to a file-backed
@@ -59,7 +59,7 @@ For a data set, this function needs to be called only one time to set up the
 current working directory. Once set up, the data can be "loaded" into any
 (new) R session by calling \code{attach.big.matrix(discriptorfile)}.
 
-This function is a simple wrapper of \code{\link[bigmemory:write.big.matrix]{bigmemory::read.big.matrix()}}. See
+This function is a simple wrapper of \code{\link[bigmemory:read.big.matrix]{bigmemory::read.big.matrix()}}. See
 \href{https://CRAN.R-project.org/package=bigmemory}{bigmemory} for more
 details.
 }

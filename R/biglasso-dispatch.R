@@ -14,19 +14,11 @@
 #              be audited together instead of hunting for a matching
 #              `res[[k]]` block elsewhere in biglasso.R.
 #
-# A family entry named ".default" (currently only binomial and cox have one)
-# is used when `screen` doesn't match any of that family's named entries --
-# this reproduces two previously-implicit quirks:
-#   - binomial silently falls back to its SSR routine for *any* unrecognized
-#     screen value (its original dispatch was an if/Hybrid/else-if/Adaptive/
-#     else chain, with SSR as the unconditional else)
-#   - cox falls back to the plain (unscreened) cdfit_cox() routine for
-#     screen = "Hybrid" or "None" (neither has a dedicated cox routine; its
-#     original dispatch was the analogous if/else-if chain with cdfit_cox()
-#     as the else)
-# families without a ".default" (gaussian, mgaussian) instead error via
-# biglasso()'s `if (is.null(spec)) stop("Invalid screening method!")`,
-# matching their original switch()'s explicit stop() default arm.
+# Every `screen` value that reaches biglasso_dispatch_lookup() is guaranteed
+# to have a real entry here: biglasso() derives its match.arg() choices
+# directly from names(biglasso_dispatch_table[[family]]) (excluding the "MM"
+# pseudo-key described below), so an unrecognized combination is rejected up
+# front rather than silently substituted.
 #
 # alg.logistic == "MM" is keyed as the pseudo-screen "MM" (binomial only):
 # it dispatches to a different routine than any actual screen value, and
@@ -87,8 +79,7 @@ biglasso_dispatch_table <- list(
                "alpha", "user_lambda", "eps", "max_iter", "penalty_factor", "dfmax", "ncores",
                "warn", "verbose"),
       out = c("a", "b", "center", "scale", "lambda", "loss", "iter", "rejections", "col.idx")
-    ),
-    .default = "SSR"  # any unrecognized screen silently behaves like "SSR"
+    )
   ),
   cox = list(
     SSR = list(
@@ -133,8 +124,7 @@ biglasso_dispatch_table <- list(
                "lambda_min", "alpha", "user_lambda", "eps", "max_iter", "penalty_factor",
                "dfmax", "ncores", "warn", "verbose"),
       out = c("b", "center", "scale", "lambda", "loss", "iter", "rejections", "col.idx")
-    ),
-    .default = "None"  # any unrecognized screen (e.g. "Hybrid") behaves like "None"
+    )
   ),
   mgaussian = list(
     SSR = list(
@@ -155,14 +145,10 @@ biglasso_dispatch_table <- list(
   )
 )
 
-# Looks up the dispatch spec for (family, screen), applying MM/.default
-# fallbacks. `screen_key` should already be "MM" for alg.logistic == "MM".
+# Looks up the dispatch spec for (family, screen). `screen_key` should
+# already be "MM" for alg.logistic == "MM".
 biglasso_dispatch_lookup <- function(family, screen_key) {
-  family_table <- biglasso_dispatch_table[[family]]
-  spec <- family_table[[screen_key]]
-  if (is.null(spec) && !is.null(family_table[[".default"]])) {
-    spec <- family_table[[family_table[[".default"]]]]
-  }
+  spec <- biglasso_dispatch_table[[family]][[screen_key]]
   if (is.null(spec)) stop("Invalid screening method!")
   spec
 }
