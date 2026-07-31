@@ -188,8 +188,130 @@ void slores_update_xmax(vector<double>& prod_PX_Pxmax_xi_pos,
   }
 }
 
+// Runs the true-Hessian IRLS Newton step + CD sweep over the ever-active set,
+// then rescans the strong set for KKT violations, repeating until the
+// ever-active set stabilizes (or max_iter is hit / the model saturates).
+// This is the portion of the algorithm identical across cdfit_binomial_ssr,
+// cdfit_binomial_slores_ssr, and cdfit_binomial_ada_slores_ssr (all three
+// use the exact w = pi*(1-pi) Hessian, unlike cdfit_binomial_ssr_approx's
+// constant v = 0.25). Dispatching check_rest_set() vs. check_rest_safe_set()
+// -- and any screening-rule bookkeeping that depends on its outcome, e.g.
+// slores_ssr's mid-fit "turn off slores" logic -- is left to the caller,
+// since it differs across entry points and can mutate state between calls.
+//
+// beta_max_ptr/beta_max_idx_ptr/xmax_invalid_ptr are optional (pass nullptr
+// to skip): cdfit_binomial_ada_slores_ssr uses them to track, across the CD
+// sweep, the largest-magnitude coefficient (as a fallback xmax) and whether
+// xmax_idx itself left the model, both consumed by its screening-rule update
+// on the *next* lambda.
+//
+// Returns true if the model saturated (caller must free its buffers and
+// return NA-filled output for the remaining lambdas), false otherwise.
+static bool cdfit_binomial_lambda_core(arma::sp_mat &beta, NumericVector &beta0, double *a,
+                                       double &a0, double *r, double *eta, double *s, double *w,
+                                       double *y, XPtr<BigMatrix> xMat, int *row_idx,
+                                       vector<int> &col_idx, NumericVector &center,
+                                       NumericVector &scale, double *m, double alpha,
+                                       double lambda_l, double thresh, double nullDev, int warn,
+                                       int max_iter, int n, int p, int l, IntegerVector &iter,
+                                       NumericVector &Dev, vector<double> &z, int *e1, int *e2,
+                                       double &sumS, double *beta_max_ptr, int *beta_max_idx_ptr,
+                                       int xmax_idx, int *xmax_invalid_ptr) {
+  double xwr, xwx, pi, u, v, l1, l2, shift, si, max_update, update, sumWResid;
+  int i, j, jj, violations;
+
+  while (iter[l] < max_iter) {
+    while (iter[l] < max_iter) {
+      iter[l]++;
+      Dev[l] = 0.0;
+
+      for (i = 0; i < n; i++) {
+        if (eta[i] > 10) {
+          pi = 1;
+          w[i] = .0001;
+        } else if (eta[i] < -10) {
+          pi = 0;
+          w[i] = .0001;
+        } else {
+          pi = exp(eta[i]) / (1 + exp(eta[i]));
+          w[i] = pi * (1 - pi);
+        }
+        s[i] = y[i] - pi;
+        r[i] = s[i] / w[i];
+        if (y[i] == 1) {
+          Dev[l] = Dev[l] - log(pi);
+        } else {
+          Dev[l] = Dev[l] - log(1 - pi);
+        }
+      }
+
+      if (Dev[l] / nullDev < .01) {
+        if (warn) warning("Model saturated; exiting...");
+        for (int ll = l; ll < iter.length(); ll++) iter[ll] = NA_INTEGER;
+        return true;
+      }
+
+      // Intercept
+      xwr = crossprod(w, r, n, 0);
+      xwx = sum(w, n);
+      beta0[l] = xwr / xwx + a0;
+      si = beta0[l] - a0;
+      if (si != 0) {
+        a0 = beta0[l];
+        for (i = 0; i < n; i++) {
+          r[i] -= si; //update r
+          eta[i] += si; //update eta
+        }
+      }
+      sumWResid = wsum(r, w, n); // update temp result: sum of w * r, used for computing xwr;
+
+      max_update = 0.0;
+      if (beta_max_ptr != nullptr) *beta_max_ptr = 0.0;
+      for (j = 0; j < p; j++) {
+        if (e1[j]) {
+          jj = col_idx[j];
+          xwr = wcrossprod_resid(xMat, r, sumWResid, row_idx, center[jj], scale[jj], w, n, jj);
+          v = wsqsum_bm(xMat, w, row_idx, center[jj], scale[jj], n, jj) / n;
+          u = xwr/n + v * a[j];
+          l1 = lambda_l * m[jj] * alpha;
+          l2 = lambda_l * m[jj] * (1-alpha);
+          beta(j, l) = lasso(u, l1, l2, v);
+
+          if (beta_max_ptr != nullptr) {
+            if (fabs(beta(j, l)) > *beta_max_ptr) {
+              *beta_max_ptr = fabs(beta(j, l));
+              *beta_max_idx_ptr = jj;
+            }
+            if (jj == xmax_idx) {
+              *xmax_invalid_ptr = (fabs(u) < l1) ? 1 : 0;
+            }
+          }
+
+          shift = beta(j, l) - a[j];
+          if (shift !=0) {
+            // update change of objective function
+            // update = - u * shift + (0.5 * v + 0.5 * l2) * (pow(beta(j, l), 2) - pow(a[j], 2)) + l1 * (fabs(beta(j, l)) - fabs(a[j]));
+            update = pow(beta(j, l) - a[j], 2) * v;
+            if (update > max_update) max_update = update;
+            update_resid_eta(r, eta, xMat, shift, row_idx, center[jj], scale[jj], n, jj); // update r
+            sumWResid = wsum(r, w, n); // update temp result w * r, used for computing xwr;
+            a[j] = beta(j, l); // update a
+          }
+        }
+      }
+      // Check for convergence
+      if (max_update < thresh)  break;
+    }
+    // Scan for violations in strong set
+    sumS = sum(s, n);
+    violations = check_strong_set(e1, e2, z, xMat, row_idx, col_idx, center, scale, a, lambda_l, sumS, alpha, s, m, n, p);
+    if (violations==0) break;
+  }
+  return false;
+}
+
 // Coordinate descent for logistic models with ssr
-RcppExport SEXP cdfit_binomial_ssr(SEXP X_, SEXP y_, SEXP row_idx_, 
+RcppExport SEXP cdfit_binomial_ssr(SEXP X_, SEXP y_, SEXP row_idx_,
                                    SEXP lambda_, SEXP nlambda_, SEXP lam_scale_,
                                    SEXP lambda_min_, SEXP alpha_, SEXP user_, SEXP eps_, 
                                    SEXP max_iter_, SEXP multiplier_, SEXP dfmax_, 
@@ -258,10 +380,10 @@ RcppExport SEXP cdfit_binomial_ssr(SEXP X_, SEXP y_, SEXP row_idx_,
   double *eta = R_Calloc(n, double);
   int *e1 = R_Calloc(p, int); //ever-active set
   int *e2 = R_Calloc(p, int); //strong set
-  double xwr, xwx, pi, u, v, cutoff, l1, l2, shift, si;
-  double max_update, update, thresh; // for convergence check
-  int i, j, jj, l, violations, lstart;
-  
+  double cutoff;
+  double thresh; // for convergence check
+  int i, j, l, violations, lstart;
+
   double ybar = sum(y, n) / n;
   a0 = beta0[0] = log(ybar / (1-ybar));
   double nullDev = 0;
@@ -273,10 +395,9 @@ RcppExport SEXP cdfit_binomial_ssr(SEXP X_, SEXP y_, SEXP row_idx_,
     eta[i] = a0;
   }
   thresh = eps * nullDev / n;
-  
+
   double sumS = sum(s, n); // temp result sum of s
-  double sumWResid = 0.0; // temp result: sum of w * r
-  
+
   // set up lambda
   if (user == 0) {
     if (lam_scale) { // set up lambda, equally spaced on log scale
@@ -349,84 +470,15 @@ RcppExport SEXP cdfit_binomial_ssr(SEXP X_, SEXP y_, SEXP row_idx_,
     
     n_reject[l] = p - sum(e2, p);
     while (iter[l] < max_iter) {
-      while (iter[l] < max_iter) {
-        while (iter[l] < max_iter) {
-          iter[l]++;
-          Dev[l] = 0.0;
-          
-          for (i = 0; i < n; i++) {
-            if (eta[i] > 10) {
-              pi = 1;
-              w[i] = .0001;
-            } else if (eta[i] < -10) {
-              pi = 0;
-              w[i] = .0001;
-            } else {
-              pi = exp(eta[i]) / (1 + exp(eta[i]));
-              w[i] = pi * (1 - pi);
-            }
-            s[i] = y[i] - pi;
-            r[i] = s[i] / w[i];
-            if (y[i] == 1) {
-              Dev[l] = Dev[l] - log(pi);
-            } else {
-              Dev[l] = Dev[l] - log(1-pi);
-            }
-          }
-          
-          if (Dev[l] / nullDev < .01) {
-            if (warn) warning("Model saturated; exiting...");
-            for (int ll=l; ll<L; ll++) iter[ll] = NA_INTEGER;
-            R_Free(s); R_Free(w); R_Free(a); R_Free(r); R_Free(e1); R_Free(e2); R_Free(eta);
-            return List::create(beta0, beta, center, scale, lambda, Dev,
-                                iter, n_reject, Rcpp::wrap(col_idx));
-          }
-          
-          // Intercept
-          xwr = crossprod(w, r, n, 0);
-          xwx = sum(w, n);
-          beta0[l] = xwr / xwx + a0;
-          si = beta0[l] - a0;
-          if (si != 0) {
-            a0 = beta0[l];
-            for (i = 0; i < n; i++) {
-              r[i] -= si; //update r
-              eta[i] += si; //update eta
-            }
-          }
-          sumWResid = wsum(r, w, n); // update temp result: sum of w * r, used for computing xwr;
-          
-          max_update = 0.0;
-          for (j = 0; j < p; j++) {
-            if (e1[j]) {
-              jj = col_idx[j];
-              xwr = wcrossprod_resid(xMat, r, sumWResid, row_idx, center[jj], scale[jj], w, n, jj);
-              v = wsqsum_bm(xMat, w, row_idx, center[jj], scale[jj], n, jj) / n;
-              u = xwr/n + v * a[j];
-              l1 = lambda[l] * m[jj] * alpha;
-              l2 = lambda[l] * m[jj] * (1-alpha);
-              beta(j, l) = lasso(u, l1, l2, v);
-              
-              shift = beta(j, l) - a[j];
-              if (shift !=0) {
-                // update change of objective function
-                // update = - u * shift + (0.5 * v + 0.5 * l2) * (pow(beta(j, l), 2) - pow(a[j], 2)) + l1 * (fabs(beta(j, l)) - fabs(a[j]));
-                
-                update = pow(beta(j, l) - a[j], 2) * v;
-                if (update > max_update) max_update = update;
-                update_resid_eta(r, eta, xMat, shift, row_idx, center[jj], scale[jj], n, jj); // update r
-                sumWResid = wsum(r, w, n); // update temp result w * r, used for computing xwr;
-                a[j] = beta(j, l); // update a
-              }
-            }
-          }
-          // Check for convergence
-          if (max_update < thresh)  break;
-        }
-        // Scan for violations in strong set
-        sumS = sum(s, n);
-        violations = check_strong_set(e1, e2, z, xMat, row_idx, col_idx, center, scale, a, lambda[l], sumS, alpha, s, m, n, p);
-        if (violations==0) break;
+      bool saturated = cdfit_binomial_lambda_core(beta, beta0, a, a0, r, eta, s, w, y, xMat,
+                                                   row_idx, col_idx, center, scale, m, alpha,
+                                                   lambda[l], thresh, nullDev, warn, max_iter, n, p,
+                                                   l, iter, Dev, z, e1, e2, sumS, nullptr, nullptr,
+                                                   xmax_idx, nullptr);
+      if (saturated) {
+        R_Free(s); R_Free(w); R_Free(a); R_Free(r); R_Free(e1); R_Free(e2); R_Free(eta);
+        return List::create(beta0, beta, center, scale, lambda, Dev,
+                            iter, n_reject, Rcpp::wrap(col_idx));
       }
       // Scan for violations in rest
       violations = check_rest_set(e1, e2, z, xMat, row_idx, col_idx, center, scale, a, lambda[l], sumS, alpha, s, m, n, p);
@@ -435,7 +487,7 @@ RcppExport SEXP cdfit_binomial_ssr(SEXP X_, SEXP y_, SEXP row_idx_,
   }
   R_Free(s); R_Free(w); R_Free(a); R_Free(r); R_Free(e1); R_Free(e2); R_Free(eta);
   return List::create(beta0, beta, center, scale, lambda, Dev, iter, n_reject, Rcpp::wrap(col_idx));
-  
+
 }
 
 // Coordinate descent for logistic models with ssr and approximate hessian
@@ -761,10 +813,10 @@ RcppExport SEXP cdfit_binomial_slores_ssr(SEXP X_, SEXP y_, SEXP n_pos_, SEXP yl
   double *eta = R_Calloc(n, double);
   int *e1 = R_Calloc(p, int); //ever-active set
   int *e2 = R_Calloc(p, int); //strong set
-  double xwr, xwx, pi, u, v, cutoff, l1, l2, shift, si;
-  double max_update, update, thresh; // for convergence check
-  int i, j, jj, l, violations, lstart;
-  
+  double cutoff;
+  double thresh; // for convergence check
+  int i, j, l, violations, lstart;
+
   double ybar = sum(y, n) / n;
   a0 = beta0[0] = log(ybar / (1-ybar));
   double nullDev = 0;
@@ -777,8 +829,7 @@ RcppExport SEXP cdfit_binomial_slores_ssr(SEXP X_, SEXP y_, SEXP n_pos_, SEXP yl
   }
   thresh = eps * nullDev / n;
   double sumS = sum(s, n); // temp result sum of s
-  double sumWResid = 0.0; // temp result: sum of w * r
-  
+
   // set up lambda
   if (user == 0) {
     if (lam_scale) { // set up lambda, equally spaced on log scale
@@ -898,83 +949,17 @@ RcppExport SEXP cdfit_binomial_slores_ssr(SEXP X_, SEXP y_, SEXP n_pos_, SEXP yl
       }
     }
     n_reject[l] = p - sum(e2, p);
-    
+
     while (iter[l] < max_iter) {
-      while (iter[l] < max_iter) {
-        while (iter[l] < max_iter) {
-          iter[l]++;
-          Dev[l] = 0.0;
-          
-          for (i = 0; i < n; i++) {
-            if (eta[i] > 10) {
-              pi = 1;
-              w[i] = .0001;
-            } else if (eta[i] < -10) {
-              pi = 0;
-              w[i] = .0001;
-            } else {
-              pi = exp(eta[i]) / (1 + exp(eta[i]));
-              w[i] = pi * (1 - pi);
-            }
-            s[i] = y[i] - pi;
-            r[i] = s[i] / w[i];
-            if (y[i] == 1) {
-              Dev[l] = Dev[l] - log(pi);
-            } else {
-              Dev[l] = Dev[l] - log(1-pi);
-            }
-          }
-          
-          if (Dev[l] / nullDev < .01) {
-            if (warn) warning("Model saturated; exiting...");
-            for (int ll=l; ll<L; ll++) iter[ll] = NA_INTEGER;
-            R_Free(slores_reject); R_Free(slores_reject_old);
-            R_Free(s); R_Free(w); R_Free(a); R_Free(r); R_Free(e1); R_Free(e2); R_Free(eta);
-            return List::create(beta0, beta, center, scale, lambda, Dev, iter, n_reject, n_slores_reject, Rcpp::wrap(col_idx));
-          }
-          // Intercept
-          xwr = crossprod(w, r, n, 0);
-          xwx = sum(w, n);
-          beta0[l] = xwr / xwx + a0;
-          si = beta0[l] - a0;
-          if (si != 0) {
-            a0 = beta0[l];
-            for (i = 0; i < n; i++) {
-              r[i] -= si; //update r
-              eta[i] += si; //update eta
-            }
-          }
-          sumWResid = wsum(r, w, n); // update temp result: sum of w * r, used for computing xwr;
-          max_update = 0.0;
-          for (j = 0; j < p; j++) {
-            if (e1[j]) {
-              jj = col_idx[j];
-              xwr = wcrossprod_resid(xMat, r, sumWResid, row_idx, center[jj], scale[jj], w, n, jj);
-              v = wsqsum_bm(xMat, w, row_idx, center[jj], scale[jj], n, jj) / n;
-              u = xwr/n + v * a[j];
-              l1 = lambda[l] * m[jj] * alpha;
-              l2 = lambda[l] * m[jj] * (1-alpha);
-              beta(j, l) = lasso(u, l1, l2, v);
-              
-              shift = beta(j, l) - a[j];
-              if (shift != 0) {
-                // update change of objective function
-                // update = - u * shift + (0.5 * v + 0.5 * l2) * (pow(beta(j, l), 2) - pow(a[j], 2)) + l1 * (fabs(beta(j, l)) - fabs(a[j]));
-                update = pow(beta(j, l) - a[j], 2) * v;
-                if (update > max_update) max_update = update;
-                update_resid_eta(r, eta, xMat, shift, row_idx, center[jj], scale[jj], n, jj); // update r
-                sumWResid = wsum(r, w, n); // update temp result w * r, used for computing xwr;
-                a[j] = beta(j, l); // update a
-              }
-            }
-          }
-          // Check for convergence
-          if (max_update < thresh)  break;
-        }
-        // Scan for violations in strong set
-        sumS = sum(s, n);
-        violations = check_strong_set(e1, e2, z, xMat, row_idx, col_idx, center, scale, a, lambda[l], sumS, alpha, s, m, n, p);
-        if (violations == 0) break;
+      bool saturated = cdfit_binomial_lambda_core(beta, beta0, a, a0, r, eta, s, w, y, xMat,
+                                                   row_idx, col_idx, center, scale, m, alpha,
+                                                   lambda[l], thresh, nullDev, warn, max_iter, n, p,
+                                                   l, iter, Dev, z, e1, e2, sumS, nullptr, nullptr,
+                                                   xmax_idx, nullptr);
+      if (saturated) {
+        R_Free(slores_reject); R_Free(slores_reject_old);
+        R_Free(s); R_Free(w); R_Free(a); R_Free(r); R_Free(e1); R_Free(e2); R_Free(eta);
+        return List::create(beta0, beta, center, scale, lambda, Dev, iter, n_reject, n_slores_reject, Rcpp::wrap(col_idx));
       }
       // Scan for violations in rest
       if (slores) {
@@ -1071,10 +1056,10 @@ RcppExport SEXP cdfit_binomial_ada_slores_ssr(SEXP X_, SEXP y_, SEXP n_pos_, SEX
   double *eta = R_Calloc(n, double);
   int *e1 = R_Calloc(p, int); //ever-active set
   int *e2 = R_Calloc(p, int); //strong set
-  double xwr, xwx, pi, u, v, cutoff, l1, l2, shift, si;
-  double max_update, update, thresh; // for convergence check
-  int i, j, jj, l, violations, lstart;
-  
+  double cutoff;
+  double thresh; // for convergence check
+  int i, j, l, violations, lstart;
+
   double ybar = sum(y, n) / n;
   a0 = beta0[0] = log(ybar / (1-ybar));
   double nullDev = 0;
@@ -1087,8 +1072,7 @@ RcppExport SEXP cdfit_binomial_ada_slores_ssr(SEXP X_, SEXP y_, SEXP n_pos_, SEX
   }
   thresh = eps * nullDev / n;
   double sumS = sum(s, n); // temp result sum of s
-  double sumWResid = 0.0; // temp result: sum of w * r
-  
+
   // set up lambda
   if (user == 0) {
     if (lam_scale) { // set up lambda, equally spaced on log scale
@@ -1237,94 +1221,17 @@ RcppExport SEXP cdfit_binomial_ada_slores_ssr(SEXP X_, SEXP y_, SEXP n_pos_, SEX
       }
     }
     n_reject[l] = p - sum(e2, p);
-    
+
     while (iter[l] < max_iter) {
-      while (iter[l] < max_iter) {
-        while (iter[l] < max_iter) {
-          iter[l]++;
-          Dev[l] = 0.0;
-          
-          for (i = 0; i < n; i++) {
-            if (eta[i] > 10) {
-              pi = 1;
-              w[i] = .0001;
-            } else if (eta[i] < -10) {
-              pi = 0;
-              w[i] = .0001;
-            } else {
-              pi = exp(eta[i]) / (1 + exp(eta[i]));
-              w[i] = pi * (1 - pi);
-            }
-            s[i] = y[i] - pi;
-            r[i] = s[i] / w[i];
-            if (y[i] == 1) {
-              Dev[l] = Dev[l] - log(pi);
-            } else {
-              Dev[l] = Dev[l] - log(1-pi);
-            }
-          }
-          
-          if (Dev[l] / nullDev < .01) {
-            if (warn) warning("Model saturated; exiting...");
-            for (int ll=l; ll<L; ll++) iter[ll] = NA_INTEGER;
-            R_Free(slores_reject); R_Free(slores_reject_old);
-            R_Free(s); R_Free(w); R_Free(a); R_Free(r); R_Free(e1); R_Free(e2); R_Free(eta);
-            return List::create(beta0, beta, center, scale, lambda, Dev, iter, n_reject, n_slores_reject, Rcpp::wrap(col_idx));
-          }
-          // Intercept
-          xwr = crossprod(w, r, n, 0);
-          xwx = sum(w, n);
-          beta0[l] = xwr / xwx + a0;
-          si = beta0[l] - a0;
-          if (si != 0) {
-            a0 = beta0[l];
-            for (i = 0; i < n; i++) {
-              r[i] -= si; //update r
-              eta[i] += si; //update eta
-            }
-          }
-          sumWResid = wsum(r, w, n); // update temp result: sum of w * r, used for computing xwr;
-          max_update = 0.0;
-          beta_max = 0.0;
-          for (j = 0; j < p; j++) {
-            if (e1[j]) {
-              jj = col_idx[j];
-              xwr = wcrossprod_resid(xMat, r, sumWResid, row_idx, center[jj], scale[jj], w, n, jj);
-              v = wsqsum_bm(xMat, w, row_idx, center[jj], scale[jj], n, jj) / n;
-              u = xwr/n + v * a[j];
-              l1 = lambda[l] * m[jj] * alpha;
-              l2 = lambda[l] * m[jj] * (1-alpha);
-              beta(j, l) = lasso(u, l1, l2, v);
-              if(fabs(lasso(u, l1, l2, v)) > beta_max) {
-                beta_max = fabs(lasso(u, l1, l2, v));
-                beta_max_idx = jj;
-              }
-              if(jj == xmax_idx) {
-                if(fabs(u) < l1) {
-                  xmax_invalid = 1;
-                } else {
-                  xmax_invalid = 0;
-                }
-              }
-              shift = beta(j, l) - a[j];
-              if (shift != 0) {
-                // update change of objective function
-                // update = - u * shift + (0.5 * v + 0.5 * l2) * (pow(beta(j, l), 2) - pow(a[j], 2)) + l1 * (fabs(beta(j, l)) - fabs(a[j]));
-                update = pow(beta(j, l) - a[j], 2) * v;
-                if (update > max_update) max_update = update;
-                update_resid_eta(r, eta, xMat, shift, row_idx, center[jj], scale[jj], n, jj); // update r
-                sumWResid = wsum(r, w, n); // update temp result w * r, used for computing xwr;
-                a[j] = beta(j, l); // update a
-              }
-            }
-          }
-          // Check for convergence
-          if (max_update < thresh)  break;
-        }
-        // Scan for violations in strong set
-        sumS = sum(s, n);
-        violations = check_strong_set(e1, e2, z, xMat, row_idx, col_idx, center, scale, a, lambda[l], sumS, alpha, s, m, n, p);
-        if (violations == 0) break;
+      bool saturated = cdfit_binomial_lambda_core(beta, beta0, a, a0, r, eta, s, w, y, xMat,
+                                                   row_idx, col_idx, center, scale, m, alpha,
+                                                   lambda[l], thresh, nullDev, warn, max_iter, n, p,
+                                                   l, iter, Dev, z, e1, e2, sumS, &beta_max,
+                                                   &beta_max_idx, xmax_idx, &xmax_invalid);
+      if (saturated) {
+        R_Free(slores_reject); R_Free(slores_reject_old);
+        R_Free(s); R_Free(w); R_Free(a); R_Free(r); R_Free(e1); R_Free(e2); R_Free(eta);
+        return List::create(beta0, beta, center, scale, lambda, Dev, iter, n_reject, n_slores_reject, Rcpp::wrap(col_idx));
       }
       // Scan for violations in rest
       if (slores) {
