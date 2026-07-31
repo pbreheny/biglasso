@@ -206,6 +206,9 @@ coef.mbiglasso <- function(object, lambda = NULL, which = 1:length(object$lambda
       beta[[class]] <- (object$beta[[class]])[col.idx, which, drop = FALSE]
     }
   } else {
+    if (max(lambda) > max(object$lambda) || min(lambda) < min(object$lambda)) {
+      stop("Supplied lambda value(s) are outside the range of the model fit.", call. = FALSE)
+    }
     ind <- approx(object$lambda, seq(object$lambda), lambda)$y
     l <- floor(ind)
     r <- ceiling(ind)
