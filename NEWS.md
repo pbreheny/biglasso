@@ -1,3 +1,12 @@
+# biglasso (development version)
+  * Removed support for long-deprecated `screen` method names ("SSR-BEDPP",
+    "SSR-Slores", "SSR-Slores-Batch", "SEDPP-Batch", "SEDPP-Batch-SSR",
+    "SEDPP-Batchfix-SSR", "SEDPP", "SSR-Dome", "NS-NAC", "SSR-NAC",
+    "SEDPP-NAC", "SSR-Dome-NAC", "SSR-BEDPP-NAC", "SSR-Slores-NAC"). These
+    were silently mapped to "Hybrid"/"Adaptive" with a warning; passing one
+    now raises the standard `match.arg()` error instead. Use "SSR",
+    "Hybrid", or "Adaptive" directly.
+
 # biglasso 1.6.1
   * Various internal fixes (see below)
   * Updating references

@@ -219,13 +219,6 @@ biglasso <- function(
 ) {
   # set up defaults -------------------------------------------------------
 
-  # Match deprecated screen methods (see biglasso-deprecated-screen.R)
-  if (length(screen) == 1 && screen %in% names(biglasso_deprecated_screen_map)) {
-    group <- biglasso_deprecated_screen_groups[[biglasso_deprecated_screen_map[[screen]]]]
-    warning(group$message)
-    screen <- group$new
-  }
-
   family <- match.arg(family)
   penalty <- match.arg(penalty)
   alg.logistic <- match.arg(alg.logistic)
