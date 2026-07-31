@@ -16,33 +16,35 @@
 // this translation unit; C++ picks between them by argument types alone,
 // which is easy to misread as "the same function" while skimming).
 
-// standardize for multiresponse
+// standardize for multiresponse; XtY is optional (only needed by the
+// EDPP/BEDPP screening in cdfit_mgaussian_ada) -- pass nullptr to skip it.
 void standardize_and_get_residual_multiresp(NumericVector &center, NumericVector &scale,
                                   int *p_keep_ptr, vector<int> &col_idx, //columns to keep, removing columns whose scale < 1e-6
                                   vector<double> &z, double *lambda_max_ptr,
                                   int *xmax_ptr, XPtr<BigMatrix> xMat,
                                   NumericMatrix &Y, int *row_idx,
-                                  double alpha, int n, int p, int m, double *mp) {
+                                  double alpha, int n, int p, int m, double *mp,
+                                  vector<double> *XtY = nullptr) {
   MatrixAccessor<double> xAcc(*xMat);
   double *xCol;
   double *sum_xy = R_Calloc(m, double);
   double *sum_y = R_Calloc(m, double);
   double zmax = 0.0, zj = 0.0;
   int i, j, k;
-  
+
   for(k = 0; k < m; k++) {
     sum_y[k] = 0.0;
     for(i = 0; i < n; i++) {
       sum_y[k] += Y(k, i);
     }
   }
-  
+
   for (j = 0; j < p; j++) {
     xCol = xAcc[j];
     for(k  = 0; k < m; k++) {
       sum_xy[k] = 0.0;
     }
-    
+
     for (i = 0; i < n; i++) {
       center[j] += xCol[row_idx[i]];
       scale[j] += pow(xCol[row_idx[i]], 2);
@@ -50,76 +52,16 @@ void standardize_and_get_residual_multiresp(NumericVector &center, NumericVector
         sum_xy[k] += xCol[row_idx[i]] * Y.at(k, i);
       }
     }
-    
+
     center[j] = center[j] / n; //center
     scale[j] = sqrt(scale[j] / n - pow(center[j], 2)); //scale
-    
+
     if (scale[j] > 1e-6) {
       col_idx.push_back(j);
       zj = 0.0;
       for(k = 0; k < m; k++) {
         zj += pow(sum_xy[k] - center[j] * sum_y[k], 2);
-      }
-      zj = sqrt(zj) / (scale[j] * n * sqrt(m)); //residual
-      // lambda_max must reflect penalty.factor -- see the analogous comment
-      // in standardize_and_get_residual() in utilities.cpp.
-      if (mp[j] > 0 && fabs(zj) / mp[j] > zmax) {
-        zmax = fabs(zj) / mp[j];
-        *xmax_ptr = j; // xmax_ptr is the index in the raw xMat, not index in col_idx!
-      }
-      z.push_back(zj);
-    }
-  }
-  *p_keep_ptr = col_idx.size();
-  *lambda_max_ptr = zmax / alpha;
-  R_Free(sum_xy); R_Free(sum_y);
-}
-
-// standardize for multiresponse and store XtY
-void standardize_and_get_residual_multiresp(NumericVector &center, NumericVector &scale,
-                                  int *p_keep_ptr, vector<int> &col_idx, //columns to keep, removing columns whose scale < 1e-6
-                                  vector<double> &z, vector<double> &XtY,
-                                  double *lambda_max_ptr, int *xmax_ptr,
-                                  XPtr<BigMatrix> xMat, NumericMatrix &Y,
-                                  int *row_idx, double alpha,
-                                  int n, int p, int m, double *mp) {
-  MatrixAccessor<double> xAcc(*xMat);
-  double *xCol;
-  double *sum_xy = R_Calloc(m, double);
-  double *sum_y = R_Calloc(m, double);
-  double zmax = 0.0, zj = 0.0;
-  int i, j, k;
-  
-  for(k = 0; k < m; k++) {
-    sum_y[k] = 0.0;
-    for(i = 0; i < n; i++) {
-      sum_y[k] += Y(k, i);
-    }
-  }
-  
-  for (j = 0; j < p; j++) {
-    xCol = xAcc[j];
-    for(k  = 0; k < m; k++) {
-      sum_xy[k] = 0.0;
-    }
-    
-    for (i = 0; i < n; i++) {
-      center[j] += xCol[row_idx[i]];
-      scale[j] += pow(xCol[row_idx[i]], 2);
-      for(k  = 0; k < m; k++) {
-        sum_xy[k] += xCol[row_idx[i]] * Y.at(k, i);
-      }
-    }
-    
-    center[j] = center[j] / n; //center
-    scale[j] = sqrt(scale[j] / n - pow(center[j], 2)); //scale
-    
-    if (scale[j] > 1e-6) {
-      col_idx.push_back(j);
-      zj = 0;
-      for(k = 0; k < m; k++) {
-        zj += pow(sum_xy[k] - center[j] * sum_y[k], 2);
-        XtY.push_back((sum_xy[k] - center[j] * sum_y[k]) / scale[j]);
+        if (XtY != nullptr) XtY->push_back((sum_xy[k] - center[j] * sum_y[k]) / scale[j]);
       }
       zj = sqrt(zj) / (scale[j] * n * sqrt(m)); //residual
       // lambda_max must reflect penalty.factor -- see the analogous comment
@@ -398,8 +340,89 @@ int check_rest_safe_set_multiresp(int *e1, int *e2, int *discard_beta, vector<do
   return violations;
 }
 
+// Runs the ever-active-set CD loop, strong-set KKT scan, and rest-set (or
+// rest-safe-set, if discard_beta != nullptr) KKT scan for a single lambda;
+// shared by cdfit_mgaussian_ada and cdfit_mgaussian_ssr.
+static void cdfit_mgaussian_lambda_core(arma::field<arma::sp_mat> &beta, double *a, double *R,
+                                        double *sumResid, vector<double> &z, int *ever_active,
+                                        int *strong_set, int *discard_beta, XPtr<BigMatrix> xMat,
+                                        int *row_idx, vector<int> &col_idx, NumericVector &center,
+                                        NumericVector &scale, double *mp, double alpha,
+                                        double lambda_l, double thresh, int max_iter, int n, int p,
+                                        int m, int l, IntegerVector &iter, NumericVector &loss,
+                                        double *xTR, double *shift) {
+  double l1, l2, max_update, update;
+  int i, j, k, jj, violations;
+
+  while (iter[l] < max_iter) {
+    while (iter[l] < max_iter) {
+      while (iter[l] < max_iter) {
+        iter[l]++;
+
+        // solve lasso over ever-active set
+        max_update = 0.0;
+        for (j = 0; j < p; j++) {
+          if (ever_active[j]) {
+            jj = col_idx[j];
+            crossprod_resid_multiresp(xTR, xMat, R, sumResid, row_idx, center[jj], scale[jj], n, m, jj);
+            z[j] = 0;
+            for (k = 0; k < m; k++) {
+              xTR[k] = (xTR[k] / n + a[j * m + k]) / sqrt(m);
+              z[j] += pow(xTR[k], 2);
+            }
+            z[j] = sqrt(z[j]);
+            l1 = lambda_l * mp[jj] * alpha;
+            l2 = lambda_l * mp[jj] * (1 - alpha);
+            lasso(beta, xTR, z[j], l1, l2, j, l, m);
+
+            update = 0;
+            for (k = 0; k < m; k++) {
+              shift[k] = beta.at(k).at(j, l) - a[j * m + k];
+              update += pow(shift[k], 2);
+            }
+
+            if (update != 0) {
+              if (update > max_update) {
+                max_update = update;
+              }
+              update_resid_multiresp(xMat, R, sumResid, shift, row_idx, center[jj], scale[jj], n, m, jj); // update R and sumResid
+              for (k = 0; k < m; k++) a[j * m + k] = beta.at(k).at(j, l);
+            }
+          }
+        }
+        // Check for convergence
+        if (max_update < thresh) break;
+      }
+
+      // Scan for violations in strong set
+      violations = check_strong_set_multiresp(ever_active, strong_set, z, xMat, row_idx, col_idx,
+                                              center, scale, a, lambda_l, sumResid, alpha, R, mp, n,
+                                              p, m);
+      if (violations == 0) break;
+    }
+
+    // Scan for violations in rest set (or rest-safe set, if screening with EDPP/BEDPP)
+    if (discard_beta == nullptr) {
+      violations = check_rest_set_multiresp(ever_active, strong_set, z, xMat, row_idx, col_idx,
+                                            center, scale, a, lambda_l, sumResid, alpha, R, mp, n, p,
+                                            m);
+    } else {
+      violations = check_rest_safe_set_multiresp(ever_active, strong_set, discard_beta, z, xMat,
+                                                 row_idx, col_idx, center, scale, a, lambda_l,
+                                                 sumResid, alpha, R, mp, n, p, m);
+    }
+    if (violations == 0) {
+      loss[l] = 0;
+      for (i = 0; i < n; i++) {
+        for (k = 0; k < m; k++) loss[l] += pow(R[i * m + k], 2);
+      }
+      break;
+    }
+  }
+}
+
 // Coordinate descent for gaussian models with adaptive screening
-RcppExport SEXP cdfit_mgaussian_ada(SEXP X_, SEXP y_, SEXP row_idx_, 
+RcppExport SEXP cdfit_mgaussian_ada(SEXP X_, SEXP y_, SEXP row_idx_,
                                     SEXP lambda_, SEXP nlambda_, 
                                     SEXP lam_scale_, SEXP lambda_min_, 
                                     SEXP alpha_, SEXP user_, SEXP eps_, 
@@ -453,9 +476,9 @@ RcppExport SEXP cdfit_mgaussian_ada(SEXP X_, SEXP y_, SEXP row_idx_,
   vector<double> XtY;
   
   // standardize: get center, scale; get p_keep_ptr, col_idx; get z, XtY, lambda_max, xmax_idx;
-  standardize_and_get_residual_multiresp(center, scale, p_keep_ptr, col_idx, z, XtY,
+  standardize_and_get_residual_multiresp(center, scale, p_keep_ptr, col_idx, z,
                                  lambda_max_ptr, xmax_ptr, xMat, Y, row_idx,
-                                 alpha, n, p, m, mp);
+                                 alpha, n, p, m, mp, &XtY);
   
   p = p_keep;   // set p = p_keep, only loop over columns whose scale > 1e-6
   
@@ -476,11 +499,11 @@ RcppExport SEXP cdfit_mgaussian_ada(SEXP X_, SEXP y_, SEXP row_idx_,
   IntegerVector iter(L);
   IntegerVector n_reject(L);
   
-  double l1, l2, cutoff, cutoff0;
+  double cutoff, cutoff0;
   double* shift = R_Calloc(m, double);
-  double max_update, update, thresh; // for convergence check
-  int i, j, k, jj, l, violations, lstart;
-  
+  double thresh; // for convergence check
+  int i, j, k, l, lstart;
+
   int *e1 = R_Calloc(p, int); // ever active set
   int *e2 = R_Calloc(p, int); // strong set
   double *R = R_Calloc(m*n, double); // residual matrix
@@ -664,70 +687,12 @@ RcppExport SEXP cdfit_mgaussian_ada(SEXP X_, SEXP y_, SEXP row_idx_,
       
     }
     n_reject[l] = p - sum(e2, p);
-    
-    while(iter[l] < max_iter) {
-      while(iter[l] < max_iter){
-        while(iter[l] < max_iter) {
-          iter[l]++;
-          
-          //solve lasso over ever-active set
-          max_update = 0.0;
-          for (j = 0; j < p; j++) {
-            if (e1[j]) {
-              jj = col_idx[j];
-              crossprod_resid_multiresp(xTR, xMat, R, sumResid, row_idx, center[jj], scale[jj], n, m, jj);
-              z[j] = 0;
-              for(k = 0; k < m; k++) {
-                xTR[k] = (xTR[k] / n + a[j * m + k]) / sqrt(m);
-                z[j] += pow(xTR[k], 2);
-              }
-              z[j] = sqrt(z[j]);
-              l1 = lambda[l] * mp[jj] * alpha;
-              l2 = lambda[l] * mp[jj] * (1-alpha);
-              lasso(beta, xTR, z[j], l1, l2, j, l, m);
-              
-              update = 0;
-              for(k = 0; k < m; k++){
-                shift[k] = beta.at(k).at(j, l) - a[j * m + k];
-                update += pow(shift[k], 2);
-              } 
-              
-              if (update !=0) {
-                // compute objective update for checking convergence
-                //update =  z[j] * shift - 0.5 * (1 + l2) * (pow(beta(j, l), 2) - pow(a[j], 2)) - l1 * (fabs(beta(j, l)) -  fabs(a[j]));
-                if (update > max_update) {
-                  max_update = update;
-                }
-                update_resid_multiresp(xMat, R, sumResid, shift, row_idx, center[jj], scale[jj], n, m, jj); // update R and sumResid
-                for(k = 0; k < m; k++) a[j * m + k] = beta.at(k).at(j, l);
-              }
-            }
-          }
-          // Check for convergence
-          if (max_update < thresh) break;
-        }
-        
-        // Scan for violations in strong set
-        violations = check_strong_set_multiresp(e1, e2, z, xMat, row_idx, col_idx,
-                                      center, scale, a, lambda[l], sumResid,
-                                      alpha, R, mp, n, p, m); 
-        if (violations==0) break;
-      }
-      
-      // Scan for violations in rest safe set
-      violations = check_rest_safe_set_multiresp(e1, e2, discard_beta, z, xMat,
-                                       row_idx, col_idx, center, scale, a,
-                                       lambda[l], sumResid, alpha, R, mp, n, p, m);
-      if (violations == 0) {
-        loss[l] = 0;
-        for(i = 0; i < n; i++) {
-          for(k = 0; k < m; k++) loss[l] += pow(R[i*m+k], 2);  
-        }
-        break;
-      }
-    }
+
+    cdfit_mgaussian_lambda_core(beta, a, R, sumResid, z, e1, e2, discard_beta, xMat, row_idx,
+                                col_idx, center, scale, mp, alpha, lambda[l], thresh, max_iter, n,
+                                p, m, l, iter, loss, xTR, shift);
   }
-  
+
   R_Free(a); R_Free(e1); R_Free(e2); R_Free(xTR); R_Free(shift); R_Free(R); R_Free(sumResid);
   R_Free(discard_beta); R_Free(lhs1); R_Free(lhs2); R_Free(lhs3);
   //ProfilerStop();
@@ -807,11 +772,11 @@ RcppExport SEXP cdfit_mgaussian_ssr(SEXP X_, SEXP y_, SEXP row_idx_,
   IntegerVector iter(L);
   IntegerVector n_reject(L);
   
-  double l1, l2, cutoff;
+  double cutoff;
   double* shift = R_Calloc(m, double);
-  double max_update, update, thresh; // for convergence check
-  int i, j, k, jj, l, violations, lstart;
-  
+  double thresh; // for convergence check
+  int i, j, k, l, lstart;
+
   int *e1 = R_Calloc(p, int); // ever active set
   int *e2 = R_Calloc(p, int); // strong set
   double *R = R_Calloc(m*n, double); // residual matrix
@@ -892,66 +857,12 @@ RcppExport SEXP cdfit_mgaussian_ssr(SEXP X_, SEXP y_, SEXP row_idx_,
       }
     }
     n_reject[l] = p - sum(e2, p);
-    
-    while(iter[l] < max_iter) {
-      while(iter[l] < max_iter){
-        while(iter[l] < max_iter) {
-          iter[l]++;
-          
-          //solve lasso over ever-active set
-          max_update = 0.0;
-          for (j = 0; j < p; j++) {
-            if (e1[j]) {
-              jj = col_idx[j];
-              crossprod_resid_multiresp(xTR, xMat, R, sumResid, row_idx, center[jj], scale[jj], n, m, jj);
-              z[j] = 0;
-              for(k = 0; k < m; k++) {
-                xTR[k] = (xTR[k] / n + a[j * m + k]) / sqrt(m);
-                z[j] += pow(xTR[k], 2);
-              }
-              z[j] = sqrt(z[j]);
-              l1 = lambda[l] * mp[jj] * alpha;
-              l2 = lambda[l] * mp[jj] * (1-alpha);
-              lasso(beta, xTR, z[j], l1, l2, j, l, m);
-              
-              update = 0;
-              for(k = 0; k < m; k++){
-                shift[k] = beta.at(k).at(j, l) - a[j * m + k];
-                update += pow(shift[k], 2);
-              } 
-              
-              if (update !=0) {
-                // compute objective update for checking convergence
-                //update =  z[j] * shift - 0.5 * (1 + l2) * (pow(beta(j, l), 2) - pow(a[j], 2)) - l1 * (fabs(beta(j, l)) -  fabs(a[j]));
-                if (update > max_update) {
-                  max_update = update;
-                }
-                update_resid_multiresp(xMat, R, sumResid, shift, row_idx, center[jj], scale[jj], n, m, jj); // update R and sumResid
-                for(k = 0; k < m; k++) a[j * m + k] = beta.at(k).at(j, l);
-              }
-            }
-          }
-          // Check for convergence
-          if (max_update < thresh) break;
-        }
-        
-        // Scan for violations in strong set
-        violations = check_strong_set_multiresp(e1, e2, z, xMat, row_idx, col_idx, center, scale, a, lambda[l], sumResid, alpha, R, mp, n, p, m); 
-        if (violations==0) break;
-      }
-      
-      // Scan for violations in rest set
-      violations = check_rest_set_multiresp(e1, e2, z, xMat, row_idx, col_idx, center, scale, a, lambda[l], sumResid, alpha, R, mp, n, p, m);
-      if (violations == 0) {
-        loss[l] = 0;
-        for(i = 0; i < n; i++) {
-          for(k = 0; k < m; k++) loss[l] += pow(R[i*m+k], 2);  
-        }
-        break;
-      }
-    }
+
+    cdfit_mgaussian_lambda_core(beta, a, R, sumResid, z, e1, e2, nullptr, xMat, row_idx, col_idx,
+                                center, scale, mp, alpha, lambda[l], thresh, max_iter, n, p, m, l,
+                                iter, loss, xTR, shift);
   }
-  
+
   R_Free(a); R_Free(e1); R_Free(e2); R_Free(xTR); R_Free(shift); R_Free(R); R_Free(sumResid);
   //ProfilerStop();
   return List::create(beta, center, scale, lambda, loss, iter, n_reject, Rcpp::wrap(col_idx));
