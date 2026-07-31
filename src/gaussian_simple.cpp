@@ -106,14 +106,6 @@ static arma::sp_mat cdfit_gaussian_simple_core(XPtr<BigMatrix> xMat, double *r, 
   return beta;
 }
 
-static void set_omp_cores(int ncore) {
-#ifdef BIGLASSO_OMP_H_
-  int useCores = ncore < 1 ? omp_get_num_procs() : ncore;
-  omp_set_dynamic(0);
-  omp_set_num_threads(useCores);
-#endif
-}
-
 // NOTE: in this simple function, lambda is a single value, not a path
 RcppExport SEXP cdfit_gaussian_simple(SEXP X_,
                                       SEXP y_,

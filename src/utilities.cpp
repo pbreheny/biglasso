@@ -9,6 +9,18 @@
 
 #include "utilities.h"
 
+void set_omp_cores(int ncore) {
+  int useCores = ncore;
+#ifdef BIGLASSO_OMP_H_
+  int haveCores = omp_get_num_procs();
+  if (useCores < 1) {
+    useCores = haveCores;
+  }
+  omp_set_dynamic(0);
+  omp_set_num_threads(useCores);
+#endif
+}
+
 double sign(double x) {
   if(x > 0.00000000001) return 1.0;
   else if(x < -0.00000000001) return -1.0;

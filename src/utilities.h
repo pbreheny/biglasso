@@ -25,6 +25,11 @@
 using namespace Rcpp;
 using namespace std;
 
+// set the number of OpenMP threads to use for the rest of the call: `ncore`
+// threads if positive, otherwise the number of available cores (a no-op
+// when compiled without OpenMP support, see biglasso_omp.h)
+void set_omp_cores(int ncore);
+
 double sign(double x);
 
 double sum(double *x, int n);
