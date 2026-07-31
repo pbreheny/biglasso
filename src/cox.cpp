@@ -433,8 +433,41 @@ void scox_screen(int* scox_reject, double lambda, double lambda_0,
   }
 }
 
+// Calculate haz, rsk, and Dev[l] from the current linear predictor `eta`,
+// and report whether the fit is saturated (Dev[l] / nullDev < .01).
+// Byte-identical block shared by all 6 cdfit_cox* entry points; what happens
+// on saturation (warning + freeing that entry point's own R_Calloc'd arrays
+// + an entry-point-specific List::create() return) differs per caller, so
+// that part stays in each entry point, gated on this function's return
+// value.
+static bool compute_cox_deviance(double *haz, double *rsk, double *eta, int *d_idx, double *y,
+                                 NumericVector &Dev, double satDev, double nullDev, int n, int f,
+                                 int l) {
+  int i, k;
+  Dev[l] = 0.0;
+
+  // Calculate haz, rsk, Dev
+  for (i = 0; i < n; i++) haz[i] = exp(eta[i]);
+  rsk[f - 1] = haz[n - 1];
+  k = f - 1;
+  for (i = n - 2; i >= 0; i--) {
+    if (d_idx[i] < k) {
+      k--;
+      rsk[k] = rsk[k + 1];
+    }
+    rsk[k] += haz[i];
+  }
+  for (i = 0; i < n; i++) {
+    Dev[l] -= 2 * y[i] * (eta[i] - log(rsk[d_idx[i]]));
+  }
+  Dev[l] -= satDev;
+
+  // Check for saturation
+  return Dev[l] / nullDev < .01;
+}
+
 // Coordinate descent for cox models
-RcppExport SEXP cdfit_cox(SEXP X_, SEXP y_, SEXP d_, SEXP d_idx_, SEXP row_idx_, 
+RcppExport SEXP cdfit_cox(SEXP X_, SEXP y_, SEXP d_, SEXP d_idx_, SEXP row_idx_,
                           SEXP lambda_, SEXP nlambda_, SEXP lam_scale_,
                           SEXP lambda_min_, SEXP alpha_, SEXP user_, SEXP eps_, 
                           SEXP max_iter_, SEXP multiplier_, SEXP dfmax_, 
@@ -584,26 +617,8 @@ RcppExport SEXP cdfit_cox(SEXP X_, SEXP y_, SEXP d_, SEXP d_idx_, SEXP row_idx_,
     while (iter[l] < max_iter) {
       while (iter[l] < max_iter) {
         iter[l]++;
-        Dev[l] = 0.0;
-        
-        // Calculate haz, rsk, Dev
-        for(i = 0; i < n; i++) haz[i] = exp(eta[i]);
-        rsk[f-1] = haz[n-1];
-        k = f-1;
-        for(i = n-2; i >= 0; i--) {
-          if(d_idx[i] < k) {
-            k--;
-            rsk[k] = rsk[k+1];
-          }
-          rsk[k] += haz[i];
-        }
-        for(i = 0; i < n; i++) {
-          Dev[l] -= 2 * y[i] * (eta[i] - log(rsk[d_idx[i]])); 
-        }
-        Dev[l] -= satDev;
-        
-        // Check for saturation
-        if (Dev[l] / nullDev < .01) {
+
+        if (compute_cox_deviance(haz, rsk, eta, d_idx, y, Dev, satDev, nullDev, n, f, l)) {
           if (warn) warning("Model saturated with deviance %f; exiting...", Dev[l]);
           for (int ll=l; ll<L; ll++) iter[ll] = NA_INTEGER;
           R_Free(s); R_Free(w); R_Free(a); R_Free(r); R_Free(e1); R_Free(eta); R_Free(haz); R_Free(rsk);
@@ -842,26 +857,8 @@ RcppExport SEXP cdfit_cox_ssr(SEXP X_, SEXP y_, SEXP d_, SEXP d_idx_, SEXP row_i
       while (iter[l] < max_iter) {
         while (iter[l] < max_iter) {
           iter[l]++;
-          Dev[l] = 0.0;
-          
-          // Calculate haz, rsk, Dev
-          for(i = 0; i < n; i++) haz[i] = exp(eta[i]);
-          rsk[f-1] = haz[n-1];
-          k = f-1;
-          for(i = n-2; i >= 0; i--) {
-            if(d_idx[i] < k) {
-              k--;
-              rsk[k] = rsk[k+1];
-            }
-            rsk[k] += haz[i];
-          }
-          for(i = 0; i < n; i++) {
-            Dev[l] -= 2 * y[i] * (eta[i] - log(rsk[d_idx[i]])); 
-          }
-          Dev[l] -= satDev;
-          
-          // Check for saturation
-          if (Dev[l] / nullDev < .01) {
+
+          if (compute_cox_deviance(haz, rsk, eta, d_idx, y, Dev, satDev, nullDev, n, f, l)) {
             if (warn) warning("Model saturated with deviance %f; exiting...", Dev[l]);
             for (int ll=l; ll<L; ll++) iter[ll] = NA_INTEGER;
             R_Free(s); R_Free(w); R_Free(a); R_Free(r); R_Free(e1); R_Free(e2); R_Free(eta); R_Free(haz); R_Free(rsk);
@@ -1115,26 +1112,8 @@ RcppExport SEXP cdfit_cox_scox(SEXP X_, SEXP y_, SEXP d_, SEXP d_idx_, SEXP row_
     while (iter[l] < max_iter) {
       while (iter[l] < max_iter) {
         iter[l]++;
-        Dev[l] = 0.0;
-        
-        // Calculate haz, rsk, Dev
-        for(i = 0; i < n; i++) haz[i] = exp(eta[i]);
-        rsk[f-1] = haz[n-1];
-        k = f-1;
-        for(i = n-2; i >= 0; i--) {
-          if(d_idx[i] < k) {
-            k--;
-            rsk[k] = rsk[k+1];
-          }
-          rsk[k] += haz[i];
-        }
-        for(i = 0; i < n; i++) {
-          Dev[l] -= 2 * y[i] * (eta[i] - log(rsk[d_idx[i]])); 
-        }
-        Dev[l] -= satDev;
-        
-        // Check for saturation
-        if (Dev[l] / nullDev < .01) {
+
+        if (compute_cox_deviance(haz, rsk, eta, d_idx, y, Dev, satDev, nullDev, n, f, l)) {
           if (warn) warning("Model saturated with deviance %f; exiting...", Dev[l]);
           for (int ll=l; ll<L; ll++) iter[ll] = NA_INTEGER;
           R_Free(s); R_Free(w); R_Free(a); R_Free(r); R_Free(e1); R_Free(safe_reject); R_Free(eta); R_Free(haz); R_Free(rsk);
@@ -1392,26 +1371,8 @@ RcppExport SEXP cdfit_cox_sscox(SEXP X_, SEXP y_, SEXP d_, SEXP d_idx_, SEXP row
     while (iter[l] < max_iter) {
       while (iter[l] < max_iter) {
         iter[l]++;
-        Dev[l] = 0.0;
-        
-        // Calculate haz, rsk, Dev
-        for(i = 0; i < n; i++) haz[i] = exp(eta[i]);
-        rsk[f-1] = haz[n-1];
-        k = f-1;
-        for(i = n-2; i >= 0; i--) {
-          if(d_idx[i] < k) {
-            k--;
-            rsk[k] = rsk[k+1];
-          }
-          rsk[k] += haz[i];
-        }
-        for(i = 0; i < n; i++) {
-          Dev[l] -= 2 * y[i] * (eta[i] - log(rsk[d_idx[i]])); 
-        }
-        Dev[l] -= satDev;
-        
-        // Check for saturation
-        if (Dev[l] / nullDev < .01) {
+
+        if (compute_cox_deviance(haz, rsk, eta, d_idx, y, Dev, satDev, nullDev, n, f, l)) {
           if (warn) warning("Model saturated with deviance %f; exiting...", Dev[l]);
           for (int ll=l; ll<L; ll++) iter[ll] = NA_INTEGER;
           R_Free(s); R_Free(w); R_Free(a); R_Free(r); R_Free(e1); R_Free(safe_reject); R_Free(eta); R_Free(haz); R_Free(rsk);
@@ -1703,26 +1664,8 @@ RcppExport SEXP cdfit_cox_ada_scox(SEXP X_, SEXP y_, SEXP d_, SEXP d_idx_, SEXP 
       while (iter[l] < max_iter) {
         while (iter[l] < max_iter) {
           iter[l]++;
-          Dev[l] = 0.0;
-          
-          // Calculate haz, rsk, Dev
-          for(i = 0; i < n; i++) haz[i] = exp(eta[i]);
-          rsk[f-1] = haz[n-1];
-          k = f-1;
-          for(i = n-2; i >= 0; i--) {
-            if(d_idx[i] < k) {
-              k--;
-              rsk[k] = rsk[k+1];
-            }
-            rsk[k] += haz[i];
-          }
-          for(i = 0; i < n; i++) {
-            Dev[l] -= 2 * y[i] * (eta[i] - log(rsk[d_idx[i]])); 
-          }
-          Dev[l] -= satDev;
-          
-          // Check for saturation
-          if (Dev[l] / nullDev < .01) {
+
+          if (compute_cox_deviance(haz, rsk, eta, d_idx, y, Dev, satDev, nullDev, n, f, l)) {
             if (warn) warning("Model saturated with deviance %f; exiting...", Dev[l]);
             for (int ll=l; ll<L; ll++) iter[ll] = NA_INTEGER;
             R_Free(s); R_Free(w); R_Free(a); R_Free(r); R_Free(e1); R_Free(e2); R_Free(safe_reject); R_Free(eta); R_Free(haz); R_Free(rsk);
@@ -1966,26 +1909,8 @@ RcppExport SEXP cdfit_cox_safe(SEXP X_, SEXP y_, SEXP d_, SEXP d_idx_, SEXP row_
     while (iter[l] < max_iter) {
       while (iter[l] < max_iter) {
         iter[l]++;
-        Dev[l] = 0.0;
-        
-        // Calculate haz, rsk, Dev
-        for(i = 0; i < n; i++) haz[i] = exp(eta[i]);
-        rsk[f-1] = haz[n-1];
-        k = f-1;
-        for(i = n-2; i >= 0; i--) {
-          if(d_idx[i] < k) {
-            k--;
-            rsk[k] = rsk[k+1];
-          }
-          rsk[k] += haz[i];
-        }
-        for(i = 0; i < n; i++) {
-          Dev[l] -= 2 * y[i] * (eta[i] - log(rsk[d_idx[i]])); 
-        }
-        Dev[l] -= satDev;
-        
-        // Check for saturation
-        if (Dev[l] / nullDev < .01) {
+
+        if (compute_cox_deviance(haz, rsk, eta, d_idx, y, Dev, satDev, nullDev, n, f, l)) {
           if (warn) warning("Model saturated with deviance %f; exiting...", Dev[l]);
           for (int ll=l; ll<L; ll++) iter[ll] = NA_INTEGER;
           R_Free(s); R_Free(w); R_Free(a); R_Free(r); R_Free(e1); R_Free(safe_reject); R_Free(eta); R_Free(haz); R_Free(rsk);
