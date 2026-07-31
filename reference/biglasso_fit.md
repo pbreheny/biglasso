@@ -78,10 +78,12 @@ biglasso_fit(
 
   The elastic-net mixing parameter that controls the relative
   contribution from the lasso (l1) and the ridge (l2) penalty. The
-  penalty is defined as: \$\$ \alpha\|\|\beta\|\|\_1 +
-  (1-\alpha)/2\|\|\beta\|\|\_2^2.\$\$ `alpha=1` is the lasso penalty,
-  `alpha=0` the ridge penalty, `alpha` in between 0 and 1 is the
-  elastic-net ("enet") penalty.
+  penalty is defined as:
+
+                         \deqn{ \alpha||\beta||_1 + (1-\alpha)/2||\beta||_2^2.}
+
+  `alpha=1` is the lasso penalty, `alpha=0` the ridge penalty, `alpha`
+  in between 0 and 1 is the elastic-net ("enet") penalty.
 
 - gamma:
 
@@ -184,29 +186,29 @@ Note:
 - Currently, the function only works with linear regression
   (`family = 'gaussian'`).
 
-## Author
-
-Tabitha Peter and Patrick Breheny
-
 ## Examples
 
 ``` r
 data(Prostate)
 X <- cbind(1, Prostate$X)
-xtx <- apply(X, 2, crossprod)/nrow(X)
+xtx <- apply(X, 2, crossprod) / nrow(X)
 y <- Prostate$y
 X.bm <- as.big.matrix(X)
 init <- rep(0, ncol(X))
-fit <- biglasso_fit(X = X.bm, y = y, r=y, init = init, xtx = xtx,
-  lambda = 0.1, penalty.factor=c(0, rep(1, ncol(X)-1)), max.iter = 10000)
+fit <- biglasso_fit(
+  X = X.bm, y = y, r = y, init = init, xtx = xtx,
+  lambda = 0.1, penalty.factor = c(0, rep(1, ncol(X) - 1)), max.iter = 10000
+)
 fit$beta
 #>                    lcavol      lweight          age         lbph          svi 
 #>  1.725303940  0.577848489  0.043409725 -0.005572137  0.076326241  0.000000000 
 #>          lcp      gleason        pgg45 
 #>  0.000000000  0.000000000  0.006712771 
-  
-fit <- biglasso_fit(X = X.bm, y = y, r=y, init = init, xtx = xtx, penalty='MCP',
-  lambda = 0.1, penalty.factor=c(0, rep(1, ncol(X)-1)), max.iter = 10000)
+
+fit <- biglasso_fit(
+  X = X.bm, y = y, r = y, init = init, xtx = xtx, penalty = "MCP",
+  lambda = 0.1, penalty.factor = c(0, rep(1, ncol(X) - 1)), max.iter = 10000
+)
 fit$beta
 #>                    lcavol      lweight          age         lbph          svi 
 #>  2.268444208  0.677388754  0.000000000 -0.013317940  0.143711214  0.000000000 

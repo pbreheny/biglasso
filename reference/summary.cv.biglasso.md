@@ -89,15 +89,4 @@ the following list elements:
 
 [`biglasso()`](https://pbreheny.github.io/biglasso/reference/biglasso.md),
 [`cv.biglasso()`](https://pbreheny.github.io/biglasso/reference/cv.biglasso.md),
-[`plot.cv.biglasso()`](https://pbreheny.github.io/biglasso/reference/plot.cv.biglasso.md),
-[biglasso-package](https://pbreheny.github.io/biglasso/reference/biglasso-package.md)
-
-## Author
-
-Yaohui Zeng and Patrick Breheny
-
-## Examples
-
-``` r
-## See examples in "cv.biglasso" and "biglasso-package"
-```
+[`plot.cv.biglasso()`](https://pbreheny.github.io/biglasso/reference/plot.cv.biglasso.md)

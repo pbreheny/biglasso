@@ -121,10 +121,6 @@ The object returned depends on `type`.
 [`biglasso()`](https://pbreheny.github.io/biglasso/reference/biglasso.md),
 [`cv.biglasso()`](https://pbreheny.github.io/biglasso/reference/cv.biglasso.md)
 
-## Author
-
-Yaohui Zeng and Patrick Breheny
-
 ## Examples
 
 ``` r

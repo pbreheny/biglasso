@@ -64,8 +64,8 @@ setupX(
 ## Value
 
 A `big.matrix` object corresponding to a file-backed
-[`bigmemory::big.matrix()`](https://rdrr.io/pkg/bigmemory/man/big.matrix.html).
-It's ready to be used as the design matrix `X` in
+[`bigmemory::big.matrix()`](https://rdrr.io/pkg/bigmemory/man/big.matrix.html)
+and ready to be used as the design matrix `X` in
 [`biglasso()`](https://pbreheny.github.io/biglasso/reference/biglasso.md)
 and
 [`cv.biglasso()`](https://pbreheny.github.io/biglasso/reference/cv.biglasso.md).
@@ -85,15 +85,4 @@ details.
 ## See also
 
 [`biglasso()`](https://pbreheny.github.io/biglasso/reference/biglasso.md),
-[`ncvreg::cv.ncvreg()`](https://pbreheny.github.io/ncvreg/reference/cv.ncvreg.html),
-[biglasso-package](https://pbreheny.github.io/biglasso/reference/biglasso-package.md)
-
-## Author
-
-Yaohui Zeng and Patrick Breheny
-
-## Examples
-
-``` r
-## see the example in "biglasso-package"
-```
+[`ncvreg::cv.ncvreg()`](https://pbreheny.github.io/ncvreg/reference/cv.ncvreg.html)

@@ -156,36 +156,38 @@ Yaohui Zeng, Chuyi Wang, Tabitha Peter, and Patrick Breheny
 
 ``` r
 if (FALSE) { # \dontrun{
-## Example of reading data from external big data file, fit lasso model, 
+## Example of reading data from external big data file, fit lasso model,
 ## and run cross validation in parallel
 
 # simulated design matrix, 1000 observations, 500,000 variables, ~ 5GB
 # there are 10 true variables with non-zero coefficient 2.
-xfname <- 'x_e3_5e5.txt' 
-yfname <- 'y_e3_5e5.txt' # response vector
+xfname <- "x_e3_5e5.txt"
+yfname <- "y_e3_5e5.txt" # response vector
 time <- system.time(
-  X <- setupX(xfname, sep = '\t') # create backing files (.bin, .desc)
+  X <- setupX(xfname, sep = "\t") # create backing files (.bin, .desc)
 )
 print(time) # ~ 7 minutes; this is just one-time operation
 dim(X)
 
-# the big.matrix then can be retrieved by its descriptor file (.desc) in any new R session. 
+# the big.matrix then can be retrieved by its descriptor file (.desc) in any new R session.
 rm(X)
-xdesc <- 'x_e3_5e5.desc' 
+xdesc <- "x_e3_5e5.desc"
 X <- attach.big.matrix(xdesc)
 dim(X)
 
 y <- as.matrix(read.table(yfname, header = F))
 time.fit <- system.time(
-  fit <- biglasso(X, y, family = 'gaussian', screen = 'Hybrid')
+  fit <- biglasso(X, y, family = "gaussian", screen = "Hybrid")
 )
 print(time.fit) # ~ 44 seconds for fitting a lasso model along the entire solution path
 
 # cross validation in parallel
 seed <- 1234
 time.cvfit <- system.time(
-  cvfit <- cv.biglasso(X, y, family = 'gaussian', screen = 'Hybrid', 
-                       seed = seed, ncores = 4, nfolds = 10)
+  cvfit <- cv.biglasso(X, y,
+    family = "gaussian", screen = "Hybrid",
+    seed = seed, ncores = 4, nfolds = 10
+  )
 )
 print(time.cvfit) # ~ 3 minutes for 10-fold cross validation
 plot(cvfit)

@@ -76,10 +76,12 @@ biglasso_path(
 
   The elastic-net mixing parameter that controls the relative
   contribution from the lasso (l1) and the ridge (l2) penalty. The
-  penalty is defined as: \$\$ \alpha\|\|\beta\|\|\_1 +
-  (1-\alpha)/2\|\|\beta\|\|\_2^2.\$\$ `alpha=1` is the lasso penalty,
-  `alpha=0` the ridge penalty, `alpha` in between 0 and 1 is the
-  elastic-net ("enet") penalty.
+  penalty is defined as:
+
+                         \deqn{ \alpha||\beta||_1 + (1-\alpha)/2||\beta||_2^2.}
+
+  `alpha=1` is the lasso penalty, `alpha=0` the ridge penalty, `alpha`
+  in between 0 and 1 is the elastic-net ("enet") penalty.
 
 - gamma:
 
@@ -189,22 +191,20 @@ Note:
 - Currently, the function only works with linear regression
   (`family = 'gaussian'`).
 
-## Author
-
-Tabitha Peter and Patrick Breheny
-
 ## Examples
 
 ``` r
 data(Prostate)
 X <- cbind(1, Prostate$X)
-xtx <- apply(X, 2, crossprod)/nrow(X)
+xtx <- apply(X, 2, crossprod) / nrow(X)
 y <- Prostate$y
 X.bm <- as.big.matrix(X)
 init <- rep(0, ncol(X))
-fit <- biglasso_path(X = X.bm, y = y, r = y, init = init, xtx = xtx,
-  lambda = c(0.5, 0.1, 0.05, 0.01, 0.001), 
-  penalty.factor=c(0, rep(1, ncol(X)-1)), max.iter=2000)
+fit <- biglasso_path(
+  X = X.bm, y = y, r = y, init = init, xtx = xtx,
+  lambda = c(0.5, 0.1, 0.05, 0.01, 0.001),
+  penalty.factor = c(0, rep(1, ncol(X) - 1)), max.iter = 2000
+)
 fit$beta
 #> 9 x 5 sparse Matrix of class "dgCMatrix"
 #>                                                                      
@@ -217,10 +217,12 @@ fit$beta
 #> lcp     .           .            .           -0.06349802 -0.101736983
 #> gleason .           .            .            .           0.042445101
 #> pgg45   0.01256831  0.006710624  0.005389947  0.00498825  0.004541638
-  
-fit <- biglasso_path(X = X.bm, y = y, r = y, init = init, xtx = xtx,
-  lambda = c(0.5, 0.1, 0.05, 0.01, 0.001), penalty='MCP',
-  penalty.factor=c(0, rep(1, ncol(X)-1)), max.iter = 2000)
+
+fit <- biglasso_path(
+  X = X.bm, y = y, r = y, init = init, xtx = xtx,
+  lambda = c(0.5, 0.1, 0.05, 0.01, 0.001), penalty = "MCP",
+  penalty.factor = c(0, rep(1, ncol(X) - 1)), max.iter = 2000
+)
 fit$beta
 #> 9 x 5 sparse Matrix of class "dgCMatrix"
 #>                                                                         

@@ -87,10 +87,6 @@ The object returned depends on `type`.
 [`biglasso()`](https://pbreheny.github.io/biglasso/reference/biglasso.md),
 [`cv.biglasso()`](https://pbreheny.github.io/biglasso/reference/cv.biglasso.md)
 
-## Author
-
-Yaohui Zeng and Patrick Breheny
-
 ## Examples
 
 ``` r
@@ -100,8 +96,15 @@ data(colon)
 X <- colon$X
 y <- colon$y
 X.bm <- as.big.matrix(X, backingfile = "")
-fit <- biglasso(X.bm, y, penalty = 'lasso', family = "binomial")
-cvfit <- cv.biglasso(X.bm, y, penalty = 'lasso', family = "binomial", seed = 1234, ncores = 2)
+fit <- biglasso(X.bm, y, penalty = "lasso", family = "binomial")
+cvfit <- cv.biglasso(
+  X.bm,
+  y,
+  penalty = "lasso",
+  family = "binomial",
+  seed = 1234,
+  ncores = 2
+)
 coef <- coef(cvfit)
 coef[which(coef != 0)]
 predict(cvfit, X.bm, type = "response")

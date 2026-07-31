@@ -33,17 +33,12 @@ plot(x, alpha = 1, log.l = TRUE, ...)
   Other graphical parameters to
   [`plot()`](https://rdrr.io/r/graphics/plot.default.html)
 
+## Value
+
+Invisibly returns `NULL`. Called for its side effect of producing a
+plot.
+
 ## See also
 
 [`biglasso()`](https://pbreheny.github.io/biglasso/reference/biglasso.md),
 [`cv.biglasso()`](https://pbreheny.github.io/biglasso/reference/cv.biglasso.md)
-
-## Author
-
-Yaohui Zeng and Patrick Breheny
-
-## Examples
-
-``` r
-## See examples in "biglasso"
-```

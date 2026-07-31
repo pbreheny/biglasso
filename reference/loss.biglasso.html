@@ -67,27 +67,23 @@
 
 <dt id="arg-eval-metric">eval.metric<a class="anchor" aria-label="anchor" href="#arg-eval-metric"></a></dt>
 <dd><p>The evaluation metric for the cross-validated error and
-for choosing optimal <code>lambda</code>. "default" for linear regression is MSE
-(mean squared error), for logistic regression is misclassification error.
-"MAPE", for linear regression only, is the Mean Absolute Percentage Error.
-"auc", for logistic regression, is the area under the receiver operating
-characteristic curve (ROC).</p></dd>
+for choosing optimal <code>lambda</code>:</p><ul><li><p><code>"default"</code> for linear regression is MSE (mean squared error) and for logistic regression is
+misclassification error.</p></li>
+<li><p><code>"MAPE"</code>, for linear regression only, is the Mean Absolute Percentage Error.</p></li>
+<li><p>"auc", for logistic regression, is the area under the receiver operating
+characteristic curve (ROC).</p></li>
+</ul></dd>
 
 
 <dt id="arg-grouped">grouped<a class="anchor" aria-label="anchor" href="#arg-grouped"></a></dt>
-<dd><p>Whether to calculate loss for the entire CV fold
-(<code>TRUE</code>), or for predictions individually. Must be <code>TRUE</code> when
-<code>eval.metric</code> is 'auc'.</p></dd>
+<dd><p>Whether to calculate loss for the entire CV fold (<code>TRUE</code>), or for predictions
+individually. Must be <code>TRUE</code> when <code>eval.metric</code> is 'auc'.</p></dd>
 
 </dl></div>
     <div class="section level2">
     <h2 id="details">Details<a class="anchor" aria-label="anchor" href="#details"></a></h2>
-    <p>These are not intended for use by users. <code>loss.biglasso</code> calculates the
-value of the loss function for the given predictions (used for cross-validation).</p>
-    </div>
-    <div class="section level2">
-    <h2 id="author">Author<a class="anchor" aria-label="anchor" href="#author"></a></h2>
-    <p>Yaohui Zeng and Patrick Breheny</p>
+    <p>These are not intended for use by users. <code>loss.biglasso</code> calculates the value of the loss
+function for the given predictions (used for cross-validation).</p>
     </div>
 
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>
@@ -99,7 +95,7 @@ value of the loss function for the given predictions (used for cross-validation)
 </div>
 
 <div class="pkgdown-footer-right">
-  <p>Last updated: July 30, 2026</p>
+  <p>Last updated: July 31, 2026</p>
 </div>
 
     </footer></div>

@@ -36,7 +36,7 @@ X[1:5, 1:5]
 X.bm <- as.big.matrix(X)
 str(X.bm)
 #> Formal class 'big.matrix' [package "bigmemory"] with 1 slot
-#>   ..@ address:<pointer: 0x557484d0d840>
+#>   ..@ address:<pointer: 0x55acfb722060>
 ```
 
 ``` r
@@ -72,12 +72,12 @@ plot(fit)
 
 ## 10-fold cross-valiation in parallel
 cvfit <- tryCatch(
-         {
-                cv.biglasso(X.bm, y, seed = 1234, nfolds = 10, ncores = 4)
-         },
-         error = function(cond) {
-                cv.biglasso(X.bm, y, seed = 1234, nfolds = 10, ncores = 2)
-         }
+  {
+    cv.biglasso(X.bm, y, seed = 1234, nfolds = 10, ncores = 4)
+  },
+  error = function(cond) {
+    cv.biglasso(X.bm, y, seed = 1234, nfolds = 10, ncores = 2)
+  }
 )
 ```
 
@@ -87,7 +87,7 @@ After cross-validation, a few things we can do:
 
 ``` r
 
-par(mfrow = c(2, 2), mar = c(3.5, 3.5, 3, 1) ,mgp = c(2.5, 0.5, 0))
+par(mfrow = c(2, 2), mar = c(3.5, 3.5, 3, 1), mgp = c(2.5, 0.5, 0))
 plot(cvfit, type = "all")
 ```
 
@@ -112,7 +112,7 @@ summary(cvfit)
 
 ``` r
 
-coef(cvfit)[which(coef(cvfit) != 0),]
+coef(cvfit)[which(coef(cvfit) != 0), ]
 #>   (Intercept)      Hsa.8147     Hsa.43279     Hsa.36689      Hsa.3152 
 #>  6.882526e-01 -5.704059e-07 -2.748858e-08 -6.967419e-04  4.940698e-05 
 #>     Hsa.36665     Hsa.692.2      Hsa.1272       Hsa.166     Hsa.31801 
@@ -151,7 +151,7 @@ library(survival)
 #> The following object is masked _by_ '.GlobalEnv':
 #> 
 #>     colon
-X <- heart[,4:7]
+X <- heart[, 4:7]
 y <- Surv(heart$stop - heart$start, heart$event)
 X.bm <- as.big.matrix(X)
 #> Warning in as.big.matrix(X): Coercing data.frame to matrix via factor level
@@ -167,12 +167,16 @@ plot(fit)
 ``` r
 
 set.seed(10101)
-n=300; p=300; m=5; s=10; b=1
-x = matrix(rnorm(n * p), n, p)
-beta = matrix(seq(from=-b,to=b,length.out=s*m),s,m)
-y = x[,1:s] %*% beta + matrix(rnorm(n*m,0,1),n,m)
-x.bm = as.big.matrix(x)
-fit = biglasso(x.bm, y, family = "mgaussian")
+n <- 300
+p <- 300
+m <- 5
+s <- 10
+b <- 1
+x <- matrix(rnorm(n * p), n, p)
+beta <- matrix(seq(from = -b, to = b, length.out = s * m), s, m)
+y <- x[, 1:s] %*% beta + matrix(rnorm(n * m, 0, 1), n, m)
+x.bm <- as.big.matrix(x)
+fit <- biglasso(x.bm, y, family = "mgaussian")
 plot(fit)
 ```
 
@@ -191,10 +195,10 @@ matrix:
 ## The data has 200 observations, 600 features, and 10 non-zero coefficients.
 ## This is not actually very big, but vignettes in R are supposed to render
 ## quickly. Much larger data can be handled in the same way.
-if(!file.exists('BigX.bin')) {
+if (!file.exists("BigX.bin")) {
   X <- matrix(rnorm(1000 * 5000), 1000, 5000)
   beta <- c(-5:5)
-  y <- as.numeric(X[,1:11] %*% beta)
+  y <- as.numeric(X[, 1:11] %*% beta)
   write.csv(X, "BigX.csv", row.names = F)
   write.csv(y, "y.csv", row.names = F)
   ## Pretend that the data in "BigX.csv" is too large to fit into memory
@@ -202,8 +206,8 @@ if(!file.exists('BigX.bin')) {
 }
 #> Reading data from file, and creating file-backed big.matrix...
 #> This should take a while if the data is very large...
-#> Start time:  2026-07-30 15:16:27 
-#> End time:  2026-07-30 15:16:29 
+#> Start time:  2026-07-31 17:27:52 
+#> End time:  2026-07-31 17:27:53 
 #> DONE!
 #> 
 #> Note: This function needs to be called only one time to create two backing
@@ -219,7 +223,7 @@ attaching its descriptor file (.desc) in any new R session:
 
 rm(list = c("X", "X.bm", "y")) # Pretend starting a new session
 X.bm <- attach.big.matrix("BigX.desc")
-y <- read.csv("y.csv")[,1]
+y <- read.csv("y.csv")[, 1]
 ```
 
 This is very appealing for big data analysis in that we don’t need to
@@ -229,9 +233,11 @@ model, and runs 10-fold cross-validation:
 
 ``` r
 
-system.time({fit <- biglasso(X.bm, y)})
+system.time({
+  fit <- biglasso(X.bm, y)
+})
 #>    user  system elapsed 
-#>   0.214   0.001   0.215
+#>   0.198   0.001   0.198
 ```
 
 ``` r
@@ -245,15 +251,19 @@ plot(fit)
 
 # 10-fold cross validation in parallel
 tryCatch(
-    {
-        system.time({cvfit <- cv.biglasso(X.bm, y, seed = 1234, ncores = 4, nfolds = 10)})
-    },
-    error = function(cond) {
-        system.time({cvfit <- cv.biglasso(X.bm, y, seed = 1234, ncores = 2, nfolds = 10)})
-    }
+  {
+    system.time({
+      cvfit <- cv.biglasso(X.bm, y, seed = 1234, ncores = 4, nfolds = 10)
+    })
+  },
+  error = function(cond) {
+    system.time({
+      cvfit <- cv.biglasso(X.bm, y, seed = 1234, ncores = 2, nfolds = 10)
+    })
+  }
 )
 #>    user  system elapsed 
-#>   0.317   0.011   2.719
+#>   0.255   0.005   2.159
 ```
 
 ``` r

@@ -102,7 +102,7 @@ Chuyi Wang, Patrick Breheny</h4>
 <span><span class="va">X.bm</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/pkg/bigmemory/man/big.matrix.html" class="external-link">as.big.matrix</a></span><span class="op">(</span><span class="va">X</span><span class="op">)</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/utils/str.html" class="external-link">str</a></span><span class="op">(</span><span class="va">X.bm</span><span class="op">)</span></span>
 <span><span class="co">#&gt; Formal class 'big.matrix' [package "bigmemory"] with 1 slot</span></span>
-<span><span class="co">#&gt;   ..@ address:&lt;pointer: 0x557484d0d840&gt;</span></span></code></pre></div>
+<span><span class="co">#&gt;   ..@ address:&lt;pointer: 0x55acfb722060&gt;</span></span></code></pre></div>
 <div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/base/dim.html" class="external-link">dim</a></span><span class="op">(</span><span class="va">X.bm</span><span class="op">)</span></span>
 <span><span class="co">#&gt; [1]   62 2000</span></span></code></pre></div>
@@ -127,19 +127,19 @@ Chuyi Wang, Patrick Breheny</h4>
 <div class="sourceCode" id="cb7"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co">## 10-fold cross-valiation in parallel</span></span>
 <span><span class="va">cvfit</span> <span class="op">&lt;-</span> <span class="kw"><a href="https://rdrr.io/r/base/conditions.html" class="external-link">tryCatch</a></span><span class="op">(</span></span>
-<span>         <span class="op">{</span></span>
-<span>                <span class="fu"><a href="../reference/cv.biglasso.html">cv.biglasso</a></span><span class="op">(</span><span class="va">X.bm</span>, <span class="va">y</span>, seed <span class="op">=</span> <span class="fl">1234</span>, nfolds <span class="op">=</span> <span class="fl">10</span>, ncores <span class="op">=</span> <span class="fl">4</span><span class="op">)</span></span>
-<span>         <span class="op">}</span>,</span>
-<span>         error <span class="op">=</span> <span class="kw">function</span><span class="op">(</span><span class="va">cond</span><span class="op">)</span> <span class="op">{</span></span>
-<span>                <span class="fu"><a href="../reference/cv.biglasso.html">cv.biglasso</a></span><span class="op">(</span><span class="va">X.bm</span>, <span class="va">y</span>, seed <span class="op">=</span> <span class="fl">1234</span>, nfolds <span class="op">=</span> <span class="fl">10</span>, ncores <span class="op">=</span> <span class="fl">2</span><span class="op">)</span></span>
-<span>         <span class="op">}</span></span>
+<span>  <span class="op">{</span></span>
+<span>    <span class="fu"><a href="../reference/cv.biglasso.html">cv.biglasso</a></span><span class="op">(</span><span class="va">X.bm</span>, <span class="va">y</span>, seed <span class="op">=</span> <span class="fl">1234</span>, nfolds <span class="op">=</span> <span class="fl">10</span>, ncores <span class="op">=</span> <span class="fl">4</span><span class="op">)</span></span>
+<span>  <span class="op">}</span>,</span>
+<span>  error <span class="op">=</span> <span class="kw">function</span><span class="op">(</span><span class="va">cond</span><span class="op">)</span> <span class="op">{</span></span>
+<span>    <span class="fu"><a href="../reference/cv.biglasso.html">cv.biglasso</a></span><span class="op">(</span><span class="va">X.bm</span>, <span class="va">y</span>, seed <span class="op">=</span> <span class="fl">1234</span>, nfolds <span class="op">=</span> <span class="fl">10</span>, ncores <span class="op">=</span> <span class="fl">2</span><span class="op">)</span></span>
+<span>  <span class="op">}</span></span>
 <span><span class="op">)</span></span></code></pre></div>
 <p>After cross-validation, a few things we can do:</p>
 <ul>
 <li>plot the cross-validation plots:</li>
 </ul>
 <div class="sourceCode" id="cb8"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/graphics/par.html" class="external-link">par</a></span><span class="op">(</span>mfrow <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">2</span>, <span class="fl">2</span><span class="op">)</span>, mar <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">3.5</span>, <span class="fl">3.5</span>, <span class="fl">3</span>, <span class="fl">1</span><span class="op">)</span> ,mgp <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">2.5</span>, <span class="fl">0.5</span>, <span class="fl">0</span><span class="op">)</span><span class="op">)</span></span>
+<code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/graphics/par.html" class="external-link">par</a></span><span class="op">(</span>mfrow <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">2</span>, <span class="fl">2</span><span class="op">)</span>, mar <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">3.5</span>, <span class="fl">3.5</span>, <span class="fl">3</span>, <span class="fl">1</span><span class="op">)</span>, mgp <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">2.5</span>, <span class="fl">0.5</span>, <span class="fl">0</span><span class="op">)</span><span class="op">)</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot</a></span><span class="op">(</span><span class="va">cvfit</span>, type <span class="op">=</span> <span class="st">"all"</span><span class="op">)</span></span></code></pre></div>
 <p><img src="biglasso_files/figure-html/unnamed-chunk-9-1.png" class="r-plt" alt="" width="576"></p>
 <ul>
@@ -161,7 +161,7 @@ Chuyi Wang, Patrick Breheny</h4>
 value:</li>
 </ul>
 <div class="sourceCode" id="cb10"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/stats/coef.html" class="external-link">coef</a></span><span class="op">(</span><span class="va">cvfit</span><span class="op">)</span><span class="op">[</span><span class="fu"><a href="https://rdrr.io/r/base/which.html" class="external-link">which</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/stats/coef.html" class="external-link">coef</a></span><span class="op">(</span><span class="va">cvfit</span><span class="op">)</span> <span class="op">!=</span> <span class="fl">0</span><span class="op">)</span>,<span class="op">]</span></span>
+<code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/stats/coef.html" class="external-link">coef</a></span><span class="op">(</span><span class="va">cvfit</span><span class="op">)</span><span class="op">[</span><span class="fu"><a href="https://rdrr.io/r/base/which.html" class="external-link">which</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/stats/coef.html" class="external-link">coef</a></span><span class="op">(</span><span class="va">cvfit</span><span class="op">)</span> <span class="op">!=</span> <span class="fl">0</span><span class="op">)</span>, <span class="op">]</span></span>
 <span><span class="co">#&gt;   (Intercept)      Hsa.8147     Hsa.43279     Hsa.36689      Hsa.3152 </span></span>
 <span><span class="co">#&gt;  6.882526e-01 -5.704059e-07 -2.748858e-08 -6.967419e-04  4.940698e-05 </span></span>
 <span><span class="co">#&gt;     Hsa.36665     Hsa.692.2      Hsa.1272       Hsa.166     Hsa.31801 </span></span>
@@ -197,7 +197,7 @@ value:</li>
 <span><span class="co">#&gt; The following object is masked _by_ '.GlobalEnv':</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt;     colon</span></span>
-<span><span class="va">X</span> <span class="op">&lt;-</span> <span class="va">heart</span><span class="op">[</span>,<span class="fl">4</span><span class="op">:</span><span class="fl">7</span><span class="op">]</span></span>
+<span><span class="va">X</span> <span class="op">&lt;-</span> <span class="va">heart</span><span class="op">[</span>, <span class="fl">4</span><span class="op">:</span><span class="fl">7</span><span class="op">]</span></span>
 <span><span class="va">y</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/pkg/survival/man/Surv.html" class="external-link">Surv</a></span><span class="op">(</span><span class="va">heart</span><span class="op">$</span><span class="va">stop</span> <span class="op">-</span> <span class="va">heart</span><span class="op">$</span><span class="va">start</span>, <span class="va">heart</span><span class="op">$</span><span class="va">event</span><span class="op">)</span></span>
 <span><span class="va">X.bm</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/pkg/bigmemory/man/big.matrix.html" class="external-link">as.big.matrix</a></span><span class="op">(</span><span class="va">X</span><span class="op">)</span></span>
 <span><span class="co">#&gt; Warning in as.big.matrix(X): Coercing data.frame to matrix via factor level</span></span>
@@ -211,12 +211,16 @@ value:</li>
 </h3>
 <div class="sourceCode" id="cb13"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/base/Random.html" class="external-link">set.seed</a></span><span class="op">(</span><span class="fl">10101</span><span class="op">)</span></span>
-<span><span class="va">n</span><span class="op">=</span><span class="fl">300</span>; <span class="va">p</span><span class="op">=</span><span class="fl">300</span>; <span class="va">m</span><span class="op">=</span><span class="fl">5</span>; <span class="va">s</span><span class="op">=</span><span class="fl">10</span>; <span class="va">b</span><span class="op">=</span><span class="fl">1</span></span>
-<span><span class="va">x</span> <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/matrix.html" class="external-link">matrix</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/stats/Normal.html" class="external-link">rnorm</a></span><span class="op">(</span><span class="va">n</span> <span class="op">*</span> <span class="va">p</span><span class="op">)</span>, <span class="va">n</span>, <span class="va">p</span><span class="op">)</span></span>
-<span><span class="va">beta</span> <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/matrix.html" class="external-link">matrix</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/seq.html" class="external-link">seq</a></span><span class="op">(</span>from<span class="op">=</span><span class="op">-</span><span class="va">b</span>,to<span class="op">=</span><span class="va">b</span>,length.out<span class="op">=</span><span class="va">s</span><span class="op">*</span><span class="va">m</span><span class="op">)</span>,<span class="va">s</span>,<span class="va">m</span><span class="op">)</span></span>
-<span><span class="va">y</span> <span class="op">=</span> <span class="va">x</span><span class="op">[</span>,<span class="fl">1</span><span class="op">:</span><span class="va">s</span><span class="op">]</span> <span class="op"><a href="https://rdrr.io/r/base/matmult.html" class="external-link">%*%</a></span> <span class="va">beta</span> <span class="op">+</span> <span class="fu"><a href="https://rdrr.io/r/base/matrix.html" class="external-link">matrix</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/stats/Normal.html" class="external-link">rnorm</a></span><span class="op">(</span><span class="va">n</span><span class="op">*</span><span class="va">m</span>,<span class="fl">0</span>,<span class="fl">1</span><span class="op">)</span>,<span class="va">n</span>,<span class="va">m</span><span class="op">)</span></span>
-<span><span class="va">x.bm</span> <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/pkg/bigmemory/man/big.matrix.html" class="external-link">as.big.matrix</a></span><span class="op">(</span><span class="va">x</span><span class="op">)</span></span>
-<span><span class="va">fit</span> <span class="op">=</span> <span class="fu"><a href="../reference/biglasso.html">biglasso</a></span><span class="op">(</span><span class="va">x.bm</span>, <span class="va">y</span>, family <span class="op">=</span> <span class="st">"mgaussian"</span><span class="op">)</span></span>
+<span><span class="va">n</span> <span class="op">&lt;-</span> <span class="fl">300</span></span>
+<span><span class="va">p</span> <span class="op">&lt;-</span> <span class="fl">300</span></span>
+<span><span class="va">m</span> <span class="op">&lt;-</span> <span class="fl">5</span></span>
+<span><span class="va">s</span> <span class="op">&lt;-</span> <span class="fl">10</span></span>
+<span><span class="va">b</span> <span class="op">&lt;-</span> <span class="fl">1</span></span>
+<span><span class="va">x</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/matrix.html" class="external-link">matrix</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/stats/Normal.html" class="external-link">rnorm</a></span><span class="op">(</span><span class="va">n</span> <span class="op">*</span> <span class="va">p</span><span class="op">)</span>, <span class="va">n</span>, <span class="va">p</span><span class="op">)</span></span>
+<span><span class="va">beta</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/matrix.html" class="external-link">matrix</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/seq.html" class="external-link">seq</a></span><span class="op">(</span>from <span class="op">=</span> <span class="op">-</span><span class="va">b</span>, to <span class="op">=</span> <span class="va">b</span>, length.out <span class="op">=</span> <span class="va">s</span> <span class="op">*</span> <span class="va">m</span><span class="op">)</span>, <span class="va">s</span>, <span class="va">m</span><span class="op">)</span></span>
+<span><span class="va">y</span> <span class="op">&lt;-</span> <span class="va">x</span><span class="op">[</span>, <span class="fl">1</span><span class="op">:</span><span class="va">s</span><span class="op">]</span> <span class="op"><a href="https://rdrr.io/r/base/matmult.html" class="external-link">%*%</a></span> <span class="va">beta</span> <span class="op">+</span> <span class="fu"><a href="https://rdrr.io/r/base/matrix.html" class="external-link">matrix</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/stats/Normal.html" class="external-link">rnorm</a></span><span class="op">(</span><span class="va">n</span> <span class="op">*</span> <span class="va">m</span>, <span class="fl">0</span>, <span class="fl">1</span><span class="op">)</span>, <span class="va">n</span>, <span class="va">m</span><span class="op">)</span></span>
+<span><span class="va">x.bm</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/pkg/bigmemory/man/big.matrix.html" class="external-link">as.big.matrix</a></span><span class="op">(</span><span class="va">x</span><span class="op">)</span></span>
+<span><span class="va">fit</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/biglasso.html">biglasso</a></span><span class="op">(</span><span class="va">x.bm</span>, <span class="va">y</span>, family <span class="op">=</span> <span class="st">"mgaussian"</span><span class="op">)</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot</a></span><span class="op">(</span><span class="va">fit</span><span class="op">)</span></span></code></pre></div>
 <p><img src="biglasso_files/figure-html/unnamed-chunk-14-1.png" class="r-plt" alt="" width="576"></p>
 </div>
@@ -233,10 +237,10 @@ data file and creates a backing file (.bin) and a descriptor file
 <code class="sourceCode R"><span><span class="co">## The data has 200 observations, 600 features, and 10 non-zero coefficients.</span></span>
 <span><span class="co">## This is not actually very big, but vignettes in R are supposed to render</span></span>
 <span><span class="co">## quickly. Much larger data can be handled in the same way.</span></span>
-<span><span class="kw">if</span><span class="op">(</span><span class="op">!</span><span class="fu"><a href="https://rdrr.io/r/base/files.html" class="external-link">file.exists</a></span><span class="op">(</span><span class="st">'BigX.bin'</span><span class="op">)</span><span class="op">)</span> <span class="op">{</span></span>
+<span><span class="kw">if</span> <span class="op">(</span><span class="op">!</span><span class="fu"><a href="https://rdrr.io/r/base/files.html" class="external-link">file.exists</a></span><span class="op">(</span><span class="st">"BigX.bin"</span><span class="op">)</span><span class="op">)</span> <span class="op">{</span></span>
 <span>  <span class="va">X</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/matrix.html" class="external-link">matrix</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/stats/Normal.html" class="external-link">rnorm</a></span><span class="op">(</span><span class="fl">1000</span> <span class="op">*</span> <span class="fl">5000</span><span class="op">)</span>, <span class="fl">1000</span>, <span class="fl">5000</span><span class="op">)</span></span>
 <span>  <span class="va">beta</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="op">-</span><span class="fl">5</span><span class="op">:</span><span class="fl">5</span><span class="op">)</span></span>
-<span>  <span class="va">y</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/numeric.html" class="external-link">as.numeric</a></span><span class="op">(</span><span class="va">X</span><span class="op">[</span>,<span class="fl">1</span><span class="op">:</span><span class="fl">11</span><span class="op">]</span> <span class="op"><a href="https://rdrr.io/r/base/matmult.html" class="external-link">%*%</a></span> <span class="va">beta</span><span class="op">)</span></span>
+<span>  <span class="va">y</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/numeric.html" class="external-link">as.numeric</a></span><span class="op">(</span><span class="va">X</span><span class="op">[</span>, <span class="fl">1</span><span class="op">:</span><span class="fl">11</span><span class="op">]</span> <span class="op"><a href="https://rdrr.io/r/base/matmult.html" class="external-link">%*%</a></span> <span class="va">beta</span><span class="op">)</span></span>
 <span>  <span class="fu"><a href="https://rdrr.io/r/utils/write.table.html" class="external-link">write.csv</a></span><span class="op">(</span><span class="va">X</span>, <span class="st">"BigX.csv"</span>, row.names <span class="op">=</span> <span class="cn">F</span><span class="op">)</span></span>
 <span>  <span class="fu"><a href="https://rdrr.io/r/utils/write.table.html" class="external-link">write.csv</a></span><span class="op">(</span><span class="va">y</span>, <span class="st">"y.csv"</span>, row.names <span class="op">=</span> <span class="cn">F</span><span class="op">)</span></span>
 <span>  <span class="co">## Pretend that the data in "BigX.csv" is too large to fit into memory</span></span>
@@ -244,8 +248,8 @@ data file and creates a backing file (.bin) and a descriptor file
 <span><span class="op">}</span></span>
 <span><span class="co">#&gt; Reading data from file, and creating file-backed big.matrix...</span></span>
 <span><span class="co">#&gt; This should take a while if the data is very large...</span></span>
-<span><span class="co">#&gt; Start time:  2026-07-30 15:16:27 </span></span>
-<span><span class="co">#&gt; End time:  2026-07-30 15:16:29 </span></span>
+<span><span class="co">#&gt; Start time:  2026-07-31 17:27:52 </span></span>
+<span><span class="co">#&gt; End time:  2026-07-31 17:27:53 </span></span>
 <span><span class="co">#&gt; DONE!</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; Note: This function needs to be called only one time to create two backing</span></span>
@@ -257,30 +261,36 @@ attaching its descriptor file (.desc) in any new R session:</p>
 <div class="sourceCode" id="cb15"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/base/rm.html" class="external-link">rm</a></span><span class="op">(</span>list <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"X"</span>, <span class="st">"X.bm"</span>, <span class="st">"y"</span><span class="op">)</span><span class="op">)</span> <span class="co"># Pretend starting a new session</span></span>
 <span><span class="va">X.bm</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/pkg/bigmemory/man/attach.big.matrix.html" class="external-link">attach.big.matrix</a></span><span class="op">(</span><span class="st">"BigX.desc"</span><span class="op">)</span></span>
-<span><span class="va">y</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/utils/read.table.html" class="external-link">read.csv</a></span><span class="op">(</span><span class="st">"y.csv"</span><span class="op">)</span><span class="op">[</span>,<span class="fl">1</span><span class="op">]</span></span></code></pre></div>
+<span><span class="va">y</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/utils/read.table.html" class="external-link">read.csv</a></span><span class="op">(</span><span class="st">"y.csv"</span><span class="op">)</span><span class="op">[</span>, <span class="fl">1</span><span class="op">]</span></span></code></pre></div>
 <p>This is very appealing for big data analysis in that we don’t need to
 “read” the raw data again in a R session, which would be very
 time-consuming. The code below again fits a lasso-penalized linear
 model, and runs 10-fold cross-validation:</p>
 <div class="sourceCode" id="cb16"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/base/system.time.html" class="external-link">system.time</a></span><span class="op">(</span><span class="op">{</span><span class="va">fit</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/biglasso.html">biglasso</a></span><span class="op">(</span><span class="va">X.bm</span>, <span class="va">y</span><span class="op">)</span><span class="op">}</span><span class="op">)</span></span>
+<code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/base/system.time.html" class="external-link">system.time</a></span><span class="op">(</span><span class="op">{</span></span>
+<span>  <span class="va">fit</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/biglasso.html">biglasso</a></span><span class="op">(</span><span class="va">X.bm</span>, <span class="va">y</span><span class="op">)</span></span>
+<span><span class="op">}</span><span class="op">)</span></span>
 <span><span class="co">#&gt;    user  system elapsed </span></span>
-<span><span class="co">#&gt;   0.214   0.001   0.215</span></span></code></pre></div>
+<span><span class="co">#&gt;   0.198   0.001   0.198</span></span></code></pre></div>
 <div class="sourceCode" id="cb17"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot</a></span><span class="op">(</span><span class="va">fit</span><span class="op">)</span></span></code></pre></div>
 <p><img src="biglasso_files/figure-html/unnamed-chunk-18-1.png" class="r-plt" alt="" width="576"></p>
 <div class="sourceCode" id="cb18"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co"># 10-fold cross validation in parallel</span></span>
 <span><span class="kw"><a href="https://rdrr.io/r/base/conditions.html" class="external-link">tryCatch</a></span><span class="op">(</span></span>
-<span>    <span class="op">{</span></span>
-<span>        <span class="fu"><a href="https://rdrr.io/r/base/system.time.html" class="external-link">system.time</a></span><span class="op">(</span><span class="op">{</span><span class="va">cvfit</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/cv.biglasso.html">cv.biglasso</a></span><span class="op">(</span><span class="va">X.bm</span>, <span class="va">y</span>, seed <span class="op">=</span> <span class="fl">1234</span>, ncores <span class="op">=</span> <span class="fl">4</span>, nfolds <span class="op">=</span> <span class="fl">10</span><span class="op">)</span><span class="op">}</span><span class="op">)</span></span>
-<span>    <span class="op">}</span>,</span>
-<span>    error <span class="op">=</span> <span class="kw">function</span><span class="op">(</span><span class="va">cond</span><span class="op">)</span> <span class="op">{</span></span>
-<span>        <span class="fu"><a href="https://rdrr.io/r/base/system.time.html" class="external-link">system.time</a></span><span class="op">(</span><span class="op">{</span><span class="va">cvfit</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/cv.biglasso.html">cv.biglasso</a></span><span class="op">(</span><span class="va">X.bm</span>, <span class="va">y</span>, seed <span class="op">=</span> <span class="fl">1234</span>, ncores <span class="op">=</span> <span class="fl">2</span>, nfolds <span class="op">=</span> <span class="fl">10</span><span class="op">)</span><span class="op">}</span><span class="op">)</span></span>
-<span>    <span class="op">}</span></span>
+<span>  <span class="op">{</span></span>
+<span>    <span class="fu"><a href="https://rdrr.io/r/base/system.time.html" class="external-link">system.time</a></span><span class="op">(</span><span class="op">{</span></span>
+<span>      <span class="va">cvfit</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/cv.biglasso.html">cv.biglasso</a></span><span class="op">(</span><span class="va">X.bm</span>, <span class="va">y</span>, seed <span class="op">=</span> <span class="fl">1234</span>, ncores <span class="op">=</span> <span class="fl">4</span>, nfolds <span class="op">=</span> <span class="fl">10</span><span class="op">)</span></span>
+<span>    <span class="op">}</span><span class="op">)</span></span>
+<span>  <span class="op">}</span>,</span>
+<span>  error <span class="op">=</span> <span class="kw">function</span><span class="op">(</span><span class="va">cond</span><span class="op">)</span> <span class="op">{</span></span>
+<span>    <span class="fu"><a href="https://rdrr.io/r/base/system.time.html" class="external-link">system.time</a></span><span class="op">(</span><span class="op">{</span></span>
+<span>      <span class="va">cvfit</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/cv.biglasso.html">cv.biglasso</a></span><span class="op">(</span><span class="va">X.bm</span>, <span class="va">y</span>, seed <span class="op">=</span> <span class="fl">1234</span>, ncores <span class="op">=</span> <span class="fl">2</span>, nfolds <span class="op">=</span> <span class="fl">10</span><span class="op">)</span></span>
+<span>    <span class="op">}</span><span class="op">)</span></span>
+<span>  <span class="op">}</span></span>
 <span><span class="op">)</span></span>
 <span><span class="co">#&gt;    user  system elapsed </span></span>
-<span><span class="co">#&gt;   0.317   0.011   2.719</span></span></code></pre></div>
+<span><span class="co">#&gt;   0.255   0.005   2.159</span></span></code></pre></div>
 <div class="sourceCode" id="cb19"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/graphics/par.html" class="external-link">par</a></span><span class="op">(</span>mfrow <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">2</span>, <span class="fl">2</span><span class="op">)</span>, mar <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">3.5</span>, <span class="fl">3.5</span>, <span class="fl">3</span>, <span class="fl">1</span><span class="op">)</span>, mgp <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">2.5</span>, <span class="fl">0.5</span>, <span class="fl">0</span><span class="op">)</span><span class="op">)</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot</a></span><span class="op">(</span><span class="va">cvfit</span>, type <span class="op">=</span> <span class="st">"all"</span><span class="op">)</span></span></code></pre></div>
@@ -311,7 +321,7 @@ manipulation</a></li>
 </div>
 
 <div class="pkgdown-footer-right">
-  <p>Last updated: July 30, 2026</p>
+  <p>Last updated: July 31, 2026</p>
 </div>
 
     </footer>

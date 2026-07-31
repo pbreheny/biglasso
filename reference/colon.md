@@ -4,15 +4,25 @@ The data file contains gene expression data of 62 samples (40 tumor
 samples, 22 normal samples) from colon-cancer patients analyzed with an
 Affymetrix oligonucleotide Hum6000 array.
 
+## Usage
+
+``` r
+data(colon)
+```
+
 ## Format
 
-A list of 2 variables included in `colon`:
+A list of 2 variables:
 
-- `X`: a 62-by-2000 matrix that records the gene expression data. Used
-  as design matrix.
+- X:
 
-- `y`: a binary vector of length 62 recording the sample status: 1 =
-  tumor; 0 = normal. Used as response vector.
+  A 62-by-2000 matrix that records the gene expression data. Used as
+  design matrix.
+
+- y:
+
+  A binary vector of length 62 recording the sample status: 1 = tumor; 0
+  = normal. Used as response vector.
 
 ## Source
 
@@ -21,10 +31,11 @@ The raw data can be found on Bioconductor:
 
 ## References
 
-- U. Alon et al. (1999): Broad patterns of gene expression revealed by
-  clustering analysis of tumor and normal colon tissue probed by
-  oligonucleotide arrays. *Proc. Natl. Acad. Sci. USA* **96**,
-  6745-6750. <https://www.pnas.org/doi/abs/10.1073/pnas.96.12.6745>.
+Alon U, Barkai N, Notterman DA, Gish K, Ybarra S, Mack D, and Levine AJ
+(1999). Broad patterns of gene expression revealed by clustering
+analysis of tumor and normal colon tissues probed by oligonucleotide
+arrays. *Proc. Natl. Acad. Sci.* 96: 6745–6750
+[doi:10.1073/pnas.96.12.6745](https://doi.org/10.1073/pnas.96.12.6745)
 
 ## Examples
 
@@ -42,7 +53,7 @@ dim(X)
 X.bm <- as.big.matrix(X, backingfile = "") # convert to big.matrix object
 str(X.bm)
 #> Formal class 'big.matrix' [package "bigmemory"] with 1 slot
-#>   ..@ address:<pointer: 0x55bbf07ef620> 
+#>   ..@ address:<pointer: 0x5622d4db9c70> 
 dim(X.bm)
 #> [1]   62 2000
 ```

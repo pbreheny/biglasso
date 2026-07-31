@@ -83,11 +83,20 @@ biglasso(
   `"Hybrid"`, which combines the strong rule with a safe rule.
   `"Adaptive"` (default for `penalty="lasso"` without `penalty.factor`),
   which is a variant of Hybrid that avoids recalculating the safe rule
-  when it would not be efficient to do so. **Note that:** 1. For linear
-  regression with elastic net penalty, both `"SSR"` and `"Hybrid"` are
-  applicable since version 1.3-0 2. Only `"SSR"` is applicable to
-  elastic-net-penalized logistic regression or cox regression 3. Active
-  set cycling is incorporated into all of these screening rules
+  when it would not be efficient to do so. Valid values are
+  family-dependent: `"Hybrid"` is only available for
+  `family="gaussian"`; for `family="cox"`, `"Hybrid"` is not available
+  but three additional cox-specific safe-rule variants are: `"scox"`,
+  `"sscox"`, and `"safe"`. **Note that:**
+
+  1.  For linear regression with elastic net penalty, both `"SSR"` and
+      `"Hybrid"` are applicable since version 1.3-0
+
+  2.  Only `"SSR"` is applicable to elastic-net-penalized logistic
+      regression or cox regression
+
+  3.  Active set cycling is incorporated into all of these screening
+      rules
 
 - safe.thresh:
 
@@ -113,10 +122,12 @@ biglasso(
 
   The elastic-net mixing parameter that controls the relative
   contribution from the lasso (l1) and the ridge (l2) penalty. The
-  penalty is defined as \$\$ \alpha\|\|\beta\|\|\_1 +
-  (1-\alpha)/2\|\|\beta\|\|\_2^2.\$\$ `alpha=1` is the lasso penalty,
-  `alpha=0` the ridge penalty, `alpha` in between 0 and 1 is the
-  elastic-net ("enet") penalty.
+  penalty is defined as
+
+  \$\$ \alpha\|\|\beta\|\|\_1 + (1-\alpha)/2\|\|\beta\|\|\_2^2.\$\$
+
+  `alpha=1` is the lasso penalty, `alpha=0` the ridge penalty, `alpha`
+  in between 0 and 1 is the elastic-net ("enet") penalty.
 
 - lambda.min:
 
@@ -273,11 +284,16 @@ family, with following variables.
 
 The objective function for linear regression or multiple responses
 linear regression (`family = "gaussian"` or `family = "mgaussian"`) is
-\$\$\frac{1}{2n}\textrm{RSS} + \lambda \cdot \textrm{penalty},\$\$ where
-for `family = "mgaussian"`), a group-lasso type penalty is applied. For
-logistic regression (`family = "binomial"`) it is \$\$-\frac{1}{n}
-\ell + \lambda \cdot \textrm{penalty},\$\$ for cox regression, breslow
-approximation for ties is applied.
+
+\$\$\frac{1}{2n}\textrm{RSS} + \lambda \cdot \textrm{penalty},\$\$
+
+where for `family = "mgaussian"`), a group-lasso type penalty is
+applied. For logistic regression
+
+(`family = "binomial"`) it is \$\$-\frac{1}{n} \ell + \lambda \cdot
+\textrm{penalty},\$\$ for cox regression,
+
+breslow approximation for ties is applied.
 
 Several advanced feature screening rules are implemented. For
 lasso-penalized linear regression, all the options of `screen` are
@@ -291,7 +307,7 @@ efficient rules are under development.
 
 Zeng Y and Breheny P. (2021) The biglasso Package: A Memory- and
 Computation- Efficient Solver for Lasso Model Fitting with Big Data in
-R. *R Journal*, **12**: 6-19.
+R. *R Journal*, 12: 6-19.
 [doi:10.32614/RJ-2021-001](https://doi.org/10.32614/RJ-2021-001)
 
 ## See also
@@ -301,10 +317,6 @@ R. *R Journal*, **12**: 6-19.
 [`cv.biglasso()`](https://pbreheny.github.io/biglasso/reference/cv.biglasso.md),
 [`plot.biglasso()`](https://pbreheny.github.io/biglasso/reference/plot.biglasso.md),
 [`ncvreg::ncvreg()`](https://pbreheny.github.io/ncvreg/reference/ncvreg.html)
-
-## Author
-
-Yaohui Zeng, Chuyi Wang and Patrick Breheny
 
 ## Examples
 
@@ -319,17 +331,29 @@ fit_lasso <- biglasso(x_bm, y, family = "gaussian")
 plot(fit_lasso, log.l = TRUE, main = "lasso")
 
 # elastic net
-fit_enet <- biglasso(x_bm, y, penalty = 'enet', alpha = 0.5, family = 'gaussian')
-plot(fit_enet, log.l = TRUE, main = 'elastic net')
+fit_enet <- biglasso(
+  x_bm,
+  y,
+  penalty = "enet",
+  alpha = 0.5,
+  family = "gaussian"
+)
+plot(fit_enet, log.l = TRUE, main = "elastic net")
 
 
 ## Logistic regression
-fit_bin_lasso <- biglasso(x_bm, y, penalty = 'lasso', family = "binomial")
-plot(fit_bin_lasso, log.l = TRUE, main = 'lasso')
+fit_bin_lasso <- biglasso(x_bm, y, penalty = "lasso", family = "binomial")
+plot(fit_bin_lasso, log.l = TRUE, main = "lasso")
 
 # elastic net
-fit_bin_enet <- biglasso(x_bm, y, penalty = 'enet', alpha = 0.5, family = "binomial")
-plot(fit_bin_enet, log.l = TRUE, main = 'elastic net')
+fit_bin_enet <- biglasso(
+  x_bm,
+  y,
+  penalty = "enet",
+  alpha = 0.5,
+  family = "binomial"
+)
+plot(fit_bin_enet, log.l = TRUE, main = "elastic net")
 
 
 ## Cox regression
@@ -339,7 +363,7 @@ p <- 30
 nzc <- p / 3
 x <- matrix(rnorm(n * p), n, p)
 beta <- rnorm(nzc)
-fx <- x[, seq(nzc)] %*% beta/3
+fx <- x[, seq(nzc)] %*% beta / 3
 hx <- exp(fx)
 ty <- rexp(n, hx)
 tcens <- quantile(ty, 0.7)
@@ -358,9 +382,9 @@ s <- 10
 b <- 1
 x <- matrix(rnorm(n * p), n, p)
 beta <- matrix(seq(from = -b, to = b, length.out = s * m), s, m)
-y = x[, 1:s] %*% beta + matrix(rnorm(n * m, 0, 1), n, m)
-x_bm = as.big.matrix(x)
-fit = biglasso(x_bm, y, family = "mgaussian")
+y <- x[, 1:s] %*% beta + matrix(rnorm(n * m, 0, 1), n, m)
+x_bm <- as.big.matrix(x)
+fit <- biglasso(x_bm, y, family = "mgaussian")
 plot(fit, main = "mgaussian")
 
 ```

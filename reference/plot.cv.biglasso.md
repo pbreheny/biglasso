@@ -58,23 +58,18 @@ plot(
 
   Other graphical parameters to `plot`
 
+## Value
+
+Invisibly returns `NULL`. Called for its side effect of producing a
+plot.
+
 ## Details
 
-Error bars representing approximate 68\\ along with the estimates at
-value of `lambda`. For `rsq` and `snr`, these confidence intervals are
-quite crude, especially near.
+Error bars representing approximate 68\\ estimates at value of `lambda`.
+For `rsq` and `snr`, these confidence intervals are quite crude,
+especially near.
 
 ## See also
 
 [`biglasso()`](https://pbreheny.github.io/biglasso/reference/biglasso.md),
 [`cv.biglasso()`](https://pbreheny.github.io/biglasso/reference/cv.biglasso.md)
-
-## Author
-
-Yaohui Zeng and Patrick Breheny
-
-## Examples
-
-``` r
-## See examples in "cv.biglasso"
-```
