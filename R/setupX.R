@@ -27,17 +27,12 @@
 #' @param type The data type. Only "double" is supported for now.
 #' @param ... Additional arguments that can be passed into function [bigmemory::read.big.matrix()].
 #'
-#' @returns A `big.matrix` object corresponding to a file-backed [bigmemory::big.matrix()]. It's
-#'   ready to be used as the design matrix `X` in [biglasso()] and [cv.biglasso()].
+#' @returns A `big.matrix` object corresponding to a file-backed [bigmemory::big.matrix()] and ready
+#'   to be used as the design matrix `X` in [biglasso()] and [cv.biglasso()].
 #'
-#' @seealso [biglasso()], [ncvreg::cv.ncvreg()], [biglasso-package]
-#'
-#' @examples
-#' ## see the example in "biglasso-package"
+#' @seealso [biglasso()], [ncvreg::cv.ncvreg()]
 #'
 #' @export
-#'
-#' @author Yaohui Zeng and Patrick Breheny
 setupX <- function(
   filename,
   dir = getwd(),

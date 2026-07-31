@@ -12,39 +12,38 @@
 \arguments{
 \item{object}{A \code{cv.biglasso} object.}
 
-\item{\dots}{Further arguments passed to or from other methods.}
+\item{...}{Further arguments passed to or from other methods.}
 
 \item{x}{A \code{"summary.cv.biglasso"} object.}
 
-\item{digits}{Number of digits past the decimal point to print out.  Can be
-a vector specifying different display digits for each of the five
-non-integer printed values.}
+\item{digits}{Number of digits past the decimal point to print out. Can be a vector specifying
+different display digits for each of the five non-integer printed values.}
 }
 \value{
-\code{summary.cv.biglasso} produces an object with S3 class
-\code{"summary.cv.biglasso"}. The class has its own print method and contains
-the following list elements:
+\code{summary.cv.biglasso} produces an object with S3 class \code{"summary.cv.biglasso"}. The
+class has its own print method and contains the following list elements:
+
+\describe{
 \item{penalty}{The penalty used by \code{biglasso}.}
-\item{model}{Either \code{"linear"} or \code{"logistic"}, depending on the \code{family} option in \code{biglasso}.}
+\item{model}{
+Either \code{"linear"} or \code{"logistic"}, depending on the \code{family} option in \code{biglasso}.
+}
 \item{n}{Number of observations}
 \item{p}{Number of regression coefficients (not including the intercept).}
 \item{min}{The index of \code{lambda} with the smallest cross-validation error.}
 \item{lambda}{The sequence of \code{lambda} values used by \code{cv.biglasso}.}
 \item{cve}{Cross-validation error (deviance).}
-\item{r.squared}{Proportion of variance explained by the model, as estimated by cross-validation.}
+\item{r.squared}{
+Proportion of variance explained by the model, as estimated by cross-validation.
+}
 \item{snr}{Signal to noise ratio, as estimated by cross-validation.}
 \item{sigma}{For linear regression models, the scale parameter estimate.}
 \item{pe}{For logistic regression models, the prediction error (misclassification error).}
 }
+}
 \description{
 Summary method for \code{cv.biglasso} objects.
 }
-\examples{
-## See examples in "cv.biglasso" and "biglasso-package"
-}
 \seealso{
-\code{\link[=biglasso]{biglasso()}}, \code{\link[=cv.biglasso]{cv.biglasso()}}, \code{\link[=plot.cv.biglasso]{plot.cv.biglasso()}}, \link{biglasso-package}
-}
-\author{
-Yaohui Zeng and Patrick Breheny
+\code{\link[=biglasso]{biglasso()}}, \code{\link[=cv.biglasso]{cv.biglasso()}}, \code{\link[=plot.cv.biglasso]{plot.cv.biglasso()}}
 }

@@ -21,14 +21,11 @@
 #' @param col Controls the color of the dots (CV estimates).
 #' @param \dots Other graphical parameters to `plot`
 #'
+#' @returns Invisibly returns `NULL`. Called for its side effect of producing a plot.
+#'
 #' @seealso [biglasso()], [cv.biglasso()]
 #'
-#' @examples
-#' ## See examples in "cv.biglasso"
-#'
 #' @export
-#'
-#' @author Yaohui Zeng and Patrick Breheny
 plot.cv.biglasso <- function(
   x,
   log.l = TRUE,
@@ -49,4 +46,5 @@ plot.cv.biglasso <- function(
     col = col,
     ...
   )
+  invisible(NULL)
 }

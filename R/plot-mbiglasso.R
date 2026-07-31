@@ -8,16 +8,13 @@
 #' @param log.l Should horizontal axis be on the log scale? Default is TRUE.
 #' @param norm.beta Should the vertical axis be the l2 norm of coefficients for each variable?
 #'   Default is TRUE. If False, the vertical axis is the coefficients.
-#' @param \dots Other graphical parameters to [plot()]
+#' @param ... Other graphical parameters to [plot()]
+#'
+#' @returns Invisibly returns `NULL`. Called for its side effect of producing a plot.
 #'
 #' @seealso [biglasso()]
 #'
-#' @examples
-#' ## See examples in "biglasso"
-#'
 #' @export
-#'
-#' @author Chuyi Wang
 plot.mbiglasso <- function(x, alpha = 1, log.l = TRUE, norm.beta = TRUE, ...) {
   YY <- coef(x, intercept = FALSE)
   ## currently not support unpenalized coefficients. NOT USED
@@ -69,4 +66,5 @@ plot.mbiglasso <- function(x, alpha = 1, log.l = TRUE, norm.beta = TRUE, ...) {
     },
     ...
   )
+  invisible(NULL)
 }

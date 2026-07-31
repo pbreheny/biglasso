@@ -8,12 +8,13 @@
 #' @param row.idx Similar to that in [biglasso()], it's a vector of the row indices of `X` that used
 #'   for the prediction. `1:nrow(X)` by default.
 #' @param type Type of prediction:
-#'   * `"link"` returns the linear predictors
-#'   * `"response"` gives the fitted values
-#'   * `"class"` returns the binomial outcome with the highest probability
-#'   * `"coefficients"` returns the coefficients
-#'   * `"vars"` returns a list containing the indices and names of the nonzero variables at each value of `lambda`
-#'   * `"nvars"` returns the number of nonzero coefficients at each value of `lambda`
+#'   - `"link"` returns the linear predictors
+#'   - `"response"` gives the fitted values
+#'   - `"class"` returns the binomial outcome with the highest probability
+#'   - `"coefficients"` returns the coefficients
+#'   - `"vars"` returns a list containing the indices and names of the nonzero variables at each
+#'     value of `lambda`
+#'   - `"nvars"` returns the number of nonzero coefficients at each value of `lambda`
 #' @param lambda Values of the regularization parameter `lambda` at which predictions are requested.
 #'   The default value is the one corresponding to the minimum cross-validation error. Accepted
 #'   values are also the strings "lambda.min" (`lambda` of minimum cross-validation error) and
@@ -36,7 +37,14 @@
 #' y <- colon$y
 #' X.bm <- as.big.matrix(X, backingfile = "")
 #' fit <- biglasso(X.bm, y, penalty = "lasso", family = "binomial")
-#' cvfit <- cv.biglasso(X.bm, y, penalty = "lasso", family = "binomial", seed = 1234, ncores = 2)
+#' cvfit <- cv.biglasso(
+#'   X.bm,
+#'   y,
+#'   penalty = "lasso",
+#'   family = "binomial",
+#'   seed = 1234,
+#'   ncores = 2
+#' )
 #' coef <- coef(cvfit)
 #' coef[which(coef != 0)]
 #' predict(cvfit, X.bm, type = "response")
@@ -47,12 +55,6 @@
 #'
 #' @rdname predict.cv.biglasso
 #' @export
-#'
-#' @name predict.cv.biglasso
-#'
-#' @method predict cv.biglasso
-#'
-#' @author Yaohui Zeng and Patrick Breheny
 predict.cv.biglasso <- function(
   object,
   X,

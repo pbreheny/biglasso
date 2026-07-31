@@ -26,7 +26,7 @@
 #'   `family="mgaussian"` only.
 #' @param drop If coefficients for a single value of `lambda` are to be returned, reduce dimensions
 #'   to a vector? Setting `drop=FALSE` returns a 1-column matrix.
-#' @param \dots Not used.
+#' @param ... Not used.
 #'
 #' @returns The object returned depends on `type`.
 #'
@@ -49,12 +49,6 @@
 #'
 #' @rdname predict.biglasso
 #' @export
-#'
-#' @name predict.biglasso
-#'
-#' @method predict biglasso
-#'
-#' @author Yaohui Zeng and Patrick Breheny
 predict.biglasso <- function(
   object,
   X,

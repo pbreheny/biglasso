@@ -17,58 +17,43 @@ setupX(
 \arguments{
 \item{filename}{The name of the data file. For example, "dat.txt".}
 
-\item{dir}{The directory used to store the binary and descriptor files
-associated with the \code{big.matrix}. The default is current working
-directory.}
+\item{dir}{The directory used to store the binary and descriptor files associated with the
+\code{big.matrix}. The default is current working directory.}
 
-\item{sep}{The field separator character. For example, "," for
-comma-delimited files (the default); "\\t" for tab-delimited files.}
+\item{sep}{The field separator character. For example, "," for comma-delimited files (the
+default); "\\t" for tab-delimited files.}
 
-\item{backingfile}{The binary file associated with the file-backed
-\code{big.matrix}. By default, its name is the same as \code{filename} with
-the extension replaced by ".bin".}
+\item{backingfile}{The binary file associated with the file-backed \code{big.matrix}. By default, its
+name is the same as \code{filename} with the extension replaced by ".bin".}
 
-\item{descriptorfile}{The descriptor file used for the description of the
-file-backed \code{big.matrix}. By default, its name is the same as
-\code{filename} with the extension replaced by ".desc".}
+\item{descriptorfile}{The descriptor file used for the description of the file-backed
+\code{big.matrix}. By default, its name is the same as \code{filename} with the extension replaced by
+".desc".}
 
 \item{type}{The data type. Only "double" is supported for now.}
 
-\item{...}{Additional arguments that can be passed into function
-\code{\link[bigmemory:read.big.matrix]{bigmemory::read.big.matrix()}}.}
+\item{...}{Additional arguments that can be passed into function \code{\link[bigmemory:read.big.matrix]{bigmemory::read.big.matrix()}}.}
 }
 \value{
-A \code{big.matrix} object corresponding to a file-backed
-\code{\link[bigmemory:big.matrix]{bigmemory::big.matrix()}}. It's ready to be used as the design matrix \code{X} in
-\code{\link[=biglasso]{biglasso()}} and \code{\link[=cv.biglasso]{cv.biglasso()}}.
+A \code{big.matrix} object corresponding to a file-backed \code{\link[bigmemory:big.matrix]{bigmemory::big.matrix()}} and ready
+to be used as the design matrix \code{X} in \code{\link[=biglasso]{biglasso()}} and \code{\link[=cv.biglasso]{cv.biglasso()}}.
 }
 \description{
-Set up the design matrix X as a \code{big.matrix} object based on external
-massive data file stored on disk that cannot be fullly loaded into memory.
-The data file must be a well-formated ASCII-file, and contains only one
-single type. Current version only supports \code{double} type. Other
-restrictions about the data file are described in
-\link{biglasso-package}. This function reads the massive data, and
-creates a \code{big.matrix} object. By default, the resulting
-\code{big.matrix} is file-backed, and can be shared across processors or
-nodes of a cluster.
+Set up the design matrix X as a \code{big.matrix} object based on external massive data file stored on
+disk that cannot be fullly loaded into memory. The data file must be a well-formated ASCII-file,
+and contains only one single type. Current version only supports \code{double} type. Other
+restrictions about the data file are described in \link{biglasso-package}. This function reads the
+massive data, and creates a \code{big.matrix} object. By default, the resulting \code{big.matrix} is
+file-backed, and can be shared across processors or nodes of a cluster.
 }
 \details{
-For a data set, this function needs to be called only one time to set up the
-\code{big.matrix} object with two backing files (.bin, .desc) created in
-current working directory. Once set up, the data can be "loaded" into any
-(new) R session by calling \code{attach.big.matrix(discriptorfile)}.
+For a data set, this function needs to be called only one time to set up the \code{big.matrix} object
+with two backing files (.bin, .desc) created in current working directory. Once set up, the data
+can be "loaded" into any (new) R session by calling \code{attach.big.matrix(discriptorfile)}.
 
 This function is a simple wrapper of \code{\link[bigmemory:read.big.matrix]{bigmemory::read.big.matrix()}}. See
-\href{https://CRAN.R-project.org/package=bigmemory}{bigmemory} for more
-details.
-}
-\examples{
-## see the example in "biglasso-package"
+\href{https://CRAN.R-project.org/package=bigmemory}{bigmemory} for more details.
 }
 \seealso{
-\code{\link[=biglasso]{biglasso()}}, \code{\link[ncvreg:cv.ncvreg]{ncvreg::cv.ncvreg()}}, \link{biglasso-package}
-}
-\author{
-Yaohui Zeng and Patrick Breheny
+\code{\link[=biglasso]{biglasso()}}, \code{\link[ncvreg:cv.ncvreg]{ncvreg::cv.ncvreg()}}
 }

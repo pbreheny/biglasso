@@ -5,27 +5,24 @@
 \title{Extending Lasso Model Fitting to Big Data}
 \description{
 Extend lasso and elastic-net linear, logistic and cox regression models for
-ultrahigh-dimensional, multi-gigabyte data sets that cannot be loaded into
-available RAM. This package utilizes memory-mapped files to store the
-massive data on the disk and only read those into memory whenever necessary
-during model fitting. Moreover, some advanced feature screening rules are
-proposed and implemented to accelerate the model fitting. As a result, this
-package is much more memory- and computation-efficient and highly scalable
-as compared to existing lasso-fitting packages such as
-\href{https://CRAN.R-project.org/package=glmnet}{glmnet} and
-\href{https://CRAN.R-project.org/package=ncvreg}{ncvreg}, thus allowing for
-powerful big data analysis even with only an ordinary laptop.
+ultrahigh-dimensional, multi-gigabyte data sets that cannot be loaded into available RAM. This
+package utilizes memory-mapped files to store the massive data on the disk and only read those
+into memory whenever necessary during model fitting. Moreover, some advanced feature screening
+rules are proposed and implemented to accelerate the model fitting. As a result, this package is
+much more memory- and computation-efficient and highly scalable as compared to existing
+lasso-fitting packages such as \href{https://CRAN.R-project.org/package=glmnet}{glmnet} and
+\href{https://CRAN.R-project.org/package=ncvreg}{ncvreg}, thus allowing for powerful big data
+analysis even with only an ordinary laptop.
 }
 \details{
-\tabular{ll}{ Package: \tab biglasso\cr Type: \tab Package\cr Version: \tab
-1.4-1\cr Date: \tab 2021-01-29\cr License: \tab GPL-3\cr}
+\tabular{ll}{ Package: \tab biglasso\cr Type: \tab Package\cr Version: \tab 1.4-1\cr Date: \tab
+2021-01-29\cr License: \tab GPL-3\cr}
 
-Penalized regression models, in particular the lasso, have been extensively
-applied to analyzing high-dimensional data sets. However, due to the memory
-limit, existing R packages are not capable of fitting lasso models for
-ultrahigh-dimensional, multi-gigabyte data sets which have been increasingly
-seen in many areas such as genetics, biomedical imaging, genome sequencing
-and high-frequency finance.
+Penalized regression models, in particular the lasso, have been extensively applied to analyzing
+high-dimensional data sets. However, due to the memory limit, existing R packages are not capable
+of fitting lasso models for ultrahigh-dimensional, multi-gigabyte data sets which have been
+increasingly seen in many areas such as genetics, biomedical imaging, genome sequencing and
+high-frequency finance.
 
 This package aims to fill the gap by extending lasso model fitting to Big
 Data in R. Version >= 1.2-3 represents a major redesign where the source
@@ -92,36 +89,38 @@ Elapsed time (s) \tab 0.11 \tab 0.83 \tab 8.47 \tab 85.50 \cr }
 }
 \examples{
 \dontrun{
-## Example of reading data from external big data file, fit lasso model, 
+## Example of reading data from external big data file, fit lasso model,
 ## and run cross validation in parallel
 
 # simulated design matrix, 1000 observations, 500,000 variables, ~ 5GB
 # there are 10 true variables with non-zero coefficient 2.
-xfname <- 'x_e3_5e5.txt' 
-yfname <- 'y_e3_5e5.txt' # response vector
+xfname <- "x_e3_5e5.txt"
+yfname <- "y_e3_5e5.txt" # response vector
 time <- system.time(
-  X <- setupX(xfname, sep = '\t') # create backing files (.bin, .desc)
+  X <- setupX(xfname, sep = "\t") # create backing files (.bin, .desc)
 )
 print(time) # ~ 7 minutes; this is just one-time operation
 dim(X)
 
-# the big.matrix then can be retrieved by its descriptor file (.desc) in any new R session. 
+# the big.matrix then can be retrieved by its descriptor file (.desc) in any new R session.
 rm(X)
-xdesc <- 'x_e3_5e5.desc' 
+xdesc <- "x_e3_5e5.desc"
 X <- attach.big.matrix(xdesc)
 dim(X)
 
 y <- as.matrix(read.table(yfname, header = F))
 time.fit <- system.time(
-  fit <- biglasso(X, y, family = 'gaussian', screen = 'Hybrid')
+  fit <- biglasso(X, y, family = "gaussian", screen = "Hybrid")
 )
 print(time.fit) # ~ 44 seconds for fitting a lasso model along the entire solution path
 
 # cross validation in parallel
 seed <- 1234
 time.cvfit <- system.time(
-  cvfit <- cv.biglasso(X, y, family = 'gaussian', screen = 'Hybrid', 
-                       seed = seed, ncores = 4, nfolds = 10)
+  cvfit <- cv.biglasso(X, y,
+    family = "gaussian", screen = "Hybrid",
+    seed = seed, ncores = 4, nfolds = 10
+  )
 )
 print(time.cvfit) # ~ 3 minutes for 10-fold cross validation
 plot(cvfit)

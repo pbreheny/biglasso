@@ -37,19 +37,29 @@
 #' @param grouped Whether to calculate CV standard error (`cvse`) over CV folds (`TRUE`), or over
 #'   all cross-validated predictions. Ignored when `eval.metric` is 'auc'.
 #'
-#' @returns An object with S3 class `"cv.biglasso"` which inherits from
-#' class `"cv.ncvreg"`. The following variables are contained in the
-#' class (adopted from [ncvreg::cv.ncvreg()]).
-#' \item{cve}{The error for each value of `lambda`, averaged across the cross-validation folds.}
-#' \item{cvse}{The estimated standard error associated with each value of for `cve`.}
-#' \item{lambda}{The sequence of regularization parameter values along which the cross-validation error was calculated.}
-#' \item{fit}{The fitted `biglasso` object for the whole data.}
-#' \item{min}{The index of `lambda` corresponding to `lambda.min`.}
-#' \item{lambda.min}{The value of `lambda` with the minimum cross-validation error.}
-#' \item{lambda.1se}{The largest value of `lambda` for which the cross-validation error is at most one standard error larger than the minimum cross-validation error.}
-#' \item{null.dev}{The deviance for the intercept-only model.}
-#' \item{pe}{If `family="binomial"`, the cross-validation prediction error for each value of `lambda`.}
-#' \item{cv.ind}{Same as above.}
+#' @returns An object with S3 class `"cv.biglasso"` which inherits from class `"cv.ncvreg"`. The
+#'   following variables are contained in the class:
+#'
+#' \describe{
+#'   \item{cve}{The error for each value of `lambda`, averaged across the cross-validation folds.}
+#'   \item{cvse}{The estimated standard error associated with each value of for `cve`.}
+#'   \item{lambda}{
+#'     The sequence of regularization parameter values along which the cross-validation error was
+#'     calculated.
+#'   }
+#'   \item{fit}{The fitted `biglasso` object for the whole data.}
+#'   \item{min}{The index of `lambda` corresponding to `lambda.min`.}
+#'   \item{lambda.min}{The value of `lambda` with the minimum cross-validation error.}
+#'   \item{lambda.1se}{
+#'     The largest value of `lambda` for which the cross-validation error is at most one standard
+#'     error larger than the minimum cross-validation error.
+#'   }
+#'   \item{null.dev}{The deviance for the intercept-only model.}
+#'   \item{pe}{
+#'     If `family="binomial"`, the cross-validation prediction error for each value of `lambda`.
+#'   }
+#'   \item{cv.ind}{Same as above.}
+#' }
 #'
 #' @seealso [biglasso()], [plot.cv.biglasso()], [summary.cv.biglasso()], [setupX()]
 #'
@@ -69,8 +79,6 @@
 #' }
 #'
 #' @export
-#'
-#' @author Yaohui Zeng and Patrick Breheny
 cv.biglasso <- function(
   X,
   y,

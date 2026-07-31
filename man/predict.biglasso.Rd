@@ -44,9 +44,8 @@
 \item{X}{Matrix of values at which predictions are to be made. It must be a
 \code{\link[bigmemory:big.matrix]{bigmemory::big.matrix()}} object. Not used for \code{type="coefficients"}.}
 
-\item{row.idx}{Similar to that in \code{\link[=biglasso]{biglasso()}}, it's a
-vector of the row indices of \code{X} that used for the prediction.
-\code{1:nrow(X)} by default.}
+\item{row.idx}{Similar to that in \code{\link[=biglasso]{biglasso()}}, it's a vector of the row indices of \code{X} that used
+for the prediction. \code{1:nrow(X)} by default.}
 
 \item{type}{Type of prediction:
 \itemize{
@@ -59,32 +58,29 @@ at each value of \code{lambda}
 \item \code{"nvars"} returns the number of nonzero coefficients at each value of \code{lambda}
 }}
 
-\item{lambda}{Values of the regularization parameter \code{lambda} at which
-predictions are requested.  Linear interpolation is used for values of
-\code{lambda} not in the sequence of lambda values in the fitted models.}
+\item{lambda}{Values of the regularization parameter \code{lambda} at which predictions are requested.
+Linear interpolation is used for values of \code{lambda} not in the sequence of lambda values in the
+fitted models.}
 
-\item{which}{Indices of the penalty parameter \code{lambda} at which
-predictions are required.  By default, all indices are returned.  If
-\code{lambda} is specified, this will override \code{which}.}
+\item{which}{Indices of the penalty parameter \code{lambda} at which predictions are required. By
+default, all indices are returned. If \code{lambda} is specified, this will override \code{which}.}
 
-\item{\dots}{Not used.}
+\item{...}{Not used.}
 
 \item{k}{Index of the response to predict in multiple responses regression (
 \code{family="mgaussian"}).}
 
-\item{drop}{If coefficients for a single value of \code{lambda} are to be
-returned, reduce dimensions to a vector?  Setting \code{drop=FALSE} returns
-a 1-column matrix.}
+\item{drop}{If coefficients for a single value of \code{lambda} are to be returned, reduce dimensions
+to a vector? Setting \code{drop=FALSE} returns a 1-column matrix.}
 
-\item{intercept}{Whether the intercept should be included in the returned
-coefficients. For \code{family="mgaussian"} only.}
+\item{intercept}{Whether the intercept should be included in the returned coefficients. For
+\code{family="mgaussian"} only.}
 }
 \value{
 The object returned depends on \code{type}.
 }
 \description{
-Extract predictions (fitted reponse, coefficients, etc.) from a
-fitted \code{\link[=biglasso]{biglasso()}} object.
+Extract predictions (fitted reponse, coefficients, etc.) from a fitted \code{\link[=biglasso]{biglasso()}} object.
 }
 \examples{
 ## Logistic regression
@@ -100,10 +96,8 @@ predict(fit, x_bm, type = "response", lambda = 0.05)[1:10]
 predict(fit, x_bm, type = "class", lambda = 0.1)[1:10]
 predict(fit, type = "vars", lambda = c(0.05, 0.1))
 predict(fit, type = "nvars", lambda = c(0.05, 0.1))
+
 }
 \seealso{
 \code{\link[=biglasso]{biglasso()}}, \code{\link[=cv.biglasso]{cv.biglasso()}}
-}
-\author{
-Yaohui Zeng and Patrick Breheny
 }

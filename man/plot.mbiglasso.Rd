@@ -9,26 +9,22 @@
 \arguments{
 \item{x}{Fitted \code{mbiglasso} model.}
 
-\item{alpha}{Controls alpha-blending, helpful when the number of covariates
-is large.  Default is alpha=1.}
+\item{alpha}{Controls alpha-blending, helpful when the number of covariates is large. Default is
+alpha=1.}
 
-\item{log.l}{Should horizontal axis be on the log scale?  Default is TRUE.}
+\item{log.l}{Should horizontal axis be on the log scale? Default is TRUE.}
 
 \item{norm.beta}{Should the vertical axis be the l2 norm of coefficients for each variable?
 Default is TRUE. If False, the vertical axis is the coefficients.}
 
-\item{\dots}{Other graphical parameters to \code{\link[=plot]{plot()}}}
+\item{...}{Other graphical parameters to \code{\link[=plot]{plot()}}}
+}
+\value{
+Invisibly returns \code{NULL}. Called for its side effect of producing a plot.
 }
 \description{
-Produce a plot of the coefficient paths for a fitted multiple responses
-\code{mbiglasso} object.
-}
-\examples{
-## See examples in "biglasso"
+Produce a plot of the coefficient paths for a fitted multiple responses \code{mbiglasso} object.
 }
 \seealso{
 \code{\link[=biglasso]{biglasso()}}
-}
-\author{
-Chuyi Wang
 }

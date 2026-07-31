@@ -14,24 +14,23 @@ loss.biglasso(y, yhat, family, eval.metric, grouped = TRUE)
 \item{family}{Either "gaussian" or "binomial", depending on the response.}
 
 \item{eval.metric}{The evaluation metric for the cross-validated error and
-for choosing optimal \code{lambda}. "default" for linear regression is MSE
-(mean squared error), for logistic regression is misclassification error.
-"MAPE", for linear regression only, is the Mean Absolute Percentage Error.
-"auc", for logistic regression, is the area under the receiver operating
-characteristic curve (ROC).}
+for choosing optimal \code{lambda}:
+\itemize{
+\item \code{"default"} for linear regression is MSE (mean squared error) and for logistic regression is
+misclassification error.
+\item \code{"MAPE"}, for linear regression only, is the Mean Absolute Percentage Error.
+\item "auc", for logistic regression, is the area under the receiver operating
+characteristic curve (ROC).
+}}
 
-\item{grouped}{Whether to calculate loss for the entire CV fold
-(\code{TRUE}), or for predictions individually. Must be \code{TRUE} when
-\code{eval.metric} is 'auc'.}
+\item{grouped}{Whether to calculate loss for the entire CV fold (\code{TRUE}), or for predictions
+individually. Must be \code{TRUE} when \code{eval.metric} is 'auc'.}
 }
 \description{
 Internal biglasso functions
 }
 \details{
-These are not intended for use by users. \code{loss.biglasso} calculates the
-value of the loss function for the given predictions (used for cross-validation).
-}
-\author{
-Yaohui Zeng and Patrick Breheny
+These are not intended for use by users. \code{loss.biglasso} calculates the value of the loss
+function for the given predictions (used for cross-validation).
 }
 \keyword{internal}

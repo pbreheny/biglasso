@@ -55,16 +55,21 @@
 #' @param return.time Whether to return the computing time of the model fitting. Default is TRUE.
 #'
 #' @returns An object with S3 class `"biglasso"` with following variables.
-#' \item{beta}{The vector of estimated coefficients}
-#' \item{iter}{A vector of length `nlambda` containing the number of
-#' iterations until convergence}
-#' \item{resid}{Vector of residuals calculated from estimated coefficients.}
-#' \item{lambda}{The sequence of regularization parameter values in the path.}
-#' \item{alpha}{Same as in `biglasso()`}
-#' \item{loss}{A vector containing either the residual sum of squares of the fitted model at each value of lambda.}
-#' \item{penalty.factor}{Same as in `biglasso()`.}
-#' \item{n}{The number of observations used in the model fitting.}
-#' \item{y}{The response vector used in the model fitting.}
+#'
+#' \describe{
+#'   \item{beta}{The vector of estimated coefficients}
+#'   \item{iter}{A vector of length `nlambda` containing the number of iterations until convergence}
+#'   \item{resid}{Vector of residuals calculated from estimated coefficients.}
+#'   \item{lambda}{The sequence of regularization parameter values in the path.}
+#'   \item{alpha}{Same as in `biglasso()`}
+#'   \item{loss}{
+#'     A vector containing either the residual sum of squares of the fitted model at each value of
+#'     lambda.
+#'   }
+#'   \item{penalty.factor}{Same as in `biglasso()`.}
+#'   \item{n}{The number of observations used in the model fitting.}
+#'   \item{y}{The response vector used in the model fitting.}
+#' }
 #'
 #' @examples
 #' data(Prostate)
@@ -86,8 +91,6 @@
 #' fit$beta
 #'
 #' @export
-#'
-#' @author Tabitha Peter and Patrick Breheny
 biglasso_fit <- function(
   X,
   y,

@@ -17,42 +17,36 @@
 \arguments{
 \item{x}{A \code{"cv.biglasso"} object.}
 
-\item{log.l}{Should horizontal axis be on the log scale?  Default is TRUE.}
+\item{log.l}{Should horizontal axis be on the log scale? Default is TRUE.}
 
-\item{type}{What to plot on the vertical axis.  \code{cve} plots the
-cross-validation error (deviance); \code{rsq} plots an estimate of the
-fraction of the deviance explained by the model (R-squared); \code{snr}
-plots an estimate of the signal-to-noise ratio; \code{scale} plots, for
-\code{family="gaussian"}, an estimate of the scale parameter (standard
-deviation); \code{pred} plots, for \code{family="binomial"}, the estimated
-prediction error; \code{all} produces all of the above.}
+\item{type}{What to plot on the vertical axis. \code{cve} plots the cross-validation error (deviance);
+\code{rsq} plots an estimate of the fraction of the deviance explained by the model (R-squared);
+\code{snr} plots an estimate of the signal-to-noise ratio; \code{scale} plots, for \code{family="gaussian"},
+an estimate of the scale parameter (standard deviation); \code{pred} plots, for \code{family="binomial"},
+the estimated prediction error; \code{all} produces all of the above.}
 
-\item{selected}{If \code{TRUE} (the default), places an axis on top of the
-plot denoting the number of variables in the model (i.e., that have a
-nonzero regression coefficient) at that value of \code{lambda}.}
+\item{selected}{If \code{TRUE} (the default), places an axis on top of the plot denoting the number of
+variables in the model (i.e., that have a nonzero regression coefficient) at that value of
+\code{lambda}.}
 
-\item{vertical.line}{If \code{TRUE} (the default), draws a vertical line at
-the value where cross-validaton error is minimized.}
+\item{vertical.line}{If \code{TRUE} (the default), draws a vertical line at the value where
+cross-validaton error is minimized.}
 
 \item{col}{Controls the color of the dots (CV estimates).}
 
 \item{\dots}{Other graphical parameters to \code{plot}}
 }
+\value{
+Invisibly returns \code{NULL}. Called for its side effect of producing a plot.
+}
 \description{
-Plot the cross-validation curve from a \code{\link[=cv.biglasso]{cv.biglasso()}} object,
-along with standard error bars.
+Plot the cross-validation curve from a \code{\link[=cv.biglasso]{cv.biglasso()}} object, along with standard error bars.
 }
 \details{
-Error bars representing approximate 68\\% confidence intervals are plotted
-along with the estimates at value of \code{lambda}.  For \code{rsq} and
-\code{snr}, these confidence intervals are quite crude, especially near.
-}
-\examples{
-## See examples in "cv.biglasso"
+Error bars representing approximate 68\\% confidence intervals are plotted along with the
+estimates at value of \code{lambda}. For \code{rsq} and \code{snr}, these confidence intervals are quite crude,
+especially near.
 }
 \seealso{
 \code{\link[=biglasso]{biglasso()}}, \code{\link[=cv.biglasso]{cv.biglasso()}}
-}
-\author{
-Yaohui Zeng and Patrick Breheny
 }

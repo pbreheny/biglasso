@@ -96,43 +96,59 @@
 #' @param return.time Whether to return the computing time of the model fitting. Default is TRUE.
 #' @param verbose Whether to output the timing of each lambda iteration. Default is FALSE.
 #'
-#' @returns An object with S3 class `"biglasso"` for
-#' `"gaussian", "binomial", "cox"` families, or an object with S3 class
-#' `"mbiglasso"` for `"mgaussian"` family,  with following variables.
-#' \item{beta}{The fitted matrix of coefficients, store in sparse matrix
-#' representation. The number of rows is equal to the number of coefficients,
-#' whereas the number of columns is equal to `nlambda`. For `"mgaussian"`
-#' family with m responses, it is a list of m such matrices.}
-#' \item{iter}{A vector of length `nlambda` containing the number of
-#' iterations until convergence at each value of `lambda`.}
-#' \item{lambda}{The sequence of regularization parameter values in the path.}
-#' \item{penalty}{Same as above.}
-#' \item{family}{Same as above.}
-#' \item{alpha}{Same as above.}
-#' \item{loss}{A vector containing either the residual sum of squares
-#' (for `"gaussian", "mgaussian"`) or negative log-likelihood
-#' (for `"binomial", "cox"`) of the fitted model at each value of `lambda`.}
-#' \item{penalty.factor}{Same as above.}
-#' \item{n}{The number of observations used in the model fitting. It's equal to
-#' `length(row.idx)`.}
-#' \item{center}{The sample mean vector of the variables, i.e., column mean of
-#' the sub-matrix of `X` used for model fitting.}
-#' \item{scale}{The sample standard deviation of the variables, i.e., column
-#' standard deviation of the sub-matrix of `X` used for model fitting.}
-#' \item{y}{The response vector used in the model fitting. Depending on
-#' `row.idx`, it could be a subset of the raw input of the response vector y.}
-#' \item{screen}{Same as above.}
-#' \item{col.idx}{The indices of features that have 'scale' value greater than
-#' 1e-6. Features with 'scale' less than 1e-6 are removed from model fitting.}
-#' \item{rejections}{The number of features rejected at each value of `lambda`.}
-#' \item{safe_rejections}{The number of features rejected by safe rules at each
-#' value of `lambda`.}
+#' @returns An object with S3 class `"biglasso"` for `"gaussian", "binomial", "cox"` families, or an
+#'   object with S3 class `"mbiglasso"` for `"mgaussian"` family, with following variables.
+#'
+#' \describe{
+#'   \item{beta}{
+#'     The fitted matrix of coefficients, store in sparse matrix representation. The number of rows
+#'     is equal to the number of coefficients, whereas the number of columns is equal to `nlambda`.
+#'     For `"mgaussian"` family with m responses, it is a list of m such matrices.
+#'   }
+#'   \item{iter}{
+#'     A vector of length `nlambda` containing the number of iterations until convergence at each
+#'     value of `lambda`.
+#'   }
+#'   \item{lambda}{The sequence of regularization parameter values in the path.}
+#'   \item{penalty}{Same as above.}
+#'   \item{family}{Same as above.}
+#'   \item{alpha}{Same as above.}
+#'   \item{loss}{
+#'     A vector containing either the residual sum of squares (for `"gaussian", "mgaussian"`) or
+#'     negative log-likelihood (for `"binomial", "cox"`) of the fitted model at each value of
+#'     `lambda`.
+#'   }
+#'   \item{penalty.factor}{Same as above.}
+#'   \item{n}{
+#'     The number of observations used in the model fitting. It's equal to `length(row.idx)`.
+#'   }
+#'   \item{center}{
+#'     The sample mean vector of the variables, i.e., column mean of the sub-matrix of `X` used for
+#'     model fitting.
+#'   }
+#'   \item{scale}{
+#'     The sample standard deviation of the variables, i.e., column standard deviation of the
+#'     sub-matrix of `X` used for model fitting.
+#'   }
+#'   \item{y}{
+#'     The response vector used in the model fitting. Depending on `row.idx`, it could be a subset
+#'     of the raw input of the response vector y.
+#'   }
+#'   \item{screen}{Same as above.}
+#'   \item{col.idx}{
+#'     The indices of features that have 'scale' value greater than 1e-6. Features with 'scale' less
+#'     than 1e-6 are removed from model fitting.
+#'   }
+#'   \item{rejections}{The number of features rejected at each value of `lambda`.}
+#'   \item{safe_rejections}{
+#'     The number of features rejected by safe rules at each value of `lambda`.
+#'   }
+#' }
 #'
 #' @references
-#' Zeng Y and Breheny P. (2021) The biglasso Package: A Memory- and Computation-
-#' Efficient Solver for Lasso Model Fitting with Big Data in R.
-#' *R Journal*, **12**: 6-19.
-#' \doi{10.32614/RJ-2021-001}
+#'   Zeng Y and Breheny P. (2021) The biglasso Package: A Memory- and Computation-
+#'   Efficient Solver for Lasso Model Fitting with Big Data in R. *R Journal*, 12: 6-19.
+#'   \doi{10.32614/RJ-2021-001}
 #' @seealso [biglasso-package], [setupX()], [cv.biglasso()], [plot.biglasso()], [ncvreg::ncvreg()]
 #'
 #' @examples
@@ -145,14 +161,26 @@
 #' fit_lasso <- biglasso(x_bm, y, family = "gaussian")
 #' plot(fit_lasso, log.l = TRUE, main = "lasso")
 #' # elastic net
-#' fit_enet <- biglasso(x_bm, y, penalty = "enet", alpha = 0.5, family = "gaussian")
+#' fit_enet <- biglasso(
+#'   x_bm,
+#'   y,
+#'   penalty = "enet",
+#'   alpha = 0.5,
+#'   family = "gaussian"
+#' )
 #' plot(fit_enet, log.l = TRUE, main = "elastic net")
 #'
 #' ## Logistic regression
 #' fit_bin_lasso <- biglasso(x_bm, y, penalty = "lasso", family = "binomial")
 #' plot(fit_bin_lasso, log.l = TRUE, main = "lasso")
 #' # elastic net
-#' fit_bin_enet <- biglasso(x_bm, y, penalty = "enet", alpha = 0.5, family = "binomial")
+#' fit_bin_enet <- biglasso(
+#'   x_bm,
+#'   y,
+#'   penalty = "enet",
+#'   alpha = 0.5,
+#'   family = "binomial"
+#' )
 #' plot(fit_bin_enet, log.l = TRUE, main = "elastic net")
 #'
 #' ## Cox regression
@@ -186,8 +214,6 @@
 #' plot(fit, main = "mgaussian")
 #'
 #' @export
-#'
-#' @author Yaohui Zeng, Chuyi Wang and Patrick Breheny
 biglasso <- function(
   X,
   y,

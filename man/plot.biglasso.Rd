@@ -9,22 +9,19 @@
 \arguments{
 \item{x}{Fitted \code{\link[=biglasso]{biglasso()}} model.}
 
-\item{alpha}{Controls alpha-blending, helpful when the number of covariates
-is large.  Default is alpha=1.}
+\item{alpha}{Controls alpha-blending, helpful when the number of covariates is large. Default is
+alpha=1.}
 
-\item{log.l}{Should horizontal axis be on the log scale?  Default is TRUE.}
+\item{log.l}{Should horizontal axis be on the log scale? Default is TRUE.}
 
-\item{\dots}{Other graphical parameters to \code{\link[=plot]{plot()}}}
+\item{...}{Other graphical parameters to \code{\link[=plot]{plot()}}}
+}
+\value{
+Invisibly returns \code{NULL}. Called for its side effect of producing a plot.
 }
 \description{
 Produce a plot of the coefficient paths for a fitted \code{\link[=biglasso]{biglasso()}} object.
 }
-\examples{
-## See examples in "biglasso"
-}
 \seealso{
 \code{\link[=biglasso]{biglasso()}}, \code{\link[=cv.biglasso]{cv.biglasso()}}
-}
-\author{
-Yaohui Zeng and Patrick Breheny
 }

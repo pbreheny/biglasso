@@ -6,16 +6,13 @@
 #' @param alpha Controls alpha-blending, helpful when the number of covariates is large. Default is
 #'   alpha=1.
 #' @param log.l Should horizontal axis be on the log scale? Default is TRUE.
-#' @param \dots Other graphical parameters to [plot()]
+#' @param ... Other graphical parameters to [plot()]
+#'
+#' @returns Invisibly returns `NULL`. Called for its side effect of producing a plot.
 #'
 #' @seealso [biglasso()], [cv.biglasso()]
 #'
-#' @examples
-#' ## See examples in "biglasso"
-#'
 #' @export
-#'
-#' @author Yaohui Zeng and Patrick Breheny
 plot.biglasso <- function(x, alpha = 1, log.l = TRUE, ...) {
   YY <- if (length(x$penalty.factor) == nrow(x$beta)) coef(x) else coef(x)[-1, , drop = FALSE]
   ## currently not support unpenalized coefficients. NOT USED
@@ -42,4 +39,5 @@ plot.biglasso <- function(x, alpha = 1, log.l = TRUE, ...) {
     },
     ...
   )
+  invisible(NULL)
 }

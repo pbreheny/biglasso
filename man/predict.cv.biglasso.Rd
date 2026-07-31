@@ -21,12 +21,10 @@
 \item{object}{A fitted \code{"cv.biglasso"} model object.}
 
 \item{X}{Matrix of values at which predictions are to be made. It must be a
-\code{\link[bigmemory:big.matrix]{bigmemory::big.matrix()}} object. Not used for
-\code{type="coefficients"}.}
+\code{\link[bigmemory:big.matrix]{bigmemory::big.matrix()}} object. Not used for \code{type="coefficients"}.}
 
-\item{row.idx}{Similar to that in \code{\link[=biglasso]{biglasso()}}, it's a
-vector of the row indices of \code{X} that used for the prediction.
-\code{1:nrow(X)} by default.}
+\item{row.idx}{Similar to that in \code{\link[=biglasso]{biglasso()}}, it's a vector of the row indices of \code{X} that used
+for the prediction. \code{1:nrow(X)} by default.}
 
 \item{type}{Type of prediction:
 \itemize{
@@ -34,21 +32,20 @@ vector of the row indices of \code{X} that used for the prediction.
 \item \code{"response"} gives the fitted values
 \item \code{"class"} returns the binomial outcome with the highest probability
 \item \code{"coefficients"} returns the coefficients
-\item \code{"vars"} returns a list containing the indices and names of the nonzero variables at each value of \code{lambda}
+\item \code{"vars"} returns a list containing the indices and names of the nonzero variables at each
+value of \code{lambda}
 \item \code{"nvars"} returns the number of nonzero coefficients at each value of \code{lambda}
 }}
 
-\item{lambda}{Values of the regularization parameter \code{lambda} at which
-predictions are requested.  The default value is the one corresponding to
-the minimum cross-validation error. Accepted values are also the strings
-"lambda.min" (\code{lambda} of minimum cross-validation error) and
-"lambda.1se" (Largest value of \code{lambda} for which the cross-validation
-error was at most one standard error larger than the minimum.).}
+\item{lambda}{Values of the regularization parameter \code{lambda} at which predictions are requested.
+The default value is the one corresponding to the minimum cross-validation error. Accepted
+values are also the strings "lambda.min" (\code{lambda} of minimum cross-validation error) and
+"lambda.1se" (Largest value of \code{lambda} for which the cross-validation error was at most one
+standard error larger than the minimum.).}
 
-\item{which}{Indices of the penalty parameter \code{lambda} at which
-predictions are requested. The default value is the index of lambda
-corresponding to lambda.min.  Note: this is overridden if \code{lambda} is
-specified.}
+\item{which}{Indices of the penalty parameter \code{lambda} at which predictions are requested. The
+default value is the index of lambda corresponding to lambda.min. Note: this is overridden if
+\code{lambda} is specified.}
 
 \item{\dots}{Not used.}
 }
@@ -65,8 +62,15 @@ data(colon)
 X <- colon$X
 y <- colon$y
 X.bm <- as.big.matrix(X, backingfile = "")
-fit <- biglasso(X.bm, y, penalty = 'lasso', family = "binomial")
-cvfit <- cv.biglasso(X.bm, y, penalty = 'lasso', family = "binomial", seed = 1234, ncores = 2)
+fit <- biglasso(X.bm, y, penalty = "lasso", family = "binomial")
+cvfit <- cv.biglasso(
+  X.bm,
+  y,
+  penalty = "lasso",
+  family = "binomial",
+  seed = 1234,
+  ncores = 2
+)
 coef <- coef(cvfit)
 coef[which(coef != 0)]
 predict(cvfit, X.bm, type = "response")
@@ -74,10 +78,8 @@ predict(cvfit, X.bm, type = "link")
 predict(cvfit, X.bm, type = "class")
 predict(cvfit, X.bm, lambda = "lambda.1se")
 }
+
 }
 \seealso{
 \code{\link[=biglasso]{biglasso()}}, \code{\link[=cv.biglasso]{cv.biglasso()}}
-}
-\author{
-Yaohui Zeng and Patrick Breheny
 }
