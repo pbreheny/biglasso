@@ -1,0 +1,8 @@
+"package","task","max_rss_gb","elapsed_s"
+"biglasso","fit",0.259,1.26
+"glmnet","fit",2.838976,11.06
+"ncvreg","fit",2.80954,16.5
+"picasso","fit",2.210984,12.87
+"biglasso","cv",0.258956,1.85
+"glmnet","cv",3.740332,70.7
+"ncvreg","cv",4.931196,131.44

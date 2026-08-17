@@ -1,0 +1,57 @@
+"Which.vary","Package","time"
+100,"glmnet",0.0731499999999996
+200,"glmnet",0.14655
+500,"glmnet",0.334049999999999
+1000,"glmnet",0.637
+2000,"glmnet",1.26069999999999
+5000,"glmnet",3.10615
+10000,"glmnet",6.27205
+20000,"glmnet",13.01805
+100,"ncvreg",0.1464
+200,"ncvreg",0.270649999999999
+500,"ncvreg",0.637200000000001
+1000,"ncvreg",1.19855
+2000,"ncvreg",2.3829
+5000,"ncvreg",5.91985
+10000,"ncvreg",11.66735
+20000,"ncvreg",23.2545500000001
+100,"picasso",0.06675
+200,"picasso",0.1262
+500,"picasso",0.295599999999997
+1000,"picasso",0.552800000000002
+2000,"picasso",1.11015
+5000,"picasso",2.75735000000001
+10000,"picasso",5.52199999999998
+20000,"picasso",11.2069
+100,"biglasso (1 core)",0.18105
+200,"biglasso (1 core)",0.235749999999998
+500,"biglasso (1 core)",0.415050000000002
+1000,"biglasso (1 core)",0.689550000000001
+2000,"biglasso (1 core)",1.28759999999999
+5000,"biglasso (1 core)",2.9768
+10000,"biglasso (1 core)",6.07055
+20000,"biglasso (1 core)",11.6684
+100,"biglasso (2 cores)",0.162
+200,"biglasso (2 cores)",0.187850000000001
+500,"biglasso (2 cores)",0.285050000000001
+1000,"biglasso (2 cores)",0.432849999999998
+2000,"biglasso (2 cores)",0.753499999999997
+5000,"biglasso (2 cores)",1.66209999999998
+10000,"biglasso (2 cores)",3.29484999999996
+20000,"biglasso (2 cores)",6.34495000000011
+100,"biglasso (4 cores)",0.149949999999999
+200,"biglasso (4 cores)",0.15955
+500,"biglasso (4 cores)",0.212750000000003
+1000,"biglasso (4 cores)",0.296750000000004
+2000,"biglasso (4 cores)",0.481700000000004
+5000,"biglasso (4 cores)",1.01450000000002
+10000,"biglasso (4 cores)",1.9534
+20000,"biglasso (4 cores)",3.73219999999992
+100,"biglasso (8 cores)",0.145000000000001
+200,"biglasso (8 cores)",0.146449999999999
+500,"biglasso (8 cores)",0.191150000000001
+1000,"biglasso (8 cores)",0.271650000000001
+2000,"biglasso (8 cores)",0.442899999999995
+5000,"biglasso (8 cores)",0.937299999999993
+10000,"biglasso (8 cores)",1.8001
+20000,"biglasso (8 cores)",3.45040000000006

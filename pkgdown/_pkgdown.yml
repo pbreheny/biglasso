@@ -17,6 +17,16 @@ home:
   sidebar:
     structure: [links, citation, authors, dev]
 
+articles:
+  - title: Get started
+    navbar: ~
+    contents:
+      - biglasso
+  - title: Benchmarks
+    navbar: Benchmarks
+    contents:
+      - benchmarks
+
 footer:
   structure:
     left: developed_by
