@@ -34,6 +34,14 @@
       <ul class="navbar-nav me-auto">
 <li class="nav-item"><a class="nav-link" href="articles/biglasso.html">Get started</a></li>
 <li class="nav-item"><a class="nav-link" href="reference/index.html">Reference</a></li>
+<li class="nav-item dropdown">
+  <button class="nav-link dropdown-toggle" type="button" id="dropdown-articles" data-bs-toggle="dropdown" aria-expanded="false" aria-haspopup="true">Articles</button>
+  <ul class="dropdown-menu" aria-labelledby="dropdown-articles">
+<li><hr class="dropdown-divider"></li>
+    <li><h6 class="dropdown-header" data-toc-skip>Benchmarks</h6></li>
+    <li><a class="dropdown-item" href="articles/benchmarks.html">Benchmarks</a></li>
+  </ul>
+</li>
 <li class="nav-item"><a class="nav-link" href="news/index.html">Changelog</a></li>
       </ul>
 <ul class="navbar-nav">
@@ -105,169 +113,7 @@
 <div class="section level2">
 <h2 id="benchmarks">Benchmarks:<a class="anchor" aria-label="anchor" href="#benchmarks"></a>
 </h2>
-<div class="section level3">
-<h3 id="simulated-data">Simulated data:<a class="anchor" aria-label="anchor" href="#simulated-data"></a>
-</h3>
-<ul>
-<li>
-<strong>Packages</strong> to be compared: <code>biglasso (1.4-0)</code>, <code>glmnet (4.0-2)</code>, <code>ncvreg (3.12-0)</code>, and <code>picasso (1.3-1)</code>.</li>
-<li>
-<strong>Platform</strong>: AMD Ryzen 5 5600X @ 4.2 GHz and 32 GB RAM.</li>
-<li>
-<strong>Experiments</strong>: solving lasso-penalized linear regression over the entire path of 100 <code>lambda</code> values equally spaced on the log scale of <code>lambda / lambda_max</code> from 0.1 to 1; varying number of observations <code>n</code> and number of features <code>p</code>; 20 replications, the mean computing time (in seconds) are reported.</li>
-<li>
-<strong>Data generating model</strong>: <code>y =  X *  beta + 0.1 eps</code>, where <code>X</code> and <code>eps</code> are i.i.d. sampled from <code>N(0, 1)</code>.</li>
-</ul>
-<!--
-![Alt text](/vignettes/2020-12-18_vary_p_pkgs.png?raw=true "Vary p")
-![Alt text](/vignettes/2020-12-18_vary_n_pkgs.png?raw=true "Vary n")
---><div class="section level4">
-<h4 id="id_1-biglasso-is-more-computation-efficient">(1) <code>biglasso</code> is more computation-efficient:<a class="anchor" aria-label="anchor" href="#id_1-biglasso-is-more-computation-efficient"></a>
-</h4>
-<!--
-![Alt text](/vignettes/2020-12-18_vary_p_pkgs.png)
-![Alt text](/vignettes/2020-12-18_vary_n_pkgs.png)
--->
-<p><img src="https://raw.githubusercontent.com/pbreheny/biglasso/master/vignettes/2020-12-18_vary_p_pkgs.png" width="400" height="300"><img src="https://raw.githubusercontent.com/pbreheny/biglasso/master/vignettes/2020-12-18_vary_n_pkgs.png" width="400" height="300"></p>
-<p>In all the settings, <code>biglasso</code> (1 core) is uniformly faster than <code>picasso</code>, <code>glmnet</code> and <code>ncvreg</code>. When the data gets bigger, <code>biglasso</code> achieves 6-9x speed-up compared to other packages. Moreover, the computing time of <code>biglasso</code> can be further reduced by half via parallel-computation of multiple cores.</p>
-</div>
-<div class="section level4">
-<h4 id="id_2-biglasso-is-more-memory-efficient">(2) <code>biglasso</code> is more memory-efficient:<a class="anchor" aria-label="anchor" href="#id_2-biglasso-is-more-memory-efficient"></a>
-</h4>
-<p>To prove that <code>biglasso</code> is much more memory-efficient, we simulate a <code>1000 X 100000</code> large feature matrix. The raw data is 0.75 GB. We used <a href="https://github.com/jeetsukumaran/Syrupy" class="external-link">Syrupy</a> to measure the memory used in RAM (i.e. the resident set size, RSS) every 1 second during lasso model fitting by each of the packages.</p>
-<p>The maximum RSS (in <strong>GB</strong>) used by a single fit and 10-fold cross validation is reported in the Table below. In the single fit case, <code>biglasso</code> consumes 0.60 GB memory in RAM, 23% of that used by <code>glmnet</code> and 24% of that used by <code>ncvreg</code>. Note that the memory consumed by <code>glmnet</code> and <code>ncvreg</code> are respectively 3.4x and 3.3x larger than the size of the raw data. <code>biglasso</code> also requires less additional memory to perform cross-validation, compared other packages. For serial 10-fold cross-validation, <code>biglasso</code> requires just 31% of the memory used by <code>glmnet</code> and 11% of that used by <code>ncvreg</code>, making it 3.2x and 9.4x more memory-efficient compared to these two, respectively.</p>
-<center>
-<table class="table">
-<thead><tr>
-<th align="right">Package</th>
-<th align="center">picasso</th>
-<th align="center">ncvreg</th>
-<th align="center">glmnet</th>
-<th align="center">biglasso</th>
-</tr></thead>
-<tbody>
-<tr>
-<td align="right">Single fit</td>
-<td align="center">0.74</td>
-<td align="center">2.47</td>
-<td align="center">2.57</td>
-<td align="center">0.60</td>
-</tr>
-<tr>
-<td align="right">10-fold CV</td>
-<td align="center">-</td>
-<td align="center">4.62</td>
-<td align="center">3.11</td>
-<td align="center">0.96</td>
-</tr>
-</tbody>
-</table>
-</center>
-<p><strong>Note</strong>: ..* the memory savings offered by <code>biglasso</code> would be even more significant if cross-validation were conducted in parallel. However, measuring memory usage across parallel processes is not straightforward and not implemented in <code>Syrupy</code>; ..* cross-validation is not implemented in <code>picasso</code> at this point.</p>
-</div>
-</div>
-<div class="section level3">
-<h3 id="real-data">Real data:<a class="anchor" aria-label="anchor" href="#real-data"></a>
-</h3>
-<p>The performance of the packages are also tested using diverse real data sets: * <a href="https://iowabiostat.github.io/data-sets/brca1/brca1.html" class="external-link">Breast cancer gene expression data</a> (GENE); * <a href="https://www.kaggle.com/datasets/hojjatk/mnist-dataset/data" class="external-link">MNIST handwritten image data</a> (MNIST); * <a href="https://arxiv.org/abs/1607.05636" class="external-link">Cardiac fibrosis genome-wide association study data</a> (GWAS); * <a href="https://archive.ics.uci.edu/ml/datasets/Bag+of+Words" class="external-link">Subset of New York Times bag-of-words data</a> (NYT).</p>
-<p>The following table summarizes the mean (SE) computing time (in seconds) of solving the lasso along the entire path of 100 <code>lambda</code> values equally spaced on the log scale of <code>lambda / lambda_max</code> from 0.1 to 1 over 20 replications.</p>
-<center>
-<table class="table">
-<thead><tr>
-<th align="right">Package</th>
-<th align="center">GENE</th>
-<th align="center">MNIST</th>
-<th align="center">GWAS</th>
-<th align="center">NYT</th>
-</tr></thead>
-<tbody>
-<tr>
-<td align="right"></td>
-<td align="center"><code>n=536</code></td>
-<td align="center"><code>n=784</code></td>
-<td align="center"><code>n=313</code></td>
-<td align="center"><code>n=5,000</code></td>
-</tr>
-<tr>
-<td align="right"></td>
-<td align="center"><code>p=17,322</code></td>
-<td align="center"><code>p=60,000</code></td>
-<td align="center"><code>p=660,495</code></td>
-<td align="center"><code>p=55,000</code></td>
-</tr>
-<tr>
-<td align="right">picasso</td>
-<td align="center">0.67 (0.02)</td>
-<td align="center">2.94 (0.01)</td>
-<td align="center">14.96 (0.01)</td>
-<td align="center">15.91 (0.16)</td>
-</tr>
-<tr>
-<td align="right">ncvreg</td>
-<td align="center">0.87 (0.01)</td>
-<td align="center">4.22 (0.00)</td>
-<td align="center">19.78 (0.01)</td>
-<td align="center">25.59 (0.12)</td>
-</tr>
-<tr>
-<td align="right">glmnet</td>
-<td align="center">0.74 (0.01)</td>
-<td align="center">3.82 (0.01)</td>
-<td align="center">16.19 (0.01)</td>
-<td align="center">24.94 (0.16)</td>
-</tr>
-<tr>
-<td align="right">biglasso</td>
-<td align="center">0.31 (0.01)</td>
-<td align="center">0.61 (0.02)</td>
-<td align="center">4.82 (0.01)</td>
-<td align="center">5.91 (0.78)</td>
-</tr>
-</tbody>
-</table>
-</center>
-</div>
-<div class="section level3">
-<h3 id="big-data-out-of-core-computation">Big data: Out-of-core computation<a class="anchor" aria-label="anchor" href="#big-data-out-of-core-computation"></a>
-</h3>
-<p>To demonstrate the out-of-core computing capability of <code>biglasso</code>, a 96 GB real data set from a large-scale genome-wide association study is analyzed. The dimensionality of the design matrix is: <code>n = 973, p = 11,830,470</code>. <strong>Note that the size of data is 3x larger than the installed 32 GB of RAM.</strong></p>
-<p>Since other three packages cannot handle this data-larger-than-RAM case, we compare the performance of screening rules <code>SSR</code> and <code>Adaptive</code> based on our package <code>biglasso</code>. In addition, two cases in terms of <code>lambda_min</code> are considered: (1) <code>lam_min = 0.1 lam_max</code>; and (2) <code>lam_min = 0.5 lam_max</code>, as in practice there is typically less interest in lower values of <code>lambda</code>for very high-dimensional data such as this case. Again the entire solution path with 100 <code>lambda</code> values is obtained. The table below summarizes the overall computing time (in <strong>minutes</strong>) by screening rule <code>SSR</code> (which is what other three packages are using) and our new rule <code>Adaptive</code>. (No replication is conducted.)</p>
-<center>
-<table class="table">
-<thead><tr>
-<th align="left">Cases</th>
-<th align="right">SSR</th>
-<th align="right">Adaptive</th>
-</tr></thead>
-<tbody>
-<tr>
-<td align="left">
-<code>lam_min / lam_max = 0.1</code>, 1 core</td>
-<td align="right">189.67</td>
-<td align="right">66.05</td>
-</tr>
-<tr>
-<td align="left">
-<code>lam_min / lam_max = 0.1</code>, 4 cores</td>
-<td align="right">86.31</td>
-<td align="right">46.91</td>
-</tr>
-<tr>
-<td align="left">
-<code>lam_min / lam_max = 0.5</code>, 1 core</td>
-<td align="right">177.84</td>
-<td align="right">24.84</td>
-</tr>
-<tr>
-<td align="left">
-<code>lam_min / lam_max = 0.5</code>, 4 cores</td>
-<td align="right">85.67</td>
-<td align="right">15.14</td>
-</tr>
-</tbody>
-</table>
-</center>
-</div>
+<p><code>biglasso</code> is substantially more memory-efficient than <code>glmnet</code>, <code>ncvreg</code>, and <code>picasso</code> on both simulated and real data sets, is competitive with or faster than them on computing time, and can fit lasso models on data too large to fit in RAM at all. See the <a href="https://pbreheny.github.io/biglasso/articles/benchmarks.html">benchmarks article</a> for current figures and tables, generated by the separate <a href="https://github.com/pbreheny/biglasso-bench" class="external-link">biglasso-bench</a> reproducibility archive.</p>
 </div>
 <div class="section level2">
 <h2 id="reference">Reference:<a class="anchor" aria-label="anchor" href="#reference"></a>
@@ -341,7 +187,7 @@
 </div>
 
 <div class="pkgdown-footer-right">
-  <p>Last updated: August 16, 2026</p>
+  <p>Last updated: August 17, 2026</p>
 </div>
 
     </footer>
