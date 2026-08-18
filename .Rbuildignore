@@ -1,6 +1,7 @@
 ^codecov\.yml$
 ^docs$
 ^pkgdown$
+^vignettes/articles$
 ^\.github$
 ^\.lintr$
 ^\.version\.json$

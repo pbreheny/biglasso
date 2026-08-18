@@ -2,6 +2,21 @@
   --bs-dropdown-link-color: #aaa;
 }
 
+.cell-output-display {
+  text-align: center;
+}
+
+.quarto-layout-cell {
+  margin-right: 0px;
+}
+
+/* pkgdown's dark-mode invert-filter mixin covers .cell-output-display img
+   but not quarto's layout-ncol/layout panel figures; extend it here so
+   layout-ncol plots switch with the light/dark theme like every other plot. */
+[data-bs-theme="dark"] .quarto-layout-panel img {
+  filter: invert(100%) hue-rotate(180deg);
+}
+
 a {
   text-decoration:none;
 }

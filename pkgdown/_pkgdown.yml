@@ -1,31 +1,31 @@
 url: https://pbreheny.github.io/biglasso/
 
+authors:
+  Patrick Breheny:
+    href: https://pbreheny.org/web/
+
 template:
   bootstrap: 5
   light-switch: true
+  math-rendering: katex
+  includes:
+    in_header: |
+      <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css" integrity="sha384-nB0miv6/jRmo5UMMR1wu3Gz6NLsoTkbqJghGIsx//Rlm+ZU03BU6SQNC66uf4l5+" crossorigin="anonymous">
+      <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js" integrity="sha384-7zkQWkzuo3B5mTepMUcHkMB5jZaolc2xDwL6VFqjFALcbeS9Ggm/Yr2r3Dy4lfFg" crossorigin="anonymous"></script>
+      <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js" integrity="sha384-43gviWU0YVjaDtb/GhzOouOXtZMP/7XUzwPTstBeZFe/+rCMvRwr4yROQP43s0Xk" crossorigin="anonymous" onload="renderMathInElement(document.body);"></script>
 
-figures:
-  dev: png
-  dpi: 96
-  fig.ext: png
-  fig.width: 5
-  fig.height: 5
-  fig.retina: 2
-  bg: "#fff"
+navbar:
+  structure:
+    left: [intro, bench, reference, news]
+    right: [search, github]
+  components:
+    bench:
+      text: Benchmarks
+      href: articles/benchmarks.html
 
 home:
   sidebar:
     structure: [links, citation, authors, dev]
-
-articles:
-  - title: Get started
-    navbar: ~
-    contents:
-      - biglasso
-  - title: Benchmarks
-    navbar: Benchmarks
-    contents:
-      - benchmarks
 
 footer:
   structure:
@@ -33,5 +33,3 @@ footer:
     right: last_updated
   components:
     last_updated: !expr paste("Last updated:", format(Sys.time(), "%B %d, %Y"))
-
-
