@@ -159,6 +159,13 @@ cv.biglasso <- function(
 
   parallel <- FALSE
   if (ncores > 1) {
+    if (!bigmemory::is.filebacked(X)) {
+      stop(
+        "Parallel cross-validation (ncores > 1) requires a file-backed big.matrix. ",
+        "Create X with backingfile set (see ?bigmemory::filebacked.big.matrix or ?setupX), ",
+        "or set ncores = 1."
+      )
+    }
     cluster <- parallel::makeCluster(ncores)
     if (!("cluster" %in% class(cluster))) {
       stop("cluster is not of class 'cluster'; see ?makeCluster")
