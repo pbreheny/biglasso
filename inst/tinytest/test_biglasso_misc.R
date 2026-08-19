@@ -142,6 +142,43 @@ expect_true(any(grepl("Prediction error", out_bin)))
 expect_false(any(grepl("Scale estimate", out_bin)))
 
 
+# Test cv.biglasso() with row.idx subsetting -----------------------------------
+# Regression test for issues #21/#43: cv.ind was built with length fit$n (the
+# row.idx-subsetted length) but then used inside cvf() to index directly into
+# the *full*, unsubsetted X/y, silently selecting the wrong rows (or erroring
+# on a length mismatch) whenever row.idx was a genuine subset. cv.biglasso()
+# on the full data with row.idx set must give identical results to
+# cv.biglasso() called directly on the pre-subsetted data.
+
+set.seed(2)
+idx <- sort(sample(seq_len(n), 30))
+X.bm_sub <- as.big.matrix(X[idx, ])
+
+cvfit_sub <- cv.biglasso(X.bm, y, row.idx = idx, seed = 1, nfolds = 3, ncores = 1, nlambda = 20)
+cvfit_ref <- cv.biglasso(X.bm_sub, y[idx], seed = 1, nfolds = 3, ncores = 1, nlambda = 20)
+
+expect_equal(cvfit_sub$fit$n, length(idx))
+expect_equal(cvfit_sub$cv.ind, cvfit_ref$cv.ind)
+expect_equal(cvfit_sub$cve, cvfit_ref$cve)
+expect_equal(cvfit_sub$lambda, cvfit_ref$lambda)
+expect_equal(cvfit_sub$lambda.min, cvfit_ref$lambda.min)
+expect_equal(cvfit_sub$null.dev, cvfit_ref$null.dev)
+
+# same check for family = "binomial", which additionally exercises the
+# stratified cv.ind construction (the min(table(y)) > nfolds branch), since
+# that branch had the same y-vs-y[row.idx] misalignment
+expect_true(min(table(y_bin[idx])) > 3)
+cvfit_bin_sub <- cv.biglasso(
+  X.bm, y_bin, row.idx = idx, family = "binomial", seed = 1, nfolds = 3, ncores = 1, nlambda = 20
+)
+cvfit_bin_ref <- cv.biglasso(
+  X.bm_sub, y_bin[idx], family = "binomial", seed = 1, nfolds = 3, ncores = 1, nlambda = 20
+)
+expect_equal(cvfit_bin_sub$cv.ind, cvfit_bin_ref$cv.ind)
+expect_equal(cvfit_bin_sub$cve, cvfit_bin_ref$cve)
+expect_equal(cvfit_bin_sub$pe, cvfit_bin_ref$pe)
+
+
 # Test plot.cv.biglasso() ------------------------------------------------------
 # smoke tests, plus checks that the two family-specific error paths (inherited
 # from ncvreg::plot.cv.ncvreg -- 'scale' is undefined for binomial, 'pred'

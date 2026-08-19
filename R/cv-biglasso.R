@@ -137,17 +137,18 @@ cv.biglasso <- function(
   }
 
   n <- fit$n
+  y.sub <- y[row.idx]
   if (missing(cv.ind)) {
-    if (fit$family == "binomial" && (min(table(y)) > nfolds)) {
-      ind1 <- which(y == 1)
-      ind0 <- which(y == 0)
+    if (fit$family == "binomial" && (min(table(y.sub)) > nfolds)) {
+      ind1 <- which(y.sub == 1)
+      ind0 <- which(y.sub == 0)
       n1 <- length(ind1)
       n0 <- length(ind0)
       cv.ind1 <- ceiling(sample(n1) / n1 * nfolds)
       cv.ind0 <- ceiling(sample(n0) / n0 * nfolds)
       cv.ind <- numeric(n)
-      cv.ind[y == 1] <- cv.ind1
-      cv.ind[y == 0] <- cv.ind0
+      cv.ind[y.sub == 1] <- cv.ind1
+      cv.ind[y.sub == 0] <- cv.ind0
     } else {
       cv.ind <- ceiling(sample(n) / n * nfolds)
     }
@@ -175,7 +176,7 @@ cv.biglasso <- function(
     xdesc <- bigmemory::describe(X)
     parallel::clusterExport(
       cluster,
-      c("cv.ind", "xdesc", "y", "cv.args", "parallel", "eval.metric"),
+      c("cv.ind", "xdesc", "y", "cv.args", "parallel", "eval.metric", "row.idx"),
       envir = environment()
     )
     parallel::clusterCall(cluster, function() {
@@ -191,6 +192,7 @@ cv.biglasso <- function(
       cv.ind = cv.ind,
       cv.args = cv.args,
       grouped = grouped,
+      row.idx = row.idx,
       parallel = parallel
     )
     parallel::stopCluster(cluster)
@@ -204,7 +206,7 @@ cv.biglasso <- function(
       if (trace) {
         cat("Starting CV fold #", i, sep = "", "\n")
       }
-      res <- cvf(i, X, y, eval.metric, cv.ind, cv.args, grouped = grouped)
+      res <- cvf(i, X, y, eval.metric, cv.ind, cv.args, grouped = grouped, row.idx = row.idx)
     }
     E[result.ind == i, match(res$ls, fit$lambda)] <- res$loss
     if (fit$family == "binomial") PE[cv.ind == i, match(res$ls, fit$lambda)] <- res$pe
@@ -241,7 +243,7 @@ cv.biglasso <- function(
     min = min,
     lambda.min = lambda[min],
     lambda.1se = lambda.1se,
-    null.dev = mean(loss.biglasso(y, rep(mean(y), n), fit$family, eval.metric = eval.metric)),
+    null.dev = mean(loss.biglasso(y.sub, rep(mean(y.sub), n), fit$family, eval.metric = eval.metric)),
     cv.ind = cv.ind,
     eval.metric = eval.metric
   )
@@ -252,22 +254,26 @@ cv.biglasso <- function(
   structure(val, class = c("cv.biglasso", "cv.ncvreg"))
 }
 
-cvf <- function(i, XX, y, eval.metric, cv.ind, cv.args, grouped, parallel = FALSE) {
+cvf <- function(i, XX, y, eval.metric, cv.ind, cv.args, grouped, row.idx, parallel = FALSE) {
   # reference to the big.matrix by descriptor info
   if (parallel) {
     XX <- attach.big.matrix(XX)
   }
+  # cv.ind is indexed by position within row.idx (the outer fitting subset), not by
+  # raw row of XX, so it must be mapped back through row.idx before being used to
+  # subset XX/y, which are still in the original (unsubsetted) row space.
+  train.idx <- row.idx[cv.ind != i]
+  idx.test <- row.idx[cv.ind == i]
+
   cv.args$X <- XX
   cv.args$y <- y
-  cv.args$row.idx <- which(cv.ind != i)
+  cv.args$row.idx <- train.idx
   cv.args$warn <- FALSE
   cv.args$ncores <- 1
 
-  idx.test <- which(cv.ind == i)
-
   fit.i <- do.call("biglasso", cv.args)
 
-  y2 <- y[cv.ind == i]
+  y2 <- y[idx.test]
   yhat <- matrix(predict(fit.i, XX, row.idx = idx.test, type = "response"), length(y2))
 
   loss <- loss.biglasso(y2, yhat, fit.i$family, eval.metric = eval.metric, grouped = grouped)
