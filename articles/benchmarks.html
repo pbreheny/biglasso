@@ -6,12 +6,15 @@
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
 <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
 <title>Benchmarks • biglasso</title>
-<script src="../lightswitch.js"></script><script src="../deps/jquery-3.6.0/jquery-3.6.0.min.js"></script><meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+<!-- katex math --><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css" integrity="sha384-nB0miv6/jRmo5UMMR1wu3Gz6NLsoTkbqJghGIsx//Rlm+ZU03BU6SQNC66uf4l5+" crossorigin="anonymous">
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js" integrity="sha384-7zkQWkzuo3B5mTepMUcHkMB5jZaolc2xDwL6VFqjFALcbeS9Ggm/Yr2r3Dy4lfFg" crossorigin="anonymous"></script><script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js" integrity="sha384-43gviWU0YVjaDtb/GhzOouOXtZMP/7XUzwPTstBeZFe/+rCMvRwr4yROQP43s0Xk" crossorigin="anonymous" onload="renderMathInElement(document.body);"></script><script src="../katex-auto.js"></script><script src="../lightswitch.js"></script><script src="../deps/jquery-3.6.0/jquery-3.6.0.min.js"></script><meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
 <link href="../deps/bootstrap-5.3.8/bootstrap.min.css" rel="stylesheet">
 <script src="../deps/bootstrap-5.3.8/bootstrap.bundle.min.js"></script><link href="../deps/font-awesome-6.5.2/css/all.min.css" rel="stylesheet">
 <link href="../deps/font-awesome-6.5.2/css/v4-shims.min.css" rel="stylesheet">
 <script src="../deps/headroom-0.11.0/headroom.min.js"></script><script src="../deps/headroom-0.11.0/jQuery.headroom.min.js"></script><script src="../deps/bootstrap-toc-1.0.1/bootstrap-toc.min.js"></script><script src="../deps/clipboard.js-2.0.11/clipboard.min.js"></script><script src="../deps/search-1.0.0/autocomplete.jquery.min.js"></script><script src="../deps/search-1.0.0/fuse.min.js"></script><script src="../deps/search-1.0.0/mark.min.js"></script><!-- pkgdown --><script src="../pkgdown.js"></script><link href="../extra.css" rel="stylesheet">
 <meta property="og:title" content="Benchmarks">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css" integrity="sha384-nB0miv6/jRmo5UMMR1wu3Gz6NLsoTkbqJghGIsx//Rlm+ZU03BU6SQNC66uf4l5+" crossorigin="anonymous">
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js" integrity="sha384-7zkQWkzuo3B5mTepMUcHkMB5jZaolc2xDwL6VFqjFALcbeS9Ggm/Yr2r3Dy4lfFg" crossorigin="anonymous"></script><script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js" integrity="sha384-43gviWU0YVjaDtb/GhzOouOXtZMP/7XUzwPTstBeZFe/+rCMvRwr4yROQP43s0Xk" crossorigin="anonymous" onload="renderMathInElement(document.body);"></script>
 </head>
 <body>
     <a href="#main" class="visually-hidden-focusable">Skip to contents</a>
@@ -31,15 +34,8 @@
     <div id="navbar" class="collapse navbar-collapse ms-3">
       <ul class="navbar-nav me-auto">
 <li class="nav-item"><a class="nav-link" href="../articles/biglasso.html">Get started</a></li>
+<li class="active nav-item"><a class="nav-link" href="../articles/benchmarks.html">Benchmarks</a></li>
 <li class="nav-item"><a class="nav-link" href="../reference/index.html">Reference</a></li>
-<li class="active nav-item dropdown">
-  <button class="nav-link dropdown-toggle" type="button" id="dropdown-articles" data-bs-toggle="dropdown" aria-expanded="false" aria-haspopup="true">Articles</button>
-  <ul class="dropdown-menu" aria-labelledby="dropdown-articles">
-<li><hr class="dropdown-divider"></li>
-    <li><h6 class="dropdown-header" data-toc-skip>Benchmarks</h6></li>
-    <li><a class="dropdown-item" href="../articles/benchmarks.html">Benchmarks</a></li>
-  </ul>
-</li>
 <li class="nav-item"><a class="nav-link" href="../news/index.html">Changelog</a></li>
       </ul>
 <ul class="navbar-nav">
@@ -47,14 +43,6 @@
  <input class="form-control" type="search" name="search-input" id="search-input" autocomplete="off" aria-label="Search site" placeholder="Search for" data-search-index="../search.json">
 </form></li>
 <li class="nav-item"><a class="external-link nav-link" href="https://github.com/pbreheny/biglasso/" aria-label="GitHub"><span class="fa fab fa-github fa-lg"></span></a></li>
-<li class="nav-item dropdown">
-  <button class="nav-link dropdown-toggle" type="button" id="dropdown-lightswitch" data-bs-toggle="dropdown" aria-expanded="false" aria-haspopup="true" aria-label="Light switch"><span class="fa fa-sun"></span></button>
-  <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="dropdown-lightswitch">
-<li><button class="dropdown-item" data-bs-theme-value="light"><span class="fa fa-sun"></span> Light</button></li>
-    <li><button class="dropdown-item" data-bs-theme-value="dark"><span class="fa fa-moon"></span> Dark</button></li>
-    <li><button class="dropdown-item" data-bs-theme-value="auto"><span class="fa fa-adjust"></span> Auto</button></li>
-  </ul>
-</li>
       </ul>
 </div>
 
@@ -69,45 +57,30 @@
   <main id="main" class="col-md-9"><div class="page-header">
 
       <h1>Benchmarks</h1>
-                        <h4 data-toc-skip class="author">Yaohui Zeng,
-Chuyi Wang, Patrick Breheny</h4>
             
       
-      <small class="dont-index">Source: <a href="https://github.com/pbreheny/biglasso/blob/main/vignettes/benchmarks.Rmd" class="external-link"><code>vignettes/benchmarks.Rmd</code></a></small>
+      <small class="dont-index">Source: <a href="https://github.com/pbreheny/biglasso/blob/main/vignettes/articles/benchmarks.Rmd" class="external-link"><code>vignettes/articles/benchmarks.Rmd</code></a></small>
       <div class="d-none name"><code>benchmarks.Rmd</code></div>
     </div>
 
     
     
-<p>This vignette shows how <code>biglasso</code> compares to
+<p>This article shows how <code>biglasso</code> compares to
 <code>glmnet</code>, <code>ncvreg</code>, and <code>picasso</code> on
 simulated and real data sets, covering linear regression, logistic
 regression, memory efficiency, and out-of-core (“bigger than RAM”)
-fitting. All numbers and figures below are generated by a separate
-reproducibility archive, <a href="https://github.com/pbreheny/biglasso-bench" class="external-link">biglasso-bench</a>,
-and copied in here by its
-<code>workflow/scripts/publish/copy_to_pkgdown.sh</code> - see that repo
-if you want to re-run any of this yourself. The R chunks in each section
-below are shown for reference (<code>eval = FALSE</code>) rather than
-actually re-run as part of building this vignette, since they call out
-to a Snakemake pipeline in a different repo.</p>
-<p><strong>Source:</strong>
-<code>pbreheny/biglasso-bench@5566aab (with uncommitted changes)</code><br><strong>Generated:</strong> 2026-08-17T22:01:26Z</p>
+fitting. The code to rerun all of these benchmarking experiments lives
+in a separate repository, <a href="https://github.com/pbreheny/biglasso-bench" class="external-link">biglasso-bench</a>.</p>
 <div class="section level2">
 <h2 id="screening-rules">Screening rules<a class="anchor" aria-label="anchor" href="#screening-rules"></a>
 </h2>
-<p><code>biglasso</code>‘s adaptive screening rules discard features
+<p><code>biglasso</code>’s adaptive screening rules discard features
 that provably cannot enter the model at the current <code>lambda</code>,
 avoiding wasted work scanning the full (possibly huge) design matrix.
 The figure below shows what fraction of features each rule discards
 across the solution path, on the bcTCGA breast-cancer gene expression
-data (the plot’s legend uses the rules’ old pre-1.5 names,
-<code>SSR</code>/<code>SEDPP</code>/<code>BEDPP</code> - current
-<code>biglasso</code> calls these <code>SSR</code>,
-<code>Adaptive</code>, and <code>Hybrid</code> respectively).</p>
-<div class="sourceCode" id="cb1"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb1-1"><a href="#cb1-1" tabindex="-1"></a><span class="co"># from biglasso-bench/:</span></span>
-<span id="cb1-2"><a href="#cb1-2" tabindex="-1"></a>snakemake screening</span></code></pre></div>
-<p><img src="figures/screening_rejection_curves.png" width="500" alt="Fraction of features discarded by each screening rule across the lasso solution path"></p>
+data.</p>
+<p><img class="r-plt" src="figures/screening_rejection_curves.png" width="500" alt="Fraction of features discarded by each screening rule across the lasso solution path"></p>
 </div>
 <div class="section level2">
 <h2 id="linear-regression">Linear regression<a class="anchor" aria-label="anchor" href="#linear-regression"></a>
@@ -122,19 +95,17 @@ from <code>lambda_max</code> down to <code>0.1 * lambda_max</code>) over
 <code>p</code> (<code>n</code> fixed at 1,000). Data are generated as
 <code>y = X %*% beta + 0.1 * eps</code>, <code>X</code> and
 <code>eps</code> iid <code>N(0, 1)</code>.</p>
-<div class="sourceCode" id="cb2"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb2-1"><a href="#cb2-1" tabindex="-1"></a><span class="co"># from biglasso-bench/:</span></span>
-<span id="cb2-2"><a href="#cb2-2" tabindex="-1"></a>snakemake all <span class="sc">--</span>config scale<span class="ot">=</span>full   <span class="co"># includes linear_vary_n, linear_vary_p</span></span></code></pre></div>
-<p><img src="figures/vary_n_linear.png" width="420" alt="Linear regression computing time vs. number of observations, by package"><img src="figures/vary_p_linear.png" width="420" alt="Linear regression computing time vs. number of features, by package"></p>
+<p><img class="r-plt" src="figures/vary_n_linear.png" width="420" alt="Linear regression computing time vs. number of observations, by package"><img class="r-plt" src="figures/vary_p_linear.png" width="420" alt="Linear regression computing time vs. number of features, by package"></p>
 <ul>
 <li>Varying <code>n</code>: At the largest simulated size,
-<code>biglasso</code> (1 core) is <em>not</em> the fastest package here
-- it trails <code>picasso</code> by a factor of 1.0; with multiple cores
+<code>biglasso</code> (1 core) is not the fastest package here - it
+trails <code>picasso</code> by a factor of 1.0; with multiple cores
 (<code>biglasso (8 cores)</code>), <code>biglasso</code> is the fastest
 option overall, 3.2x faster than the fastest single-threaded package
 (<code>picasso</code>).</li>
 <li>Varying <code>p</code>: At the largest simulated size,
-<code>biglasso</code> (1 core) is <em>not</em> the fastest package here
-- it trails <code>glmnet</code> by a factor of 1.1; with multiple cores
+<code>biglasso</code> (1 core) is not the fastest package here - it
+trails <code>glmnet</code> by a factor of 1.1; with multiple cores
 (<code>biglasso (8 cores)</code>), <code>biglasso</code> is the fastest
 option overall, 3.1x faster than the fastest single-threaded package
 (<code>glmnet</code>).</li>
@@ -149,8 +120,6 @@ breast-cancer gene expression data (<a href="https://iowabiostat.github.io/data-
 digit images, and a resampled subset of the NYT bag-of-words corpus (see
 <a href="https://github.com/pbreheny/biglasso-bench" class="external-link">biglasso-bench</a>’s
 README for exact provenance of each).</p>
-<div class="sourceCode" id="cb3"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb3-1"><a href="#cb3-1" tabindex="-1"></a><span class="co"># from biglasso-bench/:</span></span>
-<span id="cb3-2"><a href="#cb3-2" tabindex="-1"></a>snakemake all <span class="sc">--</span>config scale<span class="ot">=</span>full   <span class="co"># includes linear_real_{gene,mnist,nyt}</span></span></code></pre></div>
 <table class="table">
 <caption>Mean (SE) computing time in seconds, 20 replications.</caption>
 <thead><tr class="header">
@@ -188,7 +157,7 @@ README for exact provenance of each).</p>
 </table>
 <p><code>biglasso</code> has the fastest mean time on 1 of the 3 real
 linear-regression data sets tested here; on the others it is not the
-fastest by raw computing time - <code>glmnet</code> (2) was.
+fastest by raw computing time - <code>glmnet</code> was.
 <code>glmnet</code> in particular has gotten faster since the original
 biglasso paper was published, and on real data at these sizes it’s often
 competitive with or faster than <code>biglasso</code>.
@@ -204,19 +173,17 @@ below), not always raw speed.</p>
 </h3>
 <p>Same design as the linear-regression sweep above, but fitting
 <code>family = "binomial"</code> models.</p>
-<div class="sourceCode" id="cb4"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb4-1"><a href="#cb4-1" tabindex="-1"></a><span class="co"># from biglasso-bench/:</span></span>
-<span id="cb4-2"><a href="#cb4-2" tabindex="-1"></a>snakemake all <span class="sc">--</span>config scale<span class="ot">=</span>full   <span class="co"># includes logistic_vary_n, logistic_vary_p</span></span></code></pre></div>
-<p><img src="figures/vary_n_logistic.png" width="420" alt="Logistic regression computing time vs. number of observations, by package"><img src="figures/vary_p_logistic.png" width="420" alt="Logistic regression computing time vs. number of features, by package"></p>
+<p><img class="r-plt" src="figures/vary_n_logistic.png" width="420" alt="Logistic regression computing time vs. number of observations, by package"><img class="r-plt" src="figures/vary_p_logistic.png" width="420" alt="Logistic regression computing time vs. number of features, by package"></p>
 <ul>
 <li>Varying <code>n</code>: At the largest simulated size,
-<code>biglasso</code> (1 core) is <em>not</em> the fastest package here
-- it trails <code>glmnet</code> by a factor of 1.5; with multiple cores
+<code>biglasso</code> (1 core) is not the fastest package here - it
+trails <code>glmnet</code> by a factor of 1.5; with multiple cores
 (<code>biglasso (8 cores)</code>), <code>biglasso</code> is the fastest
 option overall, 2.2x faster than the fastest single-threaded package
 (<code>glmnet</code>).</li>
 <li>Varying <code>p</code>: At the largest simulated size,
-<code>biglasso</code> (1 core) is <em>not</em> the fastest package here
-- it trails <code>glmnet</code> by a factor of 1.6; with multiple cores
+<code>biglasso</code> (1 core) is not the fastest package here - it
+trails <code>glmnet</code> by a factor of 1.6; with multiple cores
 (<code>biglasso (8 cores)</code>), <code>biglasso</code> is the fastest
 option overall, 1.9x faster than the fastest single-threaded package
 (<code>glmnet</code>).</li>
@@ -228,8 +195,6 @@ option overall, 1.9x faster than the fastest single-threaded package
 <p>RCV1 (in the default <code>all</code> target) plus Gisette, NEWS20,
 and P53 (opt-in via <code>logistic_real_extra</code>, kept opt-in purely
 for download size - 22-191MB each).</p>
-<div class="sourceCode" id="cb5"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb5-1"><a href="#cb5-1" tabindex="-1"></a><span class="co"># from biglasso-bench/:</span></span>
-<span id="cb5-2"><a href="#cb5-2" tabindex="-1"></a>snakemake all logistic_real_extra <span class="sc">--</span>config scale<span class="ot">=</span>full</span></code></pre></div>
 <table class="table">
 <caption>Mean (SE) computing time in seconds, 20 replications.</caption>
 <thead><tr class="header">
@@ -272,9 +237,9 @@ for download size - 22-191MB each).</p>
 </table>
 <p><code>biglasso</code> does not have the fastest mean time on any of
 the 4 real logistic-regression data sets tested here -
-<code>glmnet</code> (4) did. <code>glmnet</code> in particular has
-gotten faster since the original biglasso paper was published, and on
-real data at these sizes it’s often competitive with or faster than
+<code>glmnet</code> did. <code>glmnet</code> in particular has gotten
+faster since the original biglasso paper was published, and on real data
+at these sizes it’s often competitive with or faster than
 <code>biglasso</code>. <code>biglasso</code>’s advantage on real data is
 primarily memory (see below), not always raw speed.</p>
 </div>
@@ -289,9 +254,7 @@ matrix (raw size 0.75 GB) and measure peak resident set size (RSS) via
 <code>/usr/bin/time -v</code> for a single fit and for 10-fold
 cross-validation (<code>picasso</code> has no <code>cv.*</code>
 function, hence no CV bar for it below).</p>
-<div class="sourceCode" id="cb6"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb6-1"><a href="#cb6-1" tabindex="-1"></a><span class="co"># from biglasso-bench/:</span></span>
-<span id="cb6-2"><a href="#cb6-2" tabindex="-1"></a>snakemake memory</span></code></pre></div>
-<p><img src="figures/memory_benchmark.png" width="500" alt="Peak resident set size by package, for a single fit and for 10-fold cross-validation"></p>
+<p><img class="r-plt" src="figures/memory_benchmark.png" width="500" alt="Peak resident set size by package, for a single fit and for 10-fold cross-validation"></p>
 <table class="table">
 <thead><tr class="header">
 <th align="left">Package</th>
@@ -330,39 +293,7 @@ n = 3000, p = 1,340,000 design matrix (tens of GB on disk) and fit both
 linear and logistic lasso models using <code>biglasso</code>’s
 <code>"Hybrid"</code> screening rule, entirely off a memory-mapped
 file.</p>
-<div class="sourceCode" id="cb7"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb7-1"><a href="#cb7-1" tabindex="-1"></a><span class="co"># from biglasso-bench/:</span></span>
-<span id="cb7-2"><a href="#cb7-2" tabindex="-1"></a>snakemake bigdata</span></code></pre></div>
-<p><img src="figures/bigdata_linear_path.png" width="420" alt="Coefficient paths from the out-of-core linear regression fit"><img src="figures/bigdata_logistic_path.png" width="420" alt="Coefficient paths from the out-of-core logistic regression fit"></p>
-</div>
-<div class="section level2">
-<h2 id="colon-cancer-worked-example">Colon cancer worked example<a class="anchor" aria-label="anchor" href="#colon-cancer-worked-example"></a>
-</h2>
-<p>The <code>biglasso</code> intro vignette’s small-data colon-cancer
-demo (<code>data(colon)</code>), fit and cross-validated end to end as a
-sanity check that the whole pipeline - not just the large-scale
-benchmarks above - reproduces the package’s documented behavior.</p>
-<div class="sourceCode" id="cb8"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb8-1"><a href="#cb8-1" tabindex="-1"></a><span class="co"># from biglasso-bench/:</span></span>
-<span id="cb8-2"><a href="#cb8-2" tabindex="-1"></a>snakemake all <span class="sc">--</span>config scale<span class="ot">=</span>full   <span class="co"># example_colon_cancer</span></span></code></pre></div>
-<p><img src="figures/colon_cancer_fit.png" width="420" alt="biglasso lasso path for the colon cancer data"><img src="figures/colon_cancer_cv.png" width="420" alt="biglasso cross-validation curves for the colon cancer data"></p>
-</div>
-<div class="section level2">
-<h2 id="reproducing-these-results">Reproducing these results<a class="anchor" aria-label="anchor" href="#reproducing-these-results"></a>
-</h2>
-<p>All of the above comes from <a href="https://github.com/pbreheny/biglasso-bench" class="external-link">biglasso-bench</a>, a
-Snakemake-driven pipeline that is entirely separate from this
-package:</p>
-<div class="sourceCode" id="cb9"><pre class="sourceCode sh"><code class="sourceCode bash"><span id="cb9-1"><a href="#cb9-1" tabindex="-1"></a><span class="fu">git</span> clone https://github.com/pbreheny/biglasso-bench</span>
-<span id="cb9-2"><a href="#cb9-2" tabindex="-1"></a><span class="bu">cd</span> biglasso-bench</span>
-<span id="cb9-3"><a href="#cb9-3" tabindex="-1"></a><span class="ex">snakemake</span> all memory bigdata logistic_real_extra <span class="at">--config</span> scale=full <span class="at">--cores</span> 1</span>
-<span id="cb9-4"><a href="#cb9-4" tabindex="-1"></a><span class="ex">snakemake</span> publish <span class="at">--config</span> scale=full</span>
-<span id="cb9-5"><a href="#cb9-5" tabindex="-1"></a><span class="va">BIGLASSO_REPO</span><span class="op">=</span>/path/to/biglasso <span class="ex">workflow/scripts/publish/copy_to_pkgdown.sh</span></span></code></pre></div>
-<p>The last two commands regenerate the figures/tables under
-<code>vignettes/figures/</code> and
-<code>vignettes/benchmarks_data/</code> in <em>this</em> repo from
-whatever the latest <code>biglasso-bench</code> run produced, and are
-safe to re-run any time you want this vignette’s numbers refreshed
-(e.g. after a <code>biglasso</code> performance change) - review the
-resulting <code>git diff</code> here before committing.</p>
+<p><img class="r-plt" src="figures/bigdata_linear_path.png" width="420" alt="Coefficient paths from the out-of-core linear regression fit"><img class="r-plt" src="figures/bigdata_logistic_path.png" width="420" alt="Coefficient paths from the out-of-core logistic regression fit"></p>
 </div>
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>
     </nav></aside>
@@ -371,11 +302,11 @@ resulting <code>git diff</code> here before committing.</p>
 
 
     <footer><div class="pkgdown-footer-left">
-  <p>Developed by Yaohui Zeng, Chuyi Wang, Tabitha Peter, Patrick Breheny.</p>
+  <p>Developed by Yaohui Zeng, Chuyi Wang, Tabitha Peter, <a href="https://pbreheny.org/web/" class="external-link">Patrick Breheny</a>.</p>
 </div>
 
 <div class="pkgdown-footer-right">
-  <p>Last updated: August 17, 2026</p>
+  <p>Last updated: August 19, 2026</p>
 </div>
 
     </footer>

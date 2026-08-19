@@ -36,7 +36,7 @@ X[1:5, 1:5]
 X.bm <- as.big.matrix(X)
 str(X.bm)
 #> Formal class 'big.matrix' [package "bigmemory"] with 1 slot
-#>   ..@ address:<pointer: 0x5644dded64f0>
+#>   ..@ address:<pointer: 0x55d6dee66930>
 ```
 
 ``` r
@@ -108,7 +108,7 @@ summary(cvfit)
 #>   Scale estimate (sigma): 0.371
 ```
 
-- Extract non-zero coefficients at the optimal $`\lambda`$ value:
+- Extract non-zero coefficients at the optimal \lambda value:
 
 ``` r
 
@@ -206,8 +206,8 @@ if (!file.exists("BigX.bin")) {
 }
 #> Reading data from file, and creating file-backed big.matrix...
 #> This should take a while if the data is very large...
-#> Start time:  2026-08-17 22:07:06 
-#> End time:  2026-08-17 22:07:07 
+#> Start time:  2026-08-19 14:16:19 
+#> End time:  2026-08-19 14:16:20 
 #> DONE!
 #> 
 #> Note: This function needs to be called only one time to create two backing
@@ -237,7 +237,7 @@ system.time({
   fit <- biglasso(X.bm, y)
 })
 #>    user  system elapsed 
-#>   0.179   0.000   0.179
+#>   0.191   0.004   0.196
 ```
 
 ``` r
@@ -263,7 +263,7 @@ tryCatch(
   }
 )
 #>    user  system elapsed 
-#>   0.282   0.006   2.667
+#>   0.295   0.006   2.739
 ```
 
 ``` r

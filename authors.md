@@ -8,7 +8,7 @@
 
 - **Tabitha Peter**. Author.
 
-- **Patrick Breheny**. Author, maintainer.
+- **[Patrick Breheny](https://pbreheny.org/web/)**. Author, maintainer.
   [](https://orcid.org/0000-0002-0650-1119)
 
 ## Citation

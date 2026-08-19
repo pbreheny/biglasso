@@ -6,7 +6,8 @@
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
 <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
 <title>Extending Lasso Model Fitting to Big Data • biglasso</title>
-<script src="lightswitch.js"></script><script src="deps/jquery-3.6.0/jquery-3.6.0.min.js"></script><meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+<!-- katex math --><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css" integrity="sha384-nB0miv6/jRmo5UMMR1wu3Gz6NLsoTkbqJghGIsx//Rlm+ZU03BU6SQNC66uf4l5+" crossorigin="anonymous">
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js" integrity="sha384-7zkQWkzuo3B5mTepMUcHkMB5jZaolc2xDwL6VFqjFALcbeS9Ggm/Yr2r3Dy4lfFg" crossorigin="anonymous"></script><script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js" integrity="sha384-43gviWU0YVjaDtb/GhzOouOXtZMP/7XUzwPTstBeZFe/+rCMvRwr4yROQP43s0Xk" crossorigin="anonymous" onload="renderMathInElement(document.body);"></script><script src="katex-auto.js"></script><script src="lightswitch.js"></script><script src="deps/jquery-3.6.0/jquery-3.6.0.min.js"></script><meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
 <link href="deps/bootstrap-5.3.8/bootstrap.min.css" rel="stylesheet">
 <script src="deps/bootstrap-5.3.8/bootstrap.bundle.min.js"></script><link href="deps/font-awesome-6.5.2/css/all.min.css" rel="stylesheet">
 <link href="deps/font-awesome-6.5.2/css/v4-shims.min.css" rel="stylesheet">
@@ -14,6 +15,8 @@
 <meta property="og:title" content="Extending Lasso Model Fitting to Big Data">
 <meta name="description" content="Extend lasso and elastic-net model fitting for large data sets that cannot be loaded into memory. Designed to be more memory- and computation-efficient than existing lasso-fitting packages like glmnet and ncvreg, thus allowing the user to analyze big data with limited RAM &lt;doi:10.32614/RJ-2021-001&gt;.">
 <meta property="og:description" content="Extend lasso and elastic-net model fitting for large data sets that cannot be loaded into memory. Designed to be more memory- and computation-efficient than existing lasso-fitting packages like glmnet and ncvreg, thus allowing the user to analyze big data with limited RAM &lt;doi:10.32614/RJ-2021-001&gt;.">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css" integrity="sha384-nB0miv6/jRmo5UMMR1wu3Gz6NLsoTkbqJghGIsx//Rlm+ZU03BU6SQNC66uf4l5+" crossorigin="anonymous">
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js" integrity="sha384-7zkQWkzuo3B5mTepMUcHkMB5jZaolc2xDwL6VFqjFALcbeS9Ggm/Yr2r3Dy4lfFg" crossorigin="anonymous"></script><script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js" integrity="sha384-43gviWU0YVjaDtb/GhzOouOXtZMP/7XUzwPTstBeZFe/+rCMvRwr4yROQP43s0Xk" crossorigin="anonymous" onload="renderMathInElement(document.body);"></script>
 </head>
 <body>
     <a href="#main" class="visually-hidden-focusable">Skip to contents</a>
@@ -33,15 +36,8 @@
     <div id="navbar" class="collapse navbar-collapse ms-3">
       <ul class="navbar-nav me-auto">
 <li class="nav-item"><a class="nav-link" href="articles/biglasso.html">Get started</a></li>
+<li class="nav-item"><a class="nav-link" href="articles/benchmarks.html">Benchmarks</a></li>
 <li class="nav-item"><a class="nav-link" href="reference/index.html">Reference</a></li>
-<li class="nav-item dropdown">
-  <button class="nav-link dropdown-toggle" type="button" id="dropdown-articles" data-bs-toggle="dropdown" aria-expanded="false" aria-haspopup="true">Articles</button>
-  <ul class="dropdown-menu" aria-labelledby="dropdown-articles">
-<li><hr class="dropdown-divider"></li>
-    <li><h6 class="dropdown-header" data-toc-skip>Benchmarks</h6></li>
-    <li><a class="dropdown-item" href="articles/benchmarks.html">Benchmarks</a></li>
-  </ul>
-</li>
 <li class="nav-item"><a class="nav-link" href="news/index.html">Changelog</a></li>
       </ul>
 <ul class="navbar-nav">
@@ -49,14 +45,6 @@
  <input class="form-control" type="search" name="search-input" id="search-input" autocomplete="off" aria-label="Search site" placeholder="Search for" data-search-index="search.json">
 </form></li>
 <li class="nav-item"><a class="external-link nav-link" href="https://github.com/pbreheny/biglasso/" aria-label="GitHub"><span class="fa fab fa-github fa-lg"></span></a></li>
-<li class="nav-item dropdown">
-  <button class="nav-link dropdown-toggle" type="button" id="dropdown-lightswitch" data-bs-toggle="dropdown" aria-expanded="false" aria-haspopup="true" aria-label="Light switch"><span class="fa fa-sun"></span></button>
-  <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="dropdown-lightswitch">
-<li><button class="dropdown-item" data-bs-theme-value="light"><span class="fa fa-sun"></span> Light</button></li>
-    <li><button class="dropdown-item" data-bs-theme-value="dark"><span class="fa fa-moon"></span> Dark</button></li>
-    <li><button class="dropdown-item" data-bs-theme-value="auto"><span class="fa fa-adjust"></span> Auto</button></li>
-  </ul>
-</li>
       </ul>
 </div>
 
@@ -69,7 +57,8 @@
 <div class="page-header"><h1 id="biglasso-extend-lasso-model-fitting-to-big-data-in-r">
 <a href="https://pbreheny.github.io/biglasso/index.html">biglasso: Extend Lasso Model Fitting to Big Data in R</a><a class="anchor" aria-label="anchor" href="#biglasso-extend-lasso-model-fitting-to-big-data-in-r"></a>
 </h1></div>
-<p><code>biglasso</code> extends lasso and elastic-net linear and logistic regression models for ultrahigh-dimensional, multi-gigabyte data sets that cannot be loaded into memory. It utilizes memory-mapped files to store the massive data on the disk and only read those into memory whenever necessary during model fitting. Moreover, some advanced feature screening rules are proposed and implemented to accelerate the model fitting. <strong>As a result, this package is much more memory- and computation-efficient and highly scalable as compared to existing lasso-fitting packages such as <a href="https://CRAN.R-project.org/package=glmnet" class="external-link">glmnet</a> and <a href="https://CRAN.R-project.org/package=ncvreg" class="external-link">ncvreg</a></strong>. Bechmarking experiments using both simulated and real data sets show that <code>biglasso</code> is not only 1.5x to 4x times faster than existing packages, but also at least 2x more memory-efficient. More importantly, to the best of our knowledge, <code>biglasso</code> is the first R package that enables users to fit lasso models with data sets that are larger than available RAM, thus allowing for powerful big data analysis on an ordinary laptop.</p>
+<p><code>biglasso</code> extends lasso and elastic-net linear and logistic regression models for ultrahigh-dimensional, multi-gigabyte data sets that cannot be loaded into memory. It utilizes memory-mapped files to store the massive data on the disk and only read those into memory whenever necessary during model fitting. In addition, some advanced feature screening rules are proposed and implemented to accelerate the model fitting. To the best of our knowledge, <code>biglasso</code> is the only R package that enables users to fit lasso models with data sets that are larger than available RAM, enabling big data analysis on an ordinary laptop.</p>
+<p>For more documentation, visit the <a href="https://pbreheny.github.io/biglasso/index.html">biglasso website</a>.</p>
 <div class="section level2">
 <h2 id="installation">Installation<a class="anchor" aria-label="anchor" href="#installation"></a>
 </h2>
@@ -79,25 +68,6 @@
 <p>To install the latest development version from GitHub:</p>
 <div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu">remotes</span><span class="fu">::</span><span class="fu">install_github</span><span class="op">(</span><span class="st">"pbreheny/biglasso"</span><span class="op">)</span></span></code></pre></div>
-</div>
-<div class="section level2">
-<h2 id="news">News<a class="anchor" aria-label="anchor" href="#news"></a>
-</h2>
-<ul>
-<li>See <a href="https://pbreheny.github.io/biglasso/news/index.html">NEWS.md</a> for latest news.</li>
-<li>The technical paper of this package was selected as a Winner of <a href="https://community.amstat.org/jointscsg-section/awards/student-paper-competition" class="external-link">2017 ASA Student Paper Competiton from Section on Statistical Computing</a>.</li>
-<li>This package finished in the top 3 for <a href="https://community.amstat.org/jointscsg-section/awards/john-m-chambers" class="external-link">2017 ASA Chambers Statistical Software Award</a>.</li>
-</ul>
-</div>
-<div class="section level2">
-<h2 id="documentation">Documentation<a class="anchor" aria-label="anchor" href="#documentation"></a>
-</h2>
-<ul>
-<li>Here are the <a href="https://CRAN.R-project.org/package=biglasso/biglasso.pdf" class="external-link">R Reference manual</a> and <a href="https://pbreheny.github.io/biglasso/index.html">Package Website</a>
-</li>
-<li>Here are the technical papers of the package: i) <a href="https://arxiv.org/abs/1701.05936" class="external-link">The software paper</a>; and ii) <a href="https://arxiv.org/abs/1704.08742" class="external-link">the paper of hybrid safe-strong rules</a>
-</li>
-</ul>
 </div>
 <div class="section level2">
 <h2 id="features">Features<a class="anchor" aria-label="anchor" href="#features"></a>
@@ -111,33 +81,30 @@
 </ol>
 </div>
 <div class="section level2">
-<h2 id="benchmarks">Benchmarks:<a class="anchor" aria-label="anchor" href="#benchmarks"></a>
+<h2 id="benchmarks">Benchmarks<a class="anchor" aria-label="anchor" href="#benchmarks"></a>
 </h2>
-<p><code>biglasso</code> is substantially more memory-efficient than <code>glmnet</code>, <code>ncvreg</code>, and <code>picasso</code> on both simulated and real data sets, is competitive with or faster than them on computing time, and can fit lasso models on data too large to fit in RAM at all. See the <a href="https://pbreheny.github.io/biglasso/articles/benchmarks.html">benchmarks article</a> for current figures and tables, generated by the separate <a href="https://github.com/pbreheny/biglasso-bench" class="external-link">biglasso-bench</a> reproducibility archive.</p>
+<p><code>biglasso</code> is substantially more memory-efficient than <code>glmnet</code>, <code>ncvreg</code>, and <code>picasso</code> on both simulated and real data sets, is competitive with or faster than them on computing time, and can fit lasso models on data too large to fit in RAM at all. See <a href="https://pbreheny.github.io/biglasso/articles/benchmarks.html">here for benchmarks</a>.</p>
 </div>
 <div class="section level2">
-<h2 id="reference">Reference:<a class="anchor" aria-label="anchor" href="#reference"></a>
+<h2 id="reference">Reference<a class="anchor" aria-label="anchor" href="#reference"></a>
 </h2>
 <ul>
-<li>Zeng Y and Breheny P (2021). The biglasso Package: A Memory- and Computation-Efficient Solver for Lasso Model Fitting with Big Data in R. R Journal, 12: 6-19. URL <a href="https://doi.org/10.32614/RJ-2021-001" class="external-link uri">https://doi.org/10.32614/RJ-2021-001</a>
+<li>Zeng Y and Breheny P (2021). The biglasso Package: A Memory- and Computation-Efficient Solver for Lasso Model Fitting with Big Data in R. R Journal, 12: 6–19. <a href="https://doi.org/10.32614/RJ-2021-001" class="external-link uri">https://doi.org/10.32614/RJ-2021-001</a>
 </li>
-<li>Zeng Y, Yang T, and Breheny P (2021). Hybrid safe-strong rules for efficient optimization in lasso-type problems. Computational Statistics and Data Analysis, 153: 107063. URL <a href="https://doi.org/10.1016/j.csda.2020.107063" class="external-link uri">https://doi.org/10.1016/j.csda.2020.107063</a>
+<li>Zeng Y, Yang T, and Breheny P (2021). Hybrid safe-strong rules for efficient optimization in lasso-type problems. Computational Statistics and Data Analysis, 153: 107063. <a href="https://doi.org/10.1016/j.csda.2020.107063" class="external-link uri">https://doi.org/10.1016/j.csda.2020.107063</a>
 </li>
-<li>Wang C and Breheny P (2022). Adaptive hybrid screening for efficient lasso optimization. Journal of Statistical Computation and Simulation, 92: 2233–2256. URL <a href="https://doi.org/10.1080/00949655.2021.2025376" class="external-link uri">https://doi.org/10.1080/00949655.2021.2025376</a>
+<li>Wang C and Breheny P (2022). Adaptive hybrid screening for efficient lasso optimization. Journal of Statistical Computation and Simulation, 92: 2233–2256. <a href="https://doi.org/10.1080/00949655.2021.2025376" class="external-link uri">https://doi.org/10.1080/00949655.2021.2025376</a>
 </li>
-<li>Tibshirani, R., Bien, J., Friedman, J., Hastie, T., Simon, N., Taylor, J., and Tibshirani, R. J. (2012). Strong rules for discarding predictors in lasso-type problems. Journal of the Royal Statistical Society: Series B (Statistical Methodology), 74 (2), 245-266.</li>
-<li>Wang, J., Zhou, J., Wonka, P., and Ye, J. (2013). Lasso screening rules via dual polytope projection. In Advances in Neural Information Processing Systems, pp. 1070-1078.</li>
-<li>Xiang, Z. J., and Ramadge, P. J. (2012, March). Fast lasso screening tests based on correlations. In Acoustics, Speech and Signal Processing (ICASSP), 2012 IEEE International Conference on (pp. 2137-2140). IEEE.</li>
-<li>Wang, J., Zhou, J., Liu, J., Wonka, P., and Ye, J. (2014). A safe screening rule for sparse logistic regression. In Advances in Neural Information Processing Systems, pp. 1053-1061.</li>
+<li>Tibshirani, R., Bien, J., Friedman, J., Hastie, T., Simon, N., Taylor, J., and Tibshirani, R. J. (2012). Strong rules for discarding predictors in lasso-type problems. Journal of the Royal Statistical Society: Series B (Statistical Methodology), 74: 245–266.</li>
+<li>Wang, J., Zhou, J., Wonka, P., and Ye, J. (2013). Lasso screening rules via dual polytope projection. In Advances in Neural Information Processing Systems, 1070–1078.</li>
+<li>Xiang, Z. J., and Ramadge, P. J. (2012, March). Fast lasso screening tests based on correlations. 2012 IEEE International Conference on Acoustics, Speech and Signal Processing (ICASSP), 2137–2140.</li>
+<li>Wang, J., Zhou, J., Liu, J., Wonka, P., and Ye, J. (2014). A safe screening rule for sparse logistic regression. In Advances in Neural Information Processing Systems, 1053–1061.</li>
 </ul>
 </div>
 <div class="section level2">
-<h2 id="report-bugs">Report bugs：<a class="anchor" aria-label="anchor" href="#report-bugs"></a>
+<h2 id="report-bugs">Report bugs<a class="anchor" aria-label="anchor" href="#report-bugs"></a>
 </h2>
-<ul>
-<li>open an <a href="https://github.com/pbreheny/biglasso/issues" class="external-link">issue</a> or send an email to Patrick Breheny at <a href="mailto:patrick-breheny@uiowa.edu" class="email">patrick-breheny@uiowa.edu</a>
-</li>
-</ul>
+<p>Open an <a href="https://github.com/pbreheny/biglasso/issues" class="external-link">issue</a> or send an email to Patrick Breheny at <a href="mailto:patrick-breheny@uiowa.edu" class="email">patrick-breheny@uiowa.edu</a>.</p>
 </div>
 </div>
 
@@ -163,7 +130,8 @@
 <li>Yaohui Zeng <br><small class="roles"> Author </small>   </li>
 <li>Chuyi Wang <br><small class="roles"> Author </small>   </li>
 <li>Tabitha Peter <br><small class="roles"> Author </small>   </li>
-<li>Patrick Breheny <br><small class="roles"> Author, maintainer </small> <a href="https://orcid.org/0000-0002-0650-1119" target="orcid.widget" aria-label="ORCID" class="external-link"><span class="fab fa-orcid orcid" aria-hidden="true"></span></a>  </li>
+<li>
+<a href="https://pbreheny.org/web/" class="external-link">Patrick Breheny</a> <br><small class="roles"> Author, maintainer </small> <a href="https://orcid.org/0000-0002-0650-1119" target="orcid.widget" aria-label="ORCID" class="external-link"><span class="fab fa-orcid orcid" aria-hidden="true"></span></a>  </li>
 </ul>
 </div>
 
@@ -183,11 +151,11 @@
 
 
     <footer><div class="pkgdown-footer-left">
-  <p>Developed by Yaohui Zeng, Chuyi Wang, Tabitha Peter, Patrick Breheny.</p>
+  <p>Developed by Yaohui Zeng, Chuyi Wang, Tabitha Peter, <a href="https://pbreheny.org/web/" class="external-link">Patrick Breheny</a>.</p>
 </div>
 
 <div class="pkgdown-footer-right">
-  <p>Last updated: August 17, 2026</p>
+  <p>Last updated: August 19, 2026</p>
 </div>
 
     </footer>
