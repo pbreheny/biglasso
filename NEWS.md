@@ -1,4 +1,10 @@
 # biglasso (development version)
+  * `cv.biglasso()` with the default `ncores` (`parallel::detectCores()`) on a
+    non-file-backed `big.matrix` no longer errors out of the box (close #42
+    follow-up). Cross-validation folds now silently run single-core in that
+    case, while OpenMP parallelism within each fit is unaffected. Explicitly
+    passing `ncores > 1` with a non-file-backed `X` still errors, since
+    parallel CV genuinely requires a file-backed matrix.
   * Removed support for long-deprecated `screen` method names ("SSR-BEDPP",
     "SSR-Slores", "SSR-Slores-Batch", "SEDPP-Batch", "SEDPP-Batch-SSR",
     "SEDPP-Batchfix-SSR", "SEDPP", "SSR-Dome", "NS-NAC", "SSR-NAC",

@@ -15,7 +15,7 @@
 #'
 #' @source The raw data can be found on Bioconductor:
 #'   <https://bioconductor.org/packages/release/data/experiment/html/colonCA.html>.
-#' 
+#'
 #' @references
 #'   Alon U, Barkai N, Notterman DA, Gish K, Ybarra S, Mack D, and Levine AJ (1999). Broad patterns
 #'   of gene expression revealed by clustering analysis of tumor and normal colon tissues probed by

@@ -37,11 +37,13 @@ Error. "auc", for binary classification, is the area under the receiver operatin
 characteristic curve (ROC). "class", for binary classification, gives the misclassification
 error.}
 
-\item{ncores}{The number of cores to use for parallel execution of the cross-validation folds,
-run on a cluster created by the \code{parallel} package. (This is also supplied to the \code{ncores}
-argument in \code{\link[=biglasso]{biglasso()}}, which is the number of OpenMP threads, but only for the first call of
-\code{\link[=biglasso]{biglasso()}} that is run on the entire data. The individual calls of \code{\link[=biglasso]{biglasso()}} for the CV
-folds are run without the \code{ncores} argument.)}
+\item{ncores}{The number of cores to use when fitting the cross-validation folds in parallel.
+Two subtleties worth noting:
+\itemize{
+\item \code{X} must be file-backed in order to take advantage of this option (fold workers are
+separate processes that reattach \code{X} from its backing file).
+\item \code{ncores} is also passed to \code{\link[=biglasso]{biglasso()}} for the initial, full-data fit ().
+}}
 
 \item{...}{Additional arguments to \code{biglasso}.}
 

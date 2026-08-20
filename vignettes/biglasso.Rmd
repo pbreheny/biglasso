@@ -1,6 +1,5 @@
 ---
 title: "biglasso"
-author: "Yaohui Zeng, Chuyi Wang, Patrick Breheny"
 output: rmarkdown::html_vignette
 vignette: >
   %\VignetteIndexEntry{biglasso}
@@ -9,11 +8,7 @@ vignette: >
 ---
 
 ```{r, include = FALSE}
-knitr::opts_chunk$set(
-  collapse = TRUE,
-  comment = "#>",
-  fig.width = 6, fig.height = 4
-)
+knitr::opts_chunk$set(collapse = TRUE, comment = "#>", fig.width = 6, fig.height = 4)
 ```
 
 # Small Data
@@ -34,8 +29,8 @@ X[1:5, 1:5]
 ```
 
 ```{r}
-## convert X to a big.matrix object
-## X.bm is a pointer to the data matrix
+# convert X to a big.matrix object
+# X.bm is a pointer to the data matrix
 X.bm <- as.big.matrix(X)
 str(X.bm)
 ```
@@ -44,29 +39,24 @@ str(X.bm)
 dim(X.bm)
 ```
 
+Note that this is the same as `X[1:5, 1:5]`:
+
 ```{r}
 X.bm[1:5, 1:5]
-## same results as X[1:5, 1:5]
 ```
 
 ```{r}
-## fit entire solution path, using our newly proposed "Adaptive" screening rule (default)
+# fit entire solution path
 fit <- biglasso(X.bm, y)
 plot(fit)
 ```
 
-## Cross-Validation 
+## Cross-Validation
+
+To run cross-validation, use `cv.biglasso()`:
 
 ```{r}
-## 10-fold cross-valiation in parallel
-cvfit <- tryCatch(
-  {
-    cv.biglasso(X.bm, y, seed = 1234, nfolds = 10, ncores = 4)
-  },
-  error = function(cond) {
-    cv.biglasso(X.bm, y, seed = 1234, nfolds = 10, ncores = 2)
-  }
-)
+cvfit <- cv.biglasso(X.bm, y, seed = 1234, nfolds = 10)
 ```
 
 After cross-validation, a few things we can do:
@@ -83,7 +73,6 @@ plot(cvfit, type = "all")
 ```{r}
 summary(cvfit)
 ```
-
 
 - Extract non-zero coefficients at the optimal $\lambda$ value:
 
@@ -113,7 +102,7 @@ fit <- biglasso(X.bm, y, family = "cox")
 plot(fit)
 ```
 
-## Multiple response Linear Regression (multi-task learning)
+## Multiple response Linear Regression (multitask learning)
 
 ```{r}
 set.seed(10101)
@@ -133,28 +122,28 @@ plot(fit)
 # Big Data
 
 When the raw data file is very large, it's better to convert the raw data file
-into a file-backed `big.matrix` by using a file cache. We can call function 
+into a file-backed `big.matrix` by using a file cache. We can call function
 `setupX`, which reads the raw data file and creates a backing file (.bin)
 and a descriptor file (.desc) for the raw data matrix:
 
 ```{r}
-## The data has 200 observations, 600 features, and 10 non-zero coefficients.
-## This is not actually very big, but vignettes in R are supposed to render
-## quickly. Much larger data can be handled in the same way.
+# The data has 200 observations, 600 features, and 10 non-zero coefficients.
+# This is not actually very big, but vignettes in R are supposed to render
+# quickly, so we'll have to pretend that this can't fit in memory.
+# Much larger data can be handled in the same way.
 if (!file.exists("BigX.bin")) {
   X <- matrix(rnorm(1000 * 5000), 1000, 5000)
   beta <- c(-5:5)
   y <- as.numeric(X[, 1:11] %*% beta)
-  write.csv(X, "BigX.csv", row.names = F)
-  write.csv(y, "y.csv", row.names = F)
-  ## Pretend that the data in "BigX.csv" is too large to fit into memory
-  X.bm <- setupX("BigX.csv", header = T)
+  write.csv(X, "BigX.csv", row.names = FALSE)
+  write.csv(y, "y.csv", row.names = FALSE)
+  X.bm <- setupX("BigX.csv", header = TRUE)
 }
 ```
 
-It's important to note that the above operation is just one-time execution. Once
-done, the data can always be retrieved seamlessly by attaching its descriptor
-file (.desc) in any new R session:
+It's important to note that the above operation is only a one-time execution. Once
+done, the data can be retrieved seamlessly by attaching its descriptor
+file (`.desc`) in any new R session:
 
 ```{r, warning=F}
 rm(list = c("X", "X.bm", "y")) # Pretend starting a new session
@@ -176,20 +165,10 @@ system.time({
 plot(fit)
 ```
 
+For large data sets, it is often convenient to run cross validation in parallel (you can certainly use more cores on your machine, but CRAN vignettes are only allowed to use 2):
+
 ```{r}
-# 10-fold cross validation in parallel
-tryCatch(
-  {
-    system.time({
-      cvfit <- cv.biglasso(X.bm, y, seed = 1234, ncores = 4, nfolds = 10)
-    })
-  },
-  error = function(cond) {
-    system.time({
-      cvfit <- cv.biglasso(X.bm, y, seed = 1234, ncores = 2, nfolds = 10)
-    })
-  }
-)
+cvfit <- cv.biglasso(X.bm, y, seed = 1234, ncores = 2, nfolds = 10)
 ```
 
 ```{r}

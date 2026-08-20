@@ -22,11 +22,11 @@
 #'   Error. "auc", for binary classification, is the area under the receiver operating
 #'   characteristic curve (ROC). "class", for binary classification, gives the misclassification
 #'   error.
-#' @param ncores The number of cores to use for parallel execution of the cross-validation folds,
-#'   run on a cluster created by the `parallel` package. (This is also supplied to the `ncores`
-#'   argument in [biglasso()], which is the number of OpenMP threads, but only for the first call of
-#'   [biglasso()] that is run on the entire data. The individual calls of [biglasso()] for the CV
-#'   folds are run without the `ncores` argument.)
+#' @param ncores The number of cores to use when fitting the cross-validation folds in parallel.
+#'   Two subtleties worth noting:
+#'   - `X` must be file-backed in order to take advantage of this option (fold workers are
+#'     separate processes that reattach `X` from its backing file).
+#'   - `ncores` is also passed to [biglasso()] for the initial, full-data fit ().
 #' @param ... Additional arguments to `biglasso`.
 #' @param nfolds The number of cross-validation folds. Default is 5.
 #' @param seed The seed of the random number generator in order to obtain reproducible results.
@@ -93,6 +93,7 @@ cv.biglasso <- function(
   trace = FALSE,
   grouped = TRUE
 ) {
+  ncores.missing <- missing(ncores)
   family <- match.arg(family)
   if (!family %in% c("gaussian", "binomial")) {
     stop("CV method for this family not supported yet.")
@@ -159,15 +160,25 @@ cv.biglasso <- function(
   cv.args$family <- family
 
   parallel <- FALSE
-  if (ncores > 1) {
-    if (!bigmemory::is.filebacked(X)) {
+  cv.ncores <- ncores
+  if (cv.ncores > 1 && !bigmemory::is.filebacked(X)) {
+    if (ncores.missing) {
+      # Default ncores came from parallel::detectCores(); silently fall back to
+      # single-core CV rather than erroring, since the user never asked for
+      # parallel CV specifically. OpenMP parallelism within each fit (governed
+      # by `ncores` above) is unaffected, since it never leaves this process.
+      cv.ncores <- 1
+    } else {
       stop(
         "Parallel cross-validation (ncores > 1) requires a file-backed big.matrix. ",
         "Create X with backingfile set (see ?bigmemory::filebacked.big.matrix or ?setupX), ",
-        "or set ncores = 1."
+        "or set ncores = 1 for single-core CV (OpenMP parallelism within each fit is still ",
+        "available via the `ncores` argument passed to biglasso())."
       )
     }
-    cluster <- parallel::makeCluster(ncores)
+  }
+  if (cv.ncores > 1) {
+    cluster <- parallel::makeCluster(cv.ncores)
     if (!("cluster" %in% class(cluster))) {
       stop("cluster is not of class 'cluster'; see ?makeCluster")
     }
@@ -226,7 +237,7 @@ cv.biglasso <- function(
       apply(sweep(E, 2, cve)^2, 2, weighted.mean, w = foldweights, na.rm = TRUE) / (nfolds - 1)
     )
   } else {
-    cve <- apply(E, 2, mean)
+    cve <- colMeans(E)
     cvse <- apply(E, 2, sd) / sqrt(n)
   }
   # get the index for which cvm is minimal (or maximal, for AUC).
@@ -243,12 +254,17 @@ cv.biglasso <- function(
     min = min,
     lambda.min = lambda[min],
     lambda.1se = lambda.1se,
-    null.dev = mean(loss.biglasso(y.sub, rep(mean(y.sub), n), fit$family, eval.metric = eval.metric)),
+    null.dev = mean(loss.biglasso(
+      y.sub,
+      rep(mean(y.sub), n),
+      fit$family,
+      eval.metric = eval.metric
+    )),
     cv.ind = cv.ind,
     eval.metric = eval.metric
   )
   if (fit$family == "binomial") {
-    pe <- apply(PE, 2, mean)
+    pe <- colMeans(PE)
     val$pe <- pe[ind]
   }
   structure(val, class = c("cv.biglasso", "cv.ncvreg"))
