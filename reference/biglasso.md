@@ -288,12 +288,11 @@ linear regression (`family = "gaussian"` or `family = "mgaussian"`) is
 \$\$\frac{1}{2n}\textrm{RSS} + \lambda \cdot \textrm{penalty},\$\$
 
 where for `family = "mgaussian"`), a group-lasso type penalty is
-applied. For logistic regression
+applied. For logistic regression (`family = "binomial"`) it is
 
-(`family = "binomial"`) it is \$\$-\frac{1}{n} \ell + \lambda \cdot
-\textrm{penalty},\$\$ for cox regression,
+\$\$-\frac{1}{n} \ell + \lambda \cdot \textrm{penalty},\$\$
 
-breslow approximation for ties is applied.
+for cox regression, Breslow approximation for ties is applied.
 
 Several advanced feature screening rules are implemented. For
 lasso-penalized linear regression, all the options of `screen` are
@@ -312,7 +311,6 @@ R. *R Journal*, 12: 6-19.
 
 ## See also
 
-biglasso-package,
 [`setupX()`](https://pbreheny.github.io/biglasso/reference/setupX.md),
 [`cv.biglasso()`](https://pbreheny.github.io/biglasso/reference/cv.biglasso.md),
 [`plot.biglasso()`](https://pbreheny.github.io/biglasso/reference/plot.biglasso.md),

@@ -284,10 +284,10 @@ than 1e-6 are removed from model fitting.</p></dd>
     <h2 id="details">Details<a class="anchor" aria-label="anchor" href="#details"></a></h2>
     <p>The objective function for linear regression or multiple responses linear regression (<code>family = "gaussian"</code> or <code>family = "mgaussian"</code>) is</p>
 <p>$$\frac{1}{2n}\textrm{RSS} + \lambda \cdot \textrm{penalty},$$</p>
-<p>where for <code>family = "mgaussian"</code>), a group-lasso type penalty is applied. For logistic regression</p>
-<p>(<code>family = "binomial"</code>) it is $$-\frac{1}{n} \ell +
-\lambda \cdot \textrm{penalty},$$ for cox regression,</p>
-<p>breslow approximation for ties is applied.</p>
+<p>where for <code>family = "mgaussian"</code>), a group-lasso type penalty is applied. For logistic regression
+(<code>family = "binomial"</code>) it is</p>
+<p>$$-\frac{1}{n} \ell + \lambda \cdot \textrm{penalty},$$</p>
+<p>for cox regression, Breslow approximation for ties is applied.</p>
 <p>Several advanced feature screening rules are implemented. For lasso-penalized linear regression,
 all the options of <code>screen</code> are applicable. Our proposal adaptive rule - <code>"Adaptive"</code> - achieves
 highest speedup so it's the recommended one, especially for ultrahigh-dimensional large-scale
@@ -302,7 +302,7 @@ Efficient Solver for Lasso Model Fitting with Big Data in R. <em>R Journal</em>,
     </div>
     <div class="section level2">
     <h2 id="see-also">See also<a class="anchor" aria-label="anchor" href="#see-also"></a></h2>
-    <div class="dont-index"><p>biglasso-package, <code><a href="setupX.html">setupX()</a></code>, <code><a href="cv.biglasso.html">cv.biglasso()</a></code>, <code><a href="plot.biglasso.html">plot.biglasso()</a></code>, <code><a href="https://pbreheny.github.io/ncvreg/reference/ncvreg.html" class="external-link">ncvreg::ncvreg()</a></code></p></div>
+    <div class="dont-index"><p><code><a href="setupX.html">setupX()</a></code>, <code><a href="cv.biglasso.html">cv.biglasso()</a></code>, <code><a href="plot.biglasso.html">plot.biglasso()</a></code>, <code><a href="https://pbreheny.github.io/ncvreg/reference/ncvreg.html" class="external-link">ncvreg::ncvreg()</a></code></p></div>
     </div>
 
     <div class="section level2">

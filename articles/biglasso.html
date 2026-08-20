@@ -96,7 +96,7 @@
 <span><span class="va">X.bm</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/pkg/bigmemory/man/big.matrix.html" class="external-link">as.big.matrix</a></span><span class="op">(</span><span class="va">X</span><span class="op">)</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/utils/str.html" class="external-link">str</a></span><span class="op">(</span><span class="va">X.bm</span><span class="op">)</span></span>
 <span><span class="co">#&gt; Formal class 'big.matrix' [package "bigmemory"] with 1 slot</span></span>
-<span><span class="co">#&gt;   ..@ address:&lt;pointer: 0x55e8a8131990&gt;</span></span></code></pre></div>
+<span><span class="co">#&gt;   ..@ address:&lt;pointer: 0x55b0332165d0&gt;</span></span></code></pre></div>
 <div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/base/dim.html" class="external-link">dim</a></span><span class="op">(</span><span class="va">X.bm</span><span class="op">)</span></span>
 <span><span class="co">#&gt; [1]   62 2000</span></span></code></pre></div>
@@ -233,8 +233,8 @@ data file and creates a backing file (.bin) and a descriptor file
 <span><span class="op">}</span></span>
 <span><span class="co">#&gt; Reading data from file, and creating file-backed big.matrix...</span></span>
 <span><span class="co">#&gt; This should take a while if the data is very large...</span></span>
-<span><span class="co">#&gt; Start time:  2026-08-20 15:21:18 </span></span>
-<span><span class="co">#&gt; End time:  2026-08-20 15:21:19 </span></span>
+<span><span class="co">#&gt; Start time:  2026-08-20 15:34:02 </span></span>
+<span><span class="co">#&gt; End time:  2026-08-20 15:34:03 </span></span>
 <span><span class="co">#&gt; DONE!</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; Note: This function needs to be called only one time to create two backing</span></span>
@@ -256,7 +256,7 @@ model, and runs 10-fold cross-validation:</p>
 <span>  <span class="va">fit</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/biglasso.html">biglasso</a></span><span class="op">(</span><span class="va">X.bm</span>, <span class="va">y</span><span class="op">)</span></span>
 <span><span class="op">}</span><span class="op">)</span></span>
 <span><span class="co">#&gt;    user  system elapsed </span></span>
-<span><span class="co">#&gt;   0.182   0.002   0.184</span></span></code></pre></div>
+<span><span class="co">#&gt;   0.192   0.002   0.194</span></span></code></pre></div>
 <div class="sourceCode" id="cb17"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot</a></span><span class="op">(</span><span class="va">fit</span><span class="op">)</span></span></code></pre></div>
 <p><img src="biglasso_files/figure-html/unnamed-chunk-18-1.png" class="r-plt" alt="" width="576"></p>
