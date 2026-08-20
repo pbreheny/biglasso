@@ -41,10 +41,9 @@ to be used as the design matrix \code{X} in \code{\link[=biglasso]{biglasso()}} 
 \description{
 Set up the design matrix X as a \code{big.matrix} object based on external massive data file stored on
 disk that cannot be fullly loaded into memory. The data file must be a well-formated ASCII-file,
-and contains only one single type. Current version only supports \code{double} type. Other
-restrictions about the data file are described in \link{biglasso-package}. This function reads the
-massive data, and creates a \code{big.matrix} object. By default, the resulting \code{big.matrix} is
-file-backed, and can be shared across processors or nodes of a cluster.
+and contains only one single type. Current version only supports \code{double} type. This function
+reads the massive data, and creates a \code{big.matrix} object. By default, the resulting \code{big.matrix}
+is file-backed, and can be shared across processors or nodes of a cluster.
 }
 \details{
 For a data set, this function needs to be called only one time to set up the \code{big.matrix} object

@@ -11,11 +11,11 @@
 #' \lambda*penalty,}
 #'
 #' where for `family = "mgaussian"`), a group-lasso type penalty is applied. For logistic regression
+#' (`family = "binomial"`) it is
 #'
-#' (`family = "binomial"`) it is \deqn{-\frac{1}{n} \ell +
-#' \lambda \cdot \textrm{penalty},}{-(1/n)*loglik+\lambda*penalty,} for cox regression,
+#' \deqn{-\frac{1}{n} \ell + \lambda \cdot \textrm{penalty},}{-(1/n)*loglik+\lambda*penalty,}
 #'
-#' breslow approximation for ties is applied.
+#' for cox regression, Breslow approximation for ties is applied.
 #'
 #' Several advanced feature screening rules are implemented. For lasso-penalized linear regression,
 #' all the options of `screen` are applicable. Our proposal adaptive rule - `"Adaptive"` - achieves
@@ -149,7 +149,7 @@
 #'   Zeng Y and Breheny P. (2021) The biglasso Package: A Memory- and Computation-
 #'   Efficient Solver for Lasso Model Fitting with Big Data in R. *R Journal*, 12: 6-19.
 #'   \doi{10.32614/RJ-2021-001}
-#' @seealso [biglasso-package], [setupX()], [cv.biglasso()], [plot.biglasso()], [ncvreg::ncvreg()]
+#' @seealso [setupX()], [cv.biglasso()], [plot.biglasso()], [ncvreg::ncvreg()]
 #'
 #' @examples
 #' ## Linear regression

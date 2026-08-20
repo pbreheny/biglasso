@@ -190,11 +190,11 @@ The objective function for linear regression or multiple responses linear regres
 \lambda*penalty,}
 
 where for \code{family = "mgaussian"}), a group-lasso type penalty is applied. For logistic regression
+(\code{family = "binomial"}) it is
 
-(\code{family = "binomial"}) it is \deqn{-\frac{1}{n} \ell +
-\lambda \cdot \textrm{penalty},}{-(1/n)*loglik+\lambda*penalty,} for cox regression,
+\deqn{-\frac{1}{n} \ell + \lambda \cdot \textrm{penalty},}{-(1/n)*loglik+\lambda*penalty,}
 
-breslow approximation for ties is applied.
+for cox regression, Breslow approximation for ties is applied.
 
 Several advanced feature screening rules are implemented. For lasso-penalized linear regression,
 all the options of \code{screen} are applicable. Our proposal adaptive rule - \code{"Adaptive"} - achieves
@@ -271,5 +271,5 @@ Efficient Solver for Lasso Model Fitting with Big Data in R. \emph{R Journal}, 1
 \doi{10.32614/RJ-2021-001}
 }
 \seealso{
-\link{biglasso-package}, \code{\link[=setupX]{setupX()}}, \code{\link[=cv.biglasso]{cv.biglasso()}}, \code{\link[=plot.biglasso]{plot.biglasso()}}, \code{\link[ncvreg:ncvreg]{ncvreg::ncvreg()}}
+\code{\link[=setupX]{setupX()}}, \code{\link[=cv.biglasso]{cv.biglasso()}}, \code{\link[=plot.biglasso]{plot.biglasso()}}, \code{\link[ncvreg:ncvreg]{ncvreg::ncvreg()}}
 }
