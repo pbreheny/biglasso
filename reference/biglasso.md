@@ -312,7 +312,7 @@ R. *R Journal*, 12: 6-19.
 
 ## See also
 
-[biglasso-package](https://pbreheny.github.io/biglasso/reference/biglasso-package.md),
+biglasso-package,
 [`setupX()`](https://pbreheny.github.io/biglasso/reference/setupX.md),
 [`cv.biglasso()`](https://pbreheny.github.io/biglasso/reference/cv.biglasso.md),
 [`plot.biglasso()`](https://pbreheny.github.io/biglasso/reference/plot.biglasso.md),

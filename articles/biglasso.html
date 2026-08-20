@@ -24,7 +24,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">biglasso</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.6.1.4</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.6.1.5</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -57,8 +57,6 @@
   <main id="main" class="col-md-9"><div class="page-header">
 
       <h1>biglasso</h1>
-                        <h4 data-toc-skip class="author">Yaohui Zeng,
-Chuyi Wang, Patrick Breheny</h4>
             
       
       <small class="dont-index">Source: <a href="https://github.com/pbreheny/biglasso/blob/main/vignettes/biglasso.Rmd" class="external-link"><code>vignettes/biglasso.Rmd</code></a></small>
@@ -93,15 +91,16 @@ Chuyi Wang, Patrick Breheny</h4>
 <span><span class="co">#&gt; n  6246.45   7823.53     5955.84   3975.56 2002.61</span></span>
 <span><span class="co">#&gt; t  3230.33   3694.45     3400.74   3463.59 2181.42</span></span></code></pre></div>
 <div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="co">## convert X to a big.matrix object</span></span>
-<span><span class="co">## X.bm is a pointer to the data matrix</span></span>
+<code class="sourceCode R"><span><span class="co"># convert X to a big.matrix object</span></span>
+<span><span class="co"># X.bm is a pointer to the data matrix</span></span>
 <span><span class="va">X.bm</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/pkg/bigmemory/man/big.matrix.html" class="external-link">as.big.matrix</a></span><span class="op">(</span><span class="va">X</span><span class="op">)</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/utils/str.html" class="external-link">str</a></span><span class="op">(</span><span class="va">X.bm</span><span class="op">)</span></span>
 <span><span class="co">#&gt; Formal class 'big.matrix' [package "bigmemory"] with 1 slot</span></span>
-<span><span class="co">#&gt;   ..@ address:&lt;pointer: 0x55d6dee66930&gt;</span></span></code></pre></div>
+<span><span class="co">#&gt;   ..@ address:&lt;pointer: 0x55e8a8131990&gt;</span></span></code></pre></div>
 <div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/base/dim.html" class="external-link">dim</a></span><span class="op">(</span><span class="va">X.bm</span><span class="op">)</span></span>
 <span><span class="co">#&gt; [1]   62 2000</span></span></code></pre></div>
+<p>Note that this is the same as <code>X[1:5, 1:5]</code>:</p>
 <div class="sourceCode" id="cb5"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">X.bm</span><span class="op">[</span><span class="fl">1</span><span class="op">:</span><span class="fl">5</span>, <span class="fl">1</span><span class="op">:</span><span class="fl">5</span><span class="op">]</span></span>
 <span><span class="co">#&gt;   Hsa.3004 Hsa.13491 Hsa.13491.1 Hsa.37254 Hsa.541</span></span>
@@ -109,10 +108,9 @@ Chuyi Wang, Patrick Breheny</h4>
 <span><span class="co">#&gt; n  9164.25   6719.53     4883.45   3718.16 2015.22</span></span>
 <span><span class="co">#&gt; t  3825.71   6970.36     5369.97   4705.65 1166.55</span></span>
 <span><span class="co">#&gt; n  6246.45   7823.53     5955.84   3975.56 2002.61</span></span>
-<span><span class="co">#&gt; t  3230.33   3694.45     3400.74   3463.59 2181.42</span></span>
-<span><span class="co">## same results as X[1:5, 1:5]</span></span></code></pre></div>
+<span><span class="co">#&gt; t  3230.33   3694.45     3400.74   3463.59 2181.42</span></span></code></pre></div>
 <div class="sourceCode" id="cb6"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="co">## fit entire solution path, using our newly proposed "Adaptive" screening rule (default)</span></span>
+<code class="sourceCode R"><span><span class="co"># fit entire solution path</span></span>
 <span><span class="va">fit</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/biglasso.html">biglasso</a></span><span class="op">(</span><span class="va">X.bm</span>, <span class="va">y</span><span class="op">)</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot</a></span><span class="op">(</span><span class="va">fit</span><span class="op">)</span></span></code></pre></div>
 <p><img src="biglasso_files/figure-html/unnamed-chunk-7-1.png" class="r-plt" alt="" width="576"></p>
@@ -120,16 +118,9 @@ Chuyi Wang, Patrick Breheny</h4>
 <div class="section level3">
 <h3 id="cross-validation">Cross-Validation<a class="anchor" aria-label="anchor" href="#cross-validation"></a>
 </h3>
+<p>To run cross-validation, use <code><a href="../reference/cv.biglasso.html">cv.biglasso()</a></code>:</p>
 <div class="sourceCode" id="cb7"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="co">## 10-fold cross-valiation in parallel</span></span>
-<span><span class="va">cvfit</span> <span class="op">&lt;-</span> <span class="kw"><a href="https://rdrr.io/r/base/conditions.html" class="external-link">tryCatch</a></span><span class="op">(</span></span>
-<span>  <span class="op">{</span></span>
-<span>    <span class="fu"><a href="../reference/cv.biglasso.html">cv.biglasso</a></span><span class="op">(</span><span class="va">X.bm</span>, <span class="va">y</span>, seed <span class="op">=</span> <span class="fl">1234</span>, nfolds <span class="op">=</span> <span class="fl">10</span>, ncores <span class="op">=</span> <span class="fl">4</span><span class="op">)</span></span>
-<span>  <span class="op">}</span>,</span>
-<span>  error <span class="op">=</span> <span class="kw">function</span><span class="op">(</span><span class="va">cond</span><span class="op">)</span> <span class="op">{</span></span>
-<span>    <span class="fu"><a href="../reference/cv.biglasso.html">cv.biglasso</a></span><span class="op">(</span><span class="va">X.bm</span>, <span class="va">y</span>, seed <span class="op">=</span> <span class="fl">1234</span>, nfolds <span class="op">=</span> <span class="fl">10</span>, ncores <span class="op">=</span> <span class="fl">2</span><span class="op">)</span></span>
-<span>  <span class="op">}</span></span>
-<span><span class="op">)</span></span></code></pre></div>
+<code class="sourceCode R"><span><span class="va">cvfit</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/cv.biglasso.html">cv.biglasso</a></span><span class="op">(</span><span class="va">X.bm</span>, <span class="va">y</span>, seed <span class="op">=</span> <span class="fl">1234</span>, nfolds <span class="op">=</span> <span class="fl">10</span><span class="op">)</span></span></code></pre></div>
 <p>After cross-validation, a few things we can do:</p>
 <ul>
 <li>plot the cross-validation plots:</li>
@@ -201,7 +192,7 @@ Chuyi Wang, Patrick Breheny</h4>
 <p><img src="biglasso_files/figure-html/unnamed-chunk-13-1.png" class="r-plt" alt="" width="576"></p>
 </div>
 <div class="section level3">
-<h3 id="multiple-response-linear-regression-multi-task-learning">Multiple response Linear Regression (multi-task learning)<a class="anchor" aria-label="anchor" href="#multiple-response-linear-regression-multi-task-learning"></a>
+<h3 id="multiple-response-linear-regression-multitask-learning">Multiple response Linear Regression (multitask learning)<a class="anchor" aria-label="anchor" href="#multiple-response-linear-regression-multitask-learning"></a>
 </h3>
 <div class="sourceCode" id="cb13"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/base/Random.html" class="external-link">set.seed</a></span><span class="op">(</span><span class="fl">10101</span><span class="op">)</span></span>
@@ -228,30 +219,30 @@ cache. We can call function <code>setupX</code>, which reads the raw
 data file and creates a backing file (.bin) and a descriptor file
 (.desc) for the raw data matrix:</p>
 <div class="sourceCode" id="cb14"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="co">## The data has 200 observations, 600 features, and 10 non-zero coefficients.</span></span>
-<span><span class="co">## This is not actually very big, but vignettes in R are supposed to render</span></span>
-<span><span class="co">## quickly. Much larger data can be handled in the same way.</span></span>
+<code class="sourceCode R"><span><span class="co"># The data has 200 observations, 600 features, and 10 non-zero coefficients.</span></span>
+<span><span class="co"># This is not actually very big, but vignettes in R are supposed to render</span></span>
+<span><span class="co"># quickly, so we'll have to pretend that this can't fit in memory.</span></span>
+<span><span class="co"># Much larger data can be handled in the same way.</span></span>
 <span><span class="kw">if</span> <span class="op">(</span><span class="op">!</span><span class="fu"><a href="https://rdrr.io/r/base/files.html" class="external-link">file.exists</a></span><span class="op">(</span><span class="st">"BigX.bin"</span><span class="op">)</span><span class="op">)</span> <span class="op">{</span></span>
 <span>  <span class="va">X</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/matrix.html" class="external-link">matrix</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/stats/Normal.html" class="external-link">rnorm</a></span><span class="op">(</span><span class="fl">1000</span> <span class="op">*</span> <span class="fl">5000</span><span class="op">)</span>, <span class="fl">1000</span>, <span class="fl">5000</span><span class="op">)</span></span>
 <span>  <span class="va">beta</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="op">-</span><span class="fl">5</span><span class="op">:</span><span class="fl">5</span><span class="op">)</span></span>
 <span>  <span class="va">y</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/numeric.html" class="external-link">as.numeric</a></span><span class="op">(</span><span class="va">X</span><span class="op">[</span>, <span class="fl">1</span><span class="op">:</span><span class="fl">11</span><span class="op">]</span> <span class="op"><a href="https://rdrr.io/r/base/matmult.html" class="external-link">%*%</a></span> <span class="va">beta</span><span class="op">)</span></span>
-<span>  <span class="fu"><a href="https://rdrr.io/r/utils/write.table.html" class="external-link">write.csv</a></span><span class="op">(</span><span class="va">X</span>, <span class="st">"BigX.csv"</span>, row.names <span class="op">=</span> <span class="cn">F</span><span class="op">)</span></span>
-<span>  <span class="fu"><a href="https://rdrr.io/r/utils/write.table.html" class="external-link">write.csv</a></span><span class="op">(</span><span class="va">y</span>, <span class="st">"y.csv"</span>, row.names <span class="op">=</span> <span class="cn">F</span><span class="op">)</span></span>
-<span>  <span class="co">## Pretend that the data in "BigX.csv" is too large to fit into memory</span></span>
-<span>  <span class="va">X.bm</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/setupX.html">setupX</a></span><span class="op">(</span><span class="st">"BigX.csv"</span>, header <span class="op">=</span> <span class="cn">T</span><span class="op">)</span></span>
+<span>  <span class="fu"><a href="https://rdrr.io/r/utils/write.table.html" class="external-link">write.csv</a></span><span class="op">(</span><span class="va">X</span>, <span class="st">"BigX.csv"</span>, row.names <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span></span>
+<span>  <span class="fu"><a href="https://rdrr.io/r/utils/write.table.html" class="external-link">write.csv</a></span><span class="op">(</span><span class="va">y</span>, <span class="st">"y.csv"</span>, row.names <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span></span>
+<span>  <span class="va">X.bm</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/setupX.html">setupX</a></span><span class="op">(</span><span class="st">"BigX.csv"</span>, header <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span>
 <span><span class="op">}</span></span>
 <span><span class="co">#&gt; Reading data from file, and creating file-backed big.matrix...</span></span>
 <span><span class="co">#&gt; This should take a while if the data is very large...</span></span>
-<span><span class="co">#&gt; Start time:  2026-08-19 14:16:19 </span></span>
-<span><span class="co">#&gt; End time:  2026-08-19 14:16:20 </span></span>
+<span><span class="co">#&gt; Start time:  2026-08-20 15:21:18 </span></span>
+<span><span class="co">#&gt; End time:  2026-08-20 15:21:19 </span></span>
 <span><span class="co">#&gt; DONE!</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; Note: This function needs to be called only one time to create two backing</span></span>
 <span><span class="co">#&gt;       files (.bin, .desc) in current dir. Once done, the data can be</span></span>
 <span><span class="co">#&gt;       'loaded' using function 'attach.big.matrix'. See details in doc.</span></span></code></pre></div>
-<p>It’s important to note that the above operation is just one-time
-execution. Once done, the data can always be retrieved seamlessly by
-attaching its descriptor file (.desc) in any new R session:</p>
+<p>It’s important to note that the above operation is only a one-time
+execution. Once done, the data can be retrieved seamlessly by attaching
+its descriptor file (<code>.desc</code>) in any new R session:</p>
 <div class="sourceCode" id="cb15"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/base/rm.html" class="external-link">rm</a></span><span class="op">(</span>list <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"X"</span>, <span class="st">"X.bm"</span>, <span class="st">"y"</span><span class="op">)</span><span class="op">)</span> <span class="co"># Pretend starting a new session</span></span>
 <span><span class="va">X.bm</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/pkg/bigmemory/man/attach.big.matrix.html" class="external-link">attach.big.matrix</a></span><span class="op">(</span><span class="st">"BigX.desc"</span><span class="op">)</span></span>
@@ -265,26 +256,15 @@ model, and runs 10-fold cross-validation:</p>
 <span>  <span class="va">fit</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/biglasso.html">biglasso</a></span><span class="op">(</span><span class="va">X.bm</span>, <span class="va">y</span><span class="op">)</span></span>
 <span><span class="op">}</span><span class="op">)</span></span>
 <span><span class="co">#&gt;    user  system elapsed </span></span>
-<span><span class="co">#&gt;   0.191   0.004   0.196</span></span></code></pre></div>
+<span><span class="co">#&gt;   0.182   0.002   0.184</span></span></code></pre></div>
 <div class="sourceCode" id="cb17"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot</a></span><span class="op">(</span><span class="va">fit</span><span class="op">)</span></span></code></pre></div>
 <p><img src="biglasso_files/figure-html/unnamed-chunk-18-1.png" class="r-plt" alt="" width="576"></p>
+<p>For large data sets, it is often convenient to run cross validation
+in parallel (you can certainly use more cores on your machine, but CRAN
+vignettes are only allowed to use 2):</p>
 <div class="sourceCode" id="cb18"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="co"># 10-fold cross validation in parallel</span></span>
-<span><span class="kw"><a href="https://rdrr.io/r/base/conditions.html" class="external-link">tryCatch</a></span><span class="op">(</span></span>
-<span>  <span class="op">{</span></span>
-<span>    <span class="fu"><a href="https://rdrr.io/r/base/system.time.html" class="external-link">system.time</a></span><span class="op">(</span><span class="op">{</span></span>
-<span>      <span class="va">cvfit</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/cv.biglasso.html">cv.biglasso</a></span><span class="op">(</span><span class="va">X.bm</span>, <span class="va">y</span>, seed <span class="op">=</span> <span class="fl">1234</span>, ncores <span class="op">=</span> <span class="fl">4</span>, nfolds <span class="op">=</span> <span class="fl">10</span><span class="op">)</span></span>
-<span>    <span class="op">}</span><span class="op">)</span></span>
-<span>  <span class="op">}</span>,</span>
-<span>  error <span class="op">=</span> <span class="kw">function</span><span class="op">(</span><span class="va">cond</span><span class="op">)</span> <span class="op">{</span></span>
-<span>    <span class="fu"><a href="https://rdrr.io/r/base/system.time.html" class="external-link">system.time</a></span><span class="op">(</span><span class="op">{</span></span>
-<span>      <span class="va">cvfit</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/cv.biglasso.html">cv.biglasso</a></span><span class="op">(</span><span class="va">X.bm</span>, <span class="va">y</span>, seed <span class="op">=</span> <span class="fl">1234</span>, ncores <span class="op">=</span> <span class="fl">2</span>, nfolds <span class="op">=</span> <span class="fl">10</span><span class="op">)</span></span>
-<span>    <span class="op">}</span><span class="op">)</span></span>
-<span>  <span class="op">}</span></span>
-<span><span class="op">)</span></span>
-<span><span class="co">#&gt;    user  system elapsed </span></span>
-<span><span class="co">#&gt;   0.295   0.006   2.739</span></span></code></pre></div>
+<code class="sourceCode R"><span><span class="va">cvfit</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/cv.biglasso.html">cv.biglasso</a></span><span class="op">(</span><span class="va">X.bm</span>, <span class="va">y</span>, seed <span class="op">=</span> <span class="fl">1234</span>, ncores <span class="op">=</span> <span class="fl">2</span>, nfolds <span class="op">=</span> <span class="fl">10</span><span class="op">)</span></span></code></pre></div>
 <div class="sourceCode" id="cb19"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/graphics/par.html" class="external-link">par</a></span><span class="op">(</span>mfrow <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">2</span>, <span class="fl">2</span><span class="op">)</span>, mar <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">3.5</span>, <span class="fl">3.5</span>, <span class="fl">3</span>, <span class="fl">1</span><span class="op">)</span>, mgp <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">2.5</span>, <span class="fl">0.5</span>, <span class="fl">0</span><span class="op">)</span><span class="op">)</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot</a></span><span class="op">(</span><span class="va">cvfit</span>, type <span class="op">=</span> <span class="st">"all"</span><span class="op">)</span></span></code></pre></div>
@@ -315,7 +295,7 @@ manipulation</a></li>
 </div>
 
 <div class="pkgdown-footer-right">
-  <p>Last updated: August 19, 2026</p>
+  <p>Last updated: August 20, 2026</p>
 </div>
 
     </footer>

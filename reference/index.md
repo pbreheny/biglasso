@@ -2,9 +2,6 @@
 
 ## All functions
 
-- [`biglasso-package`](https://pbreheny.github.io/biglasso/reference/biglasso-package.md)
-  : Extending Lasso Model Fitting to Big Data
-
 - [`biglasso()`](https://pbreheny.github.io/biglasso/reference/biglasso.md)
   : Fit lasso penalized regression path for big data
 

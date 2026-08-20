@@ -4,10 +4,9 @@ Set up the design matrix X as a `big.matrix` object based on external
 massive data file stored on disk that cannot be fullly loaded into
 memory. The data file must be a well-formated ASCII-file, and contains
 only one single type. Current version only supports `double` type. Other
-restrictions about the data file are described in
-[biglasso-package](https://pbreheny.github.io/biglasso/reference/biglasso-package.md).
-This function reads the massive data, and creates a `big.matrix` object.
-By default, the resulting `big.matrix` is file-backed, and can be shared
+restrictions about the data file are described in biglasso-package. This
+function reads the massive data, and creates a `big.matrix` object. By
+default, the resulting `big.matrix` is file-backed, and can be shared
 across processors or nodes of a cluster.
 
 ## Usage

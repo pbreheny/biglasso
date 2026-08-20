@@ -55,15 +55,16 @@ cv.biglasso(
 
 - ncores:
 
-  The number of cores to use for parallel execution of the
-  cross-validation folds, run on a cluster created by the `parallel`
-  package. (This is also supplied to the `ncores` argument in
-  [`biglasso()`](https://pbreheny.github.io/biglasso/reference/biglasso.md),
-  which is the number of OpenMP threads, but only for the first call of
-  [`biglasso()`](https://pbreheny.github.io/biglasso/reference/biglasso.md)
-  that is run on the entire data. The individual calls of
-  [`biglasso()`](https://pbreheny.github.io/biglasso/reference/biglasso.md)
-  for the CV folds are run without the `ncores` argument.)
+  The number of cores to use when fitting the cross-validation folds in
+  parallel. Two subtleties worth noting:
+
+  - `X` must be file-backed in order to take advantage of this option
+    (fold workers are separate processes that reattach `X` from its
+    backing file).
+
+  - `ncores` is also passed to
+    [`biglasso()`](https://pbreheny.github.io/biglasso/reference/biglasso.md)
+    for the initial, full-data fit ().
 
 - ...:
 

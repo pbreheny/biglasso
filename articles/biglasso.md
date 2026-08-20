@@ -31,12 +31,12 @@ X[1:5, 1:5]
 
 ``` r
 
-## convert X to a big.matrix object
-## X.bm is a pointer to the data matrix
+# convert X to a big.matrix object
+# X.bm is a pointer to the data matrix
 X.bm <- as.big.matrix(X)
 str(X.bm)
 #> Formal class 'big.matrix' [package "bigmemory"] with 1 slot
-#>   ..@ address:<pointer: 0x55d6dee66930>
+#>   ..@ address:<pointer: 0x55e8a8131990>
 ```
 
 ``` r
@@ -44,6 +44,8 @@ str(X.bm)
 dim(X.bm)
 #> [1]   62 2000
 ```
+
+Note that this is the same as `X[1:5, 1:5]`:
 
 ``` r
 
@@ -54,12 +56,11 @@ X.bm[1:5, 1:5]
 #> t  3825.71   6970.36     5369.97   4705.65 1166.55
 #> n  6246.45   7823.53     5955.84   3975.56 2002.61
 #> t  3230.33   3694.45     3400.74   3463.59 2181.42
-## same results as X[1:5, 1:5]
 ```
 
 ``` r
 
-## fit entire solution path, using our newly proposed "Adaptive" screening rule (default)
+# fit entire solution path
 fit <- biglasso(X.bm, y)
 plot(fit)
 ```
@@ -68,17 +69,12 @@ plot(fit)
 
 ### Cross-Validation
 
+To run cross-validation, use
+[`cv.biglasso()`](https://pbreheny.github.io/biglasso/reference/cv.biglasso.md):
+
 ``` r
 
-## 10-fold cross-valiation in parallel
-cvfit <- tryCatch(
-  {
-    cv.biglasso(X.bm, y, seed = 1234, nfolds = 10, ncores = 4)
-  },
-  error = function(cond) {
-    cv.biglasso(X.bm, y, seed = 1234, nfolds = 10, ncores = 2)
-  }
-)
+cvfit <- cv.biglasso(X.bm, y, seed = 1234, nfolds = 10)
 ```
 
 After cross-validation, a few things we can do:
@@ -162,7 +158,7 @@ plot(fit)
 
 ![](biglasso_files/figure-html/unnamed-chunk-13-1.png)
 
-### Multiple response Linear Regression (multi-task learning)
+### Multiple response Linear Regression (multitask learning)
 
 ``` r
 
@@ -192,22 +188,22 @@ matrix:
 
 ``` r
 
-## The data has 200 observations, 600 features, and 10 non-zero coefficients.
-## This is not actually very big, but vignettes in R are supposed to render
-## quickly. Much larger data can be handled in the same way.
+# The data has 200 observations, 600 features, and 10 non-zero coefficients.
+# This is not actually very big, but vignettes in R are supposed to render
+# quickly, so we'll have to pretend that this can't fit in memory.
+# Much larger data can be handled in the same way.
 if (!file.exists("BigX.bin")) {
   X <- matrix(rnorm(1000 * 5000), 1000, 5000)
   beta <- c(-5:5)
   y <- as.numeric(X[, 1:11] %*% beta)
-  write.csv(X, "BigX.csv", row.names = F)
-  write.csv(y, "y.csv", row.names = F)
-  ## Pretend that the data in "BigX.csv" is too large to fit into memory
-  X.bm <- setupX("BigX.csv", header = T)
+  write.csv(X, "BigX.csv", row.names = FALSE)
+  write.csv(y, "y.csv", row.names = FALSE)
+  X.bm <- setupX("BigX.csv", header = TRUE)
 }
 #> Reading data from file, and creating file-backed big.matrix...
 #> This should take a while if the data is very large...
-#> Start time:  2026-08-19 14:16:19 
-#> End time:  2026-08-19 14:16:20 
+#> Start time:  2026-08-20 15:21:18 
+#> End time:  2026-08-20 15:21:19 
 #> DONE!
 #> 
 #> Note: This function needs to be called only one time to create two backing
@@ -215,9 +211,9 @@ if (!file.exists("BigX.bin")) {
 #>       'loaded' using function 'attach.big.matrix'. See details in doc.
 ```
 
-It’s important to note that the above operation is just one-time
-execution. Once done, the data can always be retrieved seamlessly by
-attaching its descriptor file (.desc) in any new R session:
+It’s important to note that the above operation is only a one-time
+execution. Once done, the data can be retrieved seamlessly by attaching
+its descriptor file (`.desc`) in any new R session:
 
 ``` r
 
@@ -237,7 +233,7 @@ system.time({
   fit <- biglasso(X.bm, y)
 })
 #>    user  system elapsed 
-#>   0.191   0.004   0.196
+#>   0.182   0.002   0.184
 ```
 
 ``` r
@@ -247,23 +243,13 @@ plot(fit)
 
 ![](biglasso_files/figure-html/unnamed-chunk-18-1.png)
 
+For large data sets, it is often convenient to run cross validation in
+parallel (you can certainly use more cores on your machine, but CRAN
+vignettes are only allowed to use 2):
+
 ``` r
 
-# 10-fold cross validation in parallel
-tryCatch(
-  {
-    system.time({
-      cvfit <- cv.biglasso(X.bm, y, seed = 1234, ncores = 4, nfolds = 10)
-    })
-  },
-  error = function(cond) {
-    system.time({
-      cvfit <- cv.biglasso(X.bm, y, seed = 1234, ncores = 2, nfolds = 10)
-    })
-  }
-)
-#>    user  system elapsed 
-#>   0.295   0.006   2.739
+cvfit <- cv.biglasso(X.bm, y, seed = 1234, ncores = 2, nfolds = 10)
 ```
 
 ``` r
