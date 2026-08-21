@@ -1,12 +1,13 @@
+^CLAUDE.md$
 ^codecov\.yml$
 ^docs$
 ^pkgdown$
 ^vignettes/articles$
+
+^\.cache$
 ^\.github$
 ^\.lintr$
 ^\.version\.json$
-^.*\.Rproj$
-^\.Rproj\.user$
 ^\.vscode$
-^\.cache$
+
 ^compile_commands.json$
