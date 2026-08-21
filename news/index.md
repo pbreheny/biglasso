@@ -1,24 +1,17 @@
 # Changelog
 
-## biglasso (development version)
+## biglasso 1.7.0
 
-- [`cv.biglasso()`](https://pbreheny.github.io/biglasso/reference/cv.biglasso.md)
-  with the default `ncores`
-  ([`parallel::detectCores()`](https://rdrr.io/r/parallel/detectCores.html))
-  on a non-file-backed `big.matrix` no longer errors out of the box
-  (close [\#42](https://github.com/pbreheny/biglasso/issues/42)
-  follow-up). Cross-validation folds now silently run single-core in
-  that case, while OpenMP parallelism within each fit is unaffected.
-  Explicitly passing `ncores > 1` with a non-file-backed `X` still
-  errors, since parallel CV genuinely requires a file-backed matrix.
-- Removed support for long-deprecated `screen` method names
-  (“SSR-BEDPP”, “SSR-Slores”, “SSR-Slores-Batch”, “SEDPP-Batch”,
-  “SEDPP-Batch-SSR”, “SEDPP-Batchfix-SSR”, “SEDPP”, “SSR-Dome”,
-  “NS-NAC”, “SSR-NAC”, “SEDPP-NAC”, “SSR-Dome-NAC”, “SSR-BEDPP-NAC”,
-  “SSR-Slores-NAC”). These were silently mapped to “Hybrid”/“Adaptive”
-  with a warning; passing one now raises the standard
-  [`match.arg()`](https://rdrr.io/r/base/match.arg.html) error instead.
-  Use “SSR”, “Hybrid”, or “Adaptive” directly.
+- Breaking change: dropped support for deprecated screen names
+- biglasso_path() now accepts dfmax argument
+- Significantly expanded the test suite, which uncovered numerous bugs
+- Numerous bug fixes in predict.mbiglasso()
+- Fix lambda mismatch bug in summary.cv.biglasso()
+- Stop setting system environment variable R_C_BOUNDS_CHECK
+- Fix [\#21](https://github.com/pbreheny/biglasso/issues/21)
+- Fix [\#43](https://github.com/pbreheny/biglasso/issues/43)
+- Internal: Removed a great deal of dead code that was never called
+- Internal: Significant refactoring
 
 ## biglasso 1.6.1
 
