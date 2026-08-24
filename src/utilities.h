@@ -9,6 +9,12 @@
 // #include <vector>
 // #include <algorithm>
 
+// bigmemory/BigMatrix.h uses std::back_inserter but does not include
+// <iterator> itself; it has relied on <iterator> being pulled in
+// transitively by some other standard header. Newer/stricter libc++
+// (e.g. clang-23 under R-devel) no longer guarantees that, so include it
+// explicitly here before BigMatrix.h is processed.
+#include <iterator>
 #include "bigmemory/BigMatrix.h"
 #include "bigmemory/MatrixAccessor.hpp"
 #include "bigmemory/bigmemoryDefines.h"
