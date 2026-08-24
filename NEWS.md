@@ -1,3 +1,7 @@
+# biglasso 1.7.2
+
+- Include <iterator> for clang23 compatibility
+
 # biglasso 1.7.1
 
 - Use -S instead of --strip debug (Mac compatibility)
