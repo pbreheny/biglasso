@@ -1,6 +1,12 @@
 # Changelog
 
+## biglasso 1.7.1
+
+- Use -S instead of –strip debug (Mac compatibility)
+
 ## biglasso 1.7.0
+
+CRAN release: 2026-08-21
 
 - Breaking change: dropped support for deprecated screen names
 - biglasso_path() now accepts dfmax argument
@@ -12,6 +18,8 @@
 - Fix [\#43](https://github.com/pbreheny/biglasso/issues/43)
 - Internal: Removed a great deal of dead code that was never called
 - Internal: Significant refactoring
+- Internal: Strip debug code from external libraries to reduce package
+  size
 
 ## biglasso 1.6.1
 
