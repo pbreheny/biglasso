@@ -1,5 +1,11 @@
 # Changelog
 
+## biglasso 1.7.2
+
+CRAN release: 2026-08-25
+
+- Include for clang23 compatibility
+
 ## biglasso 1.7.1
 
 - Use -S instead of –strip debug (Mac compatibility)
